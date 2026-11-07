@@ -20,7 +20,7 @@ function campaign(): CampaignDocument {
   const snapshot = interpretSource('tracker-json', text);
   return {
     kind: 'adnd-campaign',
-    schemaVersion: 8,
+    schemaVersion: 9,
     workingCombats: [],
     combatCheckpoints: [],
     workingInventories: [],
@@ -119,7 +119,7 @@ test('DM inventory parser is reused and player documents rejected', () => {
   const dm = createEmptyEncumbranceDocument();
   expect(
     interpretSource('inventory-json', JSON.stringify(dm)).sourceVersion
-  ).toBe(9);
+  ).toBe(10);
   expect(() =>
     interpretSource(
       'inventory-json',

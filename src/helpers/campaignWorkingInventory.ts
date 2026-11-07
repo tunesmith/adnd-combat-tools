@@ -2,8 +2,11 @@ import { continuedFromSchema } from './campaignContinuityModel';
 import type { ContinuedFrom } from './campaignContinuityModel';
 import { z } from 'zod';
 import { canonical, interpretSource } from './campaignSnapshots';
-import { createEmptyEncumbranceDocument } from './encumbranceDocument';
-import type { EncumbranceDmDocumentV9 } from '../types/encumbrance';
+import {
+  createEmptyEncumbranceDocument,
+  parseEncumbranceDocument,
+} from './encumbranceDocument';
+import type { EncumbranceDmDocument } from '../types/encumbrance';
 import type { CampaignDocument } from './campaignDocument';
 export type WorkspaceView =
   | 'possessions'
@@ -18,7 +21,7 @@ export interface WorkingInventory {
   id: string;
   sessionId: string;
   title: string;
-  document: EncumbranceDmDocumentV9;
+  document: EncumbranceDmDocument;
   origin:
     | { kind: 'empty' }
     | { kind: 'import'; recordId: string; revisionId: string }
@@ -31,12 +34,17 @@ export interface InventoryCheckpoint {
   label: string;
   capturedAt: string;
   origin?: WorkingInventory['origin'];
-  document: EncumbranceDmDocumentV9;
+  document: EncumbranceDmDocument;
 }
 const id = z.string().min(1);
 const inventory = z.unknown().superRefine((value, ctx) => {
   try {
-    if (canonical(value) !== canonical(normalizeWorkingInventory(value)))
+    if (
+      canonical(value) !==
+      canonical(
+        interpretSource('inventory-json', JSON.stringify(value)).payload
+      )
+    )
       ctx.addIssue({
         code: 'custom',
         message:
@@ -79,17 +87,13 @@ export const workspaceSchema = z
     view: z.enum(['possessions', 'combats', 'history', 'details', 'tools']),
   })
   .strict();
-function normalizeWorkingInventory(value: unknown): EncumbranceDmDocumentV9 {
-  const document = interpretSource('inventory-json', JSON.stringify(value))
-    .payload as unknown as EncumbranceDmDocumentV9;
-  const ids = document.characters.flatMap((c) => c.inventory.map((i) => i.id));
-  if (new Set(ids).size !== ids.length)
-    throw new Error(
-      'Working inventory item IDs must be unique across characters for safe transfers.'
-    );
+function normalizeWorkingInventory(value: unknown): EncumbranceDmDocument {
+  const document = parseEncumbranceDocument(JSON.stringify(value));
+  if (document.kind !== 'adnd-encumbrance-dm')
+    throw new Error('DM inventory required.');
   return document;
 }
-export function emptyWorkingInventory(): EncumbranceDmDocumentV9 {
+export function emptyWorkingInventory(): EncumbranceDmDocument {
   return normalizeWorkingInventory(createEmptyEncumbranceDocument());
 }
 export function captureInventoryCheckpoint(
@@ -121,7 +125,7 @@ export function captureInventoryCheckpoint(
 export function startWorkingInventory(
   campaign: CampaignDocument,
   sessionId: string,
-  document: EncumbranceDmDocumentV9,
+  document: EncumbranceDmDocument,
   origin: WorkingInventory['origin'],
   id: string,
   checkpointId: string,
@@ -160,7 +164,7 @@ export function changeWorkingInventory(
   campaign: CampaignDocument,
   workingId: string,
   sessionId: string,
-  document: EncumbranceDmDocumentV9
+  document: EncumbranceDmDocument
 ): CampaignDocument {
   if (
     !campaign.workingInventories.some(

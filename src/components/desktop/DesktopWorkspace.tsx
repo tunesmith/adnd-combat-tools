@@ -24,7 +24,7 @@ import type {
   WorkspaceView,
   WorkingInventory,
 } from '../../helpers/campaignWorkingInventory';
-import type { EncumbranceDmDocumentV9 } from '../../types/encumbrance';
+import type { EncumbranceDmDocument } from '../../types/encumbrance';
 import type {
   DocumentState,
   DocumentCommand,
@@ -289,7 +289,7 @@ export default function DesktopWorkspace({
               : ''
           }`,
           time: v.importedAt,
-          document: v.payload as unknown as EncumbranceDmDocumentV9,
+          document: v.payload as unknown as EncumbranceDmDocument,
           origin: { kind: 'import' as const, recordId: r.id, revisionId: v.id },
         }))
       ),
@@ -312,7 +312,7 @@ export default function DesktopWorkspace({
     (v) => v.id === inventoryVersion
   );
   function start(
-    inventory: EncumbranceDmDocumentV9,
+    inventory: EncumbranceDmDocument,
     origin: WorkingInventory['origin']
   ) {
     const id = uid(),

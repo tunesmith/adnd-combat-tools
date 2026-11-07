@@ -4,7 +4,7 @@ import { startWorkingInventory } from './campaignWorkingInventory';
 import { ownedHistory } from './campaignHistory';
 import type { CampaignDocument } from './campaignDocument';
 import type { TrackerState } from '../types/tracker';
-import type { EncumbranceDmDocumentV9 } from '../types/encumbrance';
+import type { EncumbranceDmDocument } from '../types/encumbrance';
 export function activateSource(
   doc: CampaignDocument,
   recordId: string,
@@ -62,7 +62,7 @@ export function activateSource(
     ...startWorkingInventory(
       doc,
       sessionId,
-      revision.payload as unknown as EncumbranceDmDocumentV9,
+      revision.payload as unknown as EncumbranceDmDocument,
       origin,
       ids.workingId,
       ids.checkpointId,

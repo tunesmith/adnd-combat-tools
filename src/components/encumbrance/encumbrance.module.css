@@ -1613,3 +1613,58 @@ select.fieldControl {
     display: none !important;
   }
 }
+
+.holderControls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  margin-bottom: 0.7rem;
+}
+
+.holderActions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.addCharacterButton {
+  grid-column: 1;
+  justify-self: start;
+}
+
+.allPossessionsButton {
+  grid-column: 2;
+}
+
+.addStorageButton {
+  grid-column: 3;
+  justify-self: end;
+}
+
+.holderTabs {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  align-items: start;
+  gap: 0.75rem;
+}
+
+.characterTabsFullWidth {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.holderGroup {
+  min-width: 0;
+}
+
+.holderGroup .characterTabs {
+  margin-bottom: 0;
+}
+
+.storageControls {
+  text-align: right;
+}
+
+.storageControls .characterTabs {
+  justify-content: flex-end;
+}

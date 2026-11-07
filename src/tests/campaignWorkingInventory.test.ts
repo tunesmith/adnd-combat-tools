@@ -22,7 +22,7 @@ function setup() {
 }
 test('V2 migration retains every B1 record, source, identity and metadata', () => {
   const doc = parseCampaign(JSON.stringify(baseline));
-  expect(doc.schemaVersion).toBe(8);
+  expect(doc.schemaVersion).toBe(9);
   expect(doc.records).toEqual(baseline.records);
   expect(doc.sessions).toEqual(
     baseline.sessions.map((s) => ({ ...s, notes: '' }))
@@ -129,5 +129,5 @@ test('ambiguous item IDs across owners are rejected for working transfers', () =
   b.inventory = JSON.parse(JSON.stringify(a.inventory));
   expect(() =>
     changeWorkingInventory(doc, 'working-1', 'session-1', inventory)
-  ).toThrow('unique across characters');
+  ).toThrow('Duplicate item ID');
 });

@@ -1,3 +1,9 @@
+import {
+  inventoryHolders,
+  updateHolderInventory,
+  transferInventorySubtree,
+  removeStorageLocation,
+} from '../../helpers/encumbranceStorage';
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react';
 import { createPortal } from 'react-dom';
 import type { GroupBase, SingleValue } from 'react-select';
@@ -6,6 +12,8 @@ import styles from './encumbrance.module.css';
 import type {
   EncumbranceCatalogItem,
   EncumbranceCharacterSheet,
+  EncumbranceDmDocument,
+  EncumbranceStorageLocation,
   EncumbranceCustomItem,
   EncumbranceDocument,
   EncumbranceInventoryItem,
@@ -58,7 +66,7 @@ import {
 interface EncumbranceAppProps {
   mode: EncumbranceMode;
   campaign?: {
-    document: EncumbranceDocument;
+    document: EncumbranceDocument | EncumbranceDmDocument;
     readOnly?: boolean;
     onDocumentChange: (document: EncumbranceDocument) => boolean | void;
     onExport: () => void;
@@ -120,7 +128,9 @@ interface CharacterEditDraft {
   dmNotes: string;
 }
 
-interface ActiveCharacterState extends EncumbranceCharacterSheet {
+interface ActiveCharacterState
+  extends Omit<EncumbranceCharacterSheet, 'strength'> {
+  strength?: EncumbranceCharacterSheet['strength'];
   dmNotes: string;
 }
 
@@ -465,13 +475,23 @@ const isDmDocument = (
 ): document is Extract<EncumbranceDocument, { kind: 'adnd-encumbrance-dm' }> =>
   document.kind === 'adnd-encumbrance-dm';
 
+const getDmHolderStates = (
+  document: Extract<EncumbranceDocument, { kind: 'adnd-encumbrance-dm' }>
+): ActiveCharacterState[] => [
+  ...document.characters,
+  ...document.storageLocations.map((location) => ({
+    ...location,
+    dmNotes: location.notes,
+  })),
+];
+
 const getActiveCharacterState = (
   document: EncumbranceDocument
 ): ActiveCharacterState => {
   if (document.kind === 'adnd-encumbrance-dm') {
     const activeCharacter =
-      document.characters.find(
-        (character) => character.id === document.activeCharacterId
+      getDmHolderStates(document).find(
+        (holder) => holder.id === document.activeCharacterId
       ) || document.characters[0];
 
     if (activeCharacter) {
@@ -577,7 +597,7 @@ interface RowNoteLine {
 }
 
 interface InventoryRowRecord {
-  character: EncumbranceCharacterSheet;
+  character: ActiveCharacterState;
   item: EncumbranceInventoryItem;
   itemInfo: EncumbranceCatalogItem;
   displayName: string;
@@ -711,7 +731,14 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
   const [previewCharacterId, setPreviewCharacterId] = useState<string | null>(
     null
   );
-  const sourceDocument = campaign?.document || standaloneDocument;
+  const campaignDocument = campaign?.document;
+  const sourceDocument = useMemo(
+    () =>
+      campaignDocument
+        ? parseEncumbranceDocument(JSON.stringify(campaignDocument))
+        : standaloneDocument,
+    [campaignDocument, standaloneDocument]
+  );
   const document = useMemo(
     () =>
       readOnly && previewCharacterId && isDmDocument(sourceDocument)
@@ -735,6 +762,9 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
     currentDocumentRef.current = next;
     return true;
   };
+  const [storageDraft, setStorageDraft] =
+    useState<EncumbranceStorageLocation | null>(null);
+  const [storageError, setStorageError] = useState('');
   const [addMode, setAddMode] = useState<AddMode>('catalog');
   const [selectedCatalogId, setSelectedCatalogId] = useState<string>(
     encumbranceCatalog[0]?.id || ''
@@ -774,14 +804,21 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
     [document]
   );
   const dmCharacters = useMemo(
-    () => (isDmDocument(document) ? document.characters : []),
+    () => (isDmDocument(document) ? getDmHolderStates(document) : []),
     [document]
   );
+  const activeStorage = isDmDocument(document)
+    ? document.storageLocations.find(
+        (location) => location.id === activeCharacter.id
+      )
+    : undefined;
   const isAllCharactersView = mode === 'dm' && showAllCharacters;
   const visibleCharacters = isAllCharactersView
     ? dmCharacters
     : [activeCharacter];
-  const visibleCharacterCount = visibleCharacters.length;
+  const visibleCharacterCount = visibleCharacters.filter(
+    (holder) => holder.strength
+  ).length;
   const activeInventorySorts = useMemo(
     () =>
       inventorySorts.filter(
@@ -796,6 +833,7 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
 
   useEffect(() => {
     if (
+      !storageDraft &&
       !pendingRemovalState &&
       !editingItemDraft &&
       !showAddModal &&
@@ -807,6 +845,10 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
+        if (storageDraft) {
+          setStorageDraft(null);
+          return;
+        }
         if (pendingMergeReview) {
           setPendingMergeReview(null);
           return;
@@ -836,6 +878,7 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [
+    storageDraft,
     characterEditDraft,
     editingItemDraft,
     pendingMergeReview,
@@ -906,7 +949,7 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
     const nextCatalogById = new Map(encumbranceCatalogById);
     const allInventory =
       document.kind === 'adnd-encumbrance-dm'
-        ? document.characters.flatMap((character) => character.inventory)
+        ? inventoryHolders(document).flatMap((character) => character.inventory)
         : document.character.inventory;
 
     allInventory.forEach((item) => {
@@ -1034,13 +1077,12 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
     mode === 'dm'
       ? getTotalValueGp(activeCharacter, catalogById)
       : getTotalKnownValueGp(activeCharacter, catalogById);
-  const carryingCapacityGp = getStrengthCarryingCapacityGp(
-    activeCharacter.strength
-  );
-  const effectiveLoadGp = getEffectiveLoadGp(
-    totalEncumbranceGp,
-    activeCharacter.strength
-  );
+  const carryingCapacityGp = activeCharacter.strength
+    ? getStrengthCarryingCapacityGp(activeCharacter.strength)
+    : 0;
+  const effectiveLoadGp = activeCharacter.strength
+    ? getEffectiveLoadGp(totalEncumbranceGp, activeCharacter.strength)
+    : 0;
   const loadBand = getLoadBand(effectiveLoadGp);
   const containerWarningCount = getContainerWarningCount(
     activeCharacter.inventory,
@@ -1076,7 +1118,9 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
     mode === 'dm' && editingItemDraft && dmCharacters.length > 1
       ? dmCharacters.map((character) => ({
           id: character.id,
-          label: getCharacterDisplayName(character.name),
+          label: `${
+            character.strength ? '' : 'Storage · '
+          }${getCharacterDisplayName(character.name)}`,
         }))
       : [];
   const editingOwnerContainerItems =
@@ -1150,7 +1194,7 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
   const storedInOptions: EncumbranceSelectOption[] = [
     {
       value: '',
-      label: 'On person',
+      label: activeStorage ? 'At location (loose)' : 'On person',
     },
     ...containerItems.map((containerItem) => {
       const containerInfo = getInventoryItemInfo(containerItem, catalogById);
@@ -1173,7 +1217,10 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
   const editingStoredInOptions: EncumbranceSelectOption[] = [
     {
       value: '',
-      label: 'On person',
+      label:
+        editingItemOwner && !editingItemOwner.strength
+          ? 'At location (loose)'
+          : 'On person',
     },
     ...editingParentOptions.map((containerItem) => {
       const containerInfo = getInventoryItemInfo(containerItem, catalogById);
@@ -1211,11 +1258,16 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
 
   const openCharacterModal = () => {
     if (readOnly) return;
+    if (activeStorage) {
+      setStorageError('');
+      setStorageDraft({ ...activeStorage });
+      return;
+    }
     setCharacterEditDraft({
       characterId: activeCharacter.id,
       name: activeCharacter.name,
-      strengthScore: activeCharacter.strength.score,
-      exceptional: activeCharacter.strength.exceptional,
+      strengthScore: activeCharacter.strength?.score || 8,
+      exceptional: activeCharacter.strength?.exceptional || 'none',
       dmNotes: activeCharacter.dmNotes,
     });
   };
@@ -1281,19 +1333,9 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
   ) => {
     return setDocument((currentDocument) => {
       if (currentDocument.kind === 'adnd-encumbrance-dm') {
-        return {
-          ...currentDocument,
-          characters: currentDocument.characters.map((character) =>
-            character.id === characterId
-              ? {
-                  ...character,
-                  inventory: character.inventory.map((item) =>
-                    item.id === itemId ? updater(item) : item
-                  ),
-                }
-              : character
-          ),
-        };
+        return updateHolderInventory(currentDocument, characterId, (items) =>
+          items.map((item) => (item.id === itemId ? updater(item) : item))
+        );
       }
 
       return {
@@ -1680,15 +1722,13 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
       )
     )
       return;
-    setEditingItemDraft((currentDraft) =>
-      currentDraft
-        ? {
-            ...currentDraft,
-            characterId: nextCharacterId,
-            containerId: '',
-          }
-        : currentDraft
-    );
+    const nextDraft = {
+      ...editingItemDraft,
+      characterId: nextCharacterId,
+      containerId: '',
+    };
+    itemDraftRef.current = nextDraft;
+    setEditingItemDraft(nextDraft);
   };
 
   const removeInventoryItem = (
@@ -1699,7 +1739,7 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
       const inventory =
         currentDocument.kind === 'adnd-encumbrance-dm'
           ? (
-              currentDocument.characters.find(
+              getDmHolderStates(currentDocument).find(
                 (character) => character.id === characterId
               ) || currentDocument.characters[0]
             )?.inventory || []
@@ -1711,17 +1751,11 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
       );
 
       if (currentDocument.kind === 'adnd-encumbrance-dm') {
-        return {
-          ...currentDocument,
-          characters: currentDocument.characters.map((character) =>
-            character.id === characterId
-              ? {
-                  ...character,
-                  inventory: nextInventory,
-                }
-              : character
-          ),
-        };
+        return updateHolderInventory(
+          currentDocument,
+          characterId,
+          () => nextInventory
+        );
       }
 
       return {
@@ -1739,61 +1773,17 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
     sourceCharacterId: string,
     targetCharacterId: string
   ) => {
-    if (sourceCharacterId === targetCharacterId) {
-      return true;
-    }
-
-    return setDocument((currentDocument) => {
-      if (currentDocument.kind !== 'adnd-encumbrance-dm') {
-        return currentDocument;
-      }
-
-      const sourceCharacter = currentDocument.characters.find(
-        (character) => character.id === sourceCharacterId
-      );
-      const targetCharacter = currentDocument.characters.find(
-        (character) => character.id === targetCharacterId
-      );
-
-      if (!sourceCharacter || !targetCharacter) {
-        return currentDocument;
-      }
-
-      const descendantIds = getDescendantIds(sourceCharacter.inventory, itemId);
-      const movedIds = new Set([itemId, ...descendantIds]);
-      const movedItems = sourceCharacter.inventory
-        .filter((item) => movedIds.has(item.id))
-        .map((item) => ({
-          ...item,
-          containerId:
-            item.containerId && movedIds.has(item.containerId)
-              ? item.containerId
-              : null,
-        }));
-
-      return {
-        ...currentDocument,
-        characters: currentDocument.characters.map((character) => {
-          if (character.id === sourceCharacterId) {
-            return {
-              ...character,
-              inventory: character.inventory.filter(
-                (item) => !movedIds.has(item.id)
-              ),
-            };
-          }
-
-          if (character.id === targetCharacterId) {
-            return {
-              ...character,
-              inventory: [...character.inventory, ...movedItems],
-            };
-          }
-
-          return character;
-        }),
-      };
-    });
+    if (sourceCharacterId === targetCharacterId) return true;
+    return setDocument((currentDocument) =>
+      currentDocument.kind === 'adnd-encumbrance-dm'
+        ? transferInventorySubtree(
+            currentDocument,
+            itemId,
+            sourceCharacterId,
+            targetCharacterId
+          )
+        : currentDocument
+    );
   };
 
   const updateCustomItemDraft = <K extends keyof CustomItemDraft>(
@@ -1907,6 +1897,32 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
     });
   };
 
+  const addStorage = () => {
+    setStorageError('');
+    const location = {
+      id: createInventoryItemId(),
+      name: 'Unnamed storage',
+      notes: '',
+      inventory: [],
+    };
+    if (
+      !setDocument((current) =>
+        current.kind === 'adnd-encumbrance-dm'
+          ? {
+              ...current,
+              activeCharacterId: location.id,
+              storageLocations: [...current.storageLocations, location],
+            }
+          : current
+      )
+    )
+      return;
+    setShowAllCharacters(false);
+    setEditingItemDraft(null);
+    setSelectedContainerId('');
+    setStorageDraft(location);
+  };
+
   const requestRemoveInventoryItem = (itemId: string) => {
     setPendingRemovalState({
       itemId,
@@ -1941,7 +1957,7 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
     const currentInventory =
       currentDocument.kind === 'adnd-encumbrance-dm'
         ? (
-            currentDocument.characters.find(
+            getDmHolderStates(currentDocument).find(
               (character) => character.id === currentDocument.activeCharacterId
             ) || currentDocument.characters[0]
           )?.inventory || []
@@ -1993,17 +2009,11 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
     };
 
     if (currentDocument.kind === 'adnd-encumbrance-dm') {
-      return {
-        ...currentDocument,
-        characters: currentDocument.characters.map((character) =>
-          character.id === currentDocument.activeCharacterId
-            ? {
-                ...character,
-                inventory: [...character.inventory, nextItem],
-              }
-            : character
-        ),
-      };
+      return updateHolderInventory(
+        currentDocument,
+        currentDocument.activeCharacterId,
+        (items) => [...items, nextItem]
+      );
     }
 
     return {
@@ -2420,7 +2430,9 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
   };
 
   const visibleTotalEncumbranceGp = visibleCharacters.reduce(
-    (total, character) => total + getTotalEncumbranceGp(character, catalogById),
+    (total, character) =>
+      total +
+      (character.strength ? getTotalEncumbranceGp(character, catalogById) : 0),
     0
   );
   const visibleTotalValueGp = visibleCharacters.reduce(
@@ -2450,7 +2462,7 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
   );
 
   const buildInventoryRowRecord = (
-    character: EncumbranceCharacterSheet,
+    character: ActiveCharacterState,
     item: EncumbranceInventoryItem,
     depth: number,
     sequence: number
@@ -2501,7 +2513,9 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
       noteLines,
       depth,
       sequence,
-      ownerLabel: getCharacterOwnerLabel(character.name),
+      ownerLabel: character.strength
+        ? getCharacterOwnerLabel(character.name)
+        : `Storage · ${getCharacterDisplayName(character.name)}`,
       containerStatusLabel,
       containerUsage,
       containerSummary,
@@ -2668,7 +2682,7 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
   );
 
   const collectInventoryRowRecords = (
-    character: EncumbranceCharacterSheet,
+    character: ActiveCharacterState,
     containerId: string | null,
     depth = 0,
     sequenceRef = { value: 0 }
@@ -2694,7 +2708,7 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
       });
 
   const renderInventoryRows = (
-    character: EncumbranceCharacterSheet,
+    character: ActiveCharacterState,
     containerId: string | null,
     depth = 0
   ): JSX.Element[] =>
@@ -3017,11 +3031,11 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
         dmNotes: activeCharacter.dmNotes,
       };
   const characterSummaryName = isAllCharactersView
-    ? 'Party View'
+    ? 'All possessions'
     : getCharacterDisplayName(activeCharacterSummary.name);
   const characterSummaryStrength = formatStrengthSummary(
-    activeCharacterSummary.strength.score,
-    activeCharacterSummary.strength.exceptional
+    activeCharacterSummary.strength?.score || 8,
+    activeCharacterSummary.strength?.exceptional || 'none'
   );
   const hasDmNotes =
     !isAllCharactersView && Boolean(activeCharacterSummary.dmNotes.trim());
@@ -3136,7 +3150,7 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
                         role="menuitem"
                         className={styles['menuItem']}
                         onClick={createFileMenuAction(savePlayerDocument)}
-                        disabled={isAllCharactersView}
+                        disabled={isAllCharactersView || Boolean(activeStorage)}
                         title={
                           isAllCharactersView
                             ? 'Select a character to save a player file.'
@@ -3152,7 +3166,7 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
                         role="menuitem"
                         className={styles['menuItem']}
                         onClick={createFileMenuAction(savePlayerDocumentAs)}
-                        disabled={isAllCharactersView}
+                        disabled={isAllCharactersView || Boolean(activeStorage)}
                         title={
                           isAllCharactersView
                             ? 'Select a character to save a player file.'
@@ -3176,7 +3190,7 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
                         role="menuitem"
                         className={styles['menuItem']}
                         onClick={createFileMenuAction(exportPlayerCopy)}
-                        disabled={isAllCharactersView}
+                        disabled={isAllCharactersView || Boolean(activeStorage)}
                         title={
                           isAllCharactersView
                             ? 'Select a character to export a player file.'
@@ -3193,6 +3207,114 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
           </div>
         </div>
 
+        {storageDraft &&
+          createPortal(
+            <>
+              <div
+                className={styles['modalShadow']}
+                onClick={() => setStorageDraft(null)}
+              />
+              <div
+                className={styles['modal']}
+                role="dialog"
+                aria-modal="true"
+                aria-label="Storage location"
+                onClick={(event) => event.stopPropagation()}
+              >
+                <h2 className={styles['modalTitle']}>Storage location</h2>
+                <div className={styles['modalBody']}>
+                  <label className={styles['fieldGroup']}>
+                    Name
+                    <input
+                      autoFocus
+                      className={styles['fieldControl']}
+                      value={storageDraft.name}
+                      onChange={(event) =>
+                        setStorageDraft({
+                          ...storageDraft,
+                          name: event.target.value,
+                        })
+                      }
+                    />
+                  </label>
+                  <label className={styles['fieldGroup']}>
+                    Notes
+                    <textarea
+                      className={styles['fieldControl']}
+                      rows={3}
+                      value={storageDraft.notes}
+                      onChange={(event) =>
+                        setStorageDraft({
+                          ...storageDraft,
+                          notes: event.target.value,
+                        })
+                      }
+                    />
+                  </label>
+                  {storageError && <p role="alert">{storageError}</p>}
+                </div>
+                <div className={styles['modalActions']}>
+                  <button
+                    className={styles['button']}
+                    onClick={() => {
+                      try {
+                        if (
+                          setDocument((current) =>
+                            current.kind === 'adnd-encumbrance-dm'
+                              ? removeStorageLocation(current, storageDraft.id)
+                              : current
+                          )
+                        )
+                          setStorageDraft(null);
+                      } catch (error) {
+                        setStorageError(
+                          error instanceof Error ? error.message : String(error)
+                        );
+                      }
+                    }}
+                  >
+                    Remove location
+                  </button>
+                  <button
+                    className={styles['button']}
+                    onClick={() => setStorageDraft(null)}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    className={`${styles['button']} ${styles['buttonPrimary']}`}
+                    onClick={() => {
+                      if (
+                        setDocument((current) =>
+                          current.kind === 'adnd-encumbrance-dm'
+                            ? {
+                                ...current,
+                                storageLocations: current.storageLocations.map(
+                                  (location) =>
+                                    location.id === storageDraft.id
+                                      ? {
+                                          ...location,
+                                          name:
+                                            storageDraft.name.trim() ||
+                                            'Unnamed storage',
+                                          notes: storageDraft.notes,
+                                        }
+                                      : location
+                                ),
+                              }
+                            : current
+                        )
+                      )
+                        setStorageDraft(null);
+                    }}
+                  >
+                    Save location
+                  </button>
+                </div>
+              </div>
+            </>,
+            modalRoot || window.document.body
+          )}
         <input
           disabled={Boolean(campaign)}
           ref={fileInputRef}
@@ -3222,50 +3344,101 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
               mode === 'dm' ? styles['cardTight'] : ''
             }`}
           >
-            <div className={styles['cardHeader']}>
+            {mode === 'player' && (
               <div className={styles['cardTitle']}>Character</div>
-              {mode === 'dm' && (
-                <div className={styles['cardHeaderActions']}>
+            )}
+            {mode === 'dm' && (
+              <div className={styles['holderControls']}>
+                <div className={styles['holderActions']}>
+                  {!readOnly && (
+                    <button
+                      type="button"
+                      className={`${styles['button']} ${styles['buttonCompact']} ${styles['addCharacterButton']}`}
+                      onClick={addCharacter}
+                    >
+                      + Character
+                    </button>
+                  )}
                   <button
                     type="button"
-                    className={`${styles['button']} ${styles['buttonPrimary']} ${styles['buttonCompact']}`}
-                    style={{ display: readOnly ? 'none' : undefined }}
-                    onClick={addCharacter}
+                    className={`${styles['characterTab']} ${
+                      styles['allPossessionsButton']
+                    } ${
+                      isAllCharactersView ? styles['characterTabActive'] : ''
+                    }`}
+                    onClick={selectAllCharacters}
                   >
-                    Add Character
+                    All possessions
                   </button>
-                </div>
-              )}
-            </div>
-            {mode === 'dm' && (
-              <div className={styles['characterTabs']}>
-                <button
-                  type="button"
-                  className={`${styles['characterTab']} ${
-                    isAllCharactersView ? styles['characterTabActive'] : ''
-                  }`}
-                  onClick={selectAllCharacters}
-                >
-                  All Characters
-                </button>
-                {dmCharacters.map((character) => {
-                  const tabLabel = getCharacterDisplayName(character.name);
-                  return (
+                  {!readOnly && (
                     <button
-                      key={character.id}
                       type="button"
-                      className={`${styles['characterTab']} ${
-                        !isAllCharactersView &&
-                        character.id === activeCharacter.id
-                          ? styles['characterTabActive']
-                          : ''
-                      }`}
-                      onClick={() => selectActiveCharacter(character.id)}
+                      className={`${styles['button']} ${styles['buttonCompact']} ${styles['addStorageButton']}`}
+                      onClick={addStorage}
                     >
-                      {tabLabel}
+                      + Storage
                     </button>
-                  );
-                })}
+                  )}
+                </div>
+                <div
+                  className={`${styles['holderTabs']} ${
+                    isDmDocument(document) &&
+                    document.storageLocations.length === 0
+                      ? styles['characterTabsFullWidth']
+                      : ''
+                  }`}
+                >
+                  <div
+                    className={styles['holderGroup']}
+                    role="group"
+                    aria-label="Characters"
+                  >
+                    <div className={styles['characterTabs']}>
+                      {isDmDocument(document) &&
+                        document.characters.map((character) => (
+                          <button
+                            key={character.id}
+                            type="button"
+                            className={`${styles['characterTab']} ${
+                              !isAllCharactersView &&
+                              character.id === activeCharacter.id
+                                ? styles['characterTabActive']
+                                : ''
+                            }`}
+                            onClick={() => selectActiveCharacter(character.id)}
+                          >
+                            {getCharacterDisplayName(character.name)}
+                          </button>
+                        ))}
+                    </div>
+                  </div>
+                  {isDmDocument(document) &&
+                    document.storageLocations.length > 0 && (
+                      <div
+                        className={`${styles['holderGroup']} ${styles['storageControls']}`}
+                        role="group"
+                        aria-label="Storage locations"
+                      >
+                        <div className={styles['characterTabs']}>
+                          {document.storageLocations.map((location) => (
+                            <button
+                              key={location.id}
+                              type="button"
+                              className={`${styles['characterTab']} ${
+                                !isAllCharactersView &&
+                                activeCharacter.id === location.id
+                                  ? styles['characterTabActive']
+                                  : ''
+                              }`}
+                              onClick={() => selectActiveCharacter(location.id)}
+                            >
+                              {location.name || 'Unnamed storage'}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                </div>
               </div>
             )}
             {isAllCharactersView ? (
@@ -3291,7 +3464,12 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
                       mode === 'dm' ? styles['characterSummaryChipCompact'] : ''
                     }`}
                   >
-                    {visibleCharacterCount} characters
+                    {isDmDocument(document) ? document.characters.length : 1}{' '}
+                    characters
+                    {isDmDocument(document) &&
+                    document.storageLocations.length > 0
+                      ? ` · ${document.storageLocations.length} storage locations`
+                      : ''}
                   </span>
                   <span
                     className={`${styles['characterSummaryText']} ${
@@ -3337,7 +3515,9 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
                           : ''
                       }`}
                     >
-                      STR {characterSummaryStrength}
+                      {activeStorage
+                        ? 'Storage location'
+                        : `STR ${characterSummaryStrength}`}
                     </span>
                     {mode === 'dm' && hasDmNotes && (
                       <span
@@ -3359,7 +3539,13 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
               mode === 'dm' ? styles['cardTight'] : ''
             }`}
           >
-            <div className={styles['cardTitle']}>Encumbrance</div>
+            <div className={styles['cardTitle']}>
+              {activeStorage && !isAllCharactersView
+                ? 'Stored possessions'
+                : isAllCharactersView
+                ? 'Overview'
+                : 'Encumbrance'}
+            </div>
             {isAllCharactersView ? (
               <div
                 className={`${styles['summaryGrid']} ${
@@ -3418,7 +3604,7 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
                       mode === 'dm' ? styles['summaryLabelCompact'] : ''
                     }`}
                   >
-                    Total
+                    Carried
                   </span>
                   <strong>{visibleTotalEncumbranceGp} gp</strong>
                 </div>
@@ -3449,6 +3635,21 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
                     Warnings
                   </span>
                   <strong>{visibleContainerWarningCount}</strong>
+                </div>
+              </div>
+            ) : activeStorage ? (
+              <div
+                className={`${styles['summaryGrid']} ${styles['summaryGridCompact']}`}
+              >
+                <div className={styles['summaryValue']}>
+                  <span className={styles['summaryLabel']}>Value</span>
+                  <strong>{formatGpValue(totalValueGp)} gp</strong>
+                </div>
+                <div className={styles['summaryValue']}>
+                  <span className={styles['summaryLabel']}>
+                    Container warnings
+                  </span>
+                  <strong>{containerWarningCount}</strong>
                 </div>
               </div>
             ) : (

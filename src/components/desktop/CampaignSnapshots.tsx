@@ -18,7 +18,7 @@ import type {
   SnapshotInterpretation,
 } from '../../helpers/campaignSnapshots';
 import type { TrackerState } from '../../types/tracker';
-import type { EncumbranceDmDocumentV9 } from '../../types/encumbrance';
+import type { EncumbranceDmDocument } from '../../types/encumbrance';
 import styles from './desktopWorkspace.module.css';
 const uid = () =>
   typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
@@ -37,7 +37,7 @@ function Inspection({
     <HistoricalCombat state={payload as unknown as TrackerState} />
   ) : (
     <HistoricalInventory
-      document={payload as unknown as EncumbranceDmDocumentV9}
+      document={payload as unknown as EncumbranceDmDocument}
     />
   );
 }
@@ -349,9 +349,18 @@ export default function CampaignSnapshots({
                       (preview.payload as unknown as TrackerState).rounds.length
                     } rounds`
                   : `${
-                      (preview.payload as unknown as EncumbranceDmDocumentV9)
+                      (preview.payload as unknown as EncumbranceDmDocument)
                         .characters.length
-                    } characters`}{' '}
+                    } characters · ${
+                      (preview.payload as unknown as EncumbranceDmDocument)
+                        .version === 10
+                        ? (
+                            preview.payload as unknown as {
+                              storageLocations: unknown[];
+                            }
+                          ).storageLocations.length
+                        : 0
+                    } storage locations`}{' '}
                 · Original source retained
               </p>
               <label>

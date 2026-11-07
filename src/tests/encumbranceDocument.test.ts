@@ -13,7 +13,7 @@ describe('encumbrance document helpers', () => {
     const document = createEmptyEncumbranceDocument();
 
     expect(document.kind).toBe('adnd-encumbrance-dm');
-    expect(document.version).toBe(9);
+    expect(document.version).toBe(10);
     expect('customItems' in document).toBe(false);
 
     if (document.kind !== 'adnd-encumbrance-dm') {
@@ -175,7 +175,7 @@ describe('encumbrance document helpers', () => {
     );
 
     expect(parsed.kind).toBe('adnd-encumbrance-dm');
-    expect(parsed.version).toBe(9);
+    expect(parsed.version).toBe(10);
     expect('customItems' in parsed).toBe(false);
 
     if (parsed.kind !== 'adnd-encumbrance-dm') {
@@ -798,7 +798,7 @@ describe('encumbrance document helpers', () => {
 
     expect(stringified).toContain(`{
   "kind": "adnd-encumbrance-dm",
-  "version": 9,
+  "version": 10,
   "activeCharacterId": "character-1",
   "characters": [
     {

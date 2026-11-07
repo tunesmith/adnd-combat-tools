@@ -8,6 +8,8 @@ import type {
   EncumbranceDmDocumentV7,
   EncumbranceDmDocumentV8,
   EncumbranceDmDocumentV9,
+  EncumbranceDmDocumentV10,
+  EncumbranceStorageLocation,
   EncumbranceDocument,
   EncumbranceDocumentKind,
   EncumbranceDocumentV1,
@@ -29,8 +31,9 @@ import type {
   MagicKnowledge,
   StrengthScore,
 } from '../types/encumbrance';
+import { encumbranceCatalogById } from '../tables/encumbranceCatalog';
 
-const DOCUMENT_VERSION = 9;
+const DOCUMENT_VERSION = 10;
 
 type PlayerMergePrimitiveValue = string | number | boolean | null;
 export type PlayerMergeChoiceSource = 'player' | 'dm';
@@ -281,7 +284,8 @@ const isSupportedDocumentVersion = (
   | EncumbrancePlayerDocumentV8['version']
   | EncumbranceDmDocumentV8['version']
   | EncumbrancePlayerDocumentV9['version']
-  | EncumbranceDmDocumentV9['version'] =>
+  | EncumbranceDmDocumentV9['version']
+  | EncumbranceDmDocumentV10['version'] =>
   value === 1 ||
   value === 2 ||
   value === 3 ||
@@ -290,7 +294,8 @@ const isSupportedDocumentVersion = (
   value === 6 ||
   value === 7 ||
   value === 8 ||
-  value === 9;
+  value === 9 ||
+  value === 10;
 
 const isAmmoCapacityRule = (value: unknown): value is AmmoCapacityRule => {
   if (!value || typeof value !== 'object') {
@@ -535,6 +540,63 @@ const sanitizeDmCharacter = (
   dmNotes: candidate.dmNotes,
 });
 
+const sanitizeStorageLocation = (
+  location: EncumbranceStorageLocation
+): EncumbranceStorageLocation => ({
+  id: location.id,
+  name: location.name,
+  notes: location.notes,
+  inventory: location.inventory.map((item) =>
+    sanitizeInventoryItem(item, 'adnd-encumbrance-dm')
+  ),
+});
+const isStorageLocation = (
+  value: unknown
+): value is EncumbranceStorageLocation => {
+  if (!value || typeof value !== 'object') return false;
+  const location = value as Partial<EncumbranceStorageLocation>;
+  return (
+    isCharacterId(location.id) &&
+    typeof location.name === 'string' &&
+    typeof location.notes === 'string' &&
+    Array.isArray(location.inventory) &&
+    location.inventory.every(isInventoryItem)
+  );
+};
+export const validateInventoryHolders = (
+  holders: { id: string; inventory: EncumbranceInventoryItem[] }[]
+): void => {
+  const holderIds = new Set<string>();
+  const itemIds = new Set<string>();
+  for (const holder of holders) {
+    if (holderIds.has(holder.id)) throw new Error('Duplicate holder ID.');
+    holderIds.add(holder.id);
+    for (const item of holder.inventory) {
+      if (itemIds.has(item.id))
+        throw new Error('Duplicate item ID across inventory holders.');
+      itemIds.add(item.id);
+      const visited = new Set([item.id]);
+      let parentId = item.containerId;
+      while (parentId) {
+        const parent = holder.inventory.find((i) => i.id === parentId);
+        const definition =
+          parent &&
+          (parent.customItem || encumbranceCatalogById.get(parent.catalogId));
+        if (
+          !parent ||
+          (definition && !definition.isContainer) ||
+          visited.has(parentId)
+        )
+          throw new Error(
+            'Invalid or cyclic container reference. Choose a container in the same holder.'
+          );
+        visited.add(parentId);
+        parentId = parent.containerId;
+      }
+    }
+  }
+};
+
 const sanitizeOptionalMergeBaseCharacter = (
   candidate: EncumbrancePlayerCharacter | undefined,
   characterId: string
@@ -551,7 +613,9 @@ const getAllInventoryItems = (
   document: EncumbranceDocument
 ): EncumbranceInventoryItem[] =>
   document.kind === 'adnd-encumbrance-dm'
-    ? document.characters.flatMap((character) => character.inventory)
+    ? [...document.characters, ...document.storageLocations].flatMap(
+        (holder) => holder.inventory
+      )
     : document.character.inventory;
 
 const toFallbackCustomItemName = (catalogId: string): string => {
@@ -605,6 +669,10 @@ const mapInventoryItems = (
   document.kind === 'adnd-encumbrance-dm'
     ? {
         ...document,
+        storageLocations: document.storageLocations.map((location) => ({
+          ...location,
+          inventory: location.inventory.map(mapper),
+        })),
         characters: document.characters.map((character) => ({
           ...character,
           inventory: character.inventory.map(mapper),
@@ -690,7 +758,8 @@ const sanitizeDocument = (
   if (
     candidate.version === 7 ||
     candidate.version === 8 ||
-    candidate.version === 9
+    candidate.version === 9 ||
+    candidate.version === 10
   ) {
     if (candidate.kind === 'adnd-encumbrance-player') {
       const sanitizedCharacter = sanitizePlayerCharacter(candidate.character);
@@ -707,7 +776,7 @@ const sanitizeDocument = (
       return inlineLegacyCustomItems(
         {
           kind: 'adnd-encumbrance-player',
-          version: DOCUMENT_VERSION,
+          version: 9,
           character: sanitizedCharacter,
           ...(sanitizedMergeBase
             ? { mergeBaseCharacter: sanitizedMergeBase }
@@ -720,9 +789,10 @@ const sanitizeDocument = (
     const sanitizedCharacters = candidate.characters.map((character) =>
       sanitizeDmCharacter(character)
     );
-    const activeCharacterId = sanitizedCharacters.some(
-      (character) => character.id === candidate.activeCharacterId
-    )
+    const activeCharacterId = [
+      ...sanitizedCharacters,
+      ...(candidate.version === 10 ? candidate.storageLocations : []),
+    ].some((holder) => holder.id === candidate.activeCharacterId)
       ? candidate.activeCharacterId
       : sanitizedCharacters[0]?.id || createCharacterId();
 
@@ -732,6 +802,10 @@ const sanitizeDocument = (
         version: DOCUMENT_VERSION,
         activeCharacterId,
         characters: sanitizedCharacters,
+        storageLocations:
+          candidate.version === 10
+            ? candidate.storageLocations.map(sanitizeStorageLocation)
+            : [],
       },
       legacyCustomItems
     );
@@ -753,7 +827,7 @@ const sanitizeDocument = (
     return inlineLegacyCustomItems(
       {
         kind: 'adnd-encumbrance-player',
-        version: DOCUMENT_VERSION,
+        version: 9,
         character: {
           ...migratedCharacterBase,
           inventory: migratedInventory.map((item) =>
@@ -770,6 +844,7 @@ const sanitizeDocument = (
       kind: 'adnd-encumbrance-dm',
       version: DOCUMENT_VERSION,
       activeCharacterId: migratedCharacterId,
+      storageLocations: [],
       characters: [
         {
           ...migratedCharacterBase,
@@ -812,12 +887,13 @@ export const createEmptyEncumbranceDocument = (
       version: DOCUMENT_VERSION,
       activeCharacterId: character.id,
       characters: [character],
+      storageLocations: [],
     };
   }
 
   return {
     kind,
-    version: DOCUMENT_VERSION,
+    version: 9,
     character: createEmptyEncumbrancePlayerCharacter(),
   };
 };
@@ -835,7 +911,7 @@ export const redactEncumbranceDocument = (
 
     return {
       kind: 'adnd-encumbrance-player',
-      version: DOCUMENT_VERSION,
+      version: 9,
       character: sanitizedCharacter,
       ...(sanitizedMergeBase ? { mergeBaseCharacter: sanitizedMergeBase } : {}),
     };
@@ -851,7 +927,7 @@ export const redactEncumbranceDocument = (
   if (!selectedCharacter) {
     return {
       kind: 'adnd-encumbrance-player',
-      version: DOCUMENT_VERSION,
+      version: 9,
       character: createEmptyEncumbrancePlayerCharacter(),
     };
   }
@@ -867,7 +943,7 @@ export const redactEncumbranceDocument = (
 
   return {
     kind: 'adnd-encumbrance-player',
-    version: DOCUMENT_VERSION,
+    version: 9,
     character: sanitizedCharacter,
     mergeBaseCharacter: sanitizePlayerCharacter(sanitizedCharacter),
   };
@@ -910,14 +986,16 @@ const buildDmInventoryItemIndex = (
     { characterId: string; item: EncumbranceInventoryItem }
   >();
 
-  document.characters.forEach((character) => {
-    character.inventory.forEach((item) => {
-      index.set(item.id, {
-        characterId: character.id,
-        item,
+  [...document.characters, ...document.storageLocations].forEach(
+    (character) => {
+      character.inventory.forEach((item) => {
+        index.set(item.id, {
+          characterId: character.id,
+          item,
+        });
       });
-    });
-  });
+    }
+  );
 
   return index;
 };
@@ -1468,6 +1546,24 @@ export const buildPlayerMergePlan = (
     const baseItemName = getMergeItemDisplayName(baseItem);
     const ownerName = getCharacterMergeDisplayName(currentCharacter.name);
 
+    if (dmEntry && dmEntry.characterId !== currentCharacter.id) {
+      const storage = workingDocument.storageLocations.find(
+        (location) => location.id === dmEntry.characterId
+      );
+      itemReviews.push({
+        kind: 'issue',
+        itemId: baseItem.id,
+        itemName: baseItemName,
+        ownerName,
+        message: storage
+          ? `${baseItemName} is now stored at ${
+              storage.name || 'an unnamed storage location'
+            }. Player changes were not applied.`
+          : `${baseItemName} is now held by another character in the DM file. Player changes were not applied.`,
+      });
+      return;
+    }
+
     if (!playerItem) {
       if (dmEntry?.characterId === currentCharacter.id) {
         itemReviews.push({
@@ -1499,17 +1595,6 @@ export const buildPlayerMergePlan = (
           message: `${baseItemName} no longer exists in the DM file.`,
         });
       }
-      return;
-    }
-
-    if (dmEntry.characterId !== currentCharacter.id) {
-      itemReviews.push({
-        kind: 'issue',
-        itemId: baseItem.id,
-        itemName: baseItemName,
-        ownerName,
-        message: `${baseItemName} is now held by another character in the DM file.`,
-      });
       return;
     }
 
@@ -1714,7 +1799,7 @@ export const applyPlayerMergePlan = (
     }
 
     if (itemReview.kind === 'added') {
-      if (nextItemIndexById.has(itemReview.itemId)) {
+      if (buildDmInventoryItemIndex(sanitizedDocument).has(itemReview.itemId)) {
         return;
       }
 
@@ -1873,9 +1958,12 @@ export const parseEncumbranceDocument = (
   if (
     rawValue.version === 7 ||
     rawValue.version === 8 ||
-    rawValue.version === 9
+    rawValue.version === 9 ||
+    rawValue.version === 10
   ) {
     if (rawValue.kind === 'adnd-encumbrance-player') {
+      if (Number(rawValue.version) > 9)
+        throw new Error('Unsupported player document version.');
       const playerValue = rawValue as Partial<
         | EncumbrancePlayerDocumentV7
         | EncumbrancePlayerDocumentV8
@@ -1897,6 +1985,8 @@ export const parseEncumbranceDocument = (
         throw new Error('Player merge base is not valid.');
       }
 
+      validateInventoryHolders([playerValue.character]);
+      if (playerMergeBase) validateInventoryHolders([playerMergeBase]);
       return sanitizeDocument(
         playerValue as
           | EncumbrancePlayerDocumentV7
@@ -1909,6 +1999,7 @@ export const parseEncumbranceDocument = (
       | EncumbranceDmDocumentV7
       | EncumbranceDmDocumentV8
       | EncumbranceDmDocumentV9
+      | EncumbranceDmDocumentV10
     >;
 
     if (
@@ -1918,19 +2009,33 @@ export const parseEncumbranceDocument = (
         isDmCharacter(character)
       ) ||
       !isCharacterId(dmValue.activeCharacterId) ||
-      !dmValue.characters.some(
-        (character: EncumbranceDmCharacter) =>
-          character.id === dmValue.activeCharacterId
-      )
+      ![
+        ...dmValue.characters,
+        ...(dmValue.version === 10 && Array.isArray(dmValue.storageLocations)
+          ? dmValue.storageLocations
+          : []),
+      ].some((holder) => holder.id === dmValue.activeCharacterId)
     ) {
       throw new Error('File is not a supported encumbrance document.');
     }
 
+    if (
+      dmValue.version === 10 &&
+      (!('storageLocations' in dmValue) ||
+        !Array.isArray(dmValue.storageLocations) ||
+        !dmValue.storageLocations.every(isStorageLocation))
+    )
+      throw new Error('Storage locations are not valid.');
+    validateInventoryHolders([
+      ...dmValue.characters,
+      ...(dmValue.version === 10 ? dmValue.storageLocations || [] : []),
+    ]);
     return sanitizeDocument(
       dmValue as
         | EncumbranceDmDocumentV7
         | EncumbranceDmDocumentV8
         | EncumbranceDmDocumentV9
+        | EncumbranceDmDocumentV10
     );
   }
 

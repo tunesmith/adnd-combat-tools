@@ -1,3 +1,4 @@
+import { parseEncumbranceDocument } from './encumbranceDocument';
 import { campaignPartySchema } from './campaignPartyModel';
 import type { CampaignParty } from './campaignPartyModel';
 import { validatePartyReferences } from './campaignParty';
@@ -33,7 +34,7 @@ import {
 import type { CampaignRecord, CampaignSession } from './campaignSnapshots';
 export interface CampaignDocument {
   kind: 'adnd-campaign';
-  schemaVersion: 8;
+  schemaVersion: 9;
   party?: CampaignParty;
   workingCombats: WorkingCombat[];
   combatCheckpoints: CombatCheckpoint[];
@@ -154,6 +155,7 @@ const v7 = v6.extend({
   party: campaignPartySchema.optional(),
 });
 const v8 = v7.extend({ schemaVersion: z.literal(8) });
+const v9 = v8.extend({ schemaVersion: z.literal(9) });
 
 export function validateCampaign(value: unknown): CampaignDocument {
   if (!value || typeof value !== 'object')
@@ -169,10 +171,11 @@ export function validateCampaign(value: unknown): CampaignDocument {
     header['schemaVersion'] !== 5 &&
     header['schemaVersion'] !== 6 &&
     header['schemaVersion'] !== 7 &&
-    header['schemaVersion'] !== 8
+    header['schemaVersion'] !== 8 &&
+    header['schemaVersion'] !== 9
   )
     throw new Error(
-      'Unsupported campaign schema version. This app supports versions 1 through 8.'
+      'Unsupported campaign schema version. This app supports versions 1 through 9.'
     );
   if (
     value &&
@@ -181,7 +184,7 @@ export function validateCampaign(value: unknown): CampaignDocument {
   ) {
     return {
       ...v1.parse(value),
-      schemaVersion: 8,
+      schemaVersion: 9,
       workingCombats: [],
       combatCheckpoints: [],
       sessions: [],
@@ -210,7 +213,9 @@ export function validateCampaign(value: unknown): CampaignDocument {
       ? v6.parse(value)
       : header['schemaVersion'] === 7
       ? v7.parse(value)
-      : v8.parse(value);
+      : header['schemaVersion'] === 8
+      ? v8.parse(value)
+      : v9.parse(value);
   const migrated =
     legacy.schemaVersion === 3
       ? {
@@ -224,7 +229,7 @@ export function validateCampaign(value: unknown): CampaignDocument {
   const parsed = (migrated.schemaVersion === 4
     ? {
         ...migrated,
-        schemaVersion: 8 as const,
+        schemaVersion: 9 as const,
         sessions: migrated.sessions.map((s) => ({ ...s, notes: '' })),
         workingCombats: migrated.workingCombats.map((c) => ({
           ...c,
@@ -234,8 +239,15 @@ export function validateCampaign(value: unknown): CampaignDocument {
       }
     : {
         ...migrated,
-        schemaVersion: 8 as const,
+        schemaVersion: 9 as const,
       }) as unknown as CampaignDocument;
+  if (header['schemaVersion'] !== 9)
+    parsed.workingInventories = parsed.workingInventories.map((w) => {
+      const document = parseEncumbranceDocument(JSON.stringify(w.document));
+      if (document.kind !== 'adnd-encumbrance-dm')
+        throw new Error('DM inventory required.');
+      return { ...w, document };
+    });
   const ids = new Set<string>();
   const unique = (id: string) => {
     if (ids.has(id)) throw new Error('Duplicate campaign identity.');

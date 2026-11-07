@@ -199,6 +199,26 @@ export interface EncumbranceDmDocumentV9 {
   characters: EncumbranceDmCharacter[];
 }
 
+export interface EncumbranceStorageLocation {
+  id: string;
+  name: string;
+  notes: string;
+  inventory: EncumbranceInventoryItem[];
+}
+
+export interface EncumbranceDmDocumentV10 {
+  kind: 'adnd-encumbrance-dm';
+  version: 10;
+  activeCharacterId: string;
+  characters: EncumbranceDmCharacter[];
+  storageLocations: EncumbranceStorageLocation[];
+}
+
+/** Retained evidence may use the pre-storage format. */
+export type EncumbranceDmDocument =
+  | EncumbranceDmDocumentV9
+  | EncumbranceDmDocumentV10;
+
 type LegacyEncumbranceDocument = EncumbranceDocumentV1 | EncumbranceDocumentV2;
 
 export type AnyEncumbranceDocument =
@@ -212,11 +232,12 @@ export type AnyEncumbranceDocument =
   | EncumbrancePlayerDocumentV8
   | EncumbranceDmDocumentV8
   | EncumbrancePlayerDocumentV9
-  | EncumbranceDmDocumentV9;
+  | EncumbranceDmDocumentV9
+  | EncumbranceDmDocumentV10;
 
 export type EncumbranceDocument =
   | EncumbrancePlayerDocumentV9
-  | EncumbranceDmDocumentV9;
+  | EncumbranceDmDocumentV10;
 
 type LoadBandId = 'normal' | 'heavy' | 'very-heavy' | 'encumbered';
 

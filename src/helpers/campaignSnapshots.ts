@@ -352,13 +352,13 @@ export function interpretSource(
     const header = z
       .object({
         kind: z.literal('adnd-encumbrance-dm'),
-        version: number.int().min(1).max(9),
+        version: number.int().min(1).max(10),
       })
       .passthrough()
       .safeParse(raw);
     if (!header.success)
       throw new Error(
-        'Import a supported DM inventory (versions 1–9). Player files are redacted and cannot be used as the full DM record.'
+        'Import a supported DM inventory (versions 1–10). Player files are redacted and cannot be used as the full DM record.'
       );
     const rawCharacters = z
       .array(
@@ -423,7 +423,11 @@ export function interpretSource(
         }
       }
     }
-    normalized = doc;
+    // Normalizer 1 is frozen for older evidence. Never rewrite retained payloads/hashes.
+    if (header.data.version < 10) {
+      const { storageLocations: _storage, ...legacy } = doc;
+      normalized = { ...legacy, version: 9 };
+    } else normalized = doc;
     sourceVersion = header.data.version;
   } else {
     const parsed = validateTracker(raw);
@@ -503,6 +507,6 @@ export function contentIdentity(
     payload:
       type === 'combat'
         ? compactTrackerState(payload as unknown as TrackerState)
-        : payload,
+        : parseEncumbranceDocument(JSON.stringify(payload)),
   });
 }

@@ -111,10 +111,10 @@ impl Session {
         self.view.status = if serde_json::from_slice::<serde_json::Value>(&bytes)
             .ok()
             .and_then(|v| v.get("schemaVersion").and_then(|v| v.as_u64()))
-            .map(|v| v < 8)
+            .map(|v| v < 9)
             .unwrap_or(false)
         {
-            "Opened older campaign — Save upgrades to V8 and keeps the original in .bak"
+            "Opened older campaign — first Save upgrades to V9 and preserves an original recovery copy"
         } else {
             "Opened successfully"
         }
@@ -641,7 +641,7 @@ async fn campaign_export(
         for protected in [original_path,current_path].into_iter().flatten() {
             for protected in [protected.clone(),PathBuf::from(format!("{}.bak",protected.display()))] {
                 let normalize=|p:&std::path::Path| p.canonicalize().ok().or_else(|| Some(p.parent()?.canonicalize().ok()?.join(p.file_name()?)));
-                if path==protected || matches!((normalize(&path),normalize(&protected)),(Some(a),Some(b)) if a==b) { return Err("Export to a different file; campaign files and their backups are protected.".into()); }
+                if document::is_recovery_path(&path, &protected) || path==protected || matches!((normalize(&path),normalize(&protected)),(Some(a),Some(b)) if a==b) { return Err("Export to a different file; campaign files and their backups are protected.".into()); }
             }
         }
         // Explicitly chosen destination, write through a same-directory temporary file.
@@ -693,7 +693,7 @@ async fn campaign_export_working(
         let Some(file)=app.dialog().file().set_file_name("working-DM-inventory.json").blocking_save_file() else{return Ok(false)};
         let path=file.into_path().map_err(|e|e.to_string())?;
         let current=app.state::<State>().session.lock().unwrap().view.path.clone();
-        for p in [protected,current].into_iter().flatten(){for p in [p.clone(),PathBuf::from(format!("{}.bak",p.display()))]{if path==p||matches!((path.canonicalize().ok(),p.canonicalize().ok()),(Some(a),Some(b)) if a==b){return Err("Export to a different file; campaign and backup are protected.".into());}}}
+        for p in [protected,current].into_iter().flatten(){for p in [p.clone(),PathBuf::from(format!("{}.bak",p.display()))]{if document::is_recovery_path(&path,&p)||path==p||matches!((path.canonicalize().ok(),p.canonicalize().ok()),(Some(a),Some(b)) if a==b){return Err("Export to a different file; campaign and backup are protected.".into());}}}
         use std::io::Write;
         let mut temp=tempfile::NamedTempFile::new_in(path.parent().ok_or("No folder")?).map_err(|e|e.to_string())?;temp.write_all(text.as_bytes()).and_then(|_|temp.as_file().sync_all()).map_err(|e|e.to_string())?;temp.persist(path).map_err(|e|e.to_string())?;Ok(true)
     }).await.map_err(|e|e.to_string())?

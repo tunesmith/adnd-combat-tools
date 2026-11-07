@@ -158,7 +158,7 @@ export const getInventoryItemTotalGp = (
 };
 
 export const getTotalEncumbranceGp = (
-  character: EncumbranceCharacterSheet,
+  character: Pick<EncumbranceCharacterSheet, 'inventory'>,
   catalogById: Map<string, EncumbranceCatalogItem>
 ): number =>
   getChildItems(character.inventory, null).reduce(
@@ -212,7 +212,7 @@ export const getInventoryItemTotalKnownValueGp = (
 };
 
 export const getTotalValueGp = (
-  character: EncumbranceCharacterSheet,
+  character: Pick<EncumbranceCharacterSheet, 'inventory'>,
   catalogById: Map<string, EncumbranceCatalogItem>
 ): number =>
   getChildItems(character.inventory, null).reduce(
@@ -223,7 +223,7 @@ export const getTotalValueGp = (
   );
 
 export const getTotalKnownValueGp = (
-  character: EncumbranceCharacterSheet,
+  character: Pick<EncumbranceCharacterSheet, 'inventory'>,
   catalogById: Map<string, EncumbranceCatalogItem>
 ): number =>
   getChildItems(character.inventory, null).reduce(

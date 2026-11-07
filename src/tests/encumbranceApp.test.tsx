@@ -480,7 +480,7 @@ describe('encumbrance app regressions', () => {
       name: 'Diamond',
       day: 69,
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Add Character' }));
+    fireEvent.click(screen.getByRole('button', { name: '+ Character' }));
     renameCharacterInOpenModal('Azalia Larkspur');
     addCatalogItem({
       name: 'Boots, high, soft',
@@ -491,7 +491,7 @@ describe('encumbrance app regressions', () => {
       day: 65,
     });
 
-    fireEvent.click(screen.getByRole('button', { name: 'All Characters' }));
+    fireEvent.click(screen.getByRole('button', { name: 'All possessions' }));
 
     fireEvent.click(screen.getByRole('button', { name: 'Sort by Owner' }));
 
@@ -551,9 +551,9 @@ describe('encumbrance app regressions', () => {
 
     render(<EncumbranceApp mode="dm" />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Add Character' }));
+    fireEvent.click(screen.getByRole('button', { name: '+ Character' }));
     closeTopModal();
-    fireEvent.click(screen.getByRole('button', { name: 'All Characters' }));
+    fireEvent.click(screen.getByRole('button', { name: 'All possessions' }));
     openFileMenu();
 
     try {
@@ -821,7 +821,8 @@ describe('encumbrance app regressions', () => {
 
     const dmDocument: EncumbranceDocument = {
       kind: 'adnd-encumbrance-dm',
-      version: 9,
+      version: 10,
+      storageLocations: [],
       activeCharacterId: 'character-1',
       characters: [
         {
@@ -1064,7 +1065,7 @@ describe('encumbrance app regressions', () => {
       storedIn: 'Backpack',
     });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Add Character' }));
+    fireEvent.click(screen.getByRole('button', { name: '+ Character' }));
     renameCharacterInOpenModal('Azalia Larkspur');
     fireEvent.click(screen.getByRole('button', { name: 'Unnamed adventurer' }));
 
@@ -1106,7 +1107,7 @@ describe('encumbrance app regressions', () => {
       storedIn: 'Backpack',
     });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Add Character' }));
+    fireEvent.click(screen.getByRole('button', { name: '+ Character' }));
     renameCharacterInOpenModal('Azalia Larkspur');
     fireEvent.click(screen.getByRole('button', { name: 'Unnamed adventurer' }));
 

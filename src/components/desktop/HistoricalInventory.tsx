@@ -1,9 +1,9 @@
 import EncumbranceApp from '../encumbrance/EncumbranceApp';
-import type { EncumbranceDmDocumentV9 } from '../../types/encumbrance';
+import type { EncumbranceDmDocument } from '../../types/encumbrance';
 export default function HistoricalInventory({
   document,
 }: {
-  document: EncumbranceDmDocumentV9;
+  document: EncumbranceDmDocument;
 }) {
   return (
     <section aria-label="Historical inventory">
