@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { partyClasses } from './campaignPartyModel';
 import { xpNumber } from './xpArithmetic';
 const id = z.string().min(1).max(1000);
 const note = z.string().max(100_000);
@@ -116,6 +117,19 @@ export const xpRewardSchema = z
   })
   .strict();
 export type XpReward = z.infer<typeof xpRewardSchema>;
+const xpCapBasisSchema = z
+  .object({
+    characterClass: z.enum(partyClasses).nullable(),
+    baseLevel: z.number().int().min(0).max(99).nullable(),
+    mode: z.enum(['standard', 'override', 'uncapped']),
+    limit: integer.nullable(),
+    reason: note,
+  })
+  .strict();
+export type XpCapBasis = z.infer<typeof xpCapBasisSchema>;
+const capReviewSchema = z
+  .object({ characterId: id, basis: xpCapBasisSchema })
+  .strict();
 const xpBonusReviewSchema = z
   .object({
     characterId: id,
@@ -138,6 +152,7 @@ export const xpPointSchema = z
     correctionReason: note,
     rewardOverrides: z.array(xpRewardSchema).max(1000),
     confirmedEventId: id.nullable(),
+    caps: z.array(capReviewSchema).max(500).optional(),
   })
   .strict();
 export type XpPoint = z.infer<typeof xpPointSchema>;
@@ -163,6 +178,9 @@ const awardRowSchema = z
     overrideReason: note,
     before: integer,
     after: integer,
+    fullAward: integer.optional(),
+    discarded: integer.optional(),
+    cap: xpCapBasisSchema.optional(),
   })
   .strict();
 export type XpAwardRow = z.infer<typeof awardRowSchema>;
@@ -174,7 +192,7 @@ const xpEventSchema = z
     replaces: id.nullable(),
     correctionRoot: id.nullable(),
     reason: note,
-    calculatorVersion: z.literal(1),
+    calculatorVersion: z.union([z.literal(1), z.literal(2)]),
     rounding: z.literal('nearest-whole-half-up-after-bonus'),
     rewards: z.array(xpRewardSchema).min(1),
     rows: z.array(awardRowSchema).min(1),

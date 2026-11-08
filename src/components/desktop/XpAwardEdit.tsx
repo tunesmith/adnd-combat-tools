@@ -33,14 +33,14 @@ export default function XpAwardEdit({
         className={`${styles['modal']} ${styles['smallModal']}`}
         role="dialog"
         aria-modal="true"
-        aria-label={mode === 'bonus' ? 'XP bonus' : 'Final award adjustment'}
+        aria-label={mode === 'bonus' ? 'XP bonus' : 'Full award adjustment'}
         onKeyDown={(e) => {
           if (e.key === 'Escape') onClose();
         }}
       >
         <h2>{review.name}</h2>
         <label>
-          {mode === 'bonus' ? 'XP bonus %' : 'Final award XP'}
+          {mode === 'bonus' ? 'XP bonus %' : 'Full award XP'}
           <input
             autoFocus
             value={value}
@@ -75,7 +75,7 @@ export default function XpAwardEdit({
                   )
                     throw Error('Enter a nonnegative whole XP amount.');
                   if (amount !== null && !note.trim())
-                    throw Error('Add a reason for the final award adjustment.');
+                    throw Error('Add a reason for the full award adjustment.');
                   saved = onSave({
                     ...review,
                     finalOverride: amount,

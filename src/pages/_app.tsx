@@ -21,9 +21,7 @@ const DesktopWorkspace =
 
 export default function MyApp({ Component, pageProps }: AppProps) {
   return process.env['NEXT_PUBLIC_DESKTOP'] === '1' ? (
-    <DesktopWorkspace>
-      <Component {...pageProps} />
-    </DesktopWorkspace>
+    <DesktopWorkspace />
   ) : (
     <Component {...pageProps} />
   );

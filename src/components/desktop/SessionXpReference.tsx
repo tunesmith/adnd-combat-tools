@@ -1,3 +1,4 @@
+import { profileXpCap } from '../../helpers/campaignXpCap';
 import type { CampaignDocument } from '../../helpers/campaignDocument';
 import type { PartyProfile } from '../../helpers/campaignPartyModel';
 import {
@@ -49,7 +50,17 @@ export default function SessionXpReference({
             ))}
           </tr>
           <tr>
-            <th scope="row">Awarded this session</th>
+            <th scope="row" title="Maximum XP balance before training">
+              XP cap
+            </th>
+            {characters.map(({ character, profile }) => (
+              <td key={character.id}>
+                {profileXpCap(profile)?.limit?.toLocaleString() ?? '—'}
+              </td>
+            ))}
+          </tr>
+          <tr>
+            <th scope="row">XP added this session</th>
             {characters.map(({ character }) => (
               <td key={character.id}>
                 {awards

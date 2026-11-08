@@ -33,7 +33,7 @@ test('compact Session XP is historical, uses base levels and counts only accepte
     '1',
   ]);
   expect(
-    Array.from(cells('Awarded this session')).map((c) => c.textContent)
+    Array.from(cells('XP added this session')).map((c) => c.textContent)
   ).toEqual(['500', '507', '507', '461', '507']);
   expect(Array.from(cells('XP balance')).map((c) => c.textContent)).toEqual([
     '500',
@@ -52,7 +52,7 @@ test('compact Session XP is historical, uses base levels and counts only accepte
     />
   );
   expect(
-    Array.from(cells('Awarded this session')).map((c) => c.textContent)
+    Array.from(cells('XP added this session')).map((c) => c.textContent)
   ).toEqual(['0', '0', '0', '0', '0']);
   expect(Array.from(cells('XP balance')).map((c) => c.textContent)).toEqual([
     '0',
@@ -80,6 +80,6 @@ test('compact Session XP is historical, uses base levels and counts only accepte
     '—',
   ]);
   expect(
-    Array.from(cells('Awarded this session')).map((c) => c.textContent)
+    Array.from(cells('XP added this session')).map((c) => c.textContent)
   ).toEqual(['0', '0', '0', '0', '0']);
 });

@@ -1,9 +1,10 @@
 import XpTimeline from './XpTimeline';
 import XpAwardDialog from './XpAwardDialog';
+import XpCapDialog from './XpCapDialog';
 import XpAwardTable from './XpAwardTable';
 import XpAwardEdit from './XpAwardEdit';
 import { compareXpAwards } from '../../helpers/campaignXpTimeline';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { CampaignDocument } from '../../helpers/campaignDocument';
 import type {
   XpEvent,
@@ -11,6 +12,7 @@ import type {
   XpReward,
   CampaignXp as Ledger,
   XpBonusReview,
+  XpCapBasis,
 } from '../../helpers/campaignXpModel';
 import { newXpReward } from '../../helpers/campaignXpSources';
 import {
@@ -30,6 +32,7 @@ import {
   sessionXpBalances,
   xpLedger,
   xpSessionOrder,
+  xpCapProfileSignature,
 } from '../../helpers/campaignXp';
 import type { XpAwardPreview } from '../../helpers/campaignXp';
 import { xpDisplay } from '../../helpers/xpArithmetic';
@@ -49,11 +52,13 @@ function AwardDetails({
   event,
   onOpen,
   onInspectAllocation,
+  onCap,
 }: {
   document: CampaignDocument;
   event: XpEvent;
   onOpen: (reward: XpReward) => void;
   onInspectAllocation: InspectAllocation;
+  onCap: (id: string, basis?: XpCapBasis) => void;
 }) {
   return (
     <div className={styles['historyDetail']}>
@@ -67,6 +72,7 @@ function AwardDetails({
         readOnly
         onOpen={onOpen}
         onInspectAllocation={onInspectAllocation}
+        onCap={onCap}
       />
     </div>
   );
@@ -260,6 +266,16 @@ export default function CampaignXp({
     accepted: string;
     reason: string;
   }>();
+  const [capEdit, setCapEdit] = useState<{
+    id: string;
+    basis?: XpCapBasis;
+    readOnly: boolean;
+  }>();
+  const capSignature =
+    point && !point.confirmedEventId
+      ? xpCapProfileSignature(document, point)
+      : '';
+  useEffect(() => setPreview(undefined), [capSignature]);
   const inspectAllocation: InspectAllocation = (
     name,
     calculated,
@@ -280,6 +296,7 @@ export default function CampaignXp({
   const history = xp.events.find((e) => e.id === historyId);
   const visibleEvent = history || selectedEvent;
   const awardOpen = Boolean(visibleEvent || point);
+  const capPoint = visibleEvent?.point || point;
   function closeAward() {
     setSelected('');
     setHistoryId('');
@@ -288,6 +305,7 @@ export default function CampaignXp({
     setAllocation(undefined);
     setError('');
     setRenamePointId('');
+    setCapEdit(undefined);
   }
   function changePoint(change: Partial<XpPoint>) {
     if (!point) return false;
@@ -445,6 +463,7 @@ export default function CampaignXp({
                 event={visibleEvent}
                 onOpen={setInspectedEvent}
                 onInspectAllocation={inspectAllocation}
+                onCap={(id, basis) => setCapEdit({ id, basis, readOnly: true })}
               />
               {active.some((e) => e.id === visibleEvent.id) && (
                 <button onClick={() => correct(visibleEvent)}>
@@ -505,6 +524,7 @@ export default function CampaignXp({
                 }}
                 onBonus={(review) => setAwardEdit({ review, mode: 'bonus' })}
                 onFinal={(review) => setAwardEdit({ review, mode: 'final' })}
+                onCap={(id) => setCapEdit({ id, readOnly: false })}
                 onInspectAllocation={inspectAllocation}
               />
               {preview?.later.length ? (
@@ -514,7 +534,16 @@ export default function CampaignXp({
                     <p key={event.id}>
                       <strong>{event.point.label}</strong>:{' '}
                       {rows
-                        .map((r) => `${r.name}: ${r.before} → ${r.after}`)
+                        .map((r) => {
+                          const old = event.rows.find(
+                            (n) => n.characterId === r.characterId
+                          );
+                          return `${r.name}: XP added ${old?.award} → ${
+                            r.award
+                          }; discarded ${old?.discarded ?? 'not recorded'} → ${
+                            r.discarded ?? 'not recorded'
+                          }; balance ${r.before} → ${r.after}`;
+                        })
                         .join(' · ')}
                     </p>
                   ))}
@@ -629,6 +658,26 @@ export default function CampaignXp({
           </tbody>
         </table>
       </details>
+      {capEdit && capPoint && (
+        <XpCapDialog
+          document={document}
+          point={capPoint}
+          characterId={capEdit.id}
+          basis={capEdit.basis}
+          readOnly={capEdit.readOnly}
+          onClose={() => setCapEdit(undefined)}
+          onSave={(basis) =>
+            changePoint({
+              caps: [
+                ...(point?.caps || []).filter(
+                  (c) => c.characterId !== capEdit.id
+                ),
+                ...(basis ? [{ characterId: capEdit.id, basis }] : []),
+              ],
+            })
+          }
+        />
+      )}
       {awardEdit && (
         <XpAwardEdit
           review={awardEdit.review}

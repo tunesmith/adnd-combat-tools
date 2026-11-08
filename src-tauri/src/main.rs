@@ -111,10 +111,10 @@ impl Session {
         self.view.status = if serde_json::from_slice::<serde_json::Value>(&bytes)
             .ok()
             .and_then(|v| v.get("schemaVersion").and_then(|v| v.as_u64()))
-            .map(|v| v < 11)
+            .map(|v| v < 12)
             .unwrap_or(false)
         {
-            "Opened older campaign — first Save upgrades to V11 and preserves an original recovery copy"
+            "Opened older campaign — first Save upgrades to V12 and preserves an original recovery copy"
         } else {
             "Opened successfully"
         }
@@ -389,6 +389,13 @@ fn campaign_command(app: tauri::AppHandle, command: String) -> Result<(), String
     run(app, command, None);
     Ok(())
 }
+#[derive(serde::Deserialize)]
+struct StandaloneTool { id: String, label: String, path: String }
+fn standalone_tools() -> Vec<StandaloneTool> {
+    serde_json::from_str(include_str!("../../src/tables/standaloneTools.json"))
+        .expect("Bundled standalone tool catalog must be valid")
+}
+
 fn main() {
     tauri::Builder::default()
         .manage(State {
@@ -458,13 +465,9 @@ fn main() {
             )?)?;
             menu.insert(&file, 1)?;
             let tools = Submenu::new(app.handle(), "Tools", true)?;
-            tools.append(&MenuItem::with_id(
-                app.handle(),
-                "standaloneTools",
-                "Standalone Tools",
-                true,
-                None::<&str>,
-            )?)?;
+            for tool in standalone_tools() {
+                tools.append(&MenuItem::with_id(app.handle(), tool.id, tool.label, true, None::<&str>)?)?;
+            }
             let items = menu.items()?;
             let mut tools_index = items.len();
             for (index, item) in items.into_iter().enumerate() {
@@ -484,8 +487,8 @@ fn main() {
         })
         .on_menu_event(|app, event| {
             let id = event.id().as_ref();
-            if id == "standaloneTools" {
-                let _ = app.emit("show-standalone-tools", ());
+            if let Some(tool) = standalone_tools().into_iter().find(|tool| tool.id == id) {
+                let _ = app.emit("open-standalone-tool", tool.path);
             } else if ["new", "open", "save", "saveAs", "close", "reopen"].contains(&id) {
                 let _ = app.emit("campaign-action", id);
             }
@@ -697,4 +700,17 @@ async fn campaign_export_working(
         use std::io::Write;
         let mut temp=tempfile::NamedTempFile::new_in(path.parent().ok_or("No folder")?).map_err(|e|e.to_string())?;temp.write_all(text.as_bytes()).and_then(|_|temp.as_file().sync_all()).map_err(|e|e.to_string())?;temp.persist(path).map_err(|e|e.to_string())?;Ok(true)
     }).await.map_err(|e|e.to_string())?
+}
+
+#[cfg(test)]
+mod standalone_tool_tests {
+    use super::*;
+    #[test]
+    fn native_tool_catalog_is_unique_and_bundled() {
+        let tools=standalone_tools();assert_eq!(tools.len(),6);
+        let ids:std::collections::HashSet<_>=tools.iter().map(|t| &t.id).collect();
+        let paths:std::collections::HashSet<_>=tools.iter().map(|t| &t.path).collect();
+        assert_eq!(ids.len(),6);assert_eq!(paths.len(),6);
+        for tool in tools {assert!(tool.id.starts_with("tool-"));assert!(tool.path.starts_with('/'));assert!(!tool.path.contains("://"));assert!(!tool.label.is_empty());}
+    }
 }

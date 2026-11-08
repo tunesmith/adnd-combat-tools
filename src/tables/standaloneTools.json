@@ -1,0 +1,28 @@
+[
+  {
+    "id": "tool-calculator",
+    "label": "Combat Calculator",
+    "path": "/calculator"
+  },
+  { "id": "tool-battle", "label": "Battle Grid", "path": "/battle" },
+  {
+    "id": "tool-initiative",
+    "label": "Initiative Playground",
+    "path": "/initiative"
+  },
+  {
+    "id": "tool-dungeon",
+    "label": "Random Dungeon Generator",
+    "path": "/dungeon"
+  },
+  {
+    "id": "tool-tracker",
+    "label": "Standalone Combat Tracker",
+    "path": "/tracker"
+  },
+  {
+    "id": "tool-encumbrance",
+    "label": "Standalone Encumbrance & Gear",
+    "path": "/encumbrance"
+  }
+]

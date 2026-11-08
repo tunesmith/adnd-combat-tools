@@ -1,6 +1,8 @@
+import { awardCapBasis } from '../../helpers/campaignXpCap';
 import type { CampaignDocument } from '../../helpers/campaignDocument';
 import type {
   XpAwardRow,
+  XpCapBasis,
   XpBonusReview,
   XpPoint,
   XpReward,
@@ -29,6 +31,7 @@ export default function XpAwardTable({
   onOpen,
   onBonus,
   onFinal,
+  onCap,
   onInspectAllocation,
 }: {
   document: CampaignDocument;
@@ -40,6 +43,7 @@ export default function XpAwardTable({
   onOpen: (reward: XpReward) => void;
   onBonus?: (review: XpBonusReview) => void;
   onFinal?: (review: XpBonusReview) => void;
+  onCap?: (id: string, basis?: XpCapBasis) => void;
   onInspectAllocation: (
     name: string,
     calculated: string,
@@ -273,8 +277,54 @@ export default function XpAwardTable({
               );
             })}
           </tr>
+          <tr>
+            <th scope="row">XP cap</th>
+            {characters.map((c) => {
+              const row = rows?.find((r) => r.characterId === c.id);
+              let cap = row?.cap;
+              let capError = '';
+              if (!readOnly && !cap)
+                try {
+                  cap = awardCapBasis(document, point, c.id);
+                } catch (e) {
+                  capError = e instanceof Error ? e.message : String(e);
+                }
+              return (
+                <td key={c.id}>
+                  {readOnly && !cap ? (
+                    <span title="Legacy award: no cap was recorded">
+                      Not recorded
+                    </span>
+                  ) : (
+                    <button
+                      className={styles['textButton']}
+                      aria-label={`${readOnly ? 'Inspect' : 'Review'} ${
+                        c.name
+                      } XP cap`}
+                      title={
+                        cap
+                          ? `${
+                              cap.characterClass || 'Unknown class'
+                            } · trained level ${cap.baseLevel ?? 'unknown'}${
+                              cap.reason ? ` · ${cap.reason}` : ''
+                            }`
+                          : capError
+                      }
+                      onClick={() => onCap?.(c.id, cap)}
+                    >
+                      {cap
+                        ? cap.mode === 'uncapped'
+                          ? 'Uncapped'
+                          : cap.limit?.toLocaleString()
+                        : 'Review…'}
+                    </button>
+                  )}
+                </td>
+              );
+            })}
+          </tr>
           <tr className={styles['awardTotal']}>
-            <th scope="row">Award, rounded</th>
+            <th scope="row">Full award</th>
             {characters.map((c) => {
               const row = rows?.find((r) => r.characterId === c.id),
                 review = point.bonuses.find((b) => b.characterId === c.id);
@@ -284,7 +334,7 @@ export default function XpAwardTable({
                     !readOnly && review ? (
                       <button
                         className={styles['textButton']}
-                        aria-label={`Adjust ${c.name} final award`}
+                        aria-label={`Adjust ${c.name} full award`}
                         title={`Before rounding: ${xpDisplay(row.unrounded)}${
                           row.overrideReason
                             ? `; calculated ${row.rounded}; ${row.overrideReason}`
@@ -292,7 +342,7 @@ export default function XpAwardTable({
                         }`}
                         onClick={() => onFinal?.(review)}
                       >
-                        {row.award}
+                        {(row.fullAward ?? row.award).toLocaleString()}
                         {row.overrideReason ? ' *' : ''}
                       </button>
                     ) : (
@@ -303,14 +353,14 @@ export default function XpAwardTable({
                             : ''
                         }`}
                       >
-                        {row.award}
+                        {(row.fullAward ?? row.award).toLocaleString()}
                         {row.overrideReason ? ' *' : ''}
                       </span>
                     )
                   ) : review?.finalOverride != null ? (
                     <button
                       className={styles['textButton']}
-                      aria-label={`Adjust ${c.name} final award`}
+                      aria-label={`Adjust ${c.name} full award`}
                       onClick={() => onFinal?.(review)}
                     >
                       {review.finalOverride} *
@@ -322,11 +372,37 @@ export default function XpAwardTable({
               );
             })}
           </tr>
+          <tr className={styles['awardTotal']}>
+            <th scope="row">XP added</th>
+            {characters.map((c) => (
+              <td key={c.id}>
+                {rows
+                  ?.find((r) => r.characterId === c.id)
+                  ?.award?.toLocaleString() ?? '—'}
+              </td>
+            ))}
+          </tr>
+          <tr>
+            <th scope="row">Discarded</th>
+            {characters.map((c) => (
+              <td key={c.id}>
+                {rows
+                  ?.find((r) => r.characterId === c.id)
+                  ?.discarded?.toLocaleString() ?? (
+                  <span title="Legacy award: discarded XP was not recorded">
+                    —
+                  </span>
+                )}
+              </td>
+            ))}
+          </tr>
           <tr>
             <th scope="row">Previous balance</th>
             {characters.map((c) => (
               <td key={c.id}>
-                {rows?.find((r) => r.characterId === c.id)?.before ?? '—'}
+                {rows
+                  ?.find((r) => r.characterId === c.id)
+                  ?.before?.toLocaleString() ?? '—'}
               </td>
             ))}
           </tr>
@@ -334,7 +410,9 @@ export default function XpAwardTable({
             <th scope="row">New balance</th>
             {characters.map((c) => (
               <td key={c.id}>
-                {rows?.find((r) => r.characterId === c.id)?.after ?? '—'}
+                {rows
+                  ?.find((r) => r.characterId === c.id)
+                  ?.after?.toLocaleString() ?? '—'}
               </td>
             ))}
           </tr>

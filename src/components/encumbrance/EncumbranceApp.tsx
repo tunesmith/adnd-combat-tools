@@ -66,6 +66,7 @@ import {
 interface EncumbranceAppProps {
   mode: EncumbranceMode;
   campaign?: {
+    active?: boolean;
     document: EncumbranceDocument | EncumbranceDmDocument;
     readOnly?: boolean;
     onDocumentChange: (document: EncumbranceDocument) => boolean | void;
@@ -844,6 +845,7 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
     }
 
     const handleKeyDown = (event: KeyboardEvent) => {
+      if (campaign?.active === false) return;
       if (event.key === 'Escape') {
         if (storageDraft) {
           setStorageDraft(null);
@@ -878,6 +880,7 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [
+    campaign?.active,
     storageDraft,
     characterEditDraft,
     editingItemDraft,
@@ -909,6 +912,7 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
     };
 
     const handleKeyDown = (event: KeyboardEvent) => {
+      if (campaign?.active === false) return;
       if (event.key === 'Escape') {
         setShowFileMenu(false);
       }
@@ -921,7 +925,7 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
       window.removeEventListener('mousedown', handlePointerDown);
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [showFileMenu]);
+  }, [showFileMenu, campaign?.active]);
 
   useEffect(() => {
     if (!editingItemDraft) {

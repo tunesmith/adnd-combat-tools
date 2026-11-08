@@ -82,10 +82,25 @@ The final Finder-open-while-typing smoke check was subsequently completed by the
 
 The app uses a burgundy-and-gold d20 emblem; `.adnd` files use a coordinated paper-document icon. Editable sources are in `src-tauri/icons/design/`. Tauri's icon generator creates `app.icns` / `app.png` and `campaign.icns` / `campaign.png`. The custom `src-tauri/Info.plist` declares the document icon and `local.adnd.campaign` type, conforming to JSON. The campaign icon is bundled at the Resources root. Rebuild and relaunch to pick up the app icon; Finder may retain cached icons until it refreshes.
 
-Routine Save and confirmed Save As overwrite do not create or refresh `.bak` files. The first save that upgrades an existing campaign's on-disk schema preserves its exact original bytes once. An existing backup is kept, and the new original goes to a collision-safe `.upgrade-N.bak` sibling. Existing recovery files remain readable and protected from source exports. Failed saves retain the original destination and editor draft. Backups are not automatically deleted. See [Storage locations](desktop-storage.md) for the storage behavior. See [Campaign XP](desktop-xp.md) for the current V11 campaign schema and reward/award workflow.
+Routine Save and confirmed Save As overwrite do not create or refresh `.bak` files. The first save that upgrades an existing campaign's on-disk schema preserves its exact original bytes once. An existing backup is kept, and the new original goes to a collision-safe `.upgrade-N.bak` sibling. Existing recovery files remain readable and protected from source exports. Failed saves retain the original destination and editor draft. Backups are not automatically deleted. See [Storage locations](desktop-storage.md) for the storage behavior. See [Campaign XP](desktop-xp.md) for the reward/award workflow. See [XP caps](desktop-xp-caps.md) for the current V12 schema and before-training cap policy.
 
 ## Remaining limits
 
 One document and one remembered path; explicit Save only; no autosave or crash recovery. The local Apple Silicon app has no developer signing/notarization or distribution/update service. Intel, other operating systems, power loss, network/cloud filesystems, and OS shutdown were not tested. There remains a small check-to-rename race against an uncooperative simultaneous writer; this is not a synchronization protocol. Existing Next 12 dependency age is unchanged.
 
 Try the foundation with a synthetic `.adnd` document before beginning checkpoint B. No deploy, push, commit, release, or private campaign migration is part of this work.
+
+## Native Tools menu
+
+The Mac Tools menu lists Combat Calculator, Battle Grid, Initiative Playground,
+Random Dungeon Generator, Standalone Combat Tracker, and Standalone Encumbrance
+& Gear directly. Each opens the bundled local page, whether or not a campaign
+is open. Return to campaign / Back to welcome leaves the standalone page; there
+is no welcome disclosure or intermediate tools directory. Encumbrance's existing
+DM/player page navigation remains within that tool. Public web routes are unchanged.
+
+Tool navigation does not change campaign data, saved workspace selection or dirty
+state. The campaign UI stays mounted while hidden so in-progress editor drafts
+survive returning; inactive campaign keyboard handlers do not act on standalone
+controls. Opening or closing a campaign exits tool mode. Standalone tool edits
+remain independent and require explicit imports to become campaign snapshots.

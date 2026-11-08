@@ -28,7 +28,7 @@ impl Document {
     pub fn new() -> Self {
         Self {
             kind: "adnd-campaign".into(),
-            schema_version: 11,
+            schema_version: 12,
             id: uuid::Uuid::new_v4().to_string(),
             title: "Untitled campaign".into(),
             notes: String::new(),
@@ -216,7 +216,7 @@ mod tests {
     fn rejects_unknown_malformed_future() {
         assert!(parse(b"{bad").is_err());
         let mut v = serde_json::to_value(Document::new()).unwrap();
-        v["schemaVersion"] = 12.into();
+        v["schemaVersion"] = 13.into();
         assert!(parse(&serde_json::to_vec(&v).unwrap())
             .unwrap_err()
             .contains("schema version"));
@@ -367,7 +367,7 @@ mod b1_tests {
         let bytes=br#"{"kind":"adnd-campaign","schemaVersion":1,"id":"kept","title":"Old","notes":"Keep"}"#;
         fs::write(&path, bytes).unwrap();
         let doc = parse(bytes).unwrap();
-        assert_eq!(doc.schema_version, 11);
+        assert_eq!(doc.schema_version, 12);
         assert_eq!(fs::read(&path).unwrap(), bytes);
         save(&path, &doc, Some(&hash(bytes))).unwrap();
         assert_eq!(fs::read(format!("{}.bak", path.display())).unwrap(), bytes);
@@ -429,7 +429,7 @@ mod v2_migration_tests {
         let path = dir.path().join("v2.adnd");
         fs::write(&path, bytes).unwrap();
         let doc = parse(&fs::read(&path).unwrap()).unwrap();
-        assert_eq!(doc.schema_version, 11);
+        assert_eq!(doc.schema_version, 12);
         assert_eq!(fs::read(&path).unwrap(), bytes);
         save(&path, &doc, Some(&hash(bytes))).unwrap();
         assert_eq!(fs::read(format!("{}.bak", path.display())).unwrap(), bytes);
@@ -557,7 +557,7 @@ mod continuity_tests {
         }
         let bytes = serde_json::to_vec_pretty(&legacy).unwrap();
         let migrated = parse(&bytes).unwrap();
-        assert_eq!(migrated.schema_version, 11);
+        assert_eq!(migrated.schema_version, 12);
         assert!(migrated.party.as_ref().unwrap()["profiles"][0]["reference"].is_null());
         validate_replacement(&migrated, &expanded).unwrap();
         let dir = tempfile::tempdir().unwrap();
@@ -794,7 +794,7 @@ mod xp_tests {
         legacy.as_object_mut().unwrap().remove("xp");
         let original = serde_json::to_vec_pretty(&legacy).unwrap();
         let migrated = parse(&original).unwrap();
-        assert_eq!(migrated.schema_version, 11);
+        assert_eq!(migrated.schema_version, 12);
         assert!(migrated.xp.is_none());
         validate_replacement(&migrated, &accepted).unwrap();
         let dir = tempfile::tempdir().unwrap();
@@ -831,5 +831,47 @@ mod xp_tests {
         fs::write(&path, b"external synthetic edit").unwrap();
         assert_eq!(save(&path, &corrected, Some(&hash(&actual))).unwrap_err(), CONFLICT);
         assert_eq!(fs::read(&path).unwrap(), b"external synthetic edit");
+    }
+}
+
+#[cfg(test)]
+mod xp_cap_tests {
+    use super::*;
+    #[test]
+    fn caps_rebase_migration_atomic_failure_conflict_and_reopen() {
+        let fixture: serde_json::Value = serde_json::from_str(include_str!("../../src/tests/fixtures/xpCapReplay.json")).unwrap();
+        let capped = parse(&serde_json::to_vec(&fixture["capped"]).unwrap()).unwrap();
+        let row = &capped.xp.as_ref().unwrap()["events"][0]["rows"][0];
+        assert_eq!(row["fullAward"], 550);
+        assert_eq!(row["award"], 201);
+        assert_eq!(row["discarded"], 349);
+        assert_eq!(row["cap"]["limit"], 35001);
+        assert_eq!(row["after"], 35001);
+        let accepted = parse(&serde_json::to_vec(&fixture["accepted"]).unwrap()).unwrap();
+        let corrected = parse(&serde_json::to_vec(&fixture["corrected"]).unwrap()).unwrap();
+        validate_replacement(&accepted, &corrected).unwrap();
+        let xp = corrected.xp.as_ref().unwrap();
+        assert_eq!(xp["events"][3]["rows"][0]["award"],151);
+        assert_eq!(xp["events"][3]["rows"][0]["discarded"],49);
+        assert_eq!(xp["events"][3]["rows"][0]["cap"]["baseLevel"],5);
+        let dir=tempfile::tempdir().unwrap();
+        let path=dir.path().join("synthetic-cap.adnd");
+        let bytes=serde_json::to_vec(&accepted).unwrap();fs::write(&path,&bytes).unwrap();
+        assert!(save_with_hook(&path,&corrected,Some(&hash(&bytes)),|| Err("Injected cap save failure".into())).is_err());
+        assert_eq!(fs::read(&path).unwrap(),bytes);
+        save(&path,&corrected,Some(&hash(&bytes))).unwrap();
+        assert_eq!(parse(&fs::read(&path).unwrap()).unwrap(),corrected);
+        assert_eq!(fs::read_dir(dir.path()).unwrap().count(),1);
+        let actual=fs::read(&path).unwrap();fs::write(&path,b"external synthetic change").unwrap();
+        assert_eq!(save(&path,&corrected,Some(&hash(&actual))).unwrap_err(),CONFLICT);
+        assert_eq!(fs::read(&path).unwrap(),b"external synthetic change");
+        let legacy=dir.path().join("legacy.adnd");let original=serde_json::to_vec_pretty(&fixture["legacy"]).unwrap();
+        fs::write(&legacy,&original).unwrap();fs::write(dir.path().join("legacy.adnd.bak"),b"existing backup").unwrap();
+        let migrated=parse(&original).unwrap();assert_eq!(migrated.schema_version,12);
+        assert_eq!(migrated.xp.as_ref().unwrap()["events"],fixture["legacy"]["xp"]["events"]);
+        save(&legacy,&migrated,Some(&hash(&original))).unwrap();
+        assert_eq!(fs::read(dir.path().join("legacy.adnd.bak")).unwrap(),b"existing backup");
+        assert_eq!(fs::read(dir.path().join("legacy.adnd.upgrade-2.bak")).unwrap(),original);
+        assert_eq!(parse(&fs::read(&legacy).unwrap()).unwrap().xp.as_ref().unwrap()["events"],fixture["legacy"]["xp"]["events"]);
     }
 }

@@ -903,3 +903,20 @@
 .xpReference tbody tr:last-child {
   font-weight: 650;
 }
+
+.returnToWorkspace {
+  border: 1px solid #d2aeb0;
+  border-radius: 5px;
+  padding: 6px 10px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.standaloneSurface {
+  min-height: calc(100vh - 88px);
+  background: var(--caput-martuum);
+  color: var(--eggshell);
+  font-family: 'Poppins', sans-serif;
+  font-size: 12px;
+}

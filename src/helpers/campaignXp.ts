@@ -1,4 +1,10 @@
 import {
+  awardCapBasis,
+  cappedXp,
+  rebaseXpRow,
+  validateXpCap,
+} from './campaignXpCap';
+import {
   syncXpTimeline,
   compareXpTimeline,
   compareXpAwards,
@@ -17,6 +23,7 @@ import {
 import type {
   CampaignXp,
   XpAwardRow,
+  XpCapBasis,
   XpBonusReview,
   XpEvent,
   XpPoint,
@@ -306,7 +313,8 @@ export function resolveXpReward(reward: XpReward) {
 function calculateXpRows(
   rewards: XpReward[],
   bonuses: XpBonusReview[],
-  before: Record<string, number>
+  before: Record<string, number>,
+  caps?: Map<string, XpCapBasis>
 ): XpAwardRow[] {
   const resolutions = rewards.map(resolveXpReward);
   const ids = Array.from(
@@ -341,15 +349,18 @@ function calculateXpRows(
     const unrounded = xpAdd(base, bonus),
       rounded = xpRound(unrounded);
     if (review.finalOverride !== null && !review.finalReason.trim())
-      fail('Explain the final award override.');
+      fail('Explain the full award override.');
     const award = review.finalOverride ?? rounded,
       previous = before[characterId];
     if (previous === undefined)
       fail(
         `${review.name}: establish a known opening XP balance before awarding.`
       );
-    if (!Number.isSafeInteger(previous + award))
+    if (!caps && !Number.isSafeInteger(previous + award))
       fail('XP balance exceeds the supported integer range.');
+    const cap = caps?.get(characterId);
+    if (caps && !cap) fail(`${review.name}: XP cap is unknown.`);
+    const addition = cap ? cappedXp(award, previous, cap) : null;
     return {
       characterId,
       name: review.name,
@@ -363,6 +374,9 @@ function calculateXpRows(
       overrideReason: review.finalOverride === null ? '' : review.finalReason,
       before: previous,
       after: previous + award,
+      ...(addition && cap
+        ? { ...addition, fullAward: award, cap: clone(cap) }
+        : {}),
     };
   });
 }
@@ -592,6 +606,9 @@ export function beginXpCorrection(
     correctionReason: '',
     rewardOverrides: clone(event.rewards),
     confirmedEventId: null,
+    caps: event.rows.flatMap((r) =>
+      r.cap ? [{ characterId: r.characterId, basis: clone(r.cap) }] : []
+    ),
   };
   return saveXpPoint(doc, point);
 }
@@ -640,6 +657,25 @@ export interface XpAwardPreview {
   rows: XpAwardRow[];
   resolutions: ReturnType<typeof resolveXpReward>[];
   later: { event: XpEvent; rows: XpAwardRow[] }[];
+}
+export function xpCapProfileSignature(doc: CampaignDocument, point: XpPoint) {
+  const ids = pointRewards(doc, point).flatMap((r) =>
+    r.recipients.filter((c) => c.eligible).map((c) => c.characterId)
+  );
+  return canonical(
+    doc.party?.profiles
+      .filter(
+        (p) =>
+          p.sessionId === point.position.sessionId &&
+          ids.includes(p.characterId)
+      )
+      .map((p) => ({
+        id: p.characterId,
+        characterClass: p.characterClass,
+        baseLevel: p.baseLevel,
+      }))
+      .sort((a, b) => a.id.localeCompare(b.id)) || []
+  );
 }
 export function previewXpAward(
   doc: CampaignDocument,
@@ -718,7 +754,10 @@ export function previewXpAward(
     );
     if (balance !== null) before[r.characterId] = balance;
   }
-  const rows = calculateXpRows(rewards, point.bonuses, before);
+  const caps = new Map(
+    Object.keys(before).map((id) => [id, awardCapBasis(doc, point, id)])
+  );
+  const rows = calculateXpRows(rewards, point.bonuses, before, caps);
   const revised: XpEvent = {
     id: 'preview',
     point: clone(point),
@@ -726,7 +765,7 @@ export function previewXpAward(
     replaces: point.correctionOf,
     correctionRoot: null,
     reason: point.correctionReason,
-    calculatorVersion: 1,
+    calculatorVersion: 2,
     rounding: 'nearest-whole-half-up-after-bonus',
     rewards,
     rows,
@@ -746,9 +785,8 @@ export function previewXpAward(
         simulated,
         xpAwardRoot(doc, event.point)
       );
-      if (balance === null || !Number.isSafeInteger(balance + r.award))
-        fail('A later balance cannot be rebased.');
-      return { ...r, before: balance, after: balance + r.award };
+      if (balance === null) fail('A later balance cannot be rebased.');
+      return rebaseXpRow(r, balance);
     });
     later.push({ event, rows: rebased });
     simulated.push({
@@ -773,6 +811,7 @@ export function previewXpAward(
       sessionOrder: xpSessionOrder(doc),
       openings: xp.openings,
       events: xp.events,
+      capProfiles: xpCapProfileSignature(doc, point),
     }),
   };
 }
@@ -805,7 +844,7 @@ export function confirmXpAward(
     replaces: point.correctionOf,
     correctionRoot: null,
     reason: point.correctionReason,
-    calculatorVersion: 1,
+    calculatorVersion: 2,
     rounding: 'nearest-whole-half-up-after-bonus',
     rewards: preview.rewards,
     rows: preview.rows,
@@ -888,6 +927,14 @@ export function validateCampaignXp(
     )
       fail('Duplicate award selection.');
     p.bonuses.forEach((b) => recipient(b.characterId));
+    if (
+      new Set(p.caps?.map((c) => c.characterId)).size !== (p.caps?.length ?? 0)
+    )
+      fail('Duplicate XP cap review.');
+    p.caps?.forEach((c) => {
+      recipient(c.characterId);
+      validateXpCap(c.basis);
+    });
     p.rewardOverrides.forEach(validateReward);
     if (
       p.confirmedEventId &&
@@ -942,6 +989,20 @@ export function validateCampaignXp(
         canonical(previous.point) !== canonical(event.point)
       )
         fail('A balance rebase retains accepted inputs and bonuses.');
+      if (
+        previous.calculatorVersion !== event.calculatorVersion ||
+        previous.rows.some((r) => {
+          const changed = event.rows.find(
+            (n) => n.characterId === r.characterId
+          );
+          return (
+            !changed ||
+            changed.fullAward !== r.fullAward ||
+            canonical(changed.cap) !== canonical(r.cap)
+          );
+        })
+      )
+        fail('A balance review retains frozen full awards and cap bases.');
     } else {
       if (
         !livePoint ||
@@ -974,10 +1035,36 @@ export function validateCampaignXp(
       if (balance === null) fail('Unknown opening balance in confirmed award.');
       before[r.characterId] = balance;
     });
+    const caps =
+      event.calculatorVersion === 2
+        ? new Map(
+            event.rows.map((r) => {
+              if (
+                !r.cap ||
+                r.fullAward === undefined ||
+                r.discarded === undefined
+              )
+                fail('Missing capped award snapshot.');
+              validateXpCap(r.cap);
+              return [r.characterId, r.cap];
+            })
+          )
+        : undefined;
+    if (
+      event.calculatorVersion === 1 &&
+      event.rows.some(
+        (r) =>
+          r.cap !== undefined ||
+          r.fullAward !== undefined ||
+          r.discarded !== undefined
+      )
+    )
+      fail('Legacy awards cannot claim cap history.');
     const expected = calculateXpRows(
       event.rewards,
       event.point.bonuses,
-      before
+      before,
+      caps
     );
     if (
       canonical(expected) !== canonical(event.rows) ||
@@ -1064,6 +1151,16 @@ export function validateXpTransition(
       )
   )
     fail('XP session chronology is fixed after confirmation.');
+  for (const event of current.events
+    .slice(previous.events.length)
+    .filter((e) => e.calculatorVersion === 2 && !e.correctionRoot)) {
+    for (const row of event.rows)
+      if (
+        canonical(awardCapBasis(next, event.point, row.characterId)) !==
+        canonical(row.cap)
+      )
+        fail('Award cap basis changed before confirmation.');
+  }
   for (const p of previous.points.filter((p) => p.confirmedEventId))
     if (canonical(current.points.find((n) => n.id === p.id)) !== canonical(p))
       fail('Confirmed award points are immutable.');

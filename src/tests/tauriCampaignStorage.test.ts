@@ -70,7 +70,7 @@ test('Save waits for attachment validation and application', async () => {
   const replacement = storage?.replace(
     {
       kind: 'adnd-campaign',
-      schemaVersion: 11,
+      schemaVersion: 12,
       workingCombats: [],
       combatCheckpoints: [],
       workingInventories: [],
@@ -96,7 +96,7 @@ test('Save waits for attachment validation and application', async () => {
 test('queued campaign mutations rebase on accepted state and stale epochs are cancelled', async () => {
   const doc = {
     kind: 'adnd-campaign' as const,
-    schemaVersion: 11 as const,
+    schemaVersion: 12 as const,
     workingCombats: [],
     combatCheckpoints: [],
     id: 'campaign',

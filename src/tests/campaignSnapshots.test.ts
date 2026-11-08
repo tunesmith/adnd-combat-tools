@@ -20,7 +20,7 @@ function campaign(): CampaignDocument {
   const snapshot = interpretSource('tracker-json', text);
   return {
     kind: 'adnd-campaign',
-    schemaVersion: 11,
+    schemaVersion: 12,
     workingCombats: [],
     combatCheckpoints: [],
     workingInventories: [],

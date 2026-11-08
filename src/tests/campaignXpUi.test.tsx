@@ -42,7 +42,7 @@ function renameNewAward(label: string) {
   fireEvent.keyDown(dialog.getByLabelText('Rename award'), { key: 'Enter' });
 }
 function awardValues(container: ReturnType<typeof within>) {
-  const row = container.getByRole('row', { name: /^Award, rounded/ });
+  const row = container.getByRole('row', { name: /^Full award/ });
   return within(row)
     .getAllByRole('cell')
     .map((cell) => cell.textContent);
@@ -825,10 +825,10 @@ test('one award matrix handles inspection, bonus cancellation, final adjustments
     awardValues(within(screen.getByRole('table', { name: 'XP award' })))[0]
   ).toBe('461');
   fireEvent.click(
-    screen.getByRole('button', { name: 'Adjust Mira final award' })
+    screen.getByRole('button', { name: 'Adjust Mira full award' })
   );
-  edit = within(screen.getByRole('dialog', { name: 'Final award adjustment' }));
-  fireEvent.change(edit.getByLabelText('Final award XP'), {
+  edit = within(screen.getByRole('dialog', { name: 'Full award adjustment' }));
+  fireEvent.change(edit.getByLabelText('Full award XP'), {
     target: { value: '400' },
   });
   fireEvent.change(edit.getByLabelText('Reason'), {
@@ -870,10 +870,10 @@ test('one award matrix handles inspection, bonus cancellation, final adjustments
   });
   fireEvent.click(edit.getByRole('button', { name: 'Apply' }));
   fireEvent.click(
-    screen.getByRole('button', { name: 'Adjust Mira final award' })
+    screen.getByRole('button', { name: 'Adjust Mira full award' })
   );
-  edit = within(screen.getByRole('dialog', { name: 'Final award adjustment' }));
-  fireEvent.change(edit.getByLabelText('Final award XP'), {
+  edit = within(screen.getByRole('dialog', { name: 'Full award adjustment' }));
+  fireEvent.change(edit.getByLabelText('Full award XP'), {
     target: { value: '' },
   });
   fireEvent.click(edit.getByRole('button', { name: 'Apply' }));
