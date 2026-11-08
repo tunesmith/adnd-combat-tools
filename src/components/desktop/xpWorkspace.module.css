@@ -423,3 +423,19 @@
 .workspace .cellError {
   color: #842f35;
 }
+
+.awardModal {
+  width: min(1250px, 100%);
+}
+.awardDialogTitle {
+  flex: 1;
+  min-width: 0;
+}
+.modal .awardDialogTitle > button {
+  padding: 0;
+  border: 0;
+  color: inherit;
+  background: transparent;
+  font: inherit;
+  text-align: left;
+}

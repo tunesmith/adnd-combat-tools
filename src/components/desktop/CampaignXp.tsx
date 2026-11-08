@@ -1,4 +1,5 @@
 import XpTimeline from './XpTimeline';
+import XpAwardDialog from './XpAwardDialog';
 import XpAwardTable from './XpAwardTable';
 import XpAwardEdit from './XpAwardEdit';
 import { compareXpAwards } from '../../helpers/campaignXpTimeline';
@@ -235,9 +236,7 @@ export default function CampaignXp({
   const points = xp.points
     .filter((p) => p.position.sessionId === sessionId)
     .sort((a, b) => compareXpAwards(document, a, b));
-  const [selected, setSelected] = useState<string>(
-    points.find((p) => !p.confirmedEventId)?.id || points[0]?.id || ''
-  );
+  const [selected, setSelected] = useState('');
   const point = points.find((p) => p.id === selected);
   const [editor, setEditor] = useState<{
     reward: XpReward;
@@ -279,6 +278,17 @@ export default function CampaignXp({
       )
     : undefined;
   const history = xp.events.find((e) => e.id === historyId);
+  const visibleEvent = history || selectedEvent;
+  const awardOpen = Boolean(visibleEvent || point);
+  function closeAward() {
+    setSelected('');
+    setHistoryId('');
+    setPreview(undefined);
+    setAwardEdit(undefined);
+    setAllocation(undefined);
+    setError('');
+    setRenamePointId('');
+  }
   function changePoint(change: Partial<XpPoint>) {
     if (!point) return false;
     const next = { ...point, ...change };
@@ -338,7 +348,14 @@ export default function CampaignXp({
   }
   function correct(event: XpEvent) {
     const id = uid();
-    if (onChange((doc) => beginXpCorrection(doc, event.id, id))) {
+    if (
+      onChange((doc) => {
+        const changed = beginXpCorrection(doc, event.id, id);
+        const draft = xpLedger(changed).points.find((p) => p.id === id);
+        if (!draft) throw Error('Award changes could not be opened.');
+        return saveXpPoint(changed, { ...draft, label: event.point.label });
+      })
+    ) {
       setSelected(id);
       setPreview(undefined);
       setHistoryId('');
@@ -393,21 +410,6 @@ export default function CampaignXp({
           setPreview(undefined);
           return onChange(change);
         }}
-        renamePointId={renamePointId}
-        onRenameEnd={() => setRenamePointId('')}
-        onRenamePoint={(id, label) => {
-          setPreview(undefined);
-          try {
-            return onChange((doc) => {
-              const existing = xpLedger(doc).points.find((p) => p.id === id);
-              if (!existing) throw Error('Award no longer exists.');
-              return saveXpPoint(doc, { ...existing, label });
-            });
-          } catch (e) {
-            setError(e instanceof Error ? e.message : String(e));
-            return false;
-          }
-        }}
         onSelectPoint={(id) => {
           setHistoryId('');
           setAwardEdit(undefined);
@@ -425,122 +427,146 @@ export default function CampaignXp({
           } else setEditor({ reward });
         }}
       />
-      {selectedEvent && (
-        <section>
-          <AwardDetails
-            document={document}
-            event={selectedEvent}
-            onOpen={setInspectedEvent}
-            onInspectAllocation={inspectAllocation}
-          />
-          <button onClick={() => correct(selectedEvent)}>Correct award…</button>
-        </section>
-      )}
-      {point && !point.confirmedEventId && (
-        <section
-          aria-label={preview ? 'Confirm XP award' : 'Award draft'}
-          className={preview ? styles['preview'] : undefined}
+      {awardOpen && (
+        <XpAwardDialog
+          title={visibleEvent?.point.label || point?.label || 'XP award'}
+          editable={!visibleEvent && !!point && !point.confirmedEventId}
+          renameOnMount={renamePointId === point?.id}
+          onRenameEnd={() => setRenamePointId('')}
+          onRename={(label) => {
+            changePoint({ label });
+          }}
+          onClose={closeAward}
         >
-          {point.correctionOf && (
-            <label>
-              Correction reason
-              <input
-                value={point.correctionReason}
-                onChange={(e) =>
-                  changePoint({ correctionReason: e.target.value })
-                }
+          {visibleEvent && (
+            <section>
+              <AwardDetails
+                document={document}
+                event={visibleEvent}
+                onOpen={setInspectedEvent}
+                onInspectAllocation={inspectAllocation}
               />
-            </label>
+              {active.some((e) => e.id === visibleEvent.id) && (
+                <button onClick={() => correct(visibleEvent)}>
+                  Edit award…
+                </button>
+              )}
+            </section>
           )}
-          <XpAwardTable
-            document={document}
-            point={point}
-            rewards={rewards.map(
-              (r) => point.rewardOverrides.find((o) => o.id === r.id) || r
-            )}
-            rows={preview?.rows}
-            onSelect={(id, include) => {
-              setPreview(undefined);
-              onChange((doc) =>
-                selectXpRewards(
-                  doc,
-                  point.id,
-                  include
-                    ? [...point.rewardIds, id]
-                    : point.rewardIds.filter((r) => r !== id)
-                )
-              );
-            }}
-            onOpen={(reward) => {
-              const accepted = xp.events.some((e) =>
-                e.rewards.some((r) => r.id === reward.id)
-              );
-              if (
-                accepted &&
-                !(point.correctionOf && point.rewardIds.includes(reward.id))
-              )
-                setInspectedEvent(reward);
-              else
-                setEditor({
-                  reward,
-                  pointId: point.correctionOf ? point.id : undefined,
-                });
-            }}
-            onBonus={(review) => setAwardEdit({ review, mode: 'bonus' })}
-            onFinal={(review) => setAwardEdit({ review, mode: 'final' })}
-            onInspectAllocation={inspectAllocation}
-          />
-          {preview?.later.length ? (
-            <div className={styles['warning']}>
-              <h4>Later balances to review</h4>
-              {preview.later.map(({ event, rows }) => (
-                <p key={event.id}>
-                  <strong>{event.point.label}</strong>:{' '}
-                  {rows
-                    .map((r) => `${r.name}: ${r.before} → ${r.after}`)
-                    .join(' · ')}
-                </p>
-              ))}
-              <label className={styles['check']}>
-                <input
-                  type="checkbox"
-                  checked={reviewLater}
-                  onChange={(e) => setReviewLater(e.target.checked)}
-                />
-                I reviewed the recalculated later balances
-              </label>
-            </div>
-          ) : null}
-          <div className={styles['actions']}>
-            {preview ? (
-              <button
-                className={styles['primary']}
-                disabled={preview.later.length > 0 && !reviewLater}
-                onClick={confirm}
-              >
-                {preview.point.correctionOf
-                  ? 'Confirm correction'
-                  : 'Confirm award'}
-              </button>
-            ) : (
-              <button className={styles['primary']} onClick={review}>
-                Preview award
-              </button>
-            )}
-            <button
-              onClick={() => {
-                if (onChange((doc) => discardXpPoint(doc, point.id))) {
-                  setSelected('');
-                  setPreview(undefined);
-                }
-              }}
+          {!visibleEvent && point && !point.confirmedEventId && (
+            <section
+              aria-label={preview ? 'Confirm XP award' : 'Award draft'}
+              className={preview ? styles['preview'] : undefined}
             >
-              Discard award draft
-            </button>
-          </div>
-        </section>
+              {point.correctionOf && (
+                <label>
+                  Reason for changes
+                  <input
+                    value={point.correctionReason}
+                    onChange={(e) =>
+                      changePoint({ correctionReason: e.target.value })
+                    }
+                  />
+                </label>
+              )}
+              <XpAwardTable
+                document={document}
+                point={point}
+                rewards={rewards.map(
+                  (r) => point.rewardOverrides.find((o) => o.id === r.id) || r
+                )}
+                rows={preview?.rows}
+                onSelect={(id, include) => {
+                  setPreview(undefined);
+                  onChange((doc) =>
+                    selectXpRewards(
+                      doc,
+                      point.id,
+                      include
+                        ? [...point.rewardIds, id]
+                        : point.rewardIds.filter((r) => r !== id)
+                    )
+                  );
+                }}
+                onOpen={(reward) => {
+                  const accepted = xp.events.some((e) =>
+                    e.rewards.some((r) => r.id === reward.id)
+                  );
+                  if (
+                    accepted &&
+                    !(point.correctionOf && point.rewardIds.includes(reward.id))
+                  )
+                    setInspectedEvent(reward);
+                  else
+                    setEditor({
+                      reward,
+                      pointId: point.correctionOf ? point.id : undefined,
+                    });
+                }}
+                onBonus={(review) => setAwardEdit({ review, mode: 'bonus' })}
+                onFinal={(review) => setAwardEdit({ review, mode: 'final' })}
+                onInspectAllocation={inspectAllocation}
+              />
+              {preview?.later.length ? (
+                <div className={styles['warning']}>
+                  <h4>Later balances to review</h4>
+                  {preview.later.map(({ event, rows }) => (
+                    <p key={event.id}>
+                      <strong>{event.point.label}</strong>:{' '}
+                      {rows
+                        .map((r) => `${r.name}: ${r.before} → ${r.after}`)
+                        .join(' · ')}
+                    </p>
+                  ))}
+                  <label className={styles['check']}>
+                    <input
+                      type="checkbox"
+                      checked={reviewLater}
+                      onChange={(e) => setReviewLater(e.target.checked)}
+                    />
+                    I reviewed the recalculated later balances
+                  </label>
+                </div>
+              ) : null}
+              <div className={styles['actions']}>
+                {preview ? (
+                  <button
+                    className={styles['primary']}
+                    disabled={preview.later.length > 0 && !reviewLater}
+                    onClick={confirm}
+                  >
+                    {preview.point.correctionOf
+                      ? 'Confirm changes'
+                      : 'Confirm award'}
+                  </button>
+                ) : (
+                  <button className={styles['primary']} onClick={review}>
+                    Preview award
+                  </button>
+                )}
+                <button
+                  onClick={() => {
+                    if (onChange((doc) => discardXpPoint(doc, point.id))) {
+                      setSelected('');
+                      setPreview(undefined);
+                    }
+                  }}
+                >
+                  {point.correctionOf
+                    ? 'Discard changes'
+                    : 'Discard award draft'}
+                </button>
+              </div>
+            </section>
+          )}
+          {awardOpen && error && (
+            <p role="alert" className={styles['warning']}>
+              {error}
+            </p>
+          )}
+        </XpAwardDialog>
       )}
-      {error && (
+      {!awardOpen && error && (
         <p role="alert" className={styles['warning']}>
           {error}
         </p>
@@ -550,9 +576,12 @@ export default function CampaignXp({
         {xp.events.map((event) => (
           <div key={event.id} className={styles['historyRow']}>
             <button
-              onClick={() =>
-                setHistoryId(historyId === event.id ? '' : event.id)
-              }
+              onClick={() => {
+                setSelected('');
+                setPreview(undefined);
+                setHistoryId(event.id);
+                setError('');
+              }}
             >
               {event.point.label}
             </button>
@@ -575,19 +604,6 @@ export default function CampaignXp({
             )}
           </div>
         ))}
-        {history && (
-          <>
-            <AwardDetails
-              document={document}
-              event={history}
-              onOpen={setInspectedEvent}
-              onInspectAllocation={inspectAllocation}
-            />
-            {active.some((e) => e.id === history.id) && (
-              <button onClick={() => correct(history)}>Correct award…</button>
-            )}
-          </>
-        )}
       </details>
       <details>
         <summary>Historical session balances</summary>

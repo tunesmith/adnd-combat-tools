@@ -409,7 +409,7 @@ export function saveXpReward(
   if (correctionPointId) {
     const point = xp.points.find((p) => p.id === correctionPointId);
     if (!point?.correctionOf || point.confirmedEventId)
-      fail('Open a draft correction before changing accepted reward inputs.');
+      fail('Choose Edit award before changing confirmed event inputs.');
     const prior =
       point.rewardOverrides.find((r) => r.id === accepted.id) ||
       xp.rewards.find((r) => r.id === accepted.id);
@@ -431,7 +431,7 @@ export function saveXpReward(
     });
   }
   if (xp.events.some((e) => e.rewards.some((r) => r.id === accepted.id)))
-    fail('Confirmed reward inputs are frozen. Use Correct award.');
+    fail('Confirmed reward inputs are frozen. Use Edit award.');
   const previous = xp.rewards.find((r) => r.id === accepted.id);
   if (previous && accepted.version !== previous.version + 1)
     fail('Reward changed; reopen its editor.');
@@ -449,7 +449,7 @@ export function deleteXpReward(
 ): CampaignDocument {
   const xp = xpLedger(doc);
   if (xp.events.some((e) => e.rewards.some((r) => r.id === id)))
-    fail('Awarded XP events cannot be deleted. Use Correct award.');
+    fail('Awarded XP events cannot be deleted. Use Edit award.');
   const reward = xp.rewards.find((r) => r.id === id);
   if (!reward || reward.version !== version)
     fail('XP event changed; reopen its editor.');
@@ -655,7 +655,7 @@ export function previewXpAward(
     !activeXpEvents(xp.events).some((e) => e.id === point.correctionOf)
   )
     fail(
-      'This correction targets a superseded award. Start a fresh correction.'
+      'These changes target an older award version. Open the current award and choose Edit award.'
     );
   if (point.correctionOf) {
     const target = xp.events.find((e) => e.id === point.correctionOf);
@@ -666,7 +666,7 @@ export function previewXpAward(
       fail('A correction retains its original award position.');
   }
   if (point.correctionOf && !point.correctionReason.trim())
-    fail('Explain the correction.');
+    fail('Add a reason for the changes.');
   if (
     !point.rewardIds.length ||
     new Set(point.rewardIds).size !== point.rewardIds.length

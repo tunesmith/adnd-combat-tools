@@ -1,4 +1,3 @@
-import RenamableTab from './RenamableTab';
 import type { CampaignDocument } from '../../helpers/campaignDocument';
 import type { XpReward } from '../../helpers/campaignXpModel';
 import {
@@ -16,14 +15,8 @@ export default function XpTimeline({
   onSelectPoint,
   onSelectEvent,
   onChange,
-  onRenamePoint,
-  renamePointId,
-  onRenameEnd,
 }: {
   document: CampaignDocument;
-  onRenamePoint?: (id: string, label: string) => boolean;
-  renamePointId?: string;
-  onRenameEnd?: () => void;
   sessionId: string;
   selectedPointId: string;
   onSelectPoint: (id: string) => void;
@@ -57,7 +50,6 @@ export default function XpTimeline({
               : undefined;
             const displayedReward =
               settlement?.rewards.find((r) => r.id === reward?.id) || reward;
-            const editablePoint = correction || point;
             const acceptedAward = point?.confirmedEventId
               ? activeXpEvents(xp?.events || []).find(
                   (e) => xpAwardRoot(document, e.point) === entry.id
@@ -74,7 +66,7 @@ export default function XpTimeline({
                 ? 'Deferred'
                 : 'Pending'
               : correction
-              ? 'Correction draft'
+              ? 'Draft changes'
               : point?.confirmedEventId
               ? 'Confirmed'
               : 'Draft';
@@ -87,43 +79,19 @@ export default function XpTimeline({
                 <span className={styles['timelineKind']}>
                   {entry.kind === 'event' ? 'XP event' : 'XP award'}
                 </span>
-                {editablePoint &&
-                !editablePoint.confirmedEventId &&
-                onRenamePoint ? (
-                  <div
-                    className={styles['timelineName']}
-                    data-selected={selectedRoot === entry.id}
-                  >
-                    <RenamableTab
-                      label={displayLabel || 'Unnamed award'}
-                      kind="award"
-                      selected={selectedRoot === entry.id}
-                      renameOnMount={renamePointId === editablePoint.id}
-                      onSelect={() => onSelectPoint(correction?.id || entry.id)}
-                      onRename={(label) =>
-                        onRenamePoint(editablePoint.id, label)
-                      }
-                      onRenameEnd={onRenameEnd}
-                    />
-                    <small>{status}</small>
-                  </div>
-                ) : (
-                  <>
-                    <button
-                      className={styles['timelineName']}
-                      aria-pressed={
-                        entry.kind === 'award' && selectedRoot === entry.id
-                      }
-                      onClick={() => {
-                        if (displayedReward) onSelectEvent(displayedReward);
-                        else onSelectPoint(correction?.id || entry.id);
-                      }}
-                    >
-                      {displayLabel || 'Unnamed award'}
-                      <small>{status}</small>
-                    </button>
-                  </>
-                )}
+                <button
+                  className={styles['timelineName']}
+                  aria-pressed={
+                    entry.kind === 'award' && selectedRoot === entry.id
+                  }
+                  onClick={() => {
+                    if (displayedReward) onSelectEvent(displayedReward);
+                    else onSelectPoint(correction?.id || entry.id);
+                  }}
+                >
+                  {displayLabel || 'Unnamed award'}
+                  <small>{status}</small>
+                </button>
                 {displayedReward?.notes.trim() && (
                   <span className={styles['timelineNotes']}>
                     {displayedReward.notes}

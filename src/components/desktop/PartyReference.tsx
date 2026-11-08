@@ -16,6 +16,7 @@ import { saveCategories } from '../../tables/savingThrows';
 import AutoHeightTextarea from '../tracker/AutoHeightTextarea';
 import ProfileDialog from './ProfileDialog';
 import SessionProfileTable from './SessionProfileTable';
+import SessionXpReference from './SessionXpReference';
 import styles from './campaignWorkspace.module.css';
 
 const notes = ['Dodging notes', 'Fire/lightning notes', 'Other notes'] as const;
@@ -75,19 +76,26 @@ export default function PartyReference({
         )}
       </div>
       {view === 'session' ? (
-        <SessionProfileTable
-          document={document}
-          profiles={rows}
-          onEdit={(profile, character) => setEditor({ profile, character })}
-          onToggle={(characterId) =>
-            update(characterId, (p) => ({
-              ...p,
-              adjustment: p.adjustment
-                ? { ...p.adjustment, enabled: !p.adjustment.enabled }
-                : null,
-            }))
-          }
-        />
+        <>
+          <SessionProfileTable
+            document={document}
+            profiles={rows}
+            onEdit={(profile, character) => setEditor({ profile, character })}
+            onToggle={(characterId) =>
+              update(characterId, (p) => ({
+                ...p,
+                adjustment: p.adjustment
+                  ? { ...p.adjustment, enabled: !p.adjustment.enabled }
+                  : null,
+              }))
+            }
+          />
+          <SessionXpReference
+            document={document}
+            sessionId={sessionId}
+            profiles={rows}
+          />
+        </>
       ) : !rows.length ? (
         <p>
           {sessionId

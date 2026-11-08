@@ -1,4 +1,3 @@
-import { sessionXpBalances } from '../../helpers/campaignXp';
 import type { CampaignDocument } from '../../helpers/campaignDocument';
 import type {
   PartyProfile,
@@ -37,9 +36,6 @@ export default function SessionProfileTable({
             <th scope="col">Class</th>
             <th scope="col">Lv</th>
             <th scope="col">Max HP</th>
-            <th scope="col" title="XP balance as of the end of this session">
-              XP
-            </th>
             {['STR', 'INT', 'WIS', 'DEX', 'CON', 'CHA'].map((label) => (
               <th scope="col" key={label}>
                 {label}
@@ -128,21 +124,6 @@ export default function SessionProfileTable({
                   )}
                 </td>
                 <td>{recorded(reference?.maxHp)}</td>
-                <td
-                  title={`Opening XP ${
-                    sessionXpBalances(
-                      document,
-                      profile.characterId,
-                      profile.sessionId
-                    ).opening ?? 'unknown'
-                  }`}
-                >
-                  {sessionXpBalances(
-                    document,
-                    profile.characterId,
-                    profile.sessionId
-                  ).closing?.toLocaleString() ?? '—'}
-                </td>
                 <td>
                   {strength?.score == null
                     ? '—'

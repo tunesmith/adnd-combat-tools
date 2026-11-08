@@ -1,4 +1,5 @@
 /** @jest-environment jsdom */
+import replay from './fixtures/xpSyntheticReplay.json';
 import { storageInventory } from './fixtures/storageInventory';
 import { startWorkingInventory } from '../helpers/campaignWorkingInventory';
 import '@testing-library/jest-dom';
@@ -23,16 +24,22 @@ beforeEach(() => {
     value: { randomUUID: () => `xp-ui-${++id}` },
   });
 });
+function openFixtureAward() {
+  fireEvent.click(
+    screen.getByRole('button', { name: /^At the synthetic refuge/ })
+  );
+}
 function renameNewAward(label: string) {
-  if (!screen.queryByLabelText('Rename award'))
+  const dialog = within(screen.getByRole('dialog', { name: 'XP award' }));
+  if (!dialog.queryByLabelText('Rename award'))
     fireEvent.keyDown(
-      screen.getByRole('button', { name: 'New award', exact: true }),
+      dialog.getByRole('button', { name: 'New award', exact: true }),
       { key: 'F2' }
     );
-  fireEvent.change(screen.getByLabelText('Rename award'), {
+  fireEvent.change(dialog.getByLabelText('Rename award'), {
     target: { value: label },
   });
-  fireEvent.keyDown(screen.getByLabelText('Rename award'), { key: 'Enter' });
+  fireEvent.keyDown(dialog.getByLabelText('Rename award'), { key: 'Enter' });
 }
 function awardValues(container: ReturnType<typeof within>) {
   const row = container.getByRole('row', { name: /^Award, rounded/ });
@@ -338,6 +345,7 @@ test('separate participation and unequal individual allocations survive ordinary
     );
   }
   render(<Harness />);
+  openFixtureAward();
   fireEvent.click(
     screen.getByRole('button', {
       name: 'Seventeen tunnel raiders',
@@ -385,6 +393,7 @@ test('level edits, participation and ratio changes remain independent of recipie
     );
   }
   render(<Harness />);
+  openFixtureAward();
   fireEvent.click(
     screen.getByRole('button', {
       name: 'Seventeen tunnel raiders',
@@ -471,6 +480,7 @@ test('one adjustment dialog edits raw XP and individual shares without changing 
     );
   }
   render(<Harness />);
+  openFixtureAward();
   fireEvent.click(
     screen.getByRole('button', {
       name: 'Seventeen tunnel raiders',
@@ -581,12 +591,18 @@ test('money entry needs only value and recipients, then awards or deletes withou
   expect(awardValues(preview)).toEqual(['83', '83', '83', '75', '83']);
   fireEvent.click(preview.getByRole('button', { name: 'Confirm award' }));
   const accepted = current.xp?.events;
+  fireEvent.click(screen.getByRole('button', { name: 'Close award' }));
   fireEvent.click(
     screen.getByRole('button', { name: /^750 electrum Awarded/ })
   );
   expect(
     screen.queryByRole('button', { name: 'Delete event' })
   ).not.toBeInTheDocument();
+  fireEvent.click(
+    within(
+      screen.getByRole('dialog', { name: 'Historical XP event' })
+    ).getByRole('button', { name: 'Close' })
+  );
   fireEvent.click(screen.getByRole('button', { name: '+ XP Event' }));
   dialog = within(screen.getByRole('dialog', { name: 'XP event review' }));
   fireEvent.change(dialog.getByLabelText('XP event name'), {
@@ -626,6 +642,7 @@ test('treasure uses one sale-value field, keeps retained XP separate and saves a
     );
   }
   render(<Harness />);
+  openFixtureAward();
   fireEvent.click(
     screen.getByRole('button', { name: 'Kept warding scroll', exact: true })
   );
@@ -691,6 +708,7 @@ test('an older treasure draft defaults to full XP and keeps ratio overrides inde
     );
   }
   render(<Harness />);
+  openFixtureAward();
   fireEvent.click(
     screen.getByRole('button', { name: 'Kept warding scroll', exact: true })
   );
@@ -745,6 +763,7 @@ test('one award matrix handles inspection, bonus cancellation, final adjustments
     );
   }
   render(<Harness />);
+  openFixtureAward();
   expect(screen.getAllByRole('table', { name: 'XP award' })).toHaveLength(1);
   const table = within(screen.getByRole('table', { name: 'XP award' }));
   expect(table.getAllByRole('columnheader').map((h) => h.textContent)).toEqual([
@@ -829,13 +848,17 @@ test('one award matrix handles inspection, bonus cancellation, final adjustments
   expect(
     screen.queryByRole('button', { name: 'Edit Mira XP bonus' })
   ).not.toBeInTheDocument();
-  fireEvent.click(screen.getByRole('button', { name: 'Correct award…' }));
-  fireEvent.change(screen.getByLabelText('Correction reason'), {
+  fireEvent.click(screen.getByRole('button', { name: 'Edit award…' }));
+  fireEvent.change(screen.getByLabelText('Reason for changes'), {
     target: { value: 'Remove the historical cap and restore bonus' },
   });
-  fireEvent.keyDown(screen.getByRole('button', { name: /^Correction —/ }), {
-    key: 'F2',
-  });
+  fireEvent.keyDown(
+    within(screen.getByRole('dialog', { name: 'XP award' })).getByRole(
+      'button',
+      { name: 'At the synthetic refuge', exact: true }
+    ),
+    { key: 'F2' }
+  );
   fireEvent.change(screen.getByLabelText('Rename award'), {
     target: { value: 'Corrected synthetic award' },
   });
@@ -858,7 +881,7 @@ test('one award matrix handles inspection, bonus cancellation, final adjustments
   expect(
     awardValues(within(screen.getByRole('table', { name: 'XP award' })))
   ).toEqual(['507', '507', '507', '461', '507']);
-  fireEvent.click(screen.getByRole('button', { name: 'Confirm correction' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Confirm changes' }));
   expect(current.xp?.events).toHaveLength(2);
   expect(
     screen.getByRole('button', { name: /^Corrected synthetic award Confirmed/ })
@@ -867,4 +890,62 @@ test('one award matrix handles inspection, bonus cancellation, final adjustments
   expect(parseCampaign(serializeCampaign(current)).xp?.events).toEqual(
     current.xp?.events
   );
+});
+
+test('timeline events and awards open modals without automatically showing an award or changing its history', () => {
+  let current = parseCampaign(JSON.stringify(replay.confirmed));
+  const before = serializeCampaign(current);
+  function Harness() {
+    const [d, setDoc] = useState(current);
+    return (
+      <CampaignXp
+        document={d}
+        sessionId="session-2"
+        onChange={(change) => {
+          const next = parseCampaign(serializeCampaign(change(d)));
+          validateHistoryTransition(d, next, '');
+          current = next;
+          setDoc(next);
+          return true;
+        }}
+      />
+    );
+  }
+  render(<Harness />);
+  expect(
+    screen.queryByRole('table', { name: 'XP award' })
+  ).not.toBeInTheDocument();
+  expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  fireEvent.click(
+    screen.getByRole('button', { name: /^At the synthetic refuge Confirmed/ })
+  );
+  let award = within(screen.getByRole('dialog', { name: 'XP award' }));
+  expect(award.getByRole('table', { name: 'XP award' })).toBeInTheDocument();
+  fireEvent.click(award.getByRole('button', { name: 'Close award' }));
+  expect(
+    screen.queryByRole('table', { name: 'XP award' })
+  ).not.toBeInTheDocument();
+  expect(serializeCampaign(current)).toBe(before);
+  fireEvent.click(
+    screen.getByRole('button', { name: /^Later alarm fungus Pending/ })
+  );
+  fireEvent.click(
+    within(screen.getByRole('dialog', { name: 'XP event review' })).getByRole(
+      'button',
+      { name: 'Cancel' }
+    )
+  );
+  expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  fireEvent.click(
+    screen.getByRole('button', { name: /^At the synthetic refuge Confirmed/ })
+  );
+  award = within(screen.getByRole('dialog', { name: 'XP award' }));
+  fireEvent.click(award.getByRole('button', { name: 'Edit award…' }));
+  expect(screen.getByLabelText('Reason for changes')).toBeInTheDocument();
+  expect(current.xp?.events).toEqual(JSON.parse(before).xp.events);
+  fireEvent.click(screen.getByRole('button', { name: 'Discard changes' }));
+  expect(
+    screen.queryByRole('dialog', { name: 'XP award' })
+  ).not.toBeInTheDocument();
+  expect(current.xp?.events).toEqual(JSON.parse(before).xp.events);
 });
