@@ -21,12 +21,14 @@ pub struct Document {
     pub combat_checkpoints: Vec<serde_json::Value>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub party: Option<serde_json::Value>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub xp: Option<serde_json::Value>,
 }
 impl Document {
     pub fn new() -> Self {
         Self {
             kind: "adnd-campaign".into(),
-            schema_version: 9,
+            schema_version: 11,
             id: uuid::Uuid::new_v4().to_string(),
             title: "Untitled campaign".into(),
             notes: String::new(),
@@ -37,6 +39,7 @@ impl Document {
             working_combats: Vec::new(),
             combat_checkpoints: Vec::new(),
             party: None,
+            xp: None,
             workspace: serde_json::json!({"sessionId":null,"view":"possessions","combatSelections":{}}),
         }
     }
@@ -213,7 +216,7 @@ mod tests {
     fn rejects_unknown_malformed_future() {
         assert!(parse(b"{bad").is_err());
         let mut v = serde_json::to_value(Document::new()).unwrap();
-        v["schemaVersion"] = 10.into();
+        v["schemaVersion"] = 12.into();
         assert!(parse(&serde_json::to_vec(&v).unwrap())
             .unwrap_err()
             .contains("schema version"));
@@ -364,7 +367,7 @@ mod b1_tests {
         let bytes=br#"{"kind":"adnd-campaign","schemaVersion":1,"id":"kept","title":"Old","notes":"Keep"}"#;
         fs::write(&path, bytes).unwrap();
         let doc = parse(bytes).unwrap();
-        assert_eq!(doc.schema_version, 9);
+        assert_eq!(doc.schema_version, 11);
         assert_eq!(fs::read(&path).unwrap(), bytes);
         save(&path, &doc, Some(&hash(bytes))).unwrap();
         assert_eq!(fs::read(format!("{}.bak", path.display())).unwrap(), bytes);
@@ -426,7 +429,7 @@ mod v2_migration_tests {
         let path = dir.path().join("v2.adnd");
         fs::write(&path, bytes).unwrap();
         let doc = parse(&fs::read(&path).unwrap()).unwrap();
-        assert_eq!(doc.schema_version, 9);
+        assert_eq!(doc.schema_version, 11);
         assert_eq!(fs::read(&path).unwrap(), bytes);
         save(&path, &doc, Some(&hash(bytes))).unwrap();
         assert_eq!(fs::read(format!("{}.bak", path.display())).unwrap(), bytes);
@@ -554,7 +557,7 @@ mod continuity_tests {
         }
         let bytes = serde_json::to_vec_pretty(&legacy).unwrap();
         let migrated = parse(&bytes).unwrap();
-        assert_eq!(migrated.schema_version, 9);
+        assert_eq!(migrated.schema_version, 11);
         assert!(migrated.party.as_ref().unwrap()["profiles"][0]["reference"].is_null());
         validate_replacement(&migrated, &expanded).unwrap();
         let dir = tempfile::tempdir().unwrap();
@@ -769,5 +772,64 @@ mod storage_save_tests {
         assert_eq!(fs::read(dir.path().join("legacy.adnd.bak")).unwrap(), bytes);
         save(&path, &reopened, Some(&rev)).unwrap();
         assert_eq!(fs::read_dir(dir.path()).unwrap().count(), 2);
+    }
+}
+
+#[cfg(test)]
+mod xp_tests {
+    use super::*;
+    fn replay() -> (Document, Document) {
+        let fixture: serde_json::Value = serde_json::from_str(include_str!("../../src/tests/fixtures/xpSyntheticReplay.json")).unwrap();
+        let accepted = parse(&serde_json::to_vec(&fixture["confirmed"]).unwrap()).unwrap();
+        let corrected = parse(&serde_json::to_vec(&fixture["corrected"]).unwrap()).unwrap();
+        (accepted, corrected)
+    }
+    #[test]
+    fn native_exact_xp_replay_correction_history_quiet_save_failure_and_reopen() {
+        // This executes the shared BigInt calculator inside the actual QuickJS boundary.
+        let (accepted, corrected) = replay();
+        let mut legacy = serde_json::to_value(&accepted).unwrap();
+        legacy["schemaVersion"] = 9.into();
+        legacy["workspace"]["view"] = "session".into();
+        legacy.as_object_mut().unwrap().remove("xp");
+        let original = serde_json::to_vec_pretty(&legacy).unwrap();
+        let migrated = parse(&original).unwrap();
+        assert_eq!(migrated.schema_version, 11);
+        assert!(migrated.xp.is_none());
+        validate_replacement(&migrated, &accepted).unwrap();
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("synthetic-xp.adnd");
+        fs::write(&path, &original).unwrap();
+        let revision = save(&path, &accepted, Some(&hash(&original))).unwrap();
+        assert_eq!(fs::read(dir.path().join("synthetic-xp.adnd.bak")).unwrap(), original);
+        let reopened = parse(&fs::read(&path).unwrap()).unwrap();
+        assert_eq!(reopened, accepted);
+        let xp = reopened.xp.as_ref().unwrap();
+        assert_eq!(xp["events"][0]["rows"][0]["award"], 507);
+        assert_eq!(xp["events"][0]["rows"][3]["award"], 461);
+        assert_eq!(xp["events"][0]["rows"][0]["allocations"][0]["calculated"], "129/5");
+        assert_eq!(xp["events"][0]["rows"][0]["allocations"][0]["accepted"], "26");
+        assert_eq!(xp["rewards"].as_array().unwrap().len(), 4);
+        assert_eq!(xp["events"].as_array().unwrap().len(), 1);
+        validate_replacement(&accepted, &corrected).unwrap();
+        let bytes = fs::read(&path).unwrap();
+        assert!(save_with_hook(&path, &corrected, Some(&revision), || Err("Injected failure".into())).is_err());
+        assert_eq!(fs::read(&path).unwrap(), bytes);
+        save(&path, &corrected, Some(&revision)).unwrap();
+        assert_eq!(parse(&fs::read(&path).unwrap()).unwrap(), corrected);
+        assert_eq!(fs::read_dir(dir.path()).unwrap().count(), 2);
+        assert_eq!(fs::read(dir.path().join("synthetic-xp.adnd.bak")).unwrap(), original);
+        let mut changed = corrected.clone();
+        changed.xp.as_mut().unwrap()["events"][0]["rows"][0]["award"] = 999.into();
+        assert!(changed.validate().is_err());
+        assert!(validate_replacement(&corrected, &changed).is_err());
+        let mut duplicate = accepted.clone();
+        let event = duplicate.xp.as_ref().unwrap()["events"][0].clone();
+        duplicate.xp.as_mut().unwrap()["events"].as_array_mut().unwrap().push(event);
+        assert!(duplicate.validate().is_err());
+        let actual = fs::read(&path).unwrap();
+        fs::write(&path, b"external synthetic edit").unwrap();
+        assert_eq!(save(&path, &corrected, Some(&hash(&actual))).unwrap_err(), CONFLICT);
+        assert_eq!(fs::read(&path).unwrap(), b"external synthetic edit");
     }
 }

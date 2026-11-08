@@ -70,7 +70,7 @@ test('Save waits for attachment validation and application', async () => {
   const replacement = storage?.replace(
     {
       kind: 'adnd-campaign',
-      schemaVersion: 9,
+      schemaVersion: 11,
       workingCombats: [],
       combatCheckpoints: [],
       workingInventories: [],
@@ -96,7 +96,7 @@ test('Save waits for attachment validation and application', async () => {
 test('queued campaign mutations rebase on accepted state and stale epochs are cancelled', async () => {
   const doc = {
     kind: 'adnd-campaign' as const,
-    schemaVersion: 9 as const,
+    schemaVersion: 11 as const,
     workingCombats: [],
     combatCheckpoints: [],
     id: 'campaign',
@@ -269,5 +269,88 @@ test.each(['save', 'quit', 'openPending'])(
       'Last keystroke before native command'
     );
     expect(doc.workingInventories[0]?.document.characters).toHaveLength(2);
+  }
+);
+
+test.each(['save', 'quit', 'openPending'])(
+  '%s waits for one atomic XP confirmation and ignores a stale award callback',
+  async (action) => {
+    const { xpCastleDraft } = await import('./fixtures/xpCampaign');
+    const { previewXpAward, confirmXpAward, xpLedger } = await import(
+      '../helpers/campaignXp'
+    );
+    const { parseCampaign } = await import('../helpers/campaignDocument');
+    let doc = xpCastleDraft(),
+      epoch = 1;
+    const preview = previewXpAward(doc, 'refuge-point');
+    let finish: () => void = () => undefined;
+    const blocked = new Promise<void>((resolve) => {
+      finish = resolve;
+    });
+    const commands: string[] = [];
+    let onAction: ((event: { payload: unknown }) => void) | undefined;
+    window.__TAURI__ = {
+      core: {
+        invoke: async <T>(
+          name: string,
+          args?: Record<string, unknown>
+        ): Promise<T> => {
+          if (name === 'campaign_state')
+            return { document: doc, epoch, token: 1 } as unknown as T;
+          if (name === 'campaign_replace') {
+            await blocked;
+            doc = parseCampaign(String(args?.['text']));
+            return { document: doc, epoch, token: 2 } as unknown as T;
+          }
+          commands.push(String(args?.['command']));
+          return undefined as unknown as T;
+        },
+      },
+      event: {
+        listen: async <T>(
+          name: string,
+          handler: (event: { payload: T }) => void
+        ) => {
+          if (name === 'campaign-action')
+            onAction = handler as (event: { payload: unknown }) => void;
+          return () => undefined;
+        },
+      },
+    };
+    const storage = await createTauriStorage();
+    const edit = storage?.mutate(doc.id, 1, (d) =>
+      confirmXpAward(
+        d,
+        'refuge-point',
+        preview.fingerprint,
+        'queued-award',
+        '2026-11-07T12:00:00.000Z'
+      )
+    );
+    onAction?.({ payload: action });
+    await Promise.resolve();
+    expect(commands).toEqual([]);
+    finish();
+    await edit;
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(commands).toEqual([action]);
+    expect(xpLedger(doc).events).toHaveLength(1);
+    expect(xpLedger(doc).events[0]?.rows.map((r) => r.award)).toEqual([
+      507, 507, 507, 461, 507,
+    ]);
+    epoch = 2;
+    expect(
+      await storage?.mutate(doc.id, 1, (d) =>
+        confirmXpAward(
+          d,
+          'refuge-point',
+          preview.fingerprint,
+          'late-award',
+          '2026-11-07T12:00:00.000Z'
+        )
+      )
+    ).toBeNull();
+    expect(xpLedger(doc).events).toHaveLength(1);
   }
 );

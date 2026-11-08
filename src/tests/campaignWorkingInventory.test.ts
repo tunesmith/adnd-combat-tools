@@ -22,7 +22,7 @@ function setup() {
 }
 test('V2 migration retains every B1 record, source, identity and metadata', () => {
   const doc = parseCampaign(JSON.stringify(baseline));
-  expect(doc.schemaVersion).toBe(9);
+  expect(doc.schemaVersion).toBe(11);
   expect(doc.records).toEqual(baseline.records);
   expect(doc.sessions).toEqual(
     baseline.sessions.map((s) => ({ ...s, notes: '' }))

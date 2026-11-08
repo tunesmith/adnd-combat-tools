@@ -111,10 +111,10 @@ impl Session {
         self.view.status = if serde_json::from_slice::<serde_json::Value>(&bytes)
             .ok()
             .and_then(|v| v.get("schemaVersion").and_then(|v| v.as_u64()))
-            .map(|v| v < 9)
+            .map(|v| v < 11)
             .unwrap_or(false)
         {
-            "Opened older campaign — first Save upgrades to V9 and preserves an original recovery copy"
+            "Opened older campaign — first Save upgrades to V11 and preserves an original recovery copy"
         } else {
             "Opened successfully"
         }

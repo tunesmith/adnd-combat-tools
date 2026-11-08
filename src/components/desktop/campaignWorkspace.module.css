@@ -852,3 +852,18 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+.sessionDrag {
+  display: inline-flex;
+  border-radius: 5px;
+}
+.sessionDrop {
+  outline: 2px dashed #a97c30;
+  outline-offset: 3px;
+}
+.sessionDrag[draggable='true'] button {
+  cursor: grab;
+}
+.sessionDrag[draggable='true'] button:active {
+  cursor: grabbing;
+}

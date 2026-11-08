@@ -1,3 +1,7 @@
+import { migrateXpTimeline } from './campaignXpTimeline';
+import { campaignXpSchema, legacyCampaignXpSchema } from './campaignXpModel';
+import type { CampaignXp } from './campaignXpModel';
+import { validateCampaignXp } from './campaignXp';
 import { parseEncumbranceDocument } from './encumbranceDocument';
 import { campaignPartySchema } from './campaignPartyModel';
 import type { CampaignParty } from './campaignPartyModel';
@@ -34,7 +38,8 @@ import {
 import type { CampaignRecord, CampaignSession } from './campaignSnapshots';
 export interface CampaignDocument {
   kind: 'adnd-campaign';
-  schemaVersion: 9;
+  schemaVersion: 11;
+  xp?: CampaignXp;
   party?: CampaignParty;
   workingCombats: WorkingCombat[];
   combatCheckpoints: CombatCheckpoint[];
@@ -156,6 +161,29 @@ const v7 = v6.extend({
 });
 const v8 = v7.extend({ schemaVersion: z.literal(8) });
 const v9 = v8.extend({ schemaVersion: z.literal(9) });
+const v10 = v9.extend({
+  schemaVersion: z.literal(10),
+  xp: legacyCampaignXpSchema.optional(),
+  workspace: v9.shape.workspace
+    .extend({
+      view: z.enum([
+        'possessions',
+        'combats',
+        'history',
+        'details',
+        'tools',
+        'session',
+        'party',
+        'xp',
+      ]),
+    })
+    .strict(),
+});
+
+const v11 = v10.extend({
+  schemaVersion: z.literal(11),
+  xp: campaignXpSchema.optional(),
+});
 
 export function validateCampaign(value: unknown): CampaignDocument {
   if (!value || typeof value !== 'object')
@@ -172,10 +200,12 @@ export function validateCampaign(value: unknown): CampaignDocument {
     header['schemaVersion'] !== 6 &&
     header['schemaVersion'] !== 7 &&
     header['schemaVersion'] !== 8 &&
-    header['schemaVersion'] !== 9
+    header['schemaVersion'] !== 9 &&
+    header['schemaVersion'] !== 10 &&
+    header['schemaVersion'] !== 11
   )
     throw new Error(
-      'Unsupported campaign schema version. This app supports versions 1 through 9.'
+      'Unsupported campaign schema version. This app supports versions 1 through 11.'
     );
   if (
     value &&
@@ -184,7 +214,7 @@ export function validateCampaign(value: unknown): CampaignDocument {
   ) {
     return {
       ...v1.parse(value),
-      schemaVersion: 9,
+      schemaVersion: 11,
       workingCombats: [],
       combatCheckpoints: [],
       sessions: [],
@@ -215,7 +245,11 @@ export function validateCampaign(value: unknown): CampaignDocument {
       ? v7.parse(value)
       : header['schemaVersion'] === 8
       ? v8.parse(value)
-      : v9.parse(value);
+      : header['schemaVersion'] === 9
+      ? v9.parse(value)
+      : header['schemaVersion'] === 10
+      ? v10.parse(value)
+      : v11.parse(value);
   const migrated =
     legacy.schemaVersion === 3
       ? {
@@ -229,7 +263,7 @@ export function validateCampaign(value: unknown): CampaignDocument {
   const parsed = (migrated.schemaVersion === 4
     ? {
         ...migrated,
-        schemaVersion: 9 as const,
+        schemaVersion: 11 as const,
         sessions: migrated.sessions.map((s) => ({ ...s, notes: '' })),
         workingCombats: migrated.workingCombats.map((c) => ({
           ...c,
@@ -239,15 +273,26 @@ export function validateCampaign(value: unknown): CampaignDocument {
       }
     : {
         ...migrated,
-        schemaVersion: 9 as const,
+        schemaVersion: 11 as const,
       }) as unknown as CampaignDocument;
-  if (header['schemaVersion'] !== 9)
+  if (Number(header['schemaVersion']) < 9)
     parsed.workingInventories = parsed.workingInventories.map((w) => {
       const document = parseEncumbranceDocument(JSON.stringify(w.document));
       if (document.kind !== 'adnd-encumbrance-dm')
         throw new Error('DM inventory required.');
       return { ...w, document };
     });
+  // Older XP previews had a separate chronology. Align the visible tabs once,
+  // preserving its established as-of balances; subsequent tab moves mirror this field.
+  if (parsed.xp?.sessionOrder.length) {
+    const order = [
+      ...parsed.xp.sessionOrder,
+      ...parsed.sessions
+        .map((s) => s.id)
+        .filter((id) => !parsed.xp?.sessionOrder.includes(id)),
+    ];
+    parsed.sessions.sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
+  }
   const ids = new Set<string>();
   const unique = (id: string) => {
     if (ids.has(id)) throw new Error('Duplicate campaign identity.');
@@ -366,6 +411,8 @@ export function validateCampaign(value: unknown): CampaignDocument {
   }
   validatePartyReferences(parsed, unique);
   validateContinuationReferences(parsed);
+  if (parsed.xp) parsed.xp = migrateXpTimeline(parsed.xp);
+  validateCampaignXp(parsed, unique);
   return parsed;
 }
 export function parseCampaign(text: string): CampaignDocument {

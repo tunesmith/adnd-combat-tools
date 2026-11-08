@@ -1,3 +1,4 @@
+import { validateXpTransition } from './campaignXp';
 import { validateEncounterRemoval } from './campaignEncounterRemoval';
 import { validateContinuityTransition } from './campaignContinuity';
 import { canonical } from './campaignSnapshots';
@@ -73,6 +74,7 @@ export function validateHistoryTransition(
   purpose: string
 ) {
   validateContinuityTransition(old, next);
+  validateXpTransition(old, next);
   if (
     old.party?.roster.some(
       (c) => !next.party?.roster.some((n) => n.id === c.id)

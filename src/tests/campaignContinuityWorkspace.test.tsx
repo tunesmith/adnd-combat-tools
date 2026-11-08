@@ -121,7 +121,7 @@ test('workspace starts the selected continuation atomically, edits notes indepen
     within(screen.getByRole('navigation', { name: 'Session views' }))
       .getAllByRole('button')
       .map((button) => button.textContent)
-  ).toEqual(['Session', 'References', 'Possessions', 'Combats']);
+  ).toEqual(['Session', 'References', 'Possessions', 'Combats', 'XP']);
   fireEvent.change(screen.getByRole('combobox', { name: 'Version' }), {
     target: { value: 'source-history' },
   });

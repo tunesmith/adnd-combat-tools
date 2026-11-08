@@ -6,14 +6,16 @@ export default function RenamableTab({
   kind,
   selected,
   renameOnMount = false,
+  draggable = false,
   onSelect,
   onRename,
   onRenameEnd,
 }: {
   label: string;
-  kind: 'session' | 'encounter';
+  kind: 'session' | 'encounter' | 'award';
   selected: boolean;
   renameOnMount?: boolean;
+  draggable?: boolean;
   onSelect: () => void;
   onRename: (label: string) => void;
   onRenameEnd?: () => void;
@@ -42,10 +44,14 @@ export default function RenamableTab({
   return draft === null ? (
     <button
       ref={button}
+      draggable={draggable}
       type="button"
       aria-pressed={selected}
       title="Double-click or press F2 to rename"
-      onClick={onSelect}
+      onClick={(event) => {
+        event.currentTarget.focus();
+        onSelect();
+      }}
       onDoubleClick={() => setDraft(label)}
       onKeyDown={(e) => {
         if (e.key !== 'F2') return;

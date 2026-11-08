@@ -33,7 +33,7 @@ export function canonical(value: unknown): string {
     );
   return JSON.stringify(value);
 }
-const fingerprint = (value: unknown): string => sha256(canonical(value));
+export const fingerprint = (value: unknown): string => sha256(canonical(value));
 const string = z.string();
 const number = z.number().finite();
 const roster = z

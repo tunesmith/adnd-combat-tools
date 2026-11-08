@@ -1,0 +1,4524 @@
+{
+  "confirmed": {
+    "kind": "adnd-campaign",
+    "id": "synthetic-b1-native",
+    "title": "Synthetic XP expedition",
+    "notes": "Invented campaign for snapshot persistence checks.",
+    "schemaVersion": 10,
+    "sessions": [
+      {
+        "id": "session-1",
+        "label": "First expedition",
+        "notes": ""
+      },
+      {
+        "id": "session-2",
+        "label": "Return and descent",
+        "notes": ""
+      }
+    ],
+    "records": [],
+    "workingInventories": [],
+    "inventoryCheckpoints": [],
+    "workspace": {
+      "sessionId": "session-2",
+      "view": "xp",
+      "combatSelections": {}
+    },
+    "workingCombats": [],
+    "combatCheckpoints": [],
+    "party": {
+      "roster": [
+        {
+          "id": "xp-mira",
+          "name": "Mira",
+          "player": "",
+          "notes": "Invented fixture"
+        },
+        {
+          "id": "xp-tal",
+          "name": "Tal",
+          "player": "",
+          "notes": "Invented fixture"
+        },
+        {
+          "id": "xp-oren",
+          "name": "Oren",
+          "player": "",
+          "notes": "Invented fixture"
+        },
+        {
+          "id": "xp-nera",
+          "name": "Nera",
+          "player": "",
+          "notes": "Invented fixture"
+        },
+        {
+          "id": "xp-bram",
+          "name": "Bram",
+          "player": "",
+          "notes": "Invented fixture"
+        }
+      ],
+      "profiles": [
+        {
+          "sessionId": "session-1",
+          "characterId": "xp-mira",
+          "characterClass": "fighter",
+          "baseLevel": 1,
+          "saveBasis": "printed",
+          "combatBasis": "class",
+          "retainedFighter": null,
+          "retainedThief": null,
+          "adjustment": null,
+          "participating": true,
+          "overrides": [null, null, null, null, null],
+          "saveNotes": ["", "", ""],
+          "reference": {
+            "race": "",
+            "gender": "",
+            "age": null,
+            "alignment": "",
+            "maxHp": null,
+            "attributes": {
+              "strength": {
+                "score": null,
+                "exceptional": null
+              },
+              "intelligence": null,
+              "wisdom": null,
+              "dexterity": null,
+              "constitution": null,
+              "charisma": null
+            },
+            "bonuses": {
+              "meleeHit": null,
+              "meleeDamage": null,
+              "missileHit": null,
+              "reactionPercent": null,
+              "xpPercent": 10
+            }
+          }
+        },
+        {
+          "sessionId": "session-1",
+          "characterId": "xp-tal",
+          "characterClass": "fighter",
+          "baseLevel": 1,
+          "saveBasis": "printed",
+          "combatBasis": "class",
+          "retainedFighter": null,
+          "retainedThief": null,
+          "adjustment": null,
+          "participating": true,
+          "overrides": [null, null, null, null, null],
+          "saveNotes": ["", "", ""],
+          "reference": {
+            "race": "",
+            "gender": "",
+            "age": null,
+            "alignment": "",
+            "maxHp": null,
+            "attributes": {
+              "strength": {
+                "score": null,
+                "exceptional": null
+              },
+              "intelligence": null,
+              "wisdom": null,
+              "dexterity": null,
+              "constitution": null,
+              "charisma": null
+            },
+            "bonuses": {
+              "meleeHit": null,
+              "meleeDamage": null,
+              "missileHit": null,
+              "reactionPercent": null,
+              "xpPercent": 10
+            }
+          }
+        },
+        {
+          "sessionId": "session-1",
+          "characterId": "xp-oren",
+          "characterClass": "fighter",
+          "baseLevel": 1,
+          "saveBasis": "printed",
+          "combatBasis": "class",
+          "retainedFighter": null,
+          "retainedThief": null,
+          "adjustment": null,
+          "participating": true,
+          "overrides": [null, null, null, null, null],
+          "saveNotes": ["", "", ""],
+          "reference": {
+            "race": "",
+            "gender": "",
+            "age": null,
+            "alignment": "",
+            "maxHp": null,
+            "attributes": {
+              "strength": {
+                "score": null,
+                "exceptional": null
+              },
+              "intelligence": null,
+              "wisdom": null,
+              "dexterity": null,
+              "constitution": null,
+              "charisma": null
+            },
+            "bonuses": {
+              "meleeHit": null,
+              "meleeDamage": null,
+              "missileHit": null,
+              "reactionPercent": null,
+              "xpPercent": 10
+            }
+          }
+        },
+        {
+          "sessionId": "session-1",
+          "characterId": "xp-nera",
+          "characterClass": "fighter",
+          "baseLevel": 1,
+          "saveBasis": "printed",
+          "combatBasis": "class",
+          "retainedFighter": null,
+          "retainedThief": null,
+          "adjustment": null,
+          "participating": true,
+          "overrides": [null, null, null, null, null],
+          "saveNotes": ["", "", ""],
+          "reference": {
+            "race": "",
+            "gender": "",
+            "age": null,
+            "alignment": "",
+            "maxHp": null,
+            "attributes": {
+              "strength": {
+                "score": null,
+                "exceptional": null
+              },
+              "intelligence": null,
+              "wisdom": null,
+              "dexterity": null,
+              "constitution": null,
+              "charisma": null
+            },
+            "bonuses": {
+              "meleeHit": null,
+              "meleeDamage": null,
+              "missileHit": null,
+              "reactionPercent": null,
+              "xpPercent": 0
+            }
+          }
+        },
+        {
+          "sessionId": "session-1",
+          "characterId": "xp-bram",
+          "characterClass": "fighter",
+          "baseLevel": 1,
+          "saveBasis": "printed",
+          "combatBasis": "class",
+          "retainedFighter": null,
+          "retainedThief": null,
+          "adjustment": null,
+          "participating": true,
+          "overrides": [null, null, null, null, null],
+          "saveNotes": ["", "", ""],
+          "reference": {
+            "race": "",
+            "gender": "",
+            "age": null,
+            "alignment": "",
+            "maxHp": null,
+            "attributes": {
+              "strength": {
+                "score": null,
+                "exceptional": null
+              },
+              "intelligence": null,
+              "wisdom": null,
+              "dexterity": null,
+              "constitution": null,
+              "charisma": null
+            },
+            "bonuses": {
+              "meleeHit": null,
+              "meleeDamage": null,
+              "missileHit": null,
+              "reactionPercent": null,
+              "xpPercent": 10
+            }
+          }
+        },
+        {
+          "sessionId": "session-2",
+          "characterId": "xp-mira",
+          "characterClass": "fighter",
+          "baseLevel": 1,
+          "saveBasis": "printed",
+          "combatBasis": "class",
+          "retainedFighter": null,
+          "retainedThief": null,
+          "adjustment": null,
+          "participating": true,
+          "overrides": [null, null, null, null, null],
+          "saveNotes": ["", "", ""],
+          "reference": {
+            "race": "",
+            "gender": "",
+            "age": null,
+            "alignment": "",
+            "maxHp": null,
+            "attributes": {
+              "strength": {
+                "score": null,
+                "exceptional": null
+              },
+              "intelligence": null,
+              "wisdom": null,
+              "dexterity": null,
+              "constitution": null,
+              "charisma": null
+            },
+            "bonuses": {
+              "meleeHit": null,
+              "meleeDamage": null,
+              "missileHit": null,
+              "reactionPercent": null,
+              "xpPercent": 10
+            }
+          }
+        },
+        {
+          "sessionId": "session-2",
+          "characterId": "xp-tal",
+          "characterClass": "fighter",
+          "baseLevel": 1,
+          "saveBasis": "printed",
+          "combatBasis": "class",
+          "retainedFighter": null,
+          "retainedThief": null,
+          "adjustment": null,
+          "participating": true,
+          "overrides": [null, null, null, null, null],
+          "saveNotes": ["", "", ""],
+          "reference": {
+            "race": "",
+            "gender": "",
+            "age": null,
+            "alignment": "",
+            "maxHp": null,
+            "attributes": {
+              "strength": {
+                "score": null,
+                "exceptional": null
+              },
+              "intelligence": null,
+              "wisdom": null,
+              "dexterity": null,
+              "constitution": null,
+              "charisma": null
+            },
+            "bonuses": {
+              "meleeHit": null,
+              "meleeDamage": null,
+              "missileHit": null,
+              "reactionPercent": null,
+              "xpPercent": 10
+            }
+          }
+        },
+        {
+          "sessionId": "session-2",
+          "characterId": "xp-oren",
+          "characterClass": "fighter",
+          "baseLevel": 1,
+          "saveBasis": "printed",
+          "combatBasis": "class",
+          "retainedFighter": null,
+          "retainedThief": null,
+          "adjustment": null,
+          "participating": true,
+          "overrides": [null, null, null, null, null],
+          "saveNotes": ["", "", ""],
+          "reference": {
+            "race": "",
+            "gender": "",
+            "age": null,
+            "alignment": "",
+            "maxHp": null,
+            "attributes": {
+              "strength": {
+                "score": null,
+                "exceptional": null
+              },
+              "intelligence": null,
+              "wisdom": null,
+              "dexterity": null,
+              "constitution": null,
+              "charisma": null
+            },
+            "bonuses": {
+              "meleeHit": null,
+              "meleeDamage": null,
+              "missileHit": null,
+              "reactionPercent": null,
+              "xpPercent": 10
+            }
+          }
+        },
+        {
+          "sessionId": "session-2",
+          "characterId": "xp-nera",
+          "characterClass": "fighter",
+          "baseLevel": 1,
+          "saveBasis": "printed",
+          "combatBasis": "class",
+          "retainedFighter": null,
+          "retainedThief": null,
+          "adjustment": null,
+          "participating": true,
+          "overrides": [null, null, null, null, null],
+          "saveNotes": ["", "", ""],
+          "reference": {
+            "race": "",
+            "gender": "",
+            "age": null,
+            "alignment": "",
+            "maxHp": null,
+            "attributes": {
+              "strength": {
+                "score": null,
+                "exceptional": null
+              },
+              "intelligence": null,
+              "wisdom": null,
+              "dexterity": null,
+              "constitution": null,
+              "charisma": null
+            },
+            "bonuses": {
+              "meleeHit": null,
+              "meleeDamage": null,
+              "missileHit": null,
+              "reactionPercent": null,
+              "xpPercent": 0
+            }
+          }
+        },
+        {
+          "sessionId": "session-2",
+          "characterId": "xp-bram",
+          "characterClass": "fighter",
+          "baseLevel": 1,
+          "saveBasis": "printed",
+          "combatBasis": "class",
+          "retainedFighter": null,
+          "retainedThief": null,
+          "adjustment": null,
+          "participating": true,
+          "overrides": [null, null, null, null, null],
+          "saveNotes": ["", "", ""],
+          "reference": {
+            "race": "",
+            "gender": "",
+            "age": null,
+            "alignment": "",
+            "maxHp": null,
+            "attributes": {
+              "strength": {
+                "score": null,
+                "exceptional": null
+              },
+              "intelligence": null,
+              "wisdom": null,
+              "dexterity": null,
+              "constitution": null,
+              "charisma": null
+            },
+            "bonuses": {
+              "meleeHit": null,
+              "meleeDamage": null,
+              "missileHit": null,
+              "reactionPercent": null,
+              "xpPercent": 10
+            }
+          }
+        }
+      ]
+    },
+    "xp": {
+      "version": 1,
+      "sessionOrder": ["session-1", "session-2"],
+      "openings": [
+        {
+          "id": "opening-xp-mira",
+          "characterId": "xp-mira",
+          "sessionId": "session-1",
+          "balance": 0,
+          "reason": "Explicitly confirmed synthetic starting balance"
+        },
+        {
+          "id": "opening-xp-tal",
+          "characterId": "xp-tal",
+          "sessionId": "session-1",
+          "balance": 0,
+          "reason": "Explicitly confirmed synthetic starting balance"
+        },
+        {
+          "id": "opening-xp-oren",
+          "characterId": "xp-oren",
+          "sessionId": "session-1",
+          "balance": 0,
+          "reason": "Explicitly confirmed synthetic starting balance"
+        },
+        {
+          "id": "opening-xp-nera",
+          "characterId": "xp-nera",
+          "sessionId": "session-1",
+          "balance": 0,
+          "reason": "Explicitly confirmed synthetic starting balance"
+        },
+        {
+          "id": "opening-xp-bram",
+          "characterId": "xp-bram",
+          "sessionId": "session-1",
+          "balance": 0,
+          "reason": "Explicitly confirmed synthetic starting balance"
+        }
+      ],
+      "rewards": [
+        {
+          "id": "raiders",
+          "version": 1,
+          "title": "Seventeen tunnel raiders",
+          "origin": {
+            "sessionId": "session-1",
+            "phase": "end",
+            "order": 0
+          },
+          "input": {
+            "category": "monster",
+            "monsters": [
+              {
+                "id": "raiders-monster",
+                "name": "Tunnel raiders",
+                "count": 17,
+                "basis": "hit-dice",
+                "hitDice": "1/2",
+                "hpAdjustment": 0,
+                "startingHp": "44",
+                "special": 0,
+                "exceptional": 0,
+                "bandOverride": null,
+                "bandReason": ""
+              }
+            ]
+          },
+          "recipients": [
+            {
+              "characterId": "xp-mira",
+              "name": "Mira",
+              "participated": true,
+              "eligible": true,
+              "level": "1",
+              "shares": "1",
+              "allocationOverride": "26",
+              "allocationReason": "Recorded historical award-row rounding"
+            },
+            {
+              "characterId": "xp-tal",
+              "name": "Tal",
+              "participated": true,
+              "eligible": true,
+              "level": "1",
+              "shares": "1",
+              "allocationOverride": "26",
+              "allocationReason": "Recorded historical award-row rounding"
+            },
+            {
+              "characterId": "xp-oren",
+              "name": "Oren",
+              "participated": true,
+              "eligible": true,
+              "level": "1",
+              "shares": "1",
+              "allocationOverride": "26",
+              "allocationReason": "Recorded historical award-row rounding"
+            },
+            {
+              "characterId": "xp-nera",
+              "name": "Nera",
+              "participated": true,
+              "eligible": true,
+              "level": "1",
+              "shares": "1",
+              "allocationOverride": "26",
+              "allocationReason": "Recorded historical award-row rounding"
+            },
+            {
+              "characterId": "xp-bram",
+              "name": "Bram",
+              "participated": true,
+              "eligible": true,
+              "level": "1",
+              "shares": "1",
+              "allocationOverride": "26",
+              "allocationReason": "Recorded historical award-row rounding"
+            }
+          ],
+          "reviewed": true,
+          "eligibility": "secured",
+          "ratio": {
+            "proposed": null,
+            "override": null,
+            "reason": "",
+            "recordedProposal": null,
+            "recordedReason": ""
+          },
+          "rawOverride": null,
+          "evidence": {
+            "kind": "manual",
+            "sourceId": "",
+            "instanceId": "",
+            "sessionId": "session-1",
+            "keys": [],
+            "label": "Manual entry",
+            "fingerprint": "",
+            "snapshot": null
+          },
+          "distinctReason": "",
+          "notes": ""
+        },
+        {
+          "id": "money",
+          "version": 1,
+          "title": "Recovered coin lots",
+          "origin": {
+            "sessionId": "session-1",
+            "phase": "end",
+            "order": 0
+          },
+          "input": {
+            "category": "money",
+            "gp": "675"
+          },
+          "recipients": [
+            {
+              "characterId": "xp-mira",
+              "name": "Mira",
+              "participated": true,
+              "eligible": true,
+              "level": "1",
+              "shares": "1",
+              "allocationOverride": null,
+              "allocationReason": ""
+            },
+            {
+              "characterId": "xp-tal",
+              "name": "Tal",
+              "participated": true,
+              "eligible": true,
+              "level": "1",
+              "shares": "1",
+              "allocationOverride": null,
+              "allocationReason": ""
+            },
+            {
+              "characterId": "xp-oren",
+              "name": "Oren",
+              "participated": true,
+              "eligible": true,
+              "level": "1",
+              "shares": "1",
+              "allocationOverride": null,
+              "allocationReason": ""
+            },
+            {
+              "characterId": "xp-nera",
+              "name": "Nera",
+              "participated": true,
+              "eligible": true,
+              "level": "1",
+              "shares": "1",
+              "allocationOverride": null,
+              "allocationReason": ""
+            },
+            {
+              "characterId": "xp-bram",
+              "name": "Bram",
+              "participated": true,
+              "eligible": true,
+              "level": "1",
+              "shares": "1",
+              "allocationOverride": null,
+              "allocationReason": ""
+            }
+          ],
+          "reviewed": true,
+          "eligibility": "secured",
+          "ratio": {
+            "proposed": "1",
+            "override": null,
+            "reason": "",
+            "recordedProposal": null,
+            "recordedReason": ""
+          },
+          "rawOverride": null,
+          "evidence": {
+            "kind": "manual",
+            "sourceId": "",
+            "instanceId": "",
+            "sessionId": "session-1",
+            "keys": [],
+            "label": "Manual entry",
+            "fingerprint": "",
+            "snapshot": null
+          },
+          "distinctReason": "",
+          "notes": "Invented coin lots: 375 + 50 + 250 GP-equivalent"
+        },
+        {
+          "id": "scroll",
+          "version": 1,
+          "title": "Kept warding scroll",
+          "origin": {
+            "sessionId": "session-1",
+            "phase": "end",
+            "order": 0
+          },
+          "input": {
+            "category": "treasure",
+            "disposition": "keep",
+            "retainedXp": "1500",
+            "proceeds": null,
+            "marketGp": "7500"
+          },
+          "recipients": [
+            {
+              "characterId": "xp-mira",
+              "name": "Mira",
+              "participated": true,
+              "eligible": true,
+              "level": "1",
+              "shares": "1",
+              "allocationOverride": null,
+              "allocationReason": ""
+            },
+            {
+              "characterId": "xp-tal",
+              "name": "Tal",
+              "participated": true,
+              "eligible": true,
+              "level": "1",
+              "shares": "1",
+              "allocationOverride": null,
+              "allocationReason": ""
+            },
+            {
+              "characterId": "xp-oren",
+              "name": "Oren",
+              "participated": true,
+              "eligible": true,
+              "level": "1",
+              "shares": "1",
+              "allocationOverride": null,
+              "allocationReason": ""
+            },
+            {
+              "characterId": "xp-nera",
+              "name": "Nera",
+              "participated": true,
+              "eligible": true,
+              "level": "1",
+              "shares": "1",
+              "allocationOverride": null,
+              "allocationReason": ""
+            },
+            {
+              "characterId": "xp-bram",
+              "name": "Bram",
+              "participated": true,
+              "eligible": true,
+              "level": "1",
+              "shares": "1",
+              "allocationOverride": null,
+              "allocationReason": ""
+            }
+          ],
+          "reviewed": true,
+          "eligibility": "secured",
+          "ratio": {
+            "proposed": "1",
+            "override": null,
+            "reason": "",
+            "recordedProposal": null,
+            "recordedReason": ""
+          },
+          "rawOverride": null,
+          "evidence": {
+            "kind": "manual",
+            "sourceId": "",
+            "instanceId": "",
+            "sessionId": "session-1",
+            "keys": [],
+            "label": "Manual entry",
+            "fingerprint": "",
+            "snapshot": null
+          },
+          "distinctReason": "",
+          "notes": ""
+        },
+        {
+          "id": "later-fungus",
+          "version": 1,
+          "title": "Later alarm fungus",
+          "origin": {
+            "sessionId": "session-2",
+            "phase": "during",
+            "order": 1
+          },
+          "input": {
+            "category": "monster",
+            "monsters": [
+              {
+                "id": "later-fungus-monster",
+                "name": "Alarm fungus",
+                "count": 1,
+                "basis": "hit-dice",
+                "hitDice": "3",
+                "hpAdjustment": 0,
+                "startingHp": "14",
+                "special": 0,
+                "exceptional": 0,
+                "bandOverride": null,
+                "bandReason": ""
+              }
+            ]
+          },
+          "recipients": [
+            {
+              "characterId": "xp-mira",
+              "name": "Mira",
+              "participated": true,
+              "eligible": true,
+              "level": "1",
+              "shares": "1",
+              "allocationOverride": null,
+              "allocationReason": ""
+            },
+            {
+              "characterId": "xp-tal",
+              "name": "Tal",
+              "participated": true,
+              "eligible": true,
+              "level": "1",
+              "shares": "1",
+              "allocationOverride": null,
+              "allocationReason": ""
+            },
+            {
+              "characterId": "xp-oren",
+              "name": "Oren",
+              "participated": true,
+              "eligible": true,
+              "level": "1",
+              "shares": "1",
+              "allocationOverride": null,
+              "allocationReason": ""
+            },
+            {
+              "characterId": "xp-nera",
+              "name": "Nera",
+              "participated": true,
+              "eligible": true,
+              "level": "1",
+              "shares": "1",
+              "allocationOverride": null,
+              "allocationReason": ""
+            }
+          ],
+          "reviewed": true,
+          "eligibility": "secured",
+          "ratio": {
+            "proposed": null,
+            "override": "1",
+            "reason": "Recorded historical DM ratio decision; original explanation not recorded",
+            "recordedProposal": "1/2",
+            "recordedReason": "Historical sheet proposed 0.5 before its recorded override"
+          },
+          "rawOverride": {
+            "amount": "92",
+            "reason": "Historical extra 15 XP retained after DM review"
+          },
+          "evidence": {
+            "kind": "manual",
+            "sourceId": "",
+            "instanceId": "",
+            "sessionId": "session-1",
+            "keys": [],
+            "label": "Manual entry",
+            "fingerprint": "",
+            "snapshot": null
+          },
+          "distinctReason": "",
+          "notes": ""
+        }
+      ],
+      "points": [
+        {
+          "id": "refuge-point",
+          "label": "At the synthetic refuge",
+          "position": {
+            "sessionId": "session-2",
+            "phase": "opening",
+            "order": 0
+          },
+          "rewardIds": ["raiders", "money", "scroll"],
+          "bonuses": [
+            {
+              "characterId": "xp-mira",
+              "name": "Mira",
+              "percent": "10",
+              "reason": "",
+              "finalOverride": null,
+              "finalReason": ""
+            },
+            {
+              "characterId": "xp-tal",
+              "name": "Tal",
+              "percent": "10",
+              "reason": "",
+              "finalOverride": null,
+              "finalReason": ""
+            },
+            {
+              "characterId": "xp-oren",
+              "name": "Oren",
+              "percent": "10",
+              "reason": "",
+              "finalOverride": null,
+              "finalReason": ""
+            },
+            {
+              "characterId": "xp-nera",
+              "name": "Nera",
+              "percent": "0",
+              "reason": "",
+              "finalOverride": null,
+              "finalReason": ""
+            },
+            {
+              "characterId": "xp-bram",
+              "name": "Bram",
+              "percent": "10",
+              "reason": "",
+              "finalOverride": null,
+              "finalReason": ""
+            }
+          ],
+          "correctionOf": null,
+          "correctionReason": "",
+          "rewardOverrides": [],
+          "confirmedEventId": "refuge-confirmed"
+        }
+      ],
+      "events": [
+        {
+          "id": "refuge-confirmed",
+          "point": {
+            "id": "refuge-point",
+            "label": "At the synthetic refuge",
+            "position": {
+              "sessionId": "session-2",
+              "phase": "opening",
+              "order": 0
+            },
+            "rewardIds": ["raiders", "money", "scroll"],
+            "bonuses": [
+              {
+                "characterId": "xp-mira",
+                "name": "Mira",
+                "percent": "10",
+                "reason": "",
+                "finalOverride": null,
+                "finalReason": ""
+              },
+              {
+                "characterId": "xp-tal",
+                "name": "Tal",
+                "percent": "10",
+                "reason": "",
+                "finalOverride": null,
+                "finalReason": ""
+              },
+              {
+                "characterId": "xp-oren",
+                "name": "Oren",
+                "percent": "10",
+                "reason": "",
+                "finalOverride": null,
+                "finalReason": ""
+              },
+              {
+                "characterId": "xp-nera",
+                "name": "Nera",
+                "percent": "0",
+                "reason": "",
+                "finalOverride": null,
+                "finalReason": ""
+              },
+              {
+                "characterId": "xp-bram",
+                "name": "Bram",
+                "percent": "10",
+                "reason": "",
+                "finalOverride": null,
+                "finalReason": ""
+              }
+            ],
+            "correctionOf": null,
+            "correctionReason": "",
+            "rewardOverrides": [],
+            "confirmedEventId": null
+          },
+          "confirmedAt": "2026-11-07T12:00:00.000Z",
+          "replaces": null,
+          "correctionRoot": null,
+          "reason": "",
+          "calculatorVersion": 1,
+          "rounding": "nearest-whole-half-up-after-bonus",
+          "rewards": [
+            {
+              "id": "raiders",
+              "version": 1,
+              "title": "Seventeen tunnel raiders",
+              "origin": {
+                "sessionId": "session-1",
+                "phase": "end",
+                "order": 0
+              },
+              "input": {
+                "category": "monster",
+                "monsters": [
+                  {
+                    "id": "raiders-monster",
+                    "name": "Tunnel raiders",
+                    "count": 17,
+                    "basis": "hit-dice",
+                    "hitDice": "1/2",
+                    "hpAdjustment": 0,
+                    "startingHp": "44",
+                    "special": 0,
+                    "exceptional": 0,
+                    "bandOverride": null,
+                    "bandReason": ""
+                  }
+                ]
+              },
+              "recipients": [
+                {
+                  "characterId": "xp-mira",
+                  "name": "Mira",
+                  "participated": true,
+                  "eligible": true,
+                  "level": "1",
+                  "shares": "1",
+                  "allocationOverride": "26",
+                  "allocationReason": "Recorded historical award-row rounding"
+                },
+                {
+                  "characterId": "xp-tal",
+                  "name": "Tal",
+                  "participated": true,
+                  "eligible": true,
+                  "level": "1",
+                  "shares": "1",
+                  "allocationOverride": "26",
+                  "allocationReason": "Recorded historical award-row rounding"
+                },
+                {
+                  "characterId": "xp-oren",
+                  "name": "Oren",
+                  "participated": true,
+                  "eligible": true,
+                  "level": "1",
+                  "shares": "1",
+                  "allocationOverride": "26",
+                  "allocationReason": "Recorded historical award-row rounding"
+                },
+                {
+                  "characterId": "xp-nera",
+                  "name": "Nera",
+                  "participated": true,
+                  "eligible": true,
+                  "level": "1",
+                  "shares": "1",
+                  "allocationOverride": "26",
+                  "allocationReason": "Recorded historical award-row rounding"
+                },
+                {
+                  "characterId": "xp-bram",
+                  "name": "Bram",
+                  "participated": true,
+                  "eligible": true,
+                  "level": "1",
+                  "shares": "1",
+                  "allocationOverride": "26",
+                  "allocationReason": "Recorded historical award-row rounding"
+                }
+              ],
+              "reviewed": true,
+              "eligibility": "secured",
+              "ratio": {
+                "proposed": null,
+                "override": null,
+                "reason": "",
+                "recordedProposal": null,
+                "recordedReason": ""
+              },
+              "rawOverride": null,
+              "evidence": {
+                "kind": "manual",
+                "sourceId": "",
+                "instanceId": "",
+                "sessionId": "session-1",
+                "keys": [],
+                "label": "Manual entry",
+                "fingerprint": "",
+                "snapshot": null
+              },
+              "distinctReason": "",
+              "notes": ""
+            },
+            {
+              "id": "money",
+              "version": 1,
+              "title": "Recovered coin lots",
+              "origin": {
+                "sessionId": "session-1",
+                "phase": "end",
+                "order": 0
+              },
+              "input": {
+                "category": "money",
+                "gp": "675"
+              },
+              "recipients": [
+                {
+                  "characterId": "xp-mira",
+                  "name": "Mira",
+                  "participated": true,
+                  "eligible": true,
+                  "level": "1",
+                  "shares": "1",
+                  "allocationOverride": null,
+                  "allocationReason": ""
+                },
+                {
+                  "characterId": "xp-tal",
+                  "name": "Tal",
+                  "participated": true,
+                  "eligible": true,
+                  "level": "1",
+                  "shares": "1",
+                  "allocationOverride": null,
+                  "allocationReason": ""
+                },
+                {
+                  "characterId": "xp-oren",
+                  "name": "Oren",
+                  "participated": true,
+                  "eligible": true,
+                  "level": "1",
+                  "shares": "1",
+                  "allocationOverride": null,
+                  "allocationReason": ""
+                },
+                {
+                  "characterId": "xp-nera",
+                  "name": "Nera",
+                  "participated": true,
+                  "eligible": true,
+                  "level": "1",
+                  "shares": "1",
+                  "allocationOverride": null,
+                  "allocationReason": ""
+                },
+                {
+                  "characterId": "xp-bram",
+                  "name": "Bram",
+                  "participated": true,
+                  "eligible": true,
+                  "level": "1",
+                  "shares": "1",
+                  "allocationOverride": null,
+                  "allocationReason": ""
+                }
+              ],
+              "reviewed": true,
+              "eligibility": "secured",
+              "ratio": {
+                "proposed": "1",
+                "override": null,
+                "reason": "",
+                "recordedProposal": null,
+                "recordedReason": ""
+              },
+              "rawOverride": null,
+              "evidence": {
+                "kind": "manual",
+                "sourceId": "",
+                "instanceId": "",
+                "sessionId": "session-1",
+                "keys": [],
+                "label": "Manual entry",
+                "fingerprint": "",
+                "snapshot": null
+              },
+              "distinctReason": "",
+              "notes": "Invented coin lots: 375 + 50 + 250 GP-equivalent"
+            },
+            {
+              "id": "scroll",
+              "version": 1,
+              "title": "Kept warding scroll",
+              "origin": {
+                "sessionId": "session-1",
+                "phase": "end",
+                "order": 0
+              },
+              "input": {
+                "category": "treasure",
+                "disposition": "keep",
+                "retainedXp": "1500",
+                "proceeds": null,
+                "marketGp": "7500"
+              },
+              "recipients": [
+                {
+                  "characterId": "xp-mira",
+                  "name": "Mira",
+                  "participated": true,
+                  "eligible": true,
+                  "level": "1",
+                  "shares": "1",
+                  "allocationOverride": null,
+                  "allocationReason": ""
+                },
+                {
+                  "characterId": "xp-tal",
+                  "name": "Tal",
+                  "participated": true,
+                  "eligible": true,
+                  "level": "1",
+                  "shares": "1",
+                  "allocationOverride": null,
+                  "allocationReason": ""
+                },
+                {
+                  "characterId": "xp-oren",
+                  "name": "Oren",
+                  "participated": true,
+                  "eligible": true,
+                  "level": "1",
+                  "shares": "1",
+                  "allocationOverride": null,
+                  "allocationReason": ""
+                },
+                {
+                  "characterId": "xp-nera",
+                  "name": "Nera",
+                  "participated": true,
+                  "eligible": true,
+                  "level": "1",
+                  "shares": "1",
+                  "allocationOverride": null,
+                  "allocationReason": ""
+                },
+                {
+                  "characterId": "xp-bram",
+                  "name": "Bram",
+                  "participated": true,
+                  "eligible": true,
+                  "level": "1",
+                  "shares": "1",
+                  "allocationOverride": null,
+                  "allocationReason": ""
+                }
+              ],
+              "reviewed": true,
+              "eligibility": "secured",
+              "ratio": {
+                "proposed": "1",
+                "override": null,
+                "reason": "",
+                "recordedProposal": null,
+                "recordedReason": ""
+              },
+              "rawOverride": null,
+              "evidence": {
+                "kind": "manual",
+                "sourceId": "",
+                "instanceId": "",
+                "sessionId": "session-1",
+                "keys": [],
+                "label": "Manual entry",
+                "fingerprint": "",
+                "snapshot": null
+              },
+              "distinctReason": "",
+              "notes": ""
+            }
+          ],
+          "rows": [
+            {
+              "characterId": "xp-mira",
+              "name": "Mira",
+              "allocations": [
+                {
+                  "rewardId": "raiders",
+                  "calculated": "129/5",
+                  "accepted": "26",
+                  "reason": "Recorded historical award-row rounding"
+                },
+                {
+                  "rewardId": "money",
+                  "calculated": "135",
+                  "accepted": "135",
+                  "reason": ""
+                },
+                {
+                  "rewardId": "scroll",
+                  "calculated": "300",
+                  "accepted": "300",
+                  "reason": ""
+                }
+              ],
+              "base": "461",
+              "bonusPercent": "10",
+              "bonus": "461/10",
+              "unrounded": "5071/10",
+              "rounded": 507,
+              "award": 507,
+              "overrideReason": "",
+              "before": 0,
+              "after": 507
+            },
+            {
+              "characterId": "xp-tal",
+              "name": "Tal",
+              "allocations": [
+                {
+                  "rewardId": "raiders",
+                  "calculated": "129/5",
+                  "accepted": "26",
+                  "reason": "Recorded historical award-row rounding"
+                },
+                {
+                  "rewardId": "money",
+                  "calculated": "135",
+                  "accepted": "135",
+                  "reason": ""
+                },
+                {
+                  "rewardId": "scroll",
+                  "calculated": "300",
+                  "accepted": "300",
+                  "reason": ""
+                }
+              ],
+              "base": "461",
+              "bonusPercent": "10",
+              "bonus": "461/10",
+              "unrounded": "5071/10",
+              "rounded": 507,
+              "award": 507,
+              "overrideReason": "",
+              "before": 0,
+              "after": 507
+            },
+            {
+              "characterId": "xp-oren",
+              "name": "Oren",
+              "allocations": [
+                {
+                  "rewardId": "raiders",
+                  "calculated": "129/5",
+                  "accepted": "26",
+                  "reason": "Recorded historical award-row rounding"
+                },
+                {
+                  "rewardId": "money",
+                  "calculated": "135",
+                  "accepted": "135",
+                  "reason": ""
+                },
+                {
+                  "rewardId": "scroll",
+                  "calculated": "300",
+                  "accepted": "300",
+                  "reason": ""
+                }
+              ],
+              "base": "461",
+              "bonusPercent": "10",
+              "bonus": "461/10",
+              "unrounded": "5071/10",
+              "rounded": 507,
+              "award": 507,
+              "overrideReason": "",
+              "before": 0,
+              "after": 507
+            },
+            {
+              "characterId": "xp-nera",
+              "name": "Nera",
+              "allocations": [
+                {
+                  "rewardId": "raiders",
+                  "calculated": "129/5",
+                  "accepted": "26",
+                  "reason": "Recorded historical award-row rounding"
+                },
+                {
+                  "rewardId": "money",
+                  "calculated": "135",
+                  "accepted": "135",
+                  "reason": ""
+                },
+                {
+                  "rewardId": "scroll",
+                  "calculated": "300",
+                  "accepted": "300",
+                  "reason": ""
+                }
+              ],
+              "base": "461",
+              "bonusPercent": "0",
+              "bonus": "0",
+              "unrounded": "461",
+              "rounded": 461,
+              "award": 461,
+              "overrideReason": "",
+              "before": 0,
+              "after": 461
+            },
+            {
+              "characterId": "xp-bram",
+              "name": "Bram",
+              "allocations": [
+                {
+                  "rewardId": "raiders",
+                  "calculated": "129/5",
+                  "accepted": "26",
+                  "reason": "Recorded historical award-row rounding"
+                },
+                {
+                  "rewardId": "money",
+                  "calculated": "135",
+                  "accepted": "135",
+                  "reason": ""
+                },
+                {
+                  "rewardId": "scroll",
+                  "calculated": "300",
+                  "accepted": "300",
+                  "reason": ""
+                }
+              ],
+              "base": "461",
+              "bonusPercent": "10",
+              "bonus": "461/10",
+              "unrounded": "5071/10",
+              "rounded": 507,
+              "award": 507,
+              "overrideReason": "",
+              "before": 0,
+              "after": 507
+            }
+          ],
+          "resolutions": [
+            {
+              "calculatedAllocation": "129",
+              "acceptedAllocation": "130",
+              "allocationAdjustment": {
+                "direction": "increase",
+                "amount": "1"
+              },
+              "rewardId": "raiders",
+              "calculatedRaw": "129",
+              "raw": "129",
+              "difficulty": "17/2",
+              "proposedRatio": "1",
+              "ratio": "1",
+              "recordedProposal": null,
+              "calculationError": null,
+              "monsters": [
+                {
+                  "coefficients": {
+                    "id": "under-one",
+                    "label": "Up to 1−1 HD",
+                    "maximum": 1,
+                    "base": 5,
+                    "perHp": 1,
+                    "special": 2,
+                    "exceptional": 25
+                  },
+                  "raw": "129",
+                  "difficulty": "17/2"
+                }
+              ],
+              "allocations": [
+                {
+                  "characterId": "xp-mira",
+                  "calculated": "129/5",
+                  "accepted": "26",
+                  "reason": "Recorded historical award-row rounding"
+                },
+                {
+                  "characterId": "xp-tal",
+                  "calculated": "129/5",
+                  "accepted": "26",
+                  "reason": "Recorded historical award-row rounding"
+                },
+                {
+                  "characterId": "xp-oren",
+                  "calculated": "129/5",
+                  "accepted": "26",
+                  "reason": "Recorded historical award-row rounding"
+                },
+                {
+                  "characterId": "xp-nera",
+                  "calculated": "129/5",
+                  "accepted": "26",
+                  "reason": "Recorded historical award-row rounding"
+                },
+                {
+                  "characterId": "xp-bram",
+                  "calculated": "129/5",
+                  "accepted": "26",
+                  "reason": "Recorded historical award-row rounding"
+                }
+              ]
+            },
+            {
+              "calculatedAllocation": "675",
+              "acceptedAllocation": "675",
+              "allocationAdjustment": {
+                "direction": "none",
+                "amount": "0"
+              },
+              "rewardId": "money",
+              "calculatedRaw": "675",
+              "raw": "675",
+              "difficulty": null,
+              "proposedRatio": "1",
+              "ratio": "1",
+              "recordedProposal": null,
+              "calculationError": null,
+              "monsters": [],
+              "allocations": [
+                {
+                  "characterId": "xp-mira",
+                  "calculated": "135",
+                  "accepted": "135",
+                  "reason": ""
+                },
+                {
+                  "characterId": "xp-tal",
+                  "calculated": "135",
+                  "accepted": "135",
+                  "reason": ""
+                },
+                {
+                  "characterId": "xp-oren",
+                  "calculated": "135",
+                  "accepted": "135",
+                  "reason": ""
+                },
+                {
+                  "characterId": "xp-nera",
+                  "calculated": "135",
+                  "accepted": "135",
+                  "reason": ""
+                },
+                {
+                  "characterId": "xp-bram",
+                  "calculated": "135",
+                  "accepted": "135",
+                  "reason": ""
+                }
+              ]
+            },
+            {
+              "calculatedAllocation": "1500",
+              "acceptedAllocation": "1500",
+              "allocationAdjustment": {
+                "direction": "none",
+                "amount": "0"
+              },
+              "rewardId": "scroll",
+              "calculatedRaw": "1500",
+              "raw": "1500",
+              "difficulty": null,
+              "proposedRatio": "1",
+              "ratio": "1",
+              "recordedProposal": null,
+              "calculationError": null,
+              "monsters": [],
+              "allocations": [
+                {
+                  "characterId": "xp-mira",
+                  "calculated": "300",
+                  "accepted": "300",
+                  "reason": ""
+                },
+                {
+                  "characterId": "xp-tal",
+                  "calculated": "300",
+                  "accepted": "300",
+                  "reason": ""
+                },
+                {
+                  "characterId": "xp-oren",
+                  "calculated": "300",
+                  "accepted": "300",
+                  "reason": ""
+                },
+                {
+                  "characterId": "xp-nera",
+                  "calculated": "300",
+                  "accepted": "300",
+                  "reason": ""
+                },
+                {
+                  "characterId": "xp-bram",
+                  "calculated": "300",
+                  "accepted": "300",
+                  "reason": ""
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "corrected": {
+    "kind": "adnd-campaign",
+    "id": "synthetic-b1-native",
+    "title": "Synthetic XP expedition",
+    "notes": "Invented campaign for snapshot persistence checks.",
+    "schemaVersion": 10,
+    "sessions": [
+      {
+        "id": "session-1",
+        "label": "First expedition",
+        "notes": ""
+      },
+      {
+        "id": "session-2",
+        "label": "Return and descent",
+        "notes": ""
+      }
+    ],
+    "records": [],
+    "workingInventories": [],
+    "inventoryCheckpoints": [],
+    "workspace": {
+      "sessionId": "session-2",
+      "view": "xp",
+      "combatSelections": {}
+    },
+    "workingCombats": [],
+    "combatCheckpoints": [],
+    "party": {
+      "roster": [
+        {
+          "id": "xp-mira",
+          "name": "Mira",
+          "player": "",
+          "notes": "Invented fixture"
+        },
+        {
+          "id": "xp-tal",
+          "name": "Tal",
+          "player": "",
+          "notes": "Invented fixture"
+        },
+        {
+          "id": "xp-oren",
+          "name": "Oren",
+          "player": "",
+          "notes": "Invented fixture"
+        },
+        {
+          "id": "xp-nera",
+          "name": "Nera",
+          "player": "",
+          "notes": "Invented fixture"
+        },
+        {
+          "id": "xp-bram",
+          "name": "Bram",
+          "player": "",
+          "notes": "Invented fixture"
+        }
+      ],
+      "profiles": [
+        {
+          "sessionId": "session-1",
+          "characterId": "xp-mira",
+          "characterClass": "fighter",
+          "baseLevel": 1,
+          "saveBasis": "printed",
+          "combatBasis": "class",
+          "retainedFighter": null,
+          "retainedThief": null,
+          "adjustment": null,
+          "participating": true,
+          "overrides": [null, null, null, null, null],
+          "saveNotes": ["", "", ""],
+          "reference": {
+            "race": "",
+            "gender": "",
+            "age": null,
+            "alignment": "",
+            "maxHp": null,
+            "attributes": {
+              "strength": {
+                "score": null,
+                "exceptional": null
+              },
+              "intelligence": null,
+              "wisdom": null,
+              "dexterity": null,
+              "constitution": null,
+              "charisma": null
+            },
+            "bonuses": {
+              "meleeHit": null,
+              "meleeDamage": null,
+              "missileHit": null,
+              "reactionPercent": null,
+              "xpPercent": 10
+            }
+          }
+        },
+        {
+          "sessionId": "session-1",
+          "characterId": "xp-tal",
+          "characterClass": "fighter",
+          "baseLevel": 1,
+          "saveBasis": "printed",
+          "combatBasis": "class",
+          "retainedFighter": null,
+          "retainedThief": null,
+          "adjustment": null,
+          "participating": true,
+          "overrides": [null, null, null, null, null],
+          "saveNotes": ["", "", ""],
+          "reference": {
+            "race": "",
+            "gender": "",
+            "age": null,
+            "alignment": "",
+            "maxHp": null,
+            "attributes": {
+              "strength": {
+                "score": null,
+                "exceptional": null
+              },
+              "intelligence": null,
+              "wisdom": null,
+              "dexterity": null,
+              "constitution": null,
+              "charisma": null
+            },
+            "bonuses": {
+              "meleeHit": null,
+              "meleeDamage": null,
+              "missileHit": null,
+              "reactionPercent": null,
+              "xpPercent": 10
+            }
+          }
+        },
+        {
+          "sessionId": "session-1",
+          "characterId": "xp-oren",
+          "characterClass": "fighter",
+          "baseLevel": 1,
+          "saveBasis": "printed",
+          "combatBasis": "class",
+          "retainedFighter": null,
+          "retainedThief": null,
+          "adjustment": null,
+          "participating": true,
+          "overrides": [null, null, null, null, null],
+          "saveNotes": ["", "", ""],
+          "reference": {
+            "race": "",
+            "gender": "",
+            "age": null,
+            "alignment": "",
+            "maxHp": null,
+            "attributes": {
+              "strength": {
+                "score": null,
+                "exceptional": null
+              },
+              "intelligence": null,
+              "wisdom": null,
+              "dexterity": null,
+              "constitution": null,
+              "charisma": null
+            },
+            "bonuses": {
+              "meleeHit": null,
+              "meleeDamage": null,
+              "missileHit": null,
+              "reactionPercent": null,
+              "xpPercent": 10
+            }
+          }
+        },
+        {
+          "sessionId": "session-1",
+          "characterId": "xp-nera",
+          "characterClass": "fighter",
+          "baseLevel": 1,
+          "saveBasis": "printed",
+          "combatBasis": "class",
+          "retainedFighter": null,
+          "retainedThief": null,
+          "adjustment": null,
+          "participating": true,
+          "overrides": [null, null, null, null, null],
+          "saveNotes": ["", "", ""],
+          "reference": {
+            "race": "",
+            "gender": "",
+            "age": null,
+            "alignment": "",
+            "maxHp": null,
+            "attributes": {
+              "strength": {
+                "score": null,
+                "exceptional": null
+              },
+              "intelligence": null,
+              "wisdom": null,
+              "dexterity": null,
+              "constitution": null,
+              "charisma": null
+            },
+            "bonuses": {
+              "meleeHit": null,
+              "meleeDamage": null,
+              "missileHit": null,
+              "reactionPercent": null,
+              "xpPercent": 0
+            }
+          }
+        },
+        {
+          "sessionId": "session-1",
+          "characterId": "xp-bram",
+          "characterClass": "fighter",
+          "baseLevel": 1,
+          "saveBasis": "printed",
+          "combatBasis": "class",
+          "retainedFighter": null,
+          "retainedThief": null,
+          "adjustment": null,
+          "participating": true,
+          "overrides": [null, null, null, null, null],
+          "saveNotes": ["", "", ""],
+          "reference": {
+            "race": "",
+            "gender": "",
+            "age": null,
+            "alignment": "",
+            "maxHp": null,
+            "attributes": {
+              "strength": {
+                "score": null,
+                "exceptional": null
+              },
+              "intelligence": null,
+              "wisdom": null,
+              "dexterity": null,
+              "constitution": null,
+              "charisma": null
+            },
+            "bonuses": {
+              "meleeHit": null,
+              "meleeDamage": null,
+              "missileHit": null,
+              "reactionPercent": null,
+              "xpPercent": 10
+            }
+          }
+        },
+        {
+          "sessionId": "session-2",
+          "characterId": "xp-mira",
+          "characterClass": "fighter",
+          "baseLevel": 1,
+          "saveBasis": "printed",
+          "combatBasis": "class",
+          "retainedFighter": null,
+          "retainedThief": null,
+          "adjustment": null,
+          "participating": true,
+          "overrides": [null, null, null, null, null],
+          "saveNotes": ["", "", ""],
+          "reference": {
+            "race": "",
+            "gender": "",
+            "age": null,
+            "alignment": "",
+            "maxHp": null,
+            "attributes": {
+              "strength": {
+                "score": null,
+                "exceptional": null
+              },
+              "intelligence": null,
+              "wisdom": null,
+              "dexterity": null,
+              "constitution": null,
+              "charisma": null
+            },
+            "bonuses": {
+              "meleeHit": null,
+              "meleeDamage": null,
+              "missileHit": null,
+              "reactionPercent": null,
+              "xpPercent": 10
+            }
+          }
+        },
+        {
+          "sessionId": "session-2",
+          "characterId": "xp-tal",
+          "characterClass": "fighter",
+          "baseLevel": 1,
+          "saveBasis": "printed",
+          "combatBasis": "class",
+          "retainedFighter": null,
+          "retainedThief": null,
+          "adjustment": null,
+          "participating": true,
+          "overrides": [null, null, null, null, null],
+          "saveNotes": ["", "", ""],
+          "reference": {
+            "race": "",
+            "gender": "",
+            "age": null,
+            "alignment": "",
+            "maxHp": null,
+            "attributes": {
+              "strength": {
+                "score": null,
+                "exceptional": null
+              },
+              "intelligence": null,
+              "wisdom": null,
+              "dexterity": null,
+              "constitution": null,
+              "charisma": null
+            },
+            "bonuses": {
+              "meleeHit": null,
+              "meleeDamage": null,
+              "missileHit": null,
+              "reactionPercent": null,
+              "xpPercent": 10
+            }
+          }
+        },
+        {
+          "sessionId": "session-2",
+          "characterId": "xp-oren",
+          "characterClass": "fighter",
+          "baseLevel": 1,
+          "saveBasis": "printed",
+          "combatBasis": "class",
+          "retainedFighter": null,
+          "retainedThief": null,
+          "adjustment": null,
+          "participating": true,
+          "overrides": [null, null, null, null, null],
+          "saveNotes": ["", "", ""],
+          "reference": {
+            "race": "",
+            "gender": "",
+            "age": null,
+            "alignment": "",
+            "maxHp": null,
+            "attributes": {
+              "strength": {
+                "score": null,
+                "exceptional": null
+              },
+              "intelligence": null,
+              "wisdom": null,
+              "dexterity": null,
+              "constitution": null,
+              "charisma": null
+            },
+            "bonuses": {
+              "meleeHit": null,
+              "meleeDamage": null,
+              "missileHit": null,
+              "reactionPercent": null,
+              "xpPercent": 10
+            }
+          }
+        },
+        {
+          "sessionId": "session-2",
+          "characterId": "xp-nera",
+          "characterClass": "fighter",
+          "baseLevel": 1,
+          "saveBasis": "printed",
+          "combatBasis": "class",
+          "retainedFighter": null,
+          "retainedThief": null,
+          "adjustment": null,
+          "participating": true,
+          "overrides": [null, null, null, null, null],
+          "saveNotes": ["", "", ""],
+          "reference": {
+            "race": "",
+            "gender": "",
+            "age": null,
+            "alignment": "",
+            "maxHp": null,
+            "attributes": {
+              "strength": {
+                "score": null,
+                "exceptional": null
+              },
+              "intelligence": null,
+              "wisdom": null,
+              "dexterity": null,
+              "constitution": null,
+              "charisma": null
+            },
+            "bonuses": {
+              "meleeHit": null,
+              "meleeDamage": null,
+              "missileHit": null,
+              "reactionPercent": null,
+              "xpPercent": 0
+            }
+          }
+        },
+        {
+          "sessionId": "session-2",
+          "characterId": "xp-bram",
+          "characterClass": "fighter",
+          "baseLevel": 1,
+          "saveBasis": "printed",
+          "combatBasis": "class",
+          "retainedFighter": null,
+          "retainedThief": null,
+          "adjustment": null,
+          "participating": true,
+          "overrides": [null, null, null, null, null],
+          "saveNotes": ["", "", ""],
+          "reference": {
+            "race": "",
+            "gender": "",
+            "age": null,
+            "alignment": "",
+            "maxHp": null,
+            "attributes": {
+              "strength": {
+                "score": null,
+                "exceptional": null
+              },
+              "intelligence": null,
+              "wisdom": null,
+              "dexterity": null,
+              "constitution": null,
+              "charisma": null
+            },
+            "bonuses": {
+              "meleeHit": null,
+              "meleeDamage": null,
+              "missileHit": null,
+              "reactionPercent": null,
+              "xpPercent": 10
+            }
+          }
+        }
+      ]
+    },
+    "xp": {
+      "version": 1,
+      "sessionOrder": ["session-1", "session-2"],
+      "openings": [
+        {
+          "id": "opening-xp-mira",
+          "characterId": "xp-mira",
+          "sessionId": "session-1",
+          "balance": 0,
+          "reason": "Explicitly confirmed synthetic starting balance"
+        },
+        {
+          "id": "opening-xp-tal",
+          "characterId": "xp-tal",
+          "sessionId": "session-1",
+          "balance": 0,
+          "reason": "Explicitly confirmed synthetic starting balance"
+        },
+        {
+          "id": "opening-xp-oren",
+          "characterId": "xp-oren",
+          "sessionId": "session-1",
+          "balance": 0,
+          "reason": "Explicitly confirmed synthetic starting balance"
+        },
+        {
+          "id": "opening-xp-nera",
+          "characterId": "xp-nera",
+          "sessionId": "session-1",
+          "balance": 0,
+          "reason": "Explicitly confirmed synthetic starting balance"
+        },
+        {
+          "id": "opening-xp-bram",
+          "characterId": "xp-bram",
+          "sessionId": "session-1",
+          "balance": 0,
+          "reason": "Explicitly confirmed synthetic starting balance"
+        }
+      ],
+      "rewards": [
+        {
+          "id": "raiders",
+          "version": 1,
+          "title": "Seventeen tunnel raiders",
+          "origin": {
+            "sessionId": "session-1",
+            "phase": "end",
+            "order": 0
+          },
+          "input": {
+            "category": "monster",
+            "monsters": [
+              {
+                "id": "raiders-monster",
+                "name": "Tunnel raiders",
+                "count": 17,
+                "basis": "hit-dice",
+                "hitDice": "1/2",
+                "hpAdjustment": 0,
+                "startingHp": "44",
+                "special": 0,
+                "exceptional": 0,
+                "bandOverride": null,
+                "bandReason": ""
+              }
+            ]
+          },
+          "recipients": [
+            {
+              "characterId": "xp-mira",
+              "name": "Mira",
+              "participated": true,
+              "eligible": true,
+              "level": "1",
+              "shares": "1",
+              "allocationOverride": "26",
+              "allocationReason": "Recorded historical award-row rounding"
+            },
+            {
+              "characterId": "xp-tal",
+              "name": "Tal",
+              "participated": true,
+              "eligible": true,
+              "level": "1",
+              "shares": "1",
+              "allocationOverride": "26",
+              "allocationReason": "Recorded historical award-row rounding"
+            },
+            {
+              "characterId": "xp-oren",
+              "name": "Oren",
+              "participated": true,
+              "eligible": true,
+              "level": "1",
+              "shares": "1",
+              "allocationOverride": "26",
+              "allocationReason": "Recorded historical award-row rounding"
+            },
+            {
+              "characterId": "xp-nera",
+              "name": "Nera",
+              "participated": true,
+              "eligible": true,
+              "level": "1",
+              "shares": "1",
+              "allocationOverride": "26",
+              "allocationReason": "Recorded historical award-row rounding"
+            },
+            {
+              "characterId": "xp-bram",
+              "name": "Bram",
+              "participated": true,
+              "eligible": true,
+              "level": "1",
+              "shares": "1",
+              "allocationOverride": "26",
+              "allocationReason": "Recorded historical award-row rounding"
+            }
+          ],
+          "reviewed": true,
+          "eligibility": "secured",
+          "ratio": {
+            "proposed": null,
+            "override": null,
+            "reason": "",
+            "recordedProposal": null,
+            "recordedReason": ""
+          },
+          "rawOverride": null,
+          "evidence": {
+            "kind": "manual",
+            "sourceId": "",
+            "instanceId": "",
+            "sessionId": "session-1",
+            "keys": [],
+            "label": "Manual entry",
+            "fingerprint": "",
+            "snapshot": null
+          },
+          "distinctReason": "",
+          "notes": ""
+        },
+        {
+          "id": "money",
+          "version": 1,
+          "title": "Recovered coin lots",
+          "origin": {
+            "sessionId": "session-1",
+            "phase": "end",
+            "order": 0
+          },
+          "input": {
+            "category": "money",
+            "gp": "675"
+          },
+          "recipients": [
+            {
+              "characterId": "xp-mira",
+              "name": "Mira",
+              "participated": true,
+              "eligible": true,
+              "level": "1",
+              "shares": "1",
+              "allocationOverride": null,
+              "allocationReason": ""
+            },
+            {
+              "characterId": "xp-tal",
+              "name": "Tal",
+              "participated": true,
+              "eligible": true,
+              "level": "1",
+              "shares": "1",
+              "allocationOverride": null,
+              "allocationReason": ""
+            },
+            {
+              "characterId": "xp-oren",
+              "name": "Oren",
+              "participated": true,
+              "eligible": true,
+              "level": "1",
+              "shares": "1",
+              "allocationOverride": null,
+              "allocationReason": ""
+            },
+            {
+              "characterId": "xp-nera",
+              "name": "Nera",
+              "participated": true,
+              "eligible": true,
+              "level": "1",
+              "shares": "1",
+              "allocationOverride": null,
+              "allocationReason": ""
+            },
+            {
+              "characterId": "xp-bram",
+              "name": "Bram",
+              "participated": true,
+              "eligible": true,
+              "level": "1",
+              "shares": "1",
+              "allocationOverride": null,
+              "allocationReason": ""
+            }
+          ],
+          "reviewed": true,
+          "eligibility": "secured",
+          "ratio": {
+            "proposed": "1",
+            "override": null,
+            "reason": "",
+            "recordedProposal": null,
+            "recordedReason": ""
+          },
+          "rawOverride": null,
+          "evidence": {
+            "kind": "manual",
+            "sourceId": "",
+            "instanceId": "",
+            "sessionId": "session-1",
+            "keys": [],
+            "label": "Manual entry",
+            "fingerprint": "",
+            "snapshot": null
+          },
+          "distinctReason": "",
+          "notes": "Invented coin lots: 375 + 50 + 250 GP-equivalent"
+        },
+        {
+          "id": "scroll",
+          "version": 1,
+          "title": "Kept warding scroll",
+          "origin": {
+            "sessionId": "session-1",
+            "phase": "end",
+            "order": 0
+          },
+          "input": {
+            "category": "treasure",
+            "disposition": "keep",
+            "retainedXp": "1500",
+            "proceeds": null,
+            "marketGp": "7500"
+          },
+          "recipients": [
+            {
+              "characterId": "xp-mira",
+              "name": "Mira",
+              "participated": true,
+              "eligible": true,
+              "level": "1",
+              "shares": "1",
+              "allocationOverride": null,
+              "allocationReason": ""
+            },
+            {
+              "characterId": "xp-tal",
+              "name": "Tal",
+              "participated": true,
+              "eligible": true,
+              "level": "1",
+              "shares": "1",
+              "allocationOverride": null,
+              "allocationReason": ""
+            },
+            {
+              "characterId": "xp-oren",
+              "name": "Oren",
+              "participated": true,
+              "eligible": true,
+              "level": "1",
+              "shares": "1",
+              "allocationOverride": null,
+              "allocationReason": ""
+            },
+            {
+              "characterId": "xp-nera",
+              "name": "Nera",
+              "participated": true,
+              "eligible": true,
+              "level": "1",
+              "shares": "1",
+              "allocationOverride": null,
+              "allocationReason": ""
+            },
+            {
+              "characterId": "xp-bram",
+              "name": "Bram",
+              "participated": true,
+              "eligible": true,
+              "level": "1",
+              "shares": "1",
+              "allocationOverride": null,
+              "allocationReason": ""
+            }
+          ],
+          "reviewed": true,
+          "eligibility": "secured",
+          "ratio": {
+            "proposed": "1",
+            "override": null,
+            "reason": "",
+            "recordedProposal": null,
+            "recordedReason": ""
+          },
+          "rawOverride": null,
+          "evidence": {
+            "kind": "manual",
+            "sourceId": "",
+            "instanceId": "",
+            "sessionId": "session-1",
+            "keys": [],
+            "label": "Manual entry",
+            "fingerprint": "",
+            "snapshot": null
+          },
+          "distinctReason": "",
+          "notes": ""
+        },
+        {
+          "id": "later-fungus",
+          "version": 1,
+          "title": "Later alarm fungus",
+          "origin": {
+            "sessionId": "session-2",
+            "phase": "during",
+            "order": 1
+          },
+          "input": {
+            "category": "monster",
+            "monsters": [
+              {
+                "id": "later-fungus-monster",
+                "name": "Alarm fungus",
+                "count": 1,
+                "basis": "hit-dice",
+                "hitDice": "3",
+                "hpAdjustment": 0,
+                "startingHp": "14",
+                "special": 0,
+                "exceptional": 0,
+                "bandOverride": null,
+                "bandReason": ""
+              }
+            ]
+          },
+          "recipients": [
+            {
+              "characterId": "xp-mira",
+              "name": "Mira",
+              "participated": true,
+              "eligible": true,
+              "level": "1",
+              "shares": "1",
+              "allocationOverride": null,
+              "allocationReason": ""
+            },
+            {
+              "characterId": "xp-tal",
+              "name": "Tal",
+              "participated": true,
+              "eligible": true,
+              "level": "1",
+              "shares": "1",
+              "allocationOverride": null,
+              "allocationReason": ""
+            },
+            {
+              "characterId": "xp-oren",
+              "name": "Oren",
+              "participated": true,
+              "eligible": true,
+              "level": "1",
+              "shares": "1",
+              "allocationOverride": null,
+              "allocationReason": ""
+            },
+            {
+              "characterId": "xp-nera",
+              "name": "Nera",
+              "participated": true,
+              "eligible": true,
+              "level": "1",
+              "shares": "1",
+              "allocationOverride": null,
+              "allocationReason": ""
+            }
+          ],
+          "reviewed": true,
+          "eligibility": "secured",
+          "ratio": {
+            "proposed": null,
+            "override": "1",
+            "reason": "Recorded historical DM ratio decision; original explanation not recorded",
+            "recordedProposal": "1/2",
+            "recordedReason": "Historical sheet proposed 0.5 before its recorded override"
+          },
+          "rawOverride": {
+            "amount": "92",
+            "reason": "Historical extra 15 XP retained after DM review"
+          },
+          "evidence": {
+            "kind": "manual",
+            "sourceId": "",
+            "instanceId": "",
+            "sessionId": "session-1",
+            "keys": [],
+            "label": "Manual entry",
+            "fingerprint": "",
+            "snapshot": null
+          },
+          "distinctReason": "",
+          "notes": ""
+        }
+      ],
+      "points": [
+        {
+          "id": "refuge-point",
+          "label": "At the synthetic refuge",
+          "position": {
+            "sessionId": "session-2",
+            "phase": "opening",
+            "order": 0
+          },
+          "rewardIds": ["raiders", "money", "scroll"],
+          "bonuses": [
+            {
+              "characterId": "xp-mira",
+              "name": "Mira",
+              "percent": "10",
+              "reason": "",
+              "finalOverride": null,
+              "finalReason": ""
+            },
+            {
+              "characterId": "xp-tal",
+              "name": "Tal",
+              "percent": "10",
+              "reason": "",
+              "finalOverride": null,
+              "finalReason": ""
+            },
+            {
+              "characterId": "xp-oren",
+              "name": "Oren",
+              "percent": "10",
+              "reason": "",
+              "finalOverride": null,
+              "finalReason": ""
+            },
+            {
+              "characterId": "xp-nera",
+              "name": "Nera",
+              "percent": "0",
+              "reason": "",
+              "finalOverride": null,
+              "finalReason": ""
+            },
+            {
+              "characterId": "xp-bram",
+              "name": "Bram",
+              "percent": "10",
+              "reason": "",
+              "finalOverride": null,
+              "finalReason": ""
+            }
+          ],
+          "correctionOf": null,
+          "correctionReason": "",
+          "rewardOverrides": [],
+          "confirmedEventId": "refuge-confirmed"
+        },
+        {
+          "id": "correction-point",
+          "label": "Correction — At the synthetic refuge",
+          "position": {
+            "sessionId": "session-2",
+            "phase": "opening",
+            "order": 0
+          },
+          "rewardIds": ["raiders", "money", "scroll"],
+          "bonuses": [
+            {
+              "characterId": "xp-mira",
+              "name": "Mira",
+              "percent": "10",
+              "reason": "",
+              "finalOverride": 500,
+              "finalReason": "Synthetic recorded cap decision"
+            },
+            {
+              "characterId": "xp-tal",
+              "name": "Tal",
+              "percent": "10",
+              "reason": "",
+              "finalOverride": null,
+              "finalReason": ""
+            },
+            {
+              "characterId": "xp-oren",
+              "name": "Oren",
+              "percent": "10",
+              "reason": "",
+              "finalOverride": null,
+              "finalReason": ""
+            },
+            {
+              "characterId": "xp-nera",
+              "name": "Nera",
+              "percent": "0",
+              "reason": "",
+              "finalOverride": null,
+              "finalReason": ""
+            },
+            {
+              "characterId": "xp-bram",
+              "name": "Bram",
+              "percent": "10",
+              "reason": "",
+              "finalOverride": null,
+              "finalReason": ""
+            }
+          ],
+          "correctionOf": "refuge-confirmed",
+          "correctionReason": "Synthetic correction retained for native validation",
+          "rewardOverrides": [
+            {
+              "id": "raiders",
+              "version": 1,
+              "title": "Seventeen tunnel raiders",
+              "origin": {
+                "sessionId": "session-1",
+                "phase": "end",
+                "order": 0
+              },
+              "input": {
+                "category": "monster",
+                "monsters": [
+                  {
+                    "id": "raiders-monster",
+                    "name": "Tunnel raiders",
+                    "count": 17,
+                    "basis": "hit-dice",
+                    "hitDice": "1/2",
+                    "hpAdjustment": 0,
+                    "startingHp": "44",
+                    "special": 0,
+                    "exceptional": 0,
+                    "bandOverride": null,
+                    "bandReason": ""
+                  }
+                ]
+              },
+              "recipients": [
+                {
+                  "characterId": "xp-mira",
+                  "name": "Mira",
+                  "participated": true,
+                  "eligible": true,
+                  "level": "1",
+                  "shares": "1",
+                  "allocationOverride": "26",
+                  "allocationReason": "Recorded historical award-row rounding"
+                },
+                {
+                  "characterId": "xp-tal",
+                  "name": "Tal",
+                  "participated": true,
+                  "eligible": true,
+                  "level": "1",
+                  "shares": "1",
+                  "allocationOverride": "26",
+                  "allocationReason": "Recorded historical award-row rounding"
+                },
+                {
+                  "characterId": "xp-oren",
+                  "name": "Oren",
+                  "participated": true,
+                  "eligible": true,
+                  "level": "1",
+                  "shares": "1",
+                  "allocationOverride": "26",
+                  "allocationReason": "Recorded historical award-row rounding"
+                },
+                {
+                  "characterId": "xp-nera",
+                  "name": "Nera",
+                  "participated": true,
+                  "eligible": true,
+                  "level": "1",
+                  "shares": "1",
+                  "allocationOverride": "26",
+                  "allocationReason": "Recorded historical award-row rounding"
+                },
+                {
+                  "characterId": "xp-bram",
+                  "name": "Bram",
+                  "participated": true,
+                  "eligible": true,
+                  "level": "1",
+                  "shares": "1",
+                  "allocationOverride": "26",
+                  "allocationReason": "Recorded historical award-row rounding"
+                }
+              ],
+              "reviewed": true,
+              "eligibility": "secured",
+              "ratio": {
+                "proposed": null,
+                "override": null,
+                "reason": "",
+                "recordedProposal": null,
+                "recordedReason": ""
+              },
+              "rawOverride": null,
+              "evidence": {
+                "kind": "manual",
+                "sourceId": "",
+                "instanceId": "",
+                "sessionId": "session-1",
+                "keys": [],
+                "label": "Manual entry",
+                "fingerprint": "",
+                "snapshot": null
+              },
+              "distinctReason": "",
+              "notes": ""
+            },
+            {
+              "id": "money",
+              "version": 1,
+              "title": "Recovered coin lots",
+              "origin": {
+                "sessionId": "session-1",
+                "phase": "end",
+                "order": 0
+              },
+              "input": {
+                "category": "money",
+                "gp": "675"
+              },
+              "recipients": [
+                {
+                  "characterId": "xp-mira",
+                  "name": "Mira",
+                  "participated": true,
+                  "eligible": true,
+                  "level": "1",
+                  "shares": "1",
+                  "allocationOverride": null,
+                  "allocationReason": ""
+                },
+                {
+                  "characterId": "xp-tal",
+                  "name": "Tal",
+                  "participated": true,
+                  "eligible": true,
+                  "level": "1",
+                  "shares": "1",
+                  "allocationOverride": null,
+                  "allocationReason": ""
+                },
+                {
+                  "characterId": "xp-oren",
+                  "name": "Oren",
+                  "participated": true,
+                  "eligible": true,
+                  "level": "1",
+                  "shares": "1",
+                  "allocationOverride": null,
+                  "allocationReason": ""
+                },
+                {
+                  "characterId": "xp-nera",
+                  "name": "Nera",
+                  "participated": true,
+                  "eligible": true,
+                  "level": "1",
+                  "shares": "1",
+                  "allocationOverride": null,
+                  "allocationReason": ""
+                },
+                {
+                  "characterId": "xp-bram",
+                  "name": "Bram",
+                  "participated": true,
+                  "eligible": true,
+                  "level": "1",
+                  "shares": "1",
+                  "allocationOverride": null,
+                  "allocationReason": ""
+                }
+              ],
+              "reviewed": true,
+              "eligibility": "secured",
+              "ratio": {
+                "proposed": "1",
+                "override": null,
+                "reason": "",
+                "recordedProposal": null,
+                "recordedReason": ""
+              },
+              "rawOverride": null,
+              "evidence": {
+                "kind": "manual",
+                "sourceId": "",
+                "instanceId": "",
+                "sessionId": "session-1",
+                "keys": [],
+                "label": "Manual entry",
+                "fingerprint": "",
+                "snapshot": null
+              },
+              "distinctReason": "",
+              "notes": "Invented coin lots: 375 + 50 + 250 GP-equivalent"
+            },
+            {
+              "id": "scroll",
+              "version": 1,
+              "title": "Kept warding scroll",
+              "origin": {
+                "sessionId": "session-1",
+                "phase": "end",
+                "order": 0
+              },
+              "input": {
+                "category": "treasure",
+                "disposition": "keep",
+                "retainedXp": "1500",
+                "proceeds": null,
+                "marketGp": "7500"
+              },
+              "recipients": [
+                {
+                  "characterId": "xp-mira",
+                  "name": "Mira",
+                  "participated": true,
+                  "eligible": true,
+                  "level": "1",
+                  "shares": "1",
+                  "allocationOverride": null,
+                  "allocationReason": ""
+                },
+                {
+                  "characterId": "xp-tal",
+                  "name": "Tal",
+                  "participated": true,
+                  "eligible": true,
+                  "level": "1",
+                  "shares": "1",
+                  "allocationOverride": null,
+                  "allocationReason": ""
+                },
+                {
+                  "characterId": "xp-oren",
+                  "name": "Oren",
+                  "participated": true,
+                  "eligible": true,
+                  "level": "1",
+                  "shares": "1",
+                  "allocationOverride": null,
+                  "allocationReason": ""
+                },
+                {
+                  "characterId": "xp-nera",
+                  "name": "Nera",
+                  "participated": true,
+                  "eligible": true,
+                  "level": "1",
+                  "shares": "1",
+                  "allocationOverride": null,
+                  "allocationReason": ""
+                },
+                {
+                  "characterId": "xp-bram",
+                  "name": "Bram",
+                  "participated": true,
+                  "eligible": true,
+                  "level": "1",
+                  "shares": "1",
+                  "allocationOverride": null,
+                  "allocationReason": ""
+                }
+              ],
+              "reviewed": true,
+              "eligibility": "secured",
+              "ratio": {
+                "proposed": "1",
+                "override": null,
+                "reason": "",
+                "recordedProposal": null,
+                "recordedReason": ""
+              },
+              "rawOverride": null,
+              "evidence": {
+                "kind": "manual",
+                "sourceId": "",
+                "instanceId": "",
+                "sessionId": "session-1",
+                "keys": [],
+                "label": "Manual entry",
+                "fingerprint": "",
+                "snapshot": null
+              },
+              "distinctReason": "",
+              "notes": ""
+            }
+          ],
+          "confirmedEventId": "correction-confirmed"
+        }
+      ],
+      "events": [
+        {
+          "id": "refuge-confirmed",
+          "point": {
+            "id": "refuge-point",
+            "label": "At the synthetic refuge",
+            "position": {
+              "sessionId": "session-2",
+              "phase": "opening",
+              "order": 0
+            },
+            "rewardIds": ["raiders", "money", "scroll"],
+            "bonuses": [
+              {
+                "characterId": "xp-mira",
+                "name": "Mira",
+                "percent": "10",
+                "reason": "",
+                "finalOverride": null,
+                "finalReason": ""
+              },
+              {
+                "characterId": "xp-tal",
+                "name": "Tal",
+                "percent": "10",
+                "reason": "",
+                "finalOverride": null,
+                "finalReason": ""
+              },
+              {
+                "characterId": "xp-oren",
+                "name": "Oren",
+                "percent": "10",
+                "reason": "",
+                "finalOverride": null,
+                "finalReason": ""
+              },
+              {
+                "characterId": "xp-nera",
+                "name": "Nera",
+                "percent": "0",
+                "reason": "",
+                "finalOverride": null,
+                "finalReason": ""
+              },
+              {
+                "characterId": "xp-bram",
+                "name": "Bram",
+                "percent": "10",
+                "reason": "",
+                "finalOverride": null,
+                "finalReason": ""
+              }
+            ],
+            "correctionOf": null,
+            "correctionReason": "",
+            "rewardOverrides": [],
+            "confirmedEventId": null
+          },
+          "confirmedAt": "2026-11-07T12:00:00.000Z",
+          "replaces": null,
+          "correctionRoot": null,
+          "reason": "",
+          "calculatorVersion": 1,
+          "rounding": "nearest-whole-half-up-after-bonus",
+          "rewards": [
+            {
+              "id": "raiders",
+              "version": 1,
+              "title": "Seventeen tunnel raiders",
+              "origin": {
+                "sessionId": "session-1",
+                "phase": "end",
+                "order": 0
+              },
+              "input": {
+                "category": "monster",
+                "monsters": [
+                  {
+                    "id": "raiders-monster",
+                    "name": "Tunnel raiders",
+                    "count": 17,
+                    "basis": "hit-dice",
+                    "hitDice": "1/2",
+                    "hpAdjustment": 0,
+                    "startingHp": "44",
+                    "special": 0,
+                    "exceptional": 0,
+                    "bandOverride": null,
+                    "bandReason": ""
+                  }
+                ]
+              },
+              "recipients": [
+                {
+                  "characterId": "xp-mira",
+                  "name": "Mira",
+                  "participated": true,
+                  "eligible": true,
+                  "level": "1",
+                  "shares": "1",
+                  "allocationOverride": "26",
+                  "allocationReason": "Recorded historical award-row rounding"
+                },
+                {
+                  "characterId": "xp-tal",
+                  "name": "Tal",
+                  "participated": true,
+                  "eligible": true,
+                  "level": "1",
+                  "shares": "1",
+                  "allocationOverride": "26",
+                  "allocationReason": "Recorded historical award-row rounding"
+                },
+                {
+                  "characterId": "xp-oren",
+                  "name": "Oren",
+                  "participated": true,
+                  "eligible": true,
+                  "level": "1",
+                  "shares": "1",
+                  "allocationOverride": "26",
+                  "allocationReason": "Recorded historical award-row rounding"
+                },
+                {
+                  "characterId": "xp-nera",
+                  "name": "Nera",
+                  "participated": true,
+                  "eligible": true,
+                  "level": "1",
+                  "shares": "1",
+                  "allocationOverride": "26",
+                  "allocationReason": "Recorded historical award-row rounding"
+                },
+                {
+                  "characterId": "xp-bram",
+                  "name": "Bram",
+                  "participated": true,
+                  "eligible": true,
+                  "level": "1",
+                  "shares": "1",
+                  "allocationOverride": "26",
+                  "allocationReason": "Recorded historical award-row rounding"
+                }
+              ],
+              "reviewed": true,
+              "eligibility": "secured",
+              "ratio": {
+                "proposed": null,
+                "override": null,
+                "reason": "",
+                "recordedProposal": null,
+                "recordedReason": ""
+              },
+              "rawOverride": null,
+              "evidence": {
+                "kind": "manual",
+                "sourceId": "",
+                "instanceId": "",
+                "sessionId": "session-1",
+                "keys": [],
+                "label": "Manual entry",
+                "fingerprint": "",
+                "snapshot": null
+              },
+              "distinctReason": "",
+              "notes": ""
+            },
+            {
+              "id": "money",
+              "version": 1,
+              "title": "Recovered coin lots",
+              "origin": {
+                "sessionId": "session-1",
+                "phase": "end",
+                "order": 0
+              },
+              "input": {
+                "category": "money",
+                "gp": "675"
+              },
+              "recipients": [
+                {
+                  "characterId": "xp-mira",
+                  "name": "Mira",
+                  "participated": true,
+                  "eligible": true,
+                  "level": "1",
+                  "shares": "1",
+                  "allocationOverride": null,
+                  "allocationReason": ""
+                },
+                {
+                  "characterId": "xp-tal",
+                  "name": "Tal",
+                  "participated": true,
+                  "eligible": true,
+                  "level": "1",
+                  "shares": "1",
+                  "allocationOverride": null,
+                  "allocationReason": ""
+                },
+                {
+                  "characterId": "xp-oren",
+                  "name": "Oren",
+                  "participated": true,
+                  "eligible": true,
+                  "level": "1",
+                  "shares": "1",
+                  "allocationOverride": null,
+                  "allocationReason": ""
+                },
+                {
+                  "characterId": "xp-nera",
+                  "name": "Nera",
+                  "participated": true,
+                  "eligible": true,
+                  "level": "1",
+                  "shares": "1",
+                  "allocationOverride": null,
+                  "allocationReason": ""
+                },
+                {
+                  "characterId": "xp-bram",
+                  "name": "Bram",
+                  "participated": true,
+                  "eligible": true,
+                  "level": "1",
+                  "shares": "1",
+                  "allocationOverride": null,
+                  "allocationReason": ""
+                }
+              ],
+              "reviewed": true,
+              "eligibility": "secured",
+              "ratio": {
+                "proposed": "1",
+                "override": null,
+                "reason": "",
+                "recordedProposal": null,
+                "recordedReason": ""
+              },
+              "rawOverride": null,
+              "evidence": {
+                "kind": "manual",
+                "sourceId": "",
+                "instanceId": "",
+                "sessionId": "session-1",
+                "keys": [],
+                "label": "Manual entry",
+                "fingerprint": "",
+                "snapshot": null
+              },
+              "distinctReason": "",
+              "notes": "Invented coin lots: 375 + 50 + 250 GP-equivalent"
+            },
+            {
+              "id": "scroll",
+              "version": 1,
+              "title": "Kept warding scroll",
+              "origin": {
+                "sessionId": "session-1",
+                "phase": "end",
+                "order": 0
+              },
+              "input": {
+                "category": "treasure",
+                "disposition": "keep",
+                "retainedXp": "1500",
+                "proceeds": null,
+                "marketGp": "7500"
+              },
+              "recipients": [
+                {
+                  "characterId": "xp-mira",
+                  "name": "Mira",
+                  "participated": true,
+                  "eligible": true,
+                  "level": "1",
+                  "shares": "1",
+                  "allocationOverride": null,
+                  "allocationReason": ""
+                },
+                {
+                  "characterId": "xp-tal",
+                  "name": "Tal",
+                  "participated": true,
+                  "eligible": true,
+                  "level": "1",
+                  "shares": "1",
+                  "allocationOverride": null,
+                  "allocationReason": ""
+                },
+                {
+                  "characterId": "xp-oren",
+                  "name": "Oren",
+                  "participated": true,
+                  "eligible": true,
+                  "level": "1",
+                  "shares": "1",
+                  "allocationOverride": null,
+                  "allocationReason": ""
+                },
+                {
+                  "characterId": "xp-nera",
+                  "name": "Nera",
+                  "participated": true,
+                  "eligible": true,
+                  "level": "1",
+                  "shares": "1",
+                  "allocationOverride": null,
+                  "allocationReason": ""
+                },
+                {
+                  "characterId": "xp-bram",
+                  "name": "Bram",
+                  "participated": true,
+                  "eligible": true,
+                  "level": "1",
+                  "shares": "1",
+                  "allocationOverride": null,
+                  "allocationReason": ""
+                }
+              ],
+              "reviewed": true,
+              "eligibility": "secured",
+              "ratio": {
+                "proposed": "1",
+                "override": null,
+                "reason": "",
+                "recordedProposal": null,
+                "recordedReason": ""
+              },
+              "rawOverride": null,
+              "evidence": {
+                "kind": "manual",
+                "sourceId": "",
+                "instanceId": "",
+                "sessionId": "session-1",
+                "keys": [],
+                "label": "Manual entry",
+                "fingerprint": "",
+                "snapshot": null
+              },
+              "distinctReason": "",
+              "notes": ""
+            }
+          ],
+          "rows": [
+            {
+              "characterId": "xp-mira",
+              "name": "Mira",
+              "allocations": [
+                {
+                  "rewardId": "raiders",
+                  "calculated": "129/5",
+                  "accepted": "26",
+                  "reason": "Recorded historical award-row rounding"
+                },
+                {
+                  "rewardId": "money",
+                  "calculated": "135",
+                  "accepted": "135",
+                  "reason": ""
+                },
+                {
+                  "rewardId": "scroll",
+                  "calculated": "300",
+                  "accepted": "300",
+                  "reason": ""
+                }
+              ],
+              "base": "461",
+              "bonusPercent": "10",
+              "bonus": "461/10",
+              "unrounded": "5071/10",
+              "rounded": 507,
+              "award": 507,
+              "overrideReason": "",
+              "before": 0,
+              "after": 507
+            },
+            {
+              "characterId": "xp-tal",
+              "name": "Tal",
+              "allocations": [
+                {
+                  "rewardId": "raiders",
+                  "calculated": "129/5",
+                  "accepted": "26",
+                  "reason": "Recorded historical award-row rounding"
+                },
+                {
+                  "rewardId": "money",
+                  "calculated": "135",
+                  "accepted": "135",
+                  "reason": ""
+                },
+                {
+                  "rewardId": "scroll",
+                  "calculated": "300",
+                  "accepted": "300",
+                  "reason": ""
+                }
+              ],
+              "base": "461",
+              "bonusPercent": "10",
+              "bonus": "461/10",
+              "unrounded": "5071/10",
+              "rounded": 507,
+              "award": 507,
+              "overrideReason": "",
+              "before": 0,
+              "after": 507
+            },
+            {
+              "characterId": "xp-oren",
+              "name": "Oren",
+              "allocations": [
+                {
+                  "rewardId": "raiders",
+                  "calculated": "129/5",
+                  "accepted": "26",
+                  "reason": "Recorded historical award-row rounding"
+                },
+                {
+                  "rewardId": "money",
+                  "calculated": "135",
+                  "accepted": "135",
+                  "reason": ""
+                },
+                {
+                  "rewardId": "scroll",
+                  "calculated": "300",
+                  "accepted": "300",
+                  "reason": ""
+                }
+              ],
+              "base": "461",
+              "bonusPercent": "10",
+              "bonus": "461/10",
+              "unrounded": "5071/10",
+              "rounded": 507,
+              "award": 507,
+              "overrideReason": "",
+              "before": 0,
+              "after": 507
+            },
+            {
+              "characterId": "xp-nera",
+              "name": "Nera",
+              "allocations": [
+                {
+                  "rewardId": "raiders",
+                  "calculated": "129/5",
+                  "accepted": "26",
+                  "reason": "Recorded historical award-row rounding"
+                },
+                {
+                  "rewardId": "money",
+                  "calculated": "135",
+                  "accepted": "135",
+                  "reason": ""
+                },
+                {
+                  "rewardId": "scroll",
+                  "calculated": "300",
+                  "accepted": "300",
+                  "reason": ""
+                }
+              ],
+              "base": "461",
+              "bonusPercent": "0",
+              "bonus": "0",
+              "unrounded": "461",
+              "rounded": 461,
+              "award": 461,
+              "overrideReason": "",
+              "before": 0,
+              "after": 461
+            },
+            {
+              "characterId": "xp-bram",
+              "name": "Bram",
+              "allocations": [
+                {
+                  "rewardId": "raiders",
+                  "calculated": "129/5",
+                  "accepted": "26",
+                  "reason": "Recorded historical award-row rounding"
+                },
+                {
+                  "rewardId": "money",
+                  "calculated": "135",
+                  "accepted": "135",
+                  "reason": ""
+                },
+                {
+                  "rewardId": "scroll",
+                  "calculated": "300",
+                  "accepted": "300",
+                  "reason": ""
+                }
+              ],
+              "base": "461",
+              "bonusPercent": "10",
+              "bonus": "461/10",
+              "unrounded": "5071/10",
+              "rounded": 507,
+              "award": 507,
+              "overrideReason": "",
+              "before": 0,
+              "after": 507
+            }
+          ],
+          "resolutions": [
+            {
+              "calculatedAllocation": "129",
+              "acceptedAllocation": "130",
+              "allocationAdjustment": {
+                "direction": "increase",
+                "amount": "1"
+              },
+              "rewardId": "raiders",
+              "calculatedRaw": "129",
+              "raw": "129",
+              "difficulty": "17/2",
+              "proposedRatio": "1",
+              "ratio": "1",
+              "recordedProposal": null,
+              "calculationError": null,
+              "monsters": [
+                {
+                  "coefficients": {
+                    "id": "under-one",
+                    "label": "Up to 1−1 HD",
+                    "maximum": 1,
+                    "base": 5,
+                    "perHp": 1,
+                    "special": 2,
+                    "exceptional": 25
+                  },
+                  "raw": "129",
+                  "difficulty": "17/2"
+                }
+              ],
+              "allocations": [
+                {
+                  "characterId": "xp-mira",
+                  "calculated": "129/5",
+                  "accepted": "26",
+                  "reason": "Recorded historical award-row rounding"
+                },
+                {
+                  "characterId": "xp-tal",
+                  "calculated": "129/5",
+                  "accepted": "26",
+                  "reason": "Recorded historical award-row rounding"
+                },
+                {
+                  "characterId": "xp-oren",
+                  "calculated": "129/5",
+                  "accepted": "26",
+                  "reason": "Recorded historical award-row rounding"
+                },
+                {
+                  "characterId": "xp-nera",
+                  "calculated": "129/5",
+                  "accepted": "26",
+                  "reason": "Recorded historical award-row rounding"
+                },
+                {
+                  "characterId": "xp-bram",
+                  "calculated": "129/5",
+                  "accepted": "26",
+                  "reason": "Recorded historical award-row rounding"
+                }
+              ]
+            },
+            {
+              "calculatedAllocation": "675",
+              "acceptedAllocation": "675",
+              "allocationAdjustment": {
+                "direction": "none",
+                "amount": "0"
+              },
+              "rewardId": "money",
+              "calculatedRaw": "675",
+              "raw": "675",
+              "difficulty": null,
+              "proposedRatio": "1",
+              "ratio": "1",
+              "recordedProposal": null,
+              "calculationError": null,
+              "monsters": [],
+              "allocations": [
+                {
+                  "characterId": "xp-mira",
+                  "calculated": "135",
+                  "accepted": "135",
+                  "reason": ""
+                },
+                {
+                  "characterId": "xp-tal",
+                  "calculated": "135",
+                  "accepted": "135",
+                  "reason": ""
+                },
+                {
+                  "characterId": "xp-oren",
+                  "calculated": "135",
+                  "accepted": "135",
+                  "reason": ""
+                },
+                {
+                  "characterId": "xp-nera",
+                  "calculated": "135",
+                  "accepted": "135",
+                  "reason": ""
+                },
+                {
+                  "characterId": "xp-bram",
+                  "calculated": "135",
+                  "accepted": "135",
+                  "reason": ""
+                }
+              ]
+            },
+            {
+              "calculatedAllocation": "1500",
+              "acceptedAllocation": "1500",
+              "allocationAdjustment": {
+                "direction": "none",
+                "amount": "0"
+              },
+              "rewardId": "scroll",
+              "calculatedRaw": "1500",
+              "raw": "1500",
+              "difficulty": null,
+              "proposedRatio": "1",
+              "ratio": "1",
+              "recordedProposal": null,
+              "calculationError": null,
+              "monsters": [],
+              "allocations": [
+                {
+                  "characterId": "xp-mira",
+                  "calculated": "300",
+                  "accepted": "300",
+                  "reason": ""
+                },
+                {
+                  "characterId": "xp-tal",
+                  "calculated": "300",
+                  "accepted": "300",
+                  "reason": ""
+                },
+                {
+                  "characterId": "xp-oren",
+                  "calculated": "300",
+                  "accepted": "300",
+                  "reason": ""
+                },
+                {
+                  "characterId": "xp-nera",
+                  "calculated": "300",
+                  "accepted": "300",
+                  "reason": ""
+                },
+                {
+                  "characterId": "xp-bram",
+                  "calculated": "300",
+                  "accepted": "300",
+                  "reason": ""
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "correction-confirmed",
+          "point": {
+            "id": "correction-point",
+            "label": "Correction — At the synthetic refuge",
+            "position": {
+              "sessionId": "session-2",
+              "phase": "opening",
+              "order": 0
+            },
+            "rewardIds": ["raiders", "money", "scroll"],
+            "bonuses": [
+              {
+                "characterId": "xp-mira",
+                "name": "Mira",
+                "percent": "10",
+                "reason": "",
+                "finalOverride": 500,
+                "finalReason": "Synthetic recorded cap decision"
+              },
+              {
+                "characterId": "xp-tal",
+                "name": "Tal",
+                "percent": "10",
+                "reason": "",
+                "finalOverride": null,
+                "finalReason": ""
+              },
+              {
+                "characterId": "xp-oren",
+                "name": "Oren",
+                "percent": "10",
+                "reason": "",
+                "finalOverride": null,
+                "finalReason": ""
+              },
+              {
+                "characterId": "xp-nera",
+                "name": "Nera",
+                "percent": "0",
+                "reason": "",
+                "finalOverride": null,
+                "finalReason": ""
+              },
+              {
+                "characterId": "xp-bram",
+                "name": "Bram",
+                "percent": "10",
+                "reason": "",
+                "finalOverride": null,
+                "finalReason": ""
+              }
+            ],
+            "correctionOf": "refuge-confirmed",
+            "correctionReason": "Synthetic correction retained for native validation",
+            "rewardOverrides": [
+              {
+                "id": "raiders",
+                "version": 1,
+                "title": "Seventeen tunnel raiders",
+                "origin": {
+                  "sessionId": "session-1",
+                  "phase": "end",
+                  "order": 0
+                },
+                "input": {
+                  "category": "monster",
+                  "monsters": [
+                    {
+                      "id": "raiders-monster",
+                      "name": "Tunnel raiders",
+                      "count": 17,
+                      "basis": "hit-dice",
+                      "hitDice": "1/2",
+                      "hpAdjustment": 0,
+                      "startingHp": "44",
+                      "special": 0,
+                      "exceptional": 0,
+                      "bandOverride": null,
+                      "bandReason": ""
+                    }
+                  ]
+                },
+                "recipients": [
+                  {
+                    "characterId": "xp-mira",
+                    "name": "Mira",
+                    "participated": true,
+                    "eligible": true,
+                    "level": "1",
+                    "shares": "1",
+                    "allocationOverride": "26",
+                    "allocationReason": "Recorded historical award-row rounding"
+                  },
+                  {
+                    "characterId": "xp-tal",
+                    "name": "Tal",
+                    "participated": true,
+                    "eligible": true,
+                    "level": "1",
+                    "shares": "1",
+                    "allocationOverride": "26",
+                    "allocationReason": "Recorded historical award-row rounding"
+                  },
+                  {
+                    "characterId": "xp-oren",
+                    "name": "Oren",
+                    "participated": true,
+                    "eligible": true,
+                    "level": "1",
+                    "shares": "1",
+                    "allocationOverride": "26",
+                    "allocationReason": "Recorded historical award-row rounding"
+                  },
+                  {
+                    "characterId": "xp-nera",
+                    "name": "Nera",
+                    "participated": true,
+                    "eligible": true,
+                    "level": "1",
+                    "shares": "1",
+                    "allocationOverride": "26",
+                    "allocationReason": "Recorded historical award-row rounding"
+                  },
+                  {
+                    "characterId": "xp-bram",
+                    "name": "Bram",
+                    "participated": true,
+                    "eligible": true,
+                    "level": "1",
+                    "shares": "1",
+                    "allocationOverride": "26",
+                    "allocationReason": "Recorded historical award-row rounding"
+                  }
+                ],
+                "reviewed": true,
+                "eligibility": "secured",
+                "ratio": {
+                  "proposed": null,
+                  "override": null,
+                  "reason": "",
+                  "recordedProposal": null,
+                  "recordedReason": ""
+                },
+                "rawOverride": null,
+                "evidence": {
+                  "kind": "manual",
+                  "sourceId": "",
+                  "instanceId": "",
+                  "sessionId": "session-1",
+                  "keys": [],
+                  "label": "Manual entry",
+                  "fingerprint": "",
+                  "snapshot": null
+                },
+                "distinctReason": "",
+                "notes": ""
+              },
+              {
+                "id": "money",
+                "version": 1,
+                "title": "Recovered coin lots",
+                "origin": {
+                  "sessionId": "session-1",
+                  "phase": "end",
+                  "order": 0
+                },
+                "input": {
+                  "category": "money",
+                  "gp": "675"
+                },
+                "recipients": [
+                  {
+                    "characterId": "xp-mira",
+                    "name": "Mira",
+                    "participated": true,
+                    "eligible": true,
+                    "level": "1",
+                    "shares": "1",
+                    "allocationOverride": null,
+                    "allocationReason": ""
+                  },
+                  {
+                    "characterId": "xp-tal",
+                    "name": "Tal",
+                    "participated": true,
+                    "eligible": true,
+                    "level": "1",
+                    "shares": "1",
+                    "allocationOverride": null,
+                    "allocationReason": ""
+                  },
+                  {
+                    "characterId": "xp-oren",
+                    "name": "Oren",
+                    "participated": true,
+                    "eligible": true,
+                    "level": "1",
+                    "shares": "1",
+                    "allocationOverride": null,
+                    "allocationReason": ""
+                  },
+                  {
+                    "characterId": "xp-nera",
+                    "name": "Nera",
+                    "participated": true,
+                    "eligible": true,
+                    "level": "1",
+                    "shares": "1",
+                    "allocationOverride": null,
+                    "allocationReason": ""
+                  },
+                  {
+                    "characterId": "xp-bram",
+                    "name": "Bram",
+                    "participated": true,
+                    "eligible": true,
+                    "level": "1",
+                    "shares": "1",
+                    "allocationOverride": null,
+                    "allocationReason": ""
+                  }
+                ],
+                "reviewed": true,
+                "eligibility": "secured",
+                "ratio": {
+                  "proposed": "1",
+                  "override": null,
+                  "reason": "",
+                  "recordedProposal": null,
+                  "recordedReason": ""
+                },
+                "rawOverride": null,
+                "evidence": {
+                  "kind": "manual",
+                  "sourceId": "",
+                  "instanceId": "",
+                  "sessionId": "session-1",
+                  "keys": [],
+                  "label": "Manual entry",
+                  "fingerprint": "",
+                  "snapshot": null
+                },
+                "distinctReason": "",
+                "notes": "Invented coin lots: 375 + 50 + 250 GP-equivalent"
+              },
+              {
+                "id": "scroll",
+                "version": 1,
+                "title": "Kept warding scroll",
+                "origin": {
+                  "sessionId": "session-1",
+                  "phase": "end",
+                  "order": 0
+                },
+                "input": {
+                  "category": "treasure",
+                  "disposition": "keep",
+                  "retainedXp": "1500",
+                  "proceeds": null,
+                  "marketGp": "7500"
+                },
+                "recipients": [
+                  {
+                    "characterId": "xp-mira",
+                    "name": "Mira",
+                    "participated": true,
+                    "eligible": true,
+                    "level": "1",
+                    "shares": "1",
+                    "allocationOverride": null,
+                    "allocationReason": ""
+                  },
+                  {
+                    "characterId": "xp-tal",
+                    "name": "Tal",
+                    "participated": true,
+                    "eligible": true,
+                    "level": "1",
+                    "shares": "1",
+                    "allocationOverride": null,
+                    "allocationReason": ""
+                  },
+                  {
+                    "characterId": "xp-oren",
+                    "name": "Oren",
+                    "participated": true,
+                    "eligible": true,
+                    "level": "1",
+                    "shares": "1",
+                    "allocationOverride": null,
+                    "allocationReason": ""
+                  },
+                  {
+                    "characterId": "xp-nera",
+                    "name": "Nera",
+                    "participated": true,
+                    "eligible": true,
+                    "level": "1",
+                    "shares": "1",
+                    "allocationOverride": null,
+                    "allocationReason": ""
+                  },
+                  {
+                    "characterId": "xp-bram",
+                    "name": "Bram",
+                    "participated": true,
+                    "eligible": true,
+                    "level": "1",
+                    "shares": "1",
+                    "allocationOverride": null,
+                    "allocationReason": ""
+                  }
+                ],
+                "reviewed": true,
+                "eligibility": "secured",
+                "ratio": {
+                  "proposed": "1",
+                  "override": null,
+                  "reason": "",
+                  "recordedProposal": null,
+                  "recordedReason": ""
+                },
+                "rawOverride": null,
+                "evidence": {
+                  "kind": "manual",
+                  "sourceId": "",
+                  "instanceId": "",
+                  "sessionId": "session-1",
+                  "keys": [],
+                  "label": "Manual entry",
+                  "fingerprint": "",
+                  "snapshot": null
+                },
+                "distinctReason": "",
+                "notes": ""
+              }
+            ],
+            "confirmedEventId": null
+          },
+          "confirmedAt": "2026-11-07T12:00:00.000Z",
+          "replaces": "refuge-confirmed",
+          "correctionRoot": null,
+          "reason": "Synthetic correction retained for native validation",
+          "calculatorVersion": 1,
+          "rounding": "nearest-whole-half-up-after-bonus",
+          "rewards": [
+            {
+              "id": "raiders",
+              "version": 1,
+              "title": "Seventeen tunnel raiders",
+              "origin": {
+                "sessionId": "session-1",
+                "phase": "end",
+                "order": 0
+              },
+              "input": {
+                "category": "monster",
+                "monsters": [
+                  {
+                    "id": "raiders-monster",
+                    "name": "Tunnel raiders",
+                    "count": 17,
+                    "basis": "hit-dice",
+                    "hitDice": "1/2",
+                    "hpAdjustment": 0,
+                    "startingHp": "44",
+                    "special": 0,
+                    "exceptional": 0,
+                    "bandOverride": null,
+                    "bandReason": ""
+                  }
+                ]
+              },
+              "recipients": [
+                {
+                  "characterId": "xp-mira",
+                  "name": "Mira",
+                  "participated": true,
+                  "eligible": true,
+                  "level": "1",
+                  "shares": "1",
+                  "allocationOverride": "26",
+                  "allocationReason": "Recorded historical award-row rounding"
+                },
+                {
+                  "characterId": "xp-tal",
+                  "name": "Tal",
+                  "participated": true,
+                  "eligible": true,
+                  "level": "1",
+                  "shares": "1",
+                  "allocationOverride": "26",
+                  "allocationReason": "Recorded historical award-row rounding"
+                },
+                {
+                  "characterId": "xp-oren",
+                  "name": "Oren",
+                  "participated": true,
+                  "eligible": true,
+                  "level": "1",
+                  "shares": "1",
+                  "allocationOverride": "26",
+                  "allocationReason": "Recorded historical award-row rounding"
+                },
+                {
+                  "characterId": "xp-nera",
+                  "name": "Nera",
+                  "participated": true,
+                  "eligible": true,
+                  "level": "1",
+                  "shares": "1",
+                  "allocationOverride": "26",
+                  "allocationReason": "Recorded historical award-row rounding"
+                },
+                {
+                  "characterId": "xp-bram",
+                  "name": "Bram",
+                  "participated": true,
+                  "eligible": true,
+                  "level": "1",
+                  "shares": "1",
+                  "allocationOverride": "26",
+                  "allocationReason": "Recorded historical award-row rounding"
+                }
+              ],
+              "reviewed": true,
+              "eligibility": "secured",
+              "ratio": {
+                "proposed": null,
+                "override": null,
+                "reason": "",
+                "recordedProposal": null,
+                "recordedReason": ""
+              },
+              "rawOverride": null,
+              "evidence": {
+                "kind": "manual",
+                "sourceId": "",
+                "instanceId": "",
+                "sessionId": "session-1",
+                "keys": [],
+                "label": "Manual entry",
+                "fingerprint": "",
+                "snapshot": null
+              },
+              "distinctReason": "",
+              "notes": ""
+            },
+            {
+              "id": "money",
+              "version": 1,
+              "title": "Recovered coin lots",
+              "origin": {
+                "sessionId": "session-1",
+                "phase": "end",
+                "order": 0
+              },
+              "input": {
+                "category": "money",
+                "gp": "675"
+              },
+              "recipients": [
+                {
+                  "characterId": "xp-mira",
+                  "name": "Mira",
+                  "participated": true,
+                  "eligible": true,
+                  "level": "1",
+                  "shares": "1",
+                  "allocationOverride": null,
+                  "allocationReason": ""
+                },
+                {
+                  "characterId": "xp-tal",
+                  "name": "Tal",
+                  "participated": true,
+                  "eligible": true,
+                  "level": "1",
+                  "shares": "1",
+                  "allocationOverride": null,
+                  "allocationReason": ""
+                },
+                {
+                  "characterId": "xp-oren",
+                  "name": "Oren",
+                  "participated": true,
+                  "eligible": true,
+                  "level": "1",
+                  "shares": "1",
+                  "allocationOverride": null,
+                  "allocationReason": ""
+                },
+                {
+                  "characterId": "xp-nera",
+                  "name": "Nera",
+                  "participated": true,
+                  "eligible": true,
+                  "level": "1",
+                  "shares": "1",
+                  "allocationOverride": null,
+                  "allocationReason": ""
+                },
+                {
+                  "characterId": "xp-bram",
+                  "name": "Bram",
+                  "participated": true,
+                  "eligible": true,
+                  "level": "1",
+                  "shares": "1",
+                  "allocationOverride": null,
+                  "allocationReason": ""
+                }
+              ],
+              "reviewed": true,
+              "eligibility": "secured",
+              "ratio": {
+                "proposed": "1",
+                "override": null,
+                "reason": "",
+                "recordedProposal": null,
+                "recordedReason": ""
+              },
+              "rawOverride": null,
+              "evidence": {
+                "kind": "manual",
+                "sourceId": "",
+                "instanceId": "",
+                "sessionId": "session-1",
+                "keys": [],
+                "label": "Manual entry",
+                "fingerprint": "",
+                "snapshot": null
+              },
+              "distinctReason": "",
+              "notes": "Invented coin lots: 375 + 50 + 250 GP-equivalent"
+            },
+            {
+              "id": "scroll",
+              "version": 1,
+              "title": "Kept warding scroll",
+              "origin": {
+                "sessionId": "session-1",
+                "phase": "end",
+                "order": 0
+              },
+              "input": {
+                "category": "treasure",
+                "disposition": "keep",
+                "retainedXp": "1500",
+                "proceeds": null,
+                "marketGp": "7500"
+              },
+              "recipients": [
+                {
+                  "characterId": "xp-mira",
+                  "name": "Mira",
+                  "participated": true,
+                  "eligible": true,
+                  "level": "1",
+                  "shares": "1",
+                  "allocationOverride": null,
+                  "allocationReason": ""
+                },
+                {
+                  "characterId": "xp-tal",
+                  "name": "Tal",
+                  "participated": true,
+                  "eligible": true,
+                  "level": "1",
+                  "shares": "1",
+                  "allocationOverride": null,
+                  "allocationReason": ""
+                },
+                {
+                  "characterId": "xp-oren",
+                  "name": "Oren",
+                  "participated": true,
+                  "eligible": true,
+                  "level": "1",
+                  "shares": "1",
+                  "allocationOverride": null,
+                  "allocationReason": ""
+                },
+                {
+                  "characterId": "xp-nera",
+                  "name": "Nera",
+                  "participated": true,
+                  "eligible": true,
+                  "level": "1",
+                  "shares": "1",
+                  "allocationOverride": null,
+                  "allocationReason": ""
+                },
+                {
+                  "characterId": "xp-bram",
+                  "name": "Bram",
+                  "participated": true,
+                  "eligible": true,
+                  "level": "1",
+                  "shares": "1",
+                  "allocationOverride": null,
+                  "allocationReason": ""
+                }
+              ],
+              "reviewed": true,
+              "eligibility": "secured",
+              "ratio": {
+                "proposed": "1",
+                "override": null,
+                "reason": "",
+                "recordedProposal": null,
+                "recordedReason": ""
+              },
+              "rawOverride": null,
+              "evidence": {
+                "kind": "manual",
+                "sourceId": "",
+                "instanceId": "",
+                "sessionId": "session-1",
+                "keys": [],
+                "label": "Manual entry",
+                "fingerprint": "",
+                "snapshot": null
+              },
+              "distinctReason": "",
+              "notes": ""
+            }
+          ],
+          "rows": [
+            {
+              "characterId": "xp-mira",
+              "name": "Mira",
+              "allocations": [
+                {
+                  "rewardId": "raiders",
+                  "calculated": "129/5",
+                  "accepted": "26",
+                  "reason": "Recorded historical award-row rounding"
+                },
+                {
+                  "rewardId": "money",
+                  "calculated": "135",
+                  "accepted": "135",
+                  "reason": ""
+                },
+                {
+                  "rewardId": "scroll",
+                  "calculated": "300",
+                  "accepted": "300",
+                  "reason": ""
+                }
+              ],
+              "base": "461",
+              "bonusPercent": "10",
+              "bonus": "461/10",
+              "unrounded": "5071/10",
+              "rounded": 507,
+              "award": 500,
+              "overrideReason": "Synthetic recorded cap decision",
+              "before": 0,
+              "after": 500
+            },
+            {
+              "characterId": "xp-tal",
+              "name": "Tal",
+              "allocations": [
+                {
+                  "rewardId": "raiders",
+                  "calculated": "129/5",
+                  "accepted": "26",
+                  "reason": "Recorded historical award-row rounding"
+                },
+                {
+                  "rewardId": "money",
+                  "calculated": "135",
+                  "accepted": "135",
+                  "reason": ""
+                },
+                {
+                  "rewardId": "scroll",
+                  "calculated": "300",
+                  "accepted": "300",
+                  "reason": ""
+                }
+              ],
+              "base": "461",
+              "bonusPercent": "10",
+              "bonus": "461/10",
+              "unrounded": "5071/10",
+              "rounded": 507,
+              "award": 507,
+              "overrideReason": "",
+              "before": 0,
+              "after": 507
+            },
+            {
+              "characterId": "xp-oren",
+              "name": "Oren",
+              "allocations": [
+                {
+                  "rewardId": "raiders",
+                  "calculated": "129/5",
+                  "accepted": "26",
+                  "reason": "Recorded historical award-row rounding"
+                },
+                {
+                  "rewardId": "money",
+                  "calculated": "135",
+                  "accepted": "135",
+                  "reason": ""
+                },
+                {
+                  "rewardId": "scroll",
+                  "calculated": "300",
+                  "accepted": "300",
+                  "reason": ""
+                }
+              ],
+              "base": "461",
+              "bonusPercent": "10",
+              "bonus": "461/10",
+              "unrounded": "5071/10",
+              "rounded": 507,
+              "award": 507,
+              "overrideReason": "",
+              "before": 0,
+              "after": 507
+            },
+            {
+              "characterId": "xp-nera",
+              "name": "Nera",
+              "allocations": [
+                {
+                  "rewardId": "raiders",
+                  "calculated": "129/5",
+                  "accepted": "26",
+                  "reason": "Recorded historical award-row rounding"
+                },
+                {
+                  "rewardId": "money",
+                  "calculated": "135",
+                  "accepted": "135",
+                  "reason": ""
+                },
+                {
+                  "rewardId": "scroll",
+                  "calculated": "300",
+                  "accepted": "300",
+                  "reason": ""
+                }
+              ],
+              "base": "461",
+              "bonusPercent": "0",
+              "bonus": "0",
+              "unrounded": "461",
+              "rounded": 461,
+              "award": 461,
+              "overrideReason": "",
+              "before": 0,
+              "after": 461
+            },
+            {
+              "characterId": "xp-bram",
+              "name": "Bram",
+              "allocations": [
+                {
+                  "rewardId": "raiders",
+                  "calculated": "129/5",
+                  "accepted": "26",
+                  "reason": "Recorded historical award-row rounding"
+                },
+                {
+                  "rewardId": "money",
+                  "calculated": "135",
+                  "accepted": "135",
+                  "reason": ""
+                },
+                {
+                  "rewardId": "scroll",
+                  "calculated": "300",
+                  "accepted": "300",
+                  "reason": ""
+                }
+              ],
+              "base": "461",
+              "bonusPercent": "10",
+              "bonus": "461/10",
+              "unrounded": "5071/10",
+              "rounded": 507,
+              "award": 507,
+              "overrideReason": "",
+              "before": 0,
+              "after": 507
+            }
+          ],
+          "resolutions": [
+            {
+              "calculatedAllocation": "129",
+              "acceptedAllocation": "130",
+              "allocationAdjustment": {
+                "direction": "increase",
+                "amount": "1"
+              },
+              "rewardId": "raiders",
+              "calculatedRaw": "129",
+              "raw": "129",
+              "difficulty": "17/2",
+              "proposedRatio": "1",
+              "ratio": "1",
+              "recordedProposal": null,
+              "calculationError": null,
+              "monsters": [
+                {
+                  "coefficients": {
+                    "id": "under-one",
+                    "label": "Up to 1−1 HD",
+                    "maximum": 1,
+                    "base": 5,
+                    "perHp": 1,
+                    "special": 2,
+                    "exceptional": 25
+                  },
+                  "raw": "129",
+                  "difficulty": "17/2"
+                }
+              ],
+              "allocations": [
+                {
+                  "characterId": "xp-mira",
+                  "calculated": "129/5",
+                  "accepted": "26",
+                  "reason": "Recorded historical award-row rounding"
+                },
+                {
+                  "characterId": "xp-tal",
+                  "calculated": "129/5",
+                  "accepted": "26",
+                  "reason": "Recorded historical award-row rounding"
+                },
+                {
+                  "characterId": "xp-oren",
+                  "calculated": "129/5",
+                  "accepted": "26",
+                  "reason": "Recorded historical award-row rounding"
+                },
+                {
+                  "characterId": "xp-nera",
+                  "calculated": "129/5",
+                  "accepted": "26",
+                  "reason": "Recorded historical award-row rounding"
+                },
+                {
+                  "characterId": "xp-bram",
+                  "calculated": "129/5",
+                  "accepted": "26",
+                  "reason": "Recorded historical award-row rounding"
+                }
+              ]
+            },
+            {
+              "calculatedAllocation": "675",
+              "acceptedAllocation": "675",
+              "allocationAdjustment": {
+                "direction": "none",
+                "amount": "0"
+              },
+              "rewardId": "money",
+              "calculatedRaw": "675",
+              "raw": "675",
+              "difficulty": null,
+              "proposedRatio": "1",
+              "ratio": "1",
+              "recordedProposal": null,
+              "calculationError": null,
+              "monsters": [],
+              "allocations": [
+                {
+                  "characterId": "xp-mira",
+                  "calculated": "135",
+                  "accepted": "135",
+                  "reason": ""
+                },
+                {
+                  "characterId": "xp-tal",
+                  "calculated": "135",
+                  "accepted": "135",
+                  "reason": ""
+                },
+                {
+                  "characterId": "xp-oren",
+                  "calculated": "135",
+                  "accepted": "135",
+                  "reason": ""
+                },
+                {
+                  "characterId": "xp-nera",
+                  "calculated": "135",
+                  "accepted": "135",
+                  "reason": ""
+                },
+                {
+                  "characterId": "xp-bram",
+                  "calculated": "135",
+                  "accepted": "135",
+                  "reason": ""
+                }
+              ]
+            },
+            {
+              "calculatedAllocation": "1500",
+              "acceptedAllocation": "1500",
+              "allocationAdjustment": {
+                "direction": "none",
+                "amount": "0"
+              },
+              "rewardId": "scroll",
+              "calculatedRaw": "1500",
+              "raw": "1500",
+              "difficulty": null,
+              "proposedRatio": "1",
+              "ratio": "1",
+              "recordedProposal": null,
+              "calculationError": null,
+              "monsters": [],
+              "allocations": [
+                {
+                  "characterId": "xp-mira",
+                  "calculated": "300",
+                  "accepted": "300",
+                  "reason": ""
+                },
+                {
+                  "characterId": "xp-tal",
+                  "calculated": "300",
+                  "accepted": "300",
+                  "reason": ""
+                },
+                {
+                  "characterId": "xp-oren",
+                  "calculated": "300",
+                  "accepted": "300",
+                  "reason": ""
+                },
+                {
+                  "characterId": "xp-nera",
+                  "calculated": "300",
+                  "accepted": "300",
+                  "reason": ""
+                },
+                {
+                  "characterId": "xp-bram",
+                  "calculated": "300",
+                  "accepted": "300",
+                  "reason": ""
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

@@ -1,3 +1,5 @@
+import { reorderCampaignSession } from '../../helpers/campaignSessionOrder';
+import CampaignXp from './CampaignXp';
 import PartyReference from './PartyReference';
 import AutoHeightTextarea from '../tracker/AutoHeightTextarea';
 import CreateSessionDialog from './CreateSessionDialog';
@@ -42,6 +44,8 @@ export default function DesktopWorkspace({
   } | null>(null);
   const [state, setState] = useState<DocumentState | null>(null);
   const current = useRef<DocumentState | null>(null);
+  const draggedSession = useRef<string | null>(null);
+  const [dropSession, setDropSession] = useState<string | null>(null);
   const welcomeTools = useRef<HTMLDetailsElement>(null);
   const pending = useRef(0);
   const needsEditorReset = useRef(false);
@@ -236,6 +240,7 @@ export default function DesktopWorkspace({
         '3': 'details',
         '4': 'details',
         '5': 'session',
+        '6': 'xp',
       };
       const view = views[event.code.replace('Digit', '')];
       if (view && current.current?.document) {
@@ -433,30 +438,106 @@ export default function DesktopWorkspace({
         <>
           <div className={styles['sessionStrip']} aria-label="Sessions">
             {document.sessions.map((s) => (
-              <RenamableTab
+              <div
                 key={s.id}
-                kind="session"
-                label={s.label}
-                selected={s.id === sessionId}
-                onSelect={() => {
-                  if (s.id !== sessionId)
-                    mutate((d) => ({
-                      ...d,
-                      workspace: { ...d.workspace, sessionId: s.id },
-                    }));
-                }}
-                onRename={(label) =>
-                  mutate(
-                    (d) => ({
-                      ...d,
-                      sessions: d.sessions.map((item) =>
-                        item.id === s.id ? { ...item, label } : item
-                      ),
-                    }),
-                    state
-                  )
+                className={`${styles['sessionDrag']} ${
+                  dropSession === s.id ? styles['sessionDrop'] : ''
+                }`}
+                draggable={!document.xp?.events.length}
+                title={
+                  document.xp?.events.length
+                    ? 'Session order is fixed after XP confirmation'
+                    : 'Drag to reorder sessions'
                 }
-              />
+                onDragStart={(event) => {
+                  if (
+                    document.xp?.events.length ||
+                    (event.target instanceof HTMLElement &&
+                      event.target.closest('input'))
+                  ) {
+                    event.preventDefault();
+                    return;
+                  }
+                  draggedSession.current = s.id;
+                  event.dataTransfer.setData(
+                    'application/x-adnd-session',
+                    s.id
+                  );
+                  event.dataTransfer.setData('text/plain', s.id);
+                  event.dataTransfer.effectAllowed = 'move';
+                }}
+                onDragOver={(event) => {
+                  if (draggedSession.current && !document.xp?.events.length) {
+                    event.preventDefault();
+                    event.dataTransfer.dropEffect = 'move';
+                    setDropSession(s.id);
+                  }
+                }}
+                onDrop={(event) => {
+                  event.preventDefault();
+                  const from = draggedSession.current;
+                  draggedSession.current = null;
+                  setDropSession(null);
+                  if (from)
+                    mutate((d) => reorderCampaignSession(d, from, s.id), state);
+                }}
+                onDragEnd={() => {
+                  draggedSession.current = null;
+                  setDropSession(null);
+                }}
+                onKeyDown={(event) => {
+                  if (
+                    !event.altKey ||
+                    !event.shiftKey ||
+                    document.xp?.events.length ||
+                    event.target instanceof HTMLInputElement
+                  )
+                    return;
+                  const direction =
+                    event.key === 'ArrowLeft'
+                      ? -1
+                      : event.key === 'ArrowRight'
+                      ? 1
+                      : 0;
+                  const target =
+                    document.sessions[
+                      document.sessions.findIndex((item) => item.id === s.id) +
+                        direction
+                    ];
+                  if (direction && target) {
+                    event.preventDefault();
+                    mutate(
+                      (d) => reorderCampaignSession(d, s.id, target.id),
+                      state
+                    );
+                  }
+                }}
+              >
+                <RenamableTab
+                  kind="session"
+                  draggable={!document.xp?.events.length}
+                  label={s.label}
+                  selected={s.id === sessionId}
+                  onSelect={() => {
+                    if (s.id !== sessionId)
+                      mutate((d) => ({
+                        ...d,
+                        workspace: { ...d.workspace, sessionId: s.id },
+                      }));
+                  }}
+                  onRename={(label) =>
+                    mutate(
+                      (d) => ({
+                        ...d,
+                        sessions: d.sessions.map((item) =>
+                          item.id === s.id ? { ...item, label } : item
+                        ),
+                      }),
+                      state
+                    )
+                  }
+                />
+              </div>
             ))}
             <button
               className={styles['addTab']}
@@ -473,6 +554,7 @@ export default function DesktopWorkspace({
                 ['party', 'References'],
                 ['possessions', 'Possessions'],
                 ['combats', 'Combats'],
+                ['xp', 'XP'],
               ] as const
             ).map(([id, label]) => (
               <button
@@ -665,6 +747,16 @@ export default function DesktopWorkspace({
                 }}
               />
             </section>
+            {view === 'xp' && (
+              <section className={styles['view']} aria-label="XP">
+                <CampaignXp
+                  key={`${state.epoch}:${sessionId}:${editorVersion}`}
+                  document={document}
+                  sessionId={sessionId}
+                  onChange={(change) => mutate(change, scope)}
+                />
+              </section>
+            )}
             {view === 'party' && (
               <section className={styles['view']} aria-label="References">
                 <PartyReference
