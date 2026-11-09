@@ -6,7 +6,12 @@ import {
   moveXpTimelineEntry,
   xpAwardRoot,
 } from '../../helpers/campaignXpTimeline';
-import { rewardSettlement, activeXpEvents } from '../../helpers/campaignXp';
+import {
+  rewardSettlement,
+  activeXpEvents,
+  historicalXpReward,
+  historicalXpPoint,
+} from '../../helpers/campaignXp';
 import styles from './xpWorkspace.module.css';
 export default function XpTimeline({
   document,
@@ -61,6 +66,8 @@ export default function XpTimeline({
             const status = reward
               ? settlement
                 ? 'Awarded'
+                : historicalXpReward(document, reward)
+                ? 'Historical draft'
                 : reward.input.category === 'treasure' &&
                   reward.input.disposition === 'defer'
                 ? 'Deferred'
@@ -69,6 +76,8 @@ export default function XpTimeline({
               ? 'Draft changes'
               : point?.confirmedEventId
               ? 'Confirmed'
+              : point && historicalXpPoint(document, point)
+              ? 'Historical draft'
               : 'Draft';
             const move = (direction: -1 | 1) =>
               onChange((doc) =>

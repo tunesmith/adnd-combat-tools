@@ -43,6 +43,7 @@ test('cap preview separates full/add/discard, invalidates on training and persis
           Synthetic training
         </button>
         <CampaignXp
+          onConfirmExtension={async () => undefined}
           document={doc}
           sessionId="session-1"
           onChange={(change) => {
@@ -113,6 +114,7 @@ test('unknown caps need an explicit decision; cancellation cannot create an unca
     const [doc, setDoc] = useState(current);
     return (
       <CampaignXp
+        onConfirmExtension={async () => undefined}
         document={doc}
         sessionId="session-1"
         onChange={(change) => {

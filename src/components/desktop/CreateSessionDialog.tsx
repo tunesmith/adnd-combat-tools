@@ -1,3 +1,7 @@
+import {
+  historicalSessionTargets,
+  placeHistoricalSession,
+} from '../../helpers/campaignSessionOrder';
 import { profilesInSession } from '../../helpers/campaignParty';
 import { useEffect, useRef, useState } from 'react';
 import {
@@ -52,6 +56,13 @@ export default function CreateSessionDialog({
     };
   }, []);
 
+  const [placement, setPlacement] = useState('');
+  const move = placement.startsWith('move:');
+  const tail = document.sessions[document.sessions.length - 1];
+  const earlier = historicalSessionTargets(document);
+  const moveTargets =
+    tail?.id === sessionId ? historicalSessionTargets(document, tail.id) : [];
+
   const transfers = [
     ...(carryInventory ? ['inventory'] : []),
     ...(selected.length
@@ -65,14 +76,25 @@ export default function CreateSessionDialog({
 
   async function create() {
     const name = label.trim();
-    if (!name || submitting.current) return;
+    if ((!name && !move) || submitting.current) return;
     submitting.current = true;
     setBusy(true);
     setError('');
     try {
       const id = destinationId.current ?? crypto.randomUUID();
       destinationId.current = id;
-      if (source && transfers.length) {
+      if (placement) {
+        const before = placement.slice(placement.indexOf(':') + 1);
+        await onCreate((doc) => {
+          if (move && !doc.sessions.some((s) => s.id === tail?.id))
+            throw new Error('The session to move is missing.');
+          return placeHistoricalSession(
+            doc,
+            before,
+            move && tail ? tail : { id, label: name, notes: '' }
+          );
+        });
+      } else if (source && transfers.length) {
         const request = {
           campaignId: document.id,
           sourceSessionId: source.id,
@@ -143,16 +165,46 @@ export default function CreateSessionDialog({
       >
         <h2 id="create-session-title">New session</h2>
         <fieldset disabled={busy} className={styles['sessionFields']}>
-          <label className={styles['sessionNameField']}>
-            Session name
-            <input
-              autoFocus
-              maxLength={1000}
-              value={label}
-              onChange={(e) => setLabel(e.target.value)}
-            />
-          </label>
-          {source &&
+          {!!earlier.length && (
+            <label className={styles['sessionNameField']}>
+              Placement
+              <select
+                value={placement}
+                onChange={(e) => setPlacement(e.target.value)}
+              >
+                <option value="">Append new session</option>
+                <optgroup label="Insert empty session">
+                  {earlier.map((s) => (
+                    <option key={s.id} value={`insert:${s.id}`}>
+                      Insert before {s.label}
+                    </option>
+                  ))}
+                </optgroup>
+                {!!moveTargets.length && tail && (
+                  <optgroup label={`Move ${tail.label}`}>
+                    {moveTargets.map((s) => (
+                      <option key={s.id} value={`move:${s.id}`}>
+                        Move {tail.label} before {s.label}
+                      </option>
+                    ))}
+                  </optgroup>
+                )}
+              </select>
+            </label>
+          )}
+          {!move && (
+            <label className={styles['sessionNameField']}>
+              Session name
+              <input
+                autoFocus
+                maxLength={1000}
+                value={label}
+                onChange={(e) => setLabel(e.target.value)}
+              />
+            </label>
+          )}
+          {!placement &&
+            source &&
             (inventory ||
               combats.length > 0 ||
               source.notes ||
@@ -239,15 +291,17 @@ export default function CreateSessionDialog({
         )}
         <footer className={styles['sessionDialogFooter']}>
           <span aria-live="polite">
-            {transfers.length
+            {move
+              ? 'Keep session contents'
+              : !placement && transfers.length
               ? `Carry ${transfers.join(' · ')}`
               : 'Empty session'}
           </span>
           <button type="button" disabled={busy} onClick={onClose}>
             Cancel
           </button>
-          <button type="submit" disabled={busy || !label.trim()}>
-            {busy ? 'Creating…' : 'Create session'}
+          <button type="submit" disabled={busy || (!move && !label.trim())}>
+            {busy ? 'Saving…' : move ? 'Move session' : 'Create session'}
           </button>
         </footer>
       </form>

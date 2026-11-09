@@ -1,0 +1,1124 @@
+{
+  "kind": "adnd-campaign",
+  "id": "synthetic-d49",
+  "title": "Synthetic Backward XP",
+  "notes": "Synthetic campaign notes",
+  "schemaVersion": 13,
+  "workingCombats": [],
+  "combatCheckpoints": [],
+  "sessions": [
+    {
+      "id": "s70",
+      "label": "Session 70",
+      "notes": "Synthetic earlier notes"
+    },
+    {
+      "id": "s80",
+      "label": "Session 80",
+      "notes": "Synthetic earlier notes"
+    },
+    {
+      "id": "s85",
+      "label": "Session 85",
+      "notes": "Existing cutoff notes"
+    },
+    {
+      "id": "s90",
+      "label": "Session 90",
+      "notes": "Existing later notes"
+    }
+  ],
+  "records": [],
+  "workingInventories": [],
+  "inventoryCheckpoints": [],
+  "workspace": {
+    "sessionId": "s80",
+    "view": "xp",
+    "combatSelections": {}
+  },
+  "party": {
+    "roster": [
+      {
+        "id": "amber",
+        "name": "Amber",
+        "player": "",
+        "notes": ""
+      },
+      {
+        "id": "birch",
+        "name": "Birch",
+        "player": "",
+        "notes": ""
+      },
+      {
+        "id": "cedar",
+        "name": "Cedar",
+        "player": "",
+        "notes": ""
+      }
+    ],
+    "profiles": []
+  },
+  "xp": {
+    "version": 2,
+    "timeline": {
+      "s90": ["Later award-coins", "Later award"],
+      "s70": ["First backfill award-coins", "First backfill award"],
+      "s80": ["Second backfill award-coins", "Second backfill award"]
+    },
+    "sessionOrder": ["s70", "s80", "s85", "s90"],
+    "openings": [
+      {
+        "id": "opening-amber",
+        "characterId": "amber",
+        "sessionId": "s70",
+        "balance": 6000,
+        "reason": "Reconciled historical opening"
+      },
+      {
+        "id": "opening-birch",
+        "characterId": "birch",
+        "sessionId": "s70",
+        "balance": 5000,
+        "reason": "Reconciled historical opening"
+      },
+      {
+        "id": "opening-cedar",
+        "characterId": "cedar",
+        "sessionId": "s90",
+        "balance": 77,
+        "reason": "Trusted synthetic baseline"
+      }
+    ],
+    "rewards": [
+      {
+        "id": "Later award-coins",
+        "version": 1,
+        "title": "Later award synthetic coins",
+        "origin": {
+          "sessionId": "s90",
+          "phase": "during",
+          "order": 0
+        },
+        "input": {
+          "category": "money",
+          "gp": "20"
+        },
+        "recipients": [
+          {
+            "characterId": "amber",
+            "name": "Amber",
+            "participated": true,
+            "eligible": true,
+            "level": "5",
+            "shares": "1",
+            "allocationOverride": "500",
+            "allocationReason": "Recorded synthetic share"
+          },
+          {
+            "characterId": "birch",
+            "name": "Birch",
+            "participated": true,
+            "eligible": true,
+            "level": "5",
+            "shares": "1",
+            "allocationOverride": "200",
+            "allocationReason": "Recorded synthetic share"
+          }
+        ],
+        "ratio": {
+          "proposed": "1",
+          "override": null,
+          "reason": "",
+          "recordedProposal": null,
+          "recordedReason": ""
+        },
+        "rawOverride": null,
+        "evidence": {
+          "kind": "manual",
+          "sourceId": "",
+          "instanceId": "",
+          "sessionId": "s90",
+          "keys": [],
+          "label": "Manual entry",
+          "fingerprint": "",
+          "snapshot": null
+        },
+        "distinctReason": "",
+        "notes": ""
+      },
+      {
+        "id": "First backfill award-coins",
+        "version": 1,
+        "title": "First backfill award synthetic coins",
+        "origin": {
+          "sessionId": "s70",
+          "phase": "during",
+          "order": 0
+        },
+        "input": {
+          "category": "money",
+          "gp": "20"
+        },
+        "recipients": [
+          {
+            "characterId": "amber",
+            "name": "Amber",
+            "participated": true,
+            "eligible": true,
+            "level": "5",
+            "shares": "1",
+            "allocationOverride": "1500",
+            "allocationReason": "Recorded synthetic share"
+          },
+          {
+            "characterId": "birch",
+            "name": "Birch",
+            "participated": true,
+            "eligible": true,
+            "level": "5",
+            "shares": "1",
+            "allocationOverride": "1000",
+            "allocationReason": "Recorded synthetic share"
+          }
+        ],
+        "ratio": {
+          "proposed": "1",
+          "override": null,
+          "reason": "",
+          "recordedProposal": null,
+          "recordedReason": ""
+        },
+        "rawOverride": null,
+        "evidence": {
+          "kind": "manual",
+          "sourceId": "",
+          "instanceId": "",
+          "sessionId": "s70",
+          "keys": [],
+          "label": "Manual entry",
+          "fingerprint": "",
+          "snapshot": null
+        },
+        "distinctReason": "",
+        "notes": ""
+      },
+      {
+        "id": "Second backfill award-coins",
+        "version": 1,
+        "title": "Second backfill award synthetic coins",
+        "origin": {
+          "sessionId": "s80",
+          "phase": "during",
+          "order": 0
+        },
+        "input": {
+          "category": "money",
+          "gp": "20"
+        },
+        "recipients": [
+          {
+            "characterId": "amber",
+            "name": "Amber",
+            "participated": true,
+            "eligible": true,
+            "level": "5",
+            "shares": "1",
+            "allocationOverride": "2500",
+            "allocationReason": "Recorded synthetic share"
+          },
+          {
+            "characterId": "birch",
+            "name": "Birch",
+            "participated": true,
+            "eligible": true,
+            "level": "5",
+            "shares": "1",
+            "allocationOverride": "2000",
+            "allocationReason": "Recorded synthetic share"
+          }
+        ],
+        "ratio": {
+          "proposed": "1",
+          "override": null,
+          "reason": "",
+          "recordedProposal": null,
+          "recordedReason": ""
+        },
+        "rawOverride": null,
+        "evidence": {
+          "kind": "manual",
+          "sourceId": "",
+          "instanceId": "",
+          "sessionId": "s80",
+          "keys": [],
+          "label": "Manual entry",
+          "fingerprint": "",
+          "snapshot": null
+        },
+        "distinctReason": "",
+        "notes": ""
+      }
+    ],
+    "points": [
+      {
+        "id": "Later award",
+        "label": "Later award",
+        "position": {
+          "sessionId": "s90",
+          "phase": "end",
+          "order": 0
+        },
+        "rewardIds": ["Later award-coins"],
+        "bonuses": [
+          {
+            "characterId": "amber",
+            "name": "Amber",
+            "percent": "0",
+            "reason": "",
+            "finalOverride": null,
+            "finalReason": ""
+          },
+          {
+            "characterId": "birch",
+            "name": "Birch",
+            "percent": "0",
+            "reason": "",
+            "finalOverride": null,
+            "finalReason": ""
+          }
+        ],
+        "correctionOf": null,
+        "correctionReason": "",
+        "rewardOverrides": [],
+        "confirmedEventId": "later-event",
+        "caps": [
+          {
+            "characterId": "amber",
+            "basis": {
+              "characterClass": null,
+              "baseLevel": null,
+              "mode": "uncapped",
+              "limit": null,
+              "reason": "Recorded synthetic trained-level exception"
+            }
+          },
+          {
+            "characterId": "birch",
+            "basis": {
+              "characterClass": null,
+              "baseLevel": null,
+              "mode": "uncapped",
+              "limit": null,
+              "reason": "Recorded synthetic trained-level exception"
+            }
+          }
+        ]
+      },
+      {
+        "id": "First backfill award",
+        "label": "First backfill award",
+        "position": {
+          "sessionId": "s70",
+          "phase": "end",
+          "order": 0
+        },
+        "rewardIds": ["First backfill award-coins"],
+        "bonuses": [
+          {
+            "characterId": "amber",
+            "name": "Amber",
+            "percent": "0",
+            "reason": "",
+            "finalOverride": 1800,
+            "finalReason": "Recorded full synthetic award"
+          },
+          {
+            "characterId": "birch",
+            "name": "Birch",
+            "percent": "0",
+            "reason": "",
+            "finalOverride": null,
+            "finalReason": ""
+          }
+        ],
+        "correctionOf": null,
+        "correctionReason": "",
+        "rewardOverrides": [],
+        "confirmedEventId": "synthetic-stretch-1-award-0",
+        "caps": [
+          {
+            "characterId": "amber",
+            "basis": {
+              "characterClass": null,
+              "baseLevel": null,
+              "mode": "override",
+              "limit": 7500,
+              "reason": "Recorded synthetic trained-level exception"
+            }
+          },
+          {
+            "characterId": "birch",
+            "basis": {
+              "characterClass": null,
+              "baseLevel": null,
+              "mode": "uncapped",
+              "limit": null,
+              "reason": "Recorded synthetic trained-level exception"
+            }
+          }
+        ]
+      },
+      {
+        "id": "Second backfill award",
+        "label": "Second backfill award",
+        "position": {
+          "sessionId": "s80",
+          "phase": "end",
+          "order": 0
+        },
+        "rewardIds": ["Second backfill award-coins"],
+        "bonuses": [
+          {
+            "characterId": "amber",
+            "name": "Amber",
+            "percent": "0",
+            "reason": "",
+            "finalOverride": null,
+            "finalReason": ""
+          },
+          {
+            "characterId": "birch",
+            "name": "Birch",
+            "percent": "0",
+            "reason": "",
+            "finalOverride": null,
+            "finalReason": ""
+          }
+        ],
+        "correctionOf": null,
+        "correctionReason": "",
+        "rewardOverrides": [],
+        "confirmedEventId": "synthetic-stretch-1-award-1",
+        "caps": [
+          {
+            "characterId": "amber",
+            "basis": {
+              "characterClass": null,
+              "baseLevel": null,
+              "mode": "uncapped",
+              "limit": null,
+              "reason": "Recorded synthetic trained-level exception"
+            }
+          },
+          {
+            "characterId": "birch",
+            "basis": {
+              "characterClass": null,
+              "baseLevel": null,
+              "mode": "uncapped",
+              "limit": null,
+              "reason": "Recorded synthetic trained-level exception"
+            }
+          }
+        ]
+      }
+    ],
+    "events": [
+      {
+        "id": "later-event",
+        "point": {
+          "id": "Later award",
+          "label": "Later award",
+          "position": {
+            "sessionId": "s90",
+            "phase": "end",
+            "order": 0
+          },
+          "rewardIds": ["Later award-coins"],
+          "bonuses": [
+            {
+              "characterId": "amber",
+              "name": "Amber",
+              "percent": "0",
+              "reason": "",
+              "finalOverride": null,
+              "finalReason": ""
+            },
+            {
+              "characterId": "birch",
+              "name": "Birch",
+              "percent": "0",
+              "reason": "",
+              "finalOverride": null,
+              "finalReason": ""
+            }
+          ],
+          "correctionOf": null,
+          "correctionReason": "",
+          "rewardOverrides": [],
+          "confirmedEventId": null,
+          "caps": [
+            {
+              "characterId": "amber",
+              "basis": {
+                "characterClass": null,
+                "baseLevel": null,
+                "mode": "uncapped",
+                "limit": null,
+                "reason": "Recorded synthetic trained-level exception"
+              }
+            },
+            {
+              "characterId": "birch",
+              "basis": {
+                "characterClass": null,
+                "baseLevel": null,
+                "mode": "uncapped",
+                "limit": null,
+                "reason": "Recorded synthetic trained-level exception"
+              }
+            }
+          ]
+        },
+        "confirmedAt": "2026-11-07T12:00:00.000Z",
+        "replaces": null,
+        "correctionRoot": null,
+        "reason": "",
+        "calculatorVersion": 2,
+        "rounding": "nearest-whole-half-up-after-bonus",
+        "rewards": [
+          {
+            "id": "Later award-coins",
+            "version": 1,
+            "title": "Later award synthetic coins",
+            "origin": {
+              "sessionId": "s90",
+              "phase": "during",
+              "order": 0
+            },
+            "input": {
+              "category": "money",
+              "gp": "20"
+            },
+            "recipients": [
+              {
+                "characterId": "amber",
+                "name": "Amber",
+                "participated": true,
+                "eligible": true,
+                "level": "5",
+                "shares": "1",
+                "allocationOverride": "500",
+                "allocationReason": "Recorded synthetic share"
+              },
+              {
+                "characterId": "birch",
+                "name": "Birch",
+                "participated": true,
+                "eligible": true,
+                "level": "5",
+                "shares": "1",
+                "allocationOverride": "200",
+                "allocationReason": "Recorded synthetic share"
+              }
+            ],
+            "ratio": {
+              "proposed": "1",
+              "override": null,
+              "reason": "",
+              "recordedProposal": null,
+              "recordedReason": ""
+            },
+            "rawOverride": null,
+            "evidence": {
+              "kind": "manual",
+              "sourceId": "",
+              "instanceId": "",
+              "sessionId": "s90",
+              "keys": [],
+              "label": "Manual entry",
+              "fingerprint": "",
+              "snapshot": null
+            },
+            "distinctReason": "",
+            "notes": ""
+          }
+        ],
+        "rows": [
+          {
+            "characterId": "amber",
+            "name": "Amber",
+            "allocations": [
+              {
+                "rewardId": "Later award-coins",
+                "calculated": "10",
+                "accepted": "500",
+                "reason": "Recorded synthetic share"
+              }
+            ],
+            "base": "500",
+            "bonusPercent": "0",
+            "bonus": "0",
+            "unrounded": "500",
+            "rounded": 500,
+            "award": 500,
+            "overrideReason": "",
+            "before": 10000,
+            "after": 10500,
+            "discarded": 0,
+            "fullAward": 500,
+            "cap": {
+              "characterClass": null,
+              "baseLevel": null,
+              "mode": "uncapped",
+              "limit": null,
+              "reason": "Recorded synthetic trained-level exception"
+            }
+          },
+          {
+            "characterId": "birch",
+            "name": "Birch",
+            "allocations": [
+              {
+                "rewardId": "Later award-coins",
+                "calculated": "10",
+                "accepted": "200",
+                "reason": "Recorded synthetic share"
+              }
+            ],
+            "base": "200",
+            "bonusPercent": "0",
+            "bonus": "0",
+            "unrounded": "200",
+            "rounded": 200,
+            "award": 200,
+            "overrideReason": "",
+            "before": 8000,
+            "after": 8200,
+            "discarded": 0,
+            "fullAward": 200,
+            "cap": {
+              "characterClass": null,
+              "baseLevel": null,
+              "mode": "uncapped",
+              "limit": null,
+              "reason": "Recorded synthetic trained-level exception"
+            }
+          }
+        ],
+        "resolutions": [
+          {
+            "calculatedAllocation": "20",
+            "acceptedAllocation": "700",
+            "allocationAdjustment": {
+              "direction": "increase",
+              "amount": "680"
+            },
+            "rewardId": "Later award-coins",
+            "calculatedRaw": "20",
+            "raw": "20",
+            "difficulty": null,
+            "proposedRatio": "1",
+            "ratio": "1",
+            "recordedProposal": null,
+            "calculationError": null,
+            "monsters": [],
+            "allocations": [
+              {
+                "characterId": "amber",
+                "calculated": "10",
+                "accepted": "500",
+                "reason": "Recorded synthetic share"
+              },
+              {
+                "characterId": "birch",
+                "calculated": "10",
+                "accepted": "200",
+                "reason": "Recorded synthetic share"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "synthetic-stretch-1-award-0",
+        "point": {
+          "id": "First backfill award",
+          "label": "First backfill award",
+          "position": {
+            "sessionId": "s70",
+            "phase": "end",
+            "order": 0
+          },
+          "rewardIds": ["First backfill award-coins"],
+          "bonuses": [
+            {
+              "characterId": "amber",
+              "name": "Amber",
+              "percent": "0",
+              "reason": "",
+              "finalOverride": 1800,
+              "finalReason": "Recorded full synthetic award"
+            },
+            {
+              "characterId": "birch",
+              "name": "Birch",
+              "percent": "0",
+              "reason": "",
+              "finalOverride": null,
+              "finalReason": ""
+            }
+          ],
+          "correctionOf": null,
+          "correctionReason": "",
+          "rewardOverrides": [],
+          "confirmedEventId": null,
+          "caps": [
+            {
+              "characterId": "amber",
+              "basis": {
+                "characterClass": null,
+                "baseLevel": null,
+                "mode": "override",
+                "limit": 7500,
+                "reason": "Recorded synthetic trained-level exception"
+              }
+            },
+            {
+              "characterId": "birch",
+              "basis": {
+                "characterClass": null,
+                "baseLevel": null,
+                "mode": "uncapped",
+                "limit": null,
+                "reason": "Recorded synthetic trained-level exception"
+              }
+            }
+          ]
+        },
+        "confirmedAt": "2026-11-07T12:00:00.000Z",
+        "replaces": null,
+        "correctionRoot": null,
+        "reason": "",
+        "calculatorVersion": 2,
+        "rounding": "nearest-whole-half-up-after-bonus",
+        "rewards": [
+          {
+            "id": "First backfill award-coins",
+            "version": 1,
+            "title": "First backfill award synthetic coins",
+            "origin": {
+              "sessionId": "s70",
+              "phase": "during",
+              "order": 0
+            },
+            "input": {
+              "category": "money",
+              "gp": "20"
+            },
+            "recipients": [
+              {
+                "characterId": "amber",
+                "name": "Amber",
+                "participated": true,
+                "eligible": true,
+                "level": "5",
+                "shares": "1",
+                "allocationOverride": "1500",
+                "allocationReason": "Recorded synthetic share"
+              },
+              {
+                "characterId": "birch",
+                "name": "Birch",
+                "participated": true,
+                "eligible": true,
+                "level": "5",
+                "shares": "1",
+                "allocationOverride": "1000",
+                "allocationReason": "Recorded synthetic share"
+              }
+            ],
+            "ratio": {
+              "proposed": "1",
+              "override": null,
+              "reason": "",
+              "recordedProposal": null,
+              "recordedReason": ""
+            },
+            "rawOverride": null,
+            "evidence": {
+              "kind": "manual",
+              "sourceId": "",
+              "instanceId": "",
+              "sessionId": "s70",
+              "keys": [],
+              "label": "Manual entry",
+              "fingerprint": "",
+              "snapshot": null
+            },
+            "distinctReason": "",
+            "notes": ""
+          }
+        ],
+        "rows": [
+          {
+            "characterId": "amber",
+            "name": "Amber",
+            "allocations": [
+              {
+                "rewardId": "First backfill award-coins",
+                "calculated": "10",
+                "accepted": "1500",
+                "reason": "Recorded synthetic share"
+              }
+            ],
+            "base": "1500",
+            "bonusPercent": "0",
+            "bonus": "0",
+            "unrounded": "1500",
+            "rounded": 1500,
+            "award": 1500,
+            "overrideReason": "Recorded full synthetic award",
+            "before": 6000,
+            "after": 7500,
+            "discarded": 300,
+            "fullAward": 1800,
+            "cap": {
+              "characterClass": null,
+              "baseLevel": null,
+              "mode": "override",
+              "limit": 7500,
+              "reason": "Recorded synthetic trained-level exception"
+            }
+          },
+          {
+            "characterId": "birch",
+            "name": "Birch",
+            "allocations": [
+              {
+                "rewardId": "First backfill award-coins",
+                "calculated": "10",
+                "accepted": "1000",
+                "reason": "Recorded synthetic share"
+              }
+            ],
+            "base": "1000",
+            "bonusPercent": "0",
+            "bonus": "0",
+            "unrounded": "1000",
+            "rounded": 1000,
+            "award": 1000,
+            "overrideReason": "",
+            "before": 5000,
+            "after": 6000,
+            "discarded": 0,
+            "fullAward": 1000,
+            "cap": {
+              "characterClass": null,
+              "baseLevel": null,
+              "mode": "uncapped",
+              "limit": null,
+              "reason": "Recorded synthetic trained-level exception"
+            }
+          }
+        ],
+        "resolutions": [
+          {
+            "calculatedAllocation": "20",
+            "acceptedAllocation": "2500",
+            "allocationAdjustment": {
+              "direction": "increase",
+              "amount": "2480"
+            },
+            "rewardId": "First backfill award-coins",
+            "calculatedRaw": "20",
+            "raw": "20",
+            "difficulty": null,
+            "proposedRatio": "1",
+            "ratio": "1",
+            "recordedProposal": null,
+            "calculationError": null,
+            "monsters": [],
+            "allocations": [
+              {
+                "characterId": "amber",
+                "calculated": "10",
+                "accepted": "1500",
+                "reason": "Recorded synthetic share"
+              },
+              {
+                "characterId": "birch",
+                "calculated": "10",
+                "accepted": "1000",
+                "reason": "Recorded synthetic share"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "synthetic-stretch-1-award-1",
+        "point": {
+          "id": "Second backfill award",
+          "label": "Second backfill award",
+          "position": {
+            "sessionId": "s80",
+            "phase": "end",
+            "order": 0
+          },
+          "rewardIds": ["Second backfill award-coins"],
+          "bonuses": [
+            {
+              "characterId": "amber",
+              "name": "Amber",
+              "percent": "0",
+              "reason": "",
+              "finalOverride": null,
+              "finalReason": ""
+            },
+            {
+              "characterId": "birch",
+              "name": "Birch",
+              "percent": "0",
+              "reason": "",
+              "finalOverride": null,
+              "finalReason": ""
+            }
+          ],
+          "correctionOf": null,
+          "correctionReason": "",
+          "rewardOverrides": [],
+          "confirmedEventId": null,
+          "caps": [
+            {
+              "characterId": "amber",
+              "basis": {
+                "characterClass": null,
+                "baseLevel": null,
+                "mode": "uncapped",
+                "limit": null,
+                "reason": "Recorded synthetic trained-level exception"
+              }
+            },
+            {
+              "characterId": "birch",
+              "basis": {
+                "characterClass": null,
+                "baseLevel": null,
+                "mode": "uncapped",
+                "limit": null,
+                "reason": "Recorded synthetic trained-level exception"
+              }
+            }
+          ]
+        },
+        "confirmedAt": "2026-11-07T12:00:00.000Z",
+        "replaces": null,
+        "correctionRoot": null,
+        "reason": "",
+        "calculatorVersion": 2,
+        "rounding": "nearest-whole-half-up-after-bonus",
+        "rewards": [
+          {
+            "id": "Second backfill award-coins",
+            "version": 1,
+            "title": "Second backfill award synthetic coins",
+            "origin": {
+              "sessionId": "s80",
+              "phase": "during",
+              "order": 0
+            },
+            "input": {
+              "category": "money",
+              "gp": "20"
+            },
+            "recipients": [
+              {
+                "characterId": "amber",
+                "name": "Amber",
+                "participated": true,
+                "eligible": true,
+                "level": "5",
+                "shares": "1",
+                "allocationOverride": "2500",
+                "allocationReason": "Recorded synthetic share"
+              },
+              {
+                "characterId": "birch",
+                "name": "Birch",
+                "participated": true,
+                "eligible": true,
+                "level": "5",
+                "shares": "1",
+                "allocationOverride": "2000",
+                "allocationReason": "Recorded synthetic share"
+              }
+            ],
+            "ratio": {
+              "proposed": "1",
+              "override": null,
+              "reason": "",
+              "recordedProposal": null,
+              "recordedReason": ""
+            },
+            "rawOverride": null,
+            "evidence": {
+              "kind": "manual",
+              "sourceId": "",
+              "instanceId": "",
+              "sessionId": "s80",
+              "keys": [],
+              "label": "Manual entry",
+              "fingerprint": "",
+              "snapshot": null
+            },
+            "distinctReason": "",
+            "notes": ""
+          }
+        ],
+        "rows": [
+          {
+            "characterId": "amber",
+            "name": "Amber",
+            "allocations": [
+              {
+                "rewardId": "Second backfill award-coins",
+                "calculated": "10",
+                "accepted": "2500",
+                "reason": "Recorded synthetic share"
+              }
+            ],
+            "base": "2500",
+            "bonusPercent": "0",
+            "bonus": "0",
+            "unrounded": "2500",
+            "rounded": 2500,
+            "award": 2500,
+            "overrideReason": "",
+            "before": 7500,
+            "after": 10000,
+            "discarded": 0,
+            "fullAward": 2500,
+            "cap": {
+              "characterClass": null,
+              "baseLevel": null,
+              "mode": "uncapped",
+              "limit": null,
+              "reason": "Recorded synthetic trained-level exception"
+            }
+          },
+          {
+            "characterId": "birch",
+            "name": "Birch",
+            "allocations": [
+              {
+                "rewardId": "Second backfill award-coins",
+                "calculated": "10",
+                "accepted": "2000",
+                "reason": "Recorded synthetic share"
+              }
+            ],
+            "base": "2000",
+            "bonusPercent": "0",
+            "bonus": "0",
+            "unrounded": "2000",
+            "rounded": 2000,
+            "award": 2000,
+            "overrideReason": "",
+            "before": 6000,
+            "after": 8000,
+            "discarded": 0,
+            "fullAward": 2000,
+            "cap": {
+              "characterClass": null,
+              "baseLevel": null,
+              "mode": "uncapped",
+              "limit": null,
+              "reason": "Recorded synthetic trained-level exception"
+            }
+          }
+        ],
+        "resolutions": [
+          {
+            "calculatedAllocation": "20",
+            "acceptedAllocation": "4500",
+            "allocationAdjustment": {
+              "direction": "increase",
+              "amount": "4480"
+            },
+            "rewardId": "Second backfill award-coins",
+            "calculatedRaw": "20",
+            "raw": "20",
+            "difficulty": null,
+            "proposedRatio": "1",
+            "ratio": "1",
+            "recordedProposal": null,
+            "calculationError": null,
+            "monsters": [],
+            "allocations": [
+              {
+                "characterId": "amber",
+                "calculated": "10",
+                "accepted": "2500",
+                "reason": "Recorded synthetic share"
+              },
+              {
+                "characterId": "birch",
+                "calculated": "10",
+                "accepted": "2000",
+                "reason": "Recorded synthetic share"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "extensions": [
+      {
+        "id": "synthetic-stretch-1",
+        "confirmedAt": "2026-11-07T12:00:00.000Z",
+        "openings": [
+          {
+            "previous": {
+              "id": "opening-amber",
+              "characterId": "amber",
+              "sessionId": "s85",
+              "balance": 10000,
+              "reason": "Trusted synthetic baseline"
+            },
+            "replacement": {
+              "id": "opening-amber",
+              "characterId": "amber",
+              "sessionId": "s70",
+              "balance": 6000,
+              "reason": "Reconciled historical opening"
+            },
+            "applied": 4000
+          },
+          {
+            "previous": {
+              "id": "opening-birch",
+              "characterId": "birch",
+              "sessionId": "s85",
+              "balance": 8000,
+              "reason": "Trusted synthetic baseline"
+            },
+            "replacement": {
+              "id": "opening-birch",
+              "characterId": "birch",
+              "sessionId": "s70",
+              "balance": 5000,
+              "reason": "Reconciled historical opening"
+            },
+            "applied": 3000
+          }
+        ],
+        "eventIds": [
+          "synthetic-stretch-1-award-0",
+          "synthetic-stretch-1-award-1"
+        ]
+      }
+    ]
+  }
+}

@@ -64,7 +64,7 @@ test('old profiles migrate with unknown reference fields and invalid typed value
     },
   };
   const next = validateCampaign(legacy);
-  expect(next.schemaVersion).toBe(12);
+  expect(next.schemaVersion).toBe(13);
   expect(next.party).toEqual(legacy.party);
   expect(next.records).toEqual(legacy.records);
   const reference = fixture.party.profiles[0]?.reference;

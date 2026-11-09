@@ -200,24 +200,45 @@ const xpEventSchema = z
   })
   .strict();
 export type XpEvent = z.infer<typeof xpEventSchema>;
+const xpOpeningSchema = z
+  .object({
+    id,
+    characterId: id,
+    sessionId: id,
+    balance: integer.nullable(),
+    reason: note,
+  })
+  .strict();
+export type XpOpening = z.infer<typeof xpOpeningSchema>;
+
+const xpExtensionSchema = z
+  .object({
+    id,
+    confirmedAt: xpEventSchema.shape.confirmedAt,
+    eventIds: z.array(id).min(1).max(1000),
+    openings: z
+      .array(
+        z
+          .object({
+            previous: xpOpeningSchema,
+            replacement: xpOpeningSchema,
+            applied: integer,
+          })
+          .strict()
+      )
+      .min(1)
+      .max(500),
+  })
+  .strict();
+export type XpExtension = z.infer<typeof xpExtensionSchema>;
+
 export const campaignXpSchema = z
   .object({
     version: z.union([z.literal(1), z.literal(2)]),
     timeline: z.record(z.array(id).max(3000)).optional(),
     sessionOrder: z.array(id).max(500),
-    openings: z
-      .array(
-        z
-          .object({
-            id,
-            characterId: id,
-            sessionId: id,
-            balance: integer.nullable(),
-            reason: note,
-          })
-          .strict()
-      )
-      .max(500),
+    openings: z.array(xpOpeningSchema).max(500),
+    extensions: z.array(xpExtensionSchema).max(500).optional(),
     rewards: z.array(xpRewardSchema).max(2000),
     points: z.array(xpPointSchema).max(1000),
     events: z.array(xpEventSchema).max(2000),
@@ -235,5 +256,5 @@ export const emptyCampaignXp = (): CampaignXp => ({
 });
 
 export const legacyCampaignXpSchema = campaignXpSchema
-  .omit({ timeline: true })
+  .omit({ timeline: true, extensions: true })
   .extend({ version: z.literal(1) });

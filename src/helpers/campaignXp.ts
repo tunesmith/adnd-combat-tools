@@ -1,3 +1,4 @@
+import { validHistoricalSessionMove } from './campaignSessionOrder';
 import {
   awardCapBasis,
   cappedXp,
@@ -26,6 +27,8 @@ import type {
   XpCapBasis,
   XpBonusReview,
   XpEvent,
+  XpExtension,
+  XpOpening,
   XpPoint,
   XpPosition,
   XpReward,
@@ -386,17 +389,27 @@ function withLedger(doc: CampaignDocument, xp: CampaignXp): CampaignDocument {
     xp: syncXpTimeline({ ...xp, sessionOrder: xpSessionOrder({ ...doc, xp }) }),
   };
 }
+function openingUsedByExtension(xp: CampaignXp, id: string) {
+  return (
+    xp.extensions?.some((e) =>
+      e.openings.some((o) => o.previous.characterId === id)
+    ) ?? false
+  );
+}
+export function xpOpeningLocked(doc: CampaignDocument, id: string) {
+  const xp = xpLedger(doc);
+  return (
+    openingUsedByExtension(xp, id) ||
+    xp.events.some((e) => e.rows.some((r) => r.characterId === id))
+  );
+}
 export function saveXpOpening(
   doc: CampaignDocument,
   entry: CampaignXp['openings'][number]
 ): CampaignDocument {
   const xp = xpLedger(doc),
     old = xp.openings.find((o) => o.characterId === entry.characterId);
-  if (
-    xp.events.some((e) =>
-      e.rows.some((r) => r.characterId === entry.characterId)
-    )
-  )
+  if (xpOpeningLocked(doc, entry.characterId))
     fail(
       'Opening balances used by confirmed history are fixed. Correct an award explicitly.'
     );
@@ -677,9 +690,97 @@ export function xpCapProfileSignature(doc: CampaignDocument, point: XpPoint) {
       .sort((a, b) => a.id.localeCompare(b.id)) || []
   );
 }
+function beforeOpening(
+  doc: CampaignDocument,
+  sessionId: string,
+  opening: XpOpening
+) {
+  const order = xpSessionOrder(doc);
+  return order.indexOf(sessionId) < order.indexOf(opening.sessionId);
+}
+function historicalPosition(
+  doc: CampaignDocument,
+  sessionId: string,
+  characterIds: string[]
+): boolean {
+  const xp = xpLedger(doc);
+  const cutoffs = xp.openings.map(
+    (opening) =>
+      xp.extensions
+        ?.flatMap((e) => e.openings)
+        .find((entry) => entry.previous.characterId === opening.characterId)
+        ?.previous ?? opening
+  );
+  return (characterIds.length ? characterIds : ['']).some((id) => {
+    const opening = cutoffs.find((o) => o.characterId === id);
+    return opening
+      ? beforeOpening(doc, sessionId, opening)
+      : cutoffs.some((o) => beforeOpening(doc, sessionId, o));
+  });
+}
+function eligibleCharacters(rewards: XpReward[]) {
+  return Array.from(
+    new Set(
+      rewards.flatMap((r) =>
+        r.recipients.filter((c) => c.eligible).map((c) => c.characterId)
+      )
+    )
+  );
+}
+export function historicalXpReward(doc: CampaignDocument, reward: XpReward) {
+  return historicalPosition(
+    doc,
+    reward.origin.sessionId,
+    eligibleCharacters([reward])
+  );
+}
+export function historicalXpPoint(doc: CampaignDocument, point: XpPoint) {
+  return (
+    !point.correctionOf &&
+    historicalPosition(
+      doc,
+      point.position.sessionId,
+      eligibleCharacters(pointRewards(doc, point))
+    )
+  );
+}
+export function xpRewardFitsAward(
+  doc: CampaignDocument,
+  point: XpPoint,
+  reward: XpReward
+) {
+  if (point.correctionOf) return !reservedHistoricalReward(doc, point, reward);
+  const reserved = historicalXpReward(doc, reward);
+  if (point.rewardIds.length && reserved !== historicalXpPoint(doc, point))
+    return false;
+  return (
+    reserved ===
+    historicalPosition(
+      doc,
+      point.position.sessionId,
+      eligibleCharacters([reward])
+    )
+  );
+}
+function reservedHistoricalReward(
+  doc: CampaignDocument,
+  point: XpPoint,
+  reward: XpReward
+) {
+  if (!historicalXpReward(doc, reward)) return false;
+  const target = xpLedger(doc).events.find((e) => e.id === point.correctionOf);
+  return !target?.rewards.some((r) => r.id === reward.id);
+}
 export function previewXpAward(
   doc: CampaignDocument,
   pointId: string
+): XpAwardPreview {
+  return reviewXpAward(doc, pointId);
+}
+function reviewXpAward(
+  doc: CampaignDocument,
+  pointId: string,
+  reconstructing = false
 ): XpAwardPreview {
   const xp = xpLedger(doc),
     point =
@@ -709,6 +810,14 @@ export function previewXpAward(
   )
     fail('Select rewards once each.');
   const rewards = pointRewards(doc, point);
+  if (
+    !reconstructing &&
+    (historicalXpPoint(doc, point) ||
+      rewards.some((r) => reservedHistoricalReward(doc, point, r)))
+  )
+    fail(
+      'Historical drafts are confirmed together through Extend history backward.'
+    );
   for (const reward of rewards) {
     if (
       compareXpTimeline(
@@ -774,7 +883,7 @@ export function previewXpAward(
   const simulated = [...xp.events, revised];
   const later: XpAwardPreview['later'] = [];
   for (const event of active.filter(
-    (e) => compareXpAwards(doc, e.point, point) > 0
+    (e) => !reconstructing && compareXpAwards(doc, e.point, point) > 0
   )) {
     const rebased = event.rows.map((r) => {
       const balance = xpBalance(
@@ -805,14 +914,16 @@ export function previewXpAward(
   };
   return {
     ...result,
-    fingerprint: fingerprint({
-      ...result,
-      timeline: xp.timeline,
-      sessionOrder: xpSessionOrder(doc),
-      openings: xp.openings,
-      events: xp.events,
-      capProfiles: xpCapProfileSignature(doc, point),
-    }),
+    fingerprint: reconstructing
+      ? ''
+      : fingerprint({
+          ...result,
+          timeline: xp.timeline,
+          sessionOrder: xpSessionOrder(doc),
+          openings: xp.openings,
+          events: xp.events,
+          capProfiles: xpCapProfileSignature(doc, point),
+        }),
   };
 }
 export function confirmXpAward(
@@ -837,19 +948,7 @@ export function confirmXpAward(
     fail('Explicitly review the later balances before confirming.');
   if (xp.events.some((e) => e.id === eventId))
     fail('Duplicate award operation.');
-  const event: XpEvent = {
-    id: eventId,
-    point: preview.point,
-    confirmedAt: at,
-    replaces: point.correctionOf,
-    correctionRoot: null,
-    reason: point.correctionReason,
-    calculatorVersion: 2,
-    rounding: 'nearest-whole-half-up-after-bonus',
-    rewards: preview.rewards,
-    rows: preview.rows,
-    resolutions: preview.resolutions,
-  };
+  const event = awardEvent(preview, eventId, at);
   const rebased = preview.later.map(
     ({ event: previous, rows }, index): XpEvent => ({
       ...clone(previous),
@@ -861,13 +960,369 @@ export function confirmXpAward(
       rows,
     })
   );
-  return withLedger(doc, {
+  const next = withLedger(doc, {
     ...xp,
     points: xp.points.map((p) =>
       p.id === pointId ? { ...p, confirmedEventId: eventId } : p
     ),
     events: [...xp.events, event, ...rebased],
   });
+  verifyExtensionCutoffs(next);
+  return next;
+}
+function awardEvent(
+  preview: XpAwardPreview,
+  eventId: string,
+  at: string
+): XpEvent {
+  return {
+    id: eventId,
+    point: preview.point,
+    confirmedAt: at,
+    replaces: preview.point.correctionOf,
+    correctionRoot: null,
+    reason: preview.point.correctionReason,
+    calculatorVersion: 2,
+    rounding: 'nearest-whole-half-up-after-bonus',
+    rewards: preview.rewards,
+    rows: preview.rows,
+    resolutions: preview.resolutions,
+  };
+}
+type EarlierOpening = Pick<XpOpening, 'characterId' | 'sessionId' | 'balance'>;
+export interface XpExtensionRequest {
+  pointIds: string[];
+  openings: EarlierOpening[];
+}
+interface XpReconciliationRow {
+  previous: XpOpening | undefined;
+  replacement: EarlierOpening;
+  applied: number | null;
+  reconstructed: number | null;
+  difference: number | null;
+}
+export function xpExtensionDrafts(doc: CampaignDocument) {
+  const xp = xpLedger(doc);
+  return xp.points.filter(
+    (point) =>
+      !point.confirmedEventId &&
+      historicalXpPoint(doc, point) &&
+      xp.openings.some((opening) =>
+        beforeOpening(doc, point.position.sessionId, opening)
+      )
+  );
+}
+function replaceOpenings(openings: XpOpening[], replacements: XpOpening[]) {
+  return openings.map((o) => replacements.find((r) => r.id === o.id) ?? o);
+}
+export function previewXpExtension(
+  doc: CampaignDocument,
+  request: XpExtensionRequest
+) {
+  const xp = xpLedger(doc);
+  const drafts = xpExtensionDrafts(doc);
+  if (
+    !request.pointIds.length ||
+    new Set(request.pointIds).size !== request.pointIds.length
+  )
+    fail('Select historical award drafts once each.');
+  const points = request.pointIds
+    .map(
+      (id) =>
+        drafts.find((point) => point.id === id) ||
+        fail('Select unconfirmed historical awards.')
+    )
+    .sort((a, b) => compareXpAwards(doc, a, b));
+  const affected = Array.from(
+    new Set([
+      ...eligibleCharacters(points.flatMap((p) => pointRewards(doc, p))),
+      ...request.openings.map((o) => o.characterId),
+    ])
+  );
+  if (
+    new Set(request.openings.map((o) => o.characterId)).size !==
+    request.openings.length
+  )
+    fail('Enter one earlier opening per character.');
+  const rows: XpReconciliationRow[] = affected.map((characterId) => ({
+    previous: xp.openings.find((o) => o.characterId === characterId),
+    replacement: request.openings.find(
+      (o) => o.characterId === characterId
+    ) ?? {
+      characterId,
+      sessionId: '',
+      balance: null,
+    },
+    applied: null,
+    reconstructed: null,
+    difference: null,
+  }));
+  for (const { previous, replacement } of rows) {
+    if (
+      replacement.balance !== null &&
+      (!Number.isSafeInteger(replacement.balance) || replacement.balance < 0)
+    )
+      fail('Earlier opening XP must be a nonnegative whole number.');
+    if (
+      previous &&
+      replacement.sessionId &&
+      (!doc.sessions.some((s) => s.id === replacement.sessionId) ||
+        !beforeOpening(doc, replacement.sessionId, previous))
+    )
+      fail('Choose an earlier opening session for each character.');
+  }
+  const changes = rows.flatMap(({ previous, replacement }) =>
+    previous &&
+    previous.balance !== null &&
+    replacement.sessionId &&
+    replacement.balance !== null
+      ? [
+          {
+            previous,
+            replacement: {
+              ...previous,
+              ...replacement,
+              reason: 'Reconciled historical opening',
+            },
+            applied: 0,
+          },
+        ]
+      : []
+  );
+  const awards: XpAwardPreview[] = [];
+  const result = {
+    rows,
+    changes,
+    awards,
+    fingerprint: fingerprint({
+      campaignId: doc.id,
+      request,
+      xp,
+      sessions: xpSessionOrder(doc),
+      profiles: points.map((point) => xpCapProfileSignature(doc, point)),
+    }),
+  };
+  if (changes.length !== rows.length) return result;
+  let simulated: CampaignDocument = {
+    ...doc,
+    xp: {
+      ...xp,
+      openings: replaceOpenings(
+        xp.openings,
+        changes.map((c) => c.replacement)
+      ),
+    },
+  };
+  for (const point of points) {
+    for (const id of eligibleCharacters(pointRewards(doc, point))) {
+      const change = changes.find((c) => c.previous.characterId === id);
+      if (
+        !change ||
+        !beforeOpening(doc, point.position.sessionId, change.previous) ||
+        beforeOpening(doc, point.position.sessionId, change.replacement)
+      )
+        fail(
+          `${point.label}: the award must fall between each recipient’s earlier opening and existing cutoff.`
+        );
+    }
+    const award = reviewXpAward(simulated, point.id, true);
+    result.awards.push(award);
+    const ledger = xpLedger(simulated);
+    simulated = {
+      ...simulated,
+      xp: {
+        ...ledger,
+        events: [
+          ...ledger.events,
+          awardEvent(
+            award,
+            `preview-extension-${point.id}`,
+            '2000-01-01T00:00:00.000Z'
+          ),
+        ],
+      },
+    };
+    for (const row of award.rows) {
+      const change = changes.find(
+        (c) => c.previous.characterId === row.characterId
+      );
+      if (!change) fail('Reconcile every recipient of a historical award.');
+      change.applied += row.award;
+    }
+  }
+  for (const row of rows) {
+    const change = changes.find(
+      (c) => c.previous.characterId === row.replacement.characterId
+    );
+    if (
+      !change ||
+      change.replacement.balance === null ||
+      change.previous.balance === null
+    )
+      fail('Missing reconciliation balance.');
+    row.applied = change.applied;
+    row.reconstructed = change.replacement.balance + row.applied;
+    row.difference = row.reconstructed - change.previous.balance;
+  }
+  return result;
+}
+
+export function confirmXpExtension(
+  doc: CampaignDocument,
+  request: XpExtensionRequest,
+  expected: string,
+  operationId: string,
+  at: string
+): CampaignDocument {
+  const xp = xpLedger(doc);
+  if (xp.extensions?.some((e) => e.id === operationId)) return doc;
+  const preview = previewXpExtension(doc, request);
+  if (preview.fingerprint !== expected)
+    fail('XP history changed. Review a fresh reconciliation.');
+  if (!preview.awards.length || preview.rows.some((r) => r.difference !== 0))
+    fail('Every earlier opening must match the existing cutoff exactly.');
+  const events = preview.awards.map((award, index) =>
+    awardEvent(award, `${operationId}-award-${index}`, at)
+  );
+  const extension: XpExtension = {
+    id: operationId,
+    confirmedAt: at,
+    openings: preview.changes,
+    eventIds: events.map((e) => e.id),
+  };
+  const next = withLedger(doc, {
+    ...xp,
+    extensions: [...(xp.extensions ?? []), extension],
+    openings: replaceOpenings(
+      xp.openings,
+      extension.openings.map((o) => o.replacement)
+    ),
+    events: [...xp.events, ...events],
+    points: xp.points.map((point) => {
+      const event = events.find((e) => e.point.id === point.id);
+      return event ? { ...point, confirmedEventId: event.id } : point;
+    }),
+  });
+  verifyExtensionCutoffs(next);
+  verifyXpBalances(next, activeXpEvents(xp.events));
+  return next;
+}
+
+function verifyExtensionCutoffs(doc: CampaignDocument) {
+  for (const extension of xpLedger(doc).extensions ?? [])
+    for (const { previous } of extension.openings)
+      if (
+        xpBalance(
+          doc,
+          previous.characterId,
+          {
+            sessionId: previous.sessionId,
+            phase: 'opening',
+            order: 0,
+          },
+          false
+        ) !== previous.balance
+      )
+        fail(
+          'The reconciled XP balance at an original cutoff must stay unchanged.'
+        );
+}
+
+function verifyXpBalances(doc: CampaignDocument, events: XpEvent[]) {
+  for (const event of events)
+    for (const row of event.rows) {
+      const before = xpBalance(
+        doc,
+        row.characterId,
+        event.point.position,
+        false,
+        xpLedger(doc).events,
+        xpAwardRoot(doc, event.point)
+      );
+      if (before !== row.before)
+        fail(
+          'Later award balances need an explicit atomic review after an earlier correction.'
+        );
+    }
+}
+
+// Replay each award against the opening in force when it was recorded. Backfill
+// appends to storage order, even though its awards occur earlier in play order.
+function extensionReplay(
+  doc: CampaignDocument,
+  xp: CampaignXp,
+  unique: (id: string) => void
+) {
+  let initial = xp.openings;
+  const batches = new Map<string, XpOpening[]>();
+  let nextBatch = xp.events.length;
+  for (const extension of [...(xp.extensions ?? [])].reverse()) {
+    unique(extension.id);
+    const firstId =
+      extension.eventIds[0] || fail('Missing historical award batch.');
+    const start = xp.events.findIndex((e) => e.id === firstId);
+    const events = xp.events.slice(start, start + extension.eventIds.length);
+    if (
+      start < 0 ||
+      start + events.length > nextBatch ||
+      canonical(events.map((e) => e.id)) !== canonical(extension.eventIds) ||
+      events.some(
+        (e) =>
+          e.replaces ||
+          e.correctionRoot ||
+          e.calculatorVersion !== 2 ||
+          e.confirmedAt !== extension.confirmedAt
+      ) ||
+      events.some((e, i) => {
+        const previous = events[i - 1];
+        return previous && compareXpAwards(doc, previous.point, e.point) >= 0;
+      })
+    )
+      fail('Invalid historical XP award batch.');
+    nextBatch = start;
+    const rows = events.flatMap((e) =>
+      e.rows.map((r) => ({ row: r, sessionId: e.point.position.sessionId }))
+    );
+    const ids = new Set(extension.openings.map((o) => o.previous.characterId));
+    if (
+      ids.size !== extension.openings.length ||
+      rows.some(({ row }) => !ids.has(row.characterId))
+    )
+      fail('Invalid historical XP reconciliation recipients.');
+    for (const { previous, replacement, applied } of extension.openings) {
+      const awards = rows.filter(
+        ({ row }) => row.characterId === previous.characterId
+      );
+      if (
+        previous.id !== replacement.id ||
+        previous.characterId !== replacement.characterId ||
+        !doc.sessions.some((s) => s.id === previous.sessionId) ||
+        !doc.sessions.some((s) => s.id === replacement.sessionId) ||
+        canonical(initial.find((o) => o.id === replacement.id)) !==
+          canonical(replacement) ||
+        !beforeOpening(doc, replacement.sessionId, previous) ||
+        previous.balance === null ||
+        replacement.balance === null ||
+        replacement.balance + applied !== previous.balance ||
+        awards.reduce((sum, { row }) => sum + row.award, 0) !== applied ||
+        awards.some(
+          ({ sessionId }) =>
+            !beforeOpening(doc, sessionId, previous) ||
+            beforeOpening(doc, sessionId, replacement)
+        )
+      )
+        fail('Invalid historical XP opening reconciliation.');
+    }
+    batches.set(
+      firstId,
+      extension.openings.map((o) => o.replacement)
+    );
+    initial = replaceOpenings(
+      initial,
+      extension.openings.map((o) => o.previous)
+    );
+  }
+  return { initial, batches };
 }
 export function validateCampaignXp(
   doc: CampaignDocument,
@@ -942,8 +1397,13 @@ export function validateCampaignXp(
     )
       fail('Missing confirmed award.');
   }
+  const replay = extensionReplay(doc, xp, unique);
+  let openings = replay.initial;
   const prefix: XpEvent[] = [];
   for (const event of xp.events) {
+    const replacements = replay.batches.get(event.id);
+    if (replacements) openings = replaceOpenings(openings, replacements);
+    const asRecorded = { ...doc, xp: { ...xp, openings } };
     unique(event.id);
     position(event.point.position);
     event.rewards.forEach(validateReward);
@@ -1025,7 +1485,7 @@ export function validateCampaignXp(
     const before: Record<string, number> = {};
     event.rows.forEach((r) => {
       const balance = xpBalance(
-        doc,
+        asRecorded,
         r.characterId,
         event.point.position,
         false,
@@ -1110,22 +1570,8 @@ export function validateCampaignXp(
   const positions = active.map((e) => xpAwardRoot(doc, e.point));
   if (new Set(positions).size !== positions.length)
     fail('Duplicate active award position.');
-  // Every accepted active event must agree with the complete final ledger, including earlier corrections.
-  for (const event of active)
-    for (const row of event.rows) {
-      const before = xpBalance(
-        doc,
-        row.characterId,
-        event.point.position,
-        false,
-        xp.events,
-        xpAwardRoot(doc, event.point)
-      );
-      if (before !== row.before)
-        fail(
-          'Later award balances need an explicit atomic review after an earlier correction.'
-        );
-    }
+  verifyExtensionCutoffs(doc);
+  verifyXpBalances(doc, active);
 }
 export function validateXpTransition(
   old: CampaignDocument,
@@ -1141,16 +1587,59 @@ export function validateXpTransition(
     fail('Confirmed XP history is immutable. Use a linked correction.');
   if (
     previous.events.length &&
-    canonical(
-      xpSessionOrder(old).filter((id) => old.sessions.some((s) => s.id === id))
-    ) !==
+    canonical(xpSessionOrder(old)) !==
       canonical(
         xpSessionOrder(next).filter((id) =>
           old.sessions.some((s) => s.id === id)
         )
-      )
+      ) &&
+    !validHistoricalSessionMove(old, next)
   )
     fail('XP session chronology is fixed after confirmation.');
+  const extensions = previous.extensions ?? [];
+  const updated = current.extensions ?? [];
+  if (
+    canonical(updated.slice(0, extensions.length)) !== canonical(extensions) ||
+    updated.length > extensions.length + 1
+  )
+    fail('Accepted XP extension history is immutable.');
+  const extension = updated[extensions.length];
+  if (extension) {
+    const awards = current.events.slice(previous.events.length);
+    const request = {
+      pointIds: awards.map((e) => e.point.id),
+      openings: extension.openings.map(
+        ({ replacement: { characterId, sessionId, balance } }) => ({
+          characterId,
+          sessionId,
+          balance,
+        })
+      ),
+    };
+    const preview = previewXpExtension(old, request);
+    const reconciled = confirmXpExtension(
+      old,
+      request,
+      preview.fingerprint,
+      extension.id,
+      extension.confirmedAt
+    );
+    if (canonical(reconciled.xp) !== canonical(current))
+      fail(
+        'An XP extension must atomically accept exactly the reconciled drafts and openings.'
+      );
+    return;
+  }
+  for (const event of current.events.slice(previous.events.length)) {
+    if (
+      !event.correctionRoot &&
+      (historicalXpPoint(next, event.point) ||
+        event.rewards.some((reward) =>
+          reservedHistoricalReward(next, event.point, reward)
+        ))
+    )
+      fail('Historical drafts require a reconciled XP history extension.');
+  }
   for (const event of current.events
     .slice(previous.events.length)
     .filter((e) => e.calculatorVersion === 2 && !e.correctionRoot)) {
@@ -1164,10 +1653,12 @@ export function validateXpTransition(
   for (const p of previous.points.filter((p) => p.confirmedEventId))
     if (canonical(current.points.find((n) => n.id === p.id)) !== canonical(p))
       fail('Confirmed award points are immutable.');
-  for (const o of previous.openings.filter((o) =>
-    previous.events.some((e) =>
-      e.rows.some((r) => r.characterId === o.characterId)
-    )
+  for (const o of previous.openings.filter(
+    (o) =>
+      openingUsedByExtension(previous, o.characterId) ||
+      previous.events.some((e) =>
+        e.rows.some((r) => r.characterId === o.characterId)
+      )
   ))
     if (canonical(current.openings.find((n) => n.id === o.id)) !== canonical(o))
       fail('Opening balances used by XP history are immutable.');

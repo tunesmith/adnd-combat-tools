@@ -61,6 +61,7 @@ test('usable review flow establishes opening XP, keeps a scroll, creates an open
     const [doc, setDoc] = useState(current);
     return (
       <CampaignXp
+        onConfirmExtension={async () => undefined}
         document={doc}
         sessionId="session-2"
         onChange={(change) => {
@@ -145,6 +146,7 @@ test('reward modal cancel and draft save are distinct from award confirmation, w
     const [doc, setDoc] = useState(current);
     return (
       <CampaignXp
+        onConfirmExtension={async () => undefined}
         document={doc}
         sessionId="session-2"
         onChange={(change) => {
@@ -194,6 +196,7 @@ test('new reward review stays open with long-decimal and scientific-notation inv
   );
   render(
     <CampaignXp
+      onConfirmExtension={async () => undefined}
       document={campaign}
       sessionId="session-2"
       onChange={() => true}
@@ -219,6 +222,7 @@ test('single-table entry calculates fractional XP and applies one deliberate his
     const [doc, setDoc] = useState(current);
     return (
       <CampaignXp
+        onConfirmExtension={async () => undefined}
         document={doc}
         sessionId="session-2"
         onChange={(change) => {
@@ -334,6 +338,7 @@ test('separate participation and unequal individual allocations survive ordinary
     const [d, setDoc] = useState(current);
     return (
       <CampaignXp
+        onConfirmExtension={async () => undefined}
         document={d}
         sessionId="session-2"
         onChange={(change) => {
@@ -382,6 +387,7 @@ test('level edits, participation and ratio changes remain independent of recipie
     const [d, setDoc] = useState(current);
     return (
       <CampaignXp
+        onConfirmExtension={async () => undefined}
         document={d}
         sessionId="session-2"
         onChange={(change) => {
@@ -469,6 +475,7 @@ test('one adjustment dialog edits raw XP and individual shares without changing 
     const [d, setDoc] = useState(current);
     return (
       <CampaignXp
+        onConfirmExtension={async () => undefined}
         document={d}
         sessionId="session-2"
         onChange={(change) => {
@@ -544,6 +551,7 @@ test('money entry needs only value and recipients, then awards or deletes withou
     const [d, setDoc] = useState(current);
     return (
       <CampaignXp
+        onConfirmExtension={async () => undefined}
         document={d}
         sessionId="session-2"
         onChange={(change) => {
@@ -629,6 +637,7 @@ test('treasure uses one sale-value field, keeps retained XP separate and saves a
     const [d, setDoc] = useState(current);
     return (
       <CampaignXp
+        onConfirmExtension={async () => undefined}
         document={d}
         sessionId="session-2"
         onChange={(change) => {
@@ -697,6 +706,7 @@ test('an older treasure draft defaults to full XP and keeps ratio overrides inde
     const [d, setDoc] = useState(current);
     return (
       <CampaignXp
+        onConfirmExtension={async () => undefined}
         document={d}
         sessionId="session-2"
         onChange={(change) => {
@@ -750,6 +760,7 @@ test('one award matrix handles inspection, bonus cancellation, final adjustments
     const [d, setDoc] = useState(current);
     return (
       <CampaignXp
+        onConfirmExtension={async () => undefined}
         document={d}
         sessionId="session-2"
         onChange={(change) => {
@@ -899,6 +910,7 @@ test('timeline events and awards open modals without automatically showing an aw
     const [d, setDoc] = useState(current);
     return (
       <CampaignXp
+        onConfirmExtension={async () => undefined}
         document={d}
         sessionId="session-2"
         onChange={(change) => {

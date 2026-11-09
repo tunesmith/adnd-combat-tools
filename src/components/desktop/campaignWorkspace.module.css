@@ -389,7 +389,8 @@
   display: block;
   font-weight: 600;
 }
-.sessionNameField input {
+.sessionNameField input,
+.sessionNameField select {
   display: block;
   width: 100%;
   padding: 8px 10px;

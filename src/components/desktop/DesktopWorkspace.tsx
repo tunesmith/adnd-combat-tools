@@ -175,7 +175,7 @@ export default function DesktopWorkspace() {
     },
     [receive]
   );
-  async function createSession(
+  async function acceptMutation(
     change: (doc: CampaignDocument) => CampaignDocument,
     owner: DocumentState
   ) {
@@ -185,7 +185,7 @@ export default function DesktopWorkspace() {
       current.current?.epoch !== owner.epoch ||
       current.current.document?.id !== owner.document.id
     )
-      throw new Error('Campaign changed. Reopen New session.');
+      throw new Error('Campaign changed. Reopen the dialog.');
     change(current.current.document);
     pending.current += 1;
     setError(null);
@@ -200,7 +200,7 @@ export default function DesktopWorkspace() {
         current.current?.epoch !== owner.epoch ||
         current.current.document?.id !== owner.document.id
       )
-        throw new Error('Campaign changed while creating the session.');
+        throw new Error('Campaign changed before the edit was accepted.');
       pending.current = Math.max(0, pending.current - 1);
       receive(accepted);
     } catch (e) {
@@ -485,7 +485,7 @@ export default function DesktopWorkspace() {
               key={`${state.epoch}:${continuing.sessionId}`}
               document={document}
               sessionId={continuing.sessionId}
-              onCreate={(change) => createSession(change, continuing.owner)}
+              onCreate={(change) => acceptMutation(change, continuing.owner)}
               onClose={() => setContinuing(null)}
             />
           )}
@@ -826,6 +826,9 @@ export default function DesktopWorkspace() {
                     key={`${state.epoch}:${sessionId}:${editorVersion}`}
                     document={document}
                     sessionId={sessionId}
+                    onConfirmExtension={(change) =>
+                      acceptMutation(change, state)
+                    }
                     onChange={(change) => mutate(change, scope)}
                   />
                 </section>

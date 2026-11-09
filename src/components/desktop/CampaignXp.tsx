@@ -1,3 +1,4 @@
+import XpHistoryExtension from './XpHistoryExtension';
 import XpTimeline from './XpTimeline';
 import XpAwardDialog from './XpAwardDialog';
 import XpCapDialog from './XpCapDialog';
@@ -33,6 +34,9 @@ import {
   xpLedger,
   xpSessionOrder,
   xpCapProfileSignature,
+  xpOpeningLocked,
+  historicalXpPoint,
+  xpRewardFitsAward,
 } from '../../helpers/campaignXp';
 import type { XpAwardPreview } from '../../helpers/campaignXp';
 import { xpDisplay } from '../../helpers/xpArithmetic';
@@ -82,11 +86,13 @@ function OpeningBalances({
   sessionId,
   onChange,
   onClose,
+  onExtend,
 }: {
   document: CampaignDocument;
   sessionId: string;
   onChange: (change: (doc: CampaignDocument) => CampaignDocument) => boolean;
   onClose: () => void;
+  onExtend: () => void;
 }) {
   const [entries, setEntries] = useState<Ledger['openings']>(() =>
     (document.party?.roster || []).map(
@@ -101,10 +107,7 @@ function OpeningBalances({
     )
   );
   const [error, setError] = useState('');
-  const locked = (id: string) =>
-    xpLedger(document).events.some((e) =>
-      e.rows.some((r) => r.characterId === id)
-    );
+  const locked = (id: string) => xpOpeningLocked(document, id);
   return (
     <div className={styles['backdrop']}>
       <section
@@ -202,8 +205,54 @@ function OpeningBalances({
             </tbody>
           </table>
         </div>
+        {!!xpLedger(document).extensions?.length && (
+          <details>
+            <summary>Previous opening balances</summary>
+            {xpLedger(document).extensions?.map((extension) => (
+              <div key={extension.id}>
+                <p>{new Date(extension.confirmedAt).toLocaleString()}</p>
+                <ul>
+                  {extension.openings.map(
+                    ({ previous, replacement, applied }) => (
+                      <li key={previous.id}>
+                        {
+                          document.party?.roster.find(
+                            (c) => c.id === previous.characterId
+                          )?.name
+                        }
+                        {' · '}
+                        {
+                          document.sessions.find(
+                            (s) => s.id === previous.sessionId
+                          )?.label
+                        }
+                        {' · '}
+                        {balance(previous.balance)}
+                        {' = '}
+                        {balance(replacement.balance)}
+                        {' before '}
+                        {
+                          document.sessions.find(
+                            (s) => s.id === replacement.sessionId
+                          )?.label
+                        }
+                        {' + '}
+                        {balance(applied)}
+                        {' XP added'}
+                        {previous.reason && <small>{previous.reason}</small>}
+                      </li>
+                    )
+                  )}
+                </ul>
+              </div>
+            ))}
+          </details>
+        )}
         {error && <p role="alert">{error}</p>}
         <div className={styles['footer']}>
+          {!!xpLedger(document).openings.length && (
+            <button onClick={onExtend}>Extend history backward…</button>
+          )}
           <button onClick={onClose}>Cancel</button>
           <button
             className={styles['primary']}
@@ -233,10 +282,14 @@ export default function CampaignXp({
   document,
   sessionId,
   onChange,
+  onConfirmExtension,
 }: {
   document: CampaignDocument;
   sessionId: string;
   onChange: (change: (doc: CampaignDocument) => CampaignDocument) => boolean;
+  onConfirmExtension: (
+    change: (doc: CampaignDocument) => CampaignDocument
+  ) => Promise<void>;
 }) {
   const xp = xpLedger(document);
   const points = xp.points
@@ -250,6 +303,7 @@ export default function CampaignXp({
   }>();
   const [openings, setOpenings] = useState(false),
     [error, setError] = useState('');
+  const [extending, setExtending] = useState(false);
   const [preview, setPreview] = useState<XpAwardPreview>();
   const [reviewLater, setReviewLater] = useState(false);
   const operation = useRef<{ fingerprint: string; id: string; at: string }>();
@@ -380,7 +434,13 @@ export default function CampaignXp({
       setError('');
     }
   }
-  const pending = xp.rewards.filter((r) => !rewardSettlement(document, r.id));
+  const historical =
+    point && !point.confirmedEventId && historicalXpPoint(document, point);
+  const pending = xp.rewards.filter(
+    (r) =>
+      !rewardSettlement(document, r.id) &&
+      (!point || xpRewardFitsAward(document, point, r))
+  );
   const selectedRewards = point ? pointRewards(document, point) : [];
   const rewards = point?.confirmedEventId
     ? pending
@@ -488,6 +548,12 @@ export default function CampaignXp({
                   />
                 </label>
               )}
+              {historical && (
+                <p>
+                  Historical draft. Preview and confirm it through Opening
+                  balances → Extend history backward.
+                </p>
+              )}
               <XpAwardTable
                 document={document}
                 point={point}
@@ -558,21 +624,22 @@ export default function CampaignXp({
                 </div>
               ) : null}
               <div className={styles['actions']}>
-                {preview ? (
-                  <button
-                    className={styles['primary']}
-                    disabled={preview.later.length > 0 && !reviewLater}
-                    onClick={confirm}
-                  >
-                    {preview.point.correctionOf
-                      ? 'Confirm changes'
-                      : 'Confirm award'}
-                  </button>
-                ) : (
-                  <button className={styles['primary']} onClick={review}>
-                    Preview award
-                  </button>
-                )}
+                {!historical &&
+                  (preview ? (
+                    <button
+                      className={styles['primary']}
+                      disabled={preview.later.length > 0 && !reviewLater}
+                      onClick={confirm}
+                    >
+                      {preview.point.correctionOf
+                        ? 'Confirm changes'
+                        : 'Confirm award'}
+                    </button>
+                  ) : (
+                    <button className={styles['primary']} onClick={review}>
+                      Preview award
+                    </button>
+                  ))}
                 <button
                   onClick={() => {
                     if (onChange((doc) => discardXpPoint(doc, point.id))) {
@@ -751,6 +818,17 @@ export default function CampaignXp({
           sessionId={sessionId}
           onChange={onChange}
           onClose={() => setOpenings(false)}
+          onExtend={() => {
+            setOpenings(false);
+            setExtending(true);
+          }}
+        />
+      )}
+      {extending && (
+        <XpHistoryExtension
+          document={document}
+          onConfirm={onConfirmExtension}
+          onClose={() => setExtending(false)}
         />
       )}
       {editor && (

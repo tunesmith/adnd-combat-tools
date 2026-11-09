@@ -28,7 +28,7 @@ impl Document {
     pub fn new() -> Self {
         Self {
             kind: "adnd-campaign".into(),
-            schema_version: 12,
+            schema_version: 13,
             id: uuid::Uuid::new_v4().to_string(),
             title: "Untitled campaign".into(),
             notes: String::new(),
@@ -216,7 +216,7 @@ mod tests {
     fn rejects_unknown_malformed_future() {
         assert!(parse(b"{bad").is_err());
         let mut v = serde_json::to_value(Document::new()).unwrap();
-        v["schemaVersion"] = 13.into();
+        v["schemaVersion"] = 14.into();
         assert!(parse(&serde_json::to_vec(&v).unwrap())
             .unwrap_err()
             .contains("schema version"));
@@ -367,7 +367,7 @@ mod b1_tests {
         let bytes=br#"{"kind":"adnd-campaign","schemaVersion":1,"id":"kept","title":"Old","notes":"Keep"}"#;
         fs::write(&path, bytes).unwrap();
         let doc = parse(bytes).unwrap();
-        assert_eq!(doc.schema_version, 12);
+        assert_eq!(doc.schema_version, 13);
         assert_eq!(fs::read(&path).unwrap(), bytes);
         save(&path, &doc, Some(&hash(bytes))).unwrap();
         assert_eq!(fs::read(format!("{}.bak", path.display())).unwrap(), bytes);
@@ -429,7 +429,7 @@ mod v2_migration_tests {
         let path = dir.path().join("v2.adnd");
         fs::write(&path, bytes).unwrap();
         let doc = parse(&fs::read(&path).unwrap()).unwrap();
-        assert_eq!(doc.schema_version, 12);
+        assert_eq!(doc.schema_version, 13);
         assert_eq!(fs::read(&path).unwrap(), bytes);
         save(&path, &doc, Some(&hash(bytes))).unwrap();
         assert_eq!(fs::read(format!("{}.bak", path.display())).unwrap(), bytes);
@@ -557,7 +557,7 @@ mod continuity_tests {
         }
         let bytes = serde_json::to_vec_pretty(&legacy).unwrap();
         let migrated = parse(&bytes).unwrap();
-        assert_eq!(migrated.schema_version, 12);
+        assert_eq!(migrated.schema_version, 13);
         assert!(migrated.party.as_ref().unwrap()["profiles"][0]["reference"].is_null());
         validate_replacement(&migrated, &expanded).unwrap();
         let dir = tempfile::tempdir().unwrap();
@@ -794,7 +794,7 @@ mod xp_tests {
         legacy.as_object_mut().unwrap().remove("xp");
         let original = serde_json::to_vec_pretty(&legacy).unwrap();
         let migrated = parse(&original).unwrap();
-        assert_eq!(migrated.schema_version, 12);
+        assert_eq!(migrated.schema_version, 13);
         assert!(migrated.xp.is_none());
         validate_replacement(&migrated, &accepted).unwrap();
         let dir = tempfile::tempdir().unwrap();
@@ -867,11 +867,79 @@ mod xp_cap_tests {
         assert_eq!(fs::read(&path).unwrap(),b"external synthetic change");
         let legacy=dir.path().join("legacy.adnd");let original=serde_json::to_vec_pretty(&fixture["legacy"]).unwrap();
         fs::write(&legacy,&original).unwrap();fs::write(dir.path().join("legacy.adnd.bak"),b"existing backup").unwrap();
-        let migrated=parse(&original).unwrap();assert_eq!(migrated.schema_version,12);
+        let migrated=parse(&original).unwrap();assert_eq!(migrated.schema_version,13);
         assert_eq!(migrated.xp.as_ref().unwrap()["events"],fixture["legacy"]["xp"]["events"]);
         save(&legacy,&migrated,Some(&hash(&original))).unwrap();
         assert_eq!(fs::read(dir.path().join("legacy.adnd.bak")).unwrap(),b"existing backup");
         assert_eq!(fs::read(dir.path().join("legacy.adnd.upgrade-2.bak")).unwrap(),original);
         assert_eq!(parse(&fs::read(&legacy).unwrap()).unwrap().xp.as_ref().unwrap()["events"],fixture["legacy"]["xp"]["events"]);
+    }
+}
+
+#[cfg(test)]
+mod xp_extension_tests {
+    use super::*;
+
+    #[test]
+    fn reconciled_batch_requires_prior_drafts_and_saves_atomically() {
+        let bytes = include_bytes!("../../src/tests/fixtures/xpExtensionReplay.json");
+        let accepted = parse(bytes).unwrap();
+        let mut draft = accepted.clone();
+        let xp = draft.xp.as_mut().unwrap();
+        let audit = xp.as_object_mut().unwrap().remove("extensions").unwrap();
+        let batch = &audit[0];
+        xp["events"].as_array_mut().unwrap().truncate(1);
+        for opening in xp["openings"].as_array_mut().unwrap() {
+            if let Some(entry) = batch["openings"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .find(|entry| entry["previous"]["id"] == opening["id"])
+            {
+                *opening = entry["previous"].clone();
+            }
+        }
+        for point in xp["points"].as_array_mut().unwrap() {
+            if batch["eventIds"].as_array().unwrap().contains(&point["confirmedEventId"]) {
+                point["confirmedEventId"] = serde_json::Value::Null;
+            }
+        }
+        draft.validate().unwrap();
+        validate_replacement(&draft, &accepted).unwrap();
+        let mut tampered = accepted.clone();
+        tampered.xp.as_mut().unwrap()["events"][0]["confirmedAt"] =
+            "2026-11-08T12:00:00.000Z".into();
+        assert!(validate_replacement_with_purpose(&draft, &tampered, "xp-extension").is_err());
+        let mut wrong_total = accepted.clone();
+        wrong_total.xp.as_mut().unwrap()["extensions"][0]["openings"][0]["applied"] = 4001.into();
+        assert!(wrong_total.validate().is_err());
+        let mut unreviewed = draft.clone();
+        unreviewed.xp.as_mut().unwrap()["points"][1]["label"] = "Different draft".into();
+        assert!(validate_replacement(&unreviewed, &accepted).is_err());
+
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("synthetic-extension.adnd");
+        let mut legacy = serde_json::to_value(&draft).unwrap();
+        legacy["schemaVersion"] = 12.into();
+        let original = serde_json::to_vec(&legacy).unwrap();
+        fs::write(&path, &original).unwrap();
+        let migrated = parse(&original).unwrap();
+        assert_eq!(migrated, draft);
+        let rev = save(&path, &migrated, Some(&hash(&original))).unwrap();
+        let draft_bytes = fs::read(&path).unwrap();
+        let backup = dir.path().join("synthetic-extension.adnd.bak");
+        assert_eq!(fs::read(&backup).unwrap(), original);
+        assert!(save_with_hook(&path, &accepted, Some(&rev), || Err("Injected save failure".into())).is_err());
+        assert_eq!(fs::read(&path).unwrap(), draft_bytes);
+        fs::write(&path, b"external synthetic change").unwrap();
+        assert_eq!(save(&path, &accepted, Some(&rev)).unwrap_err(), CONFLICT);
+        assert_eq!(fs::read(&path).unwrap(), b"external synthetic change");
+        fs::write(&path, draft_bytes).unwrap();
+        save(&path, &accepted, Some(&rev)).unwrap();
+        let reopened = parse(&fs::read(&path).unwrap()).unwrap();
+        assert_eq!(reopened, accepted);
+        assert_eq!(reopened.xp.unwrap()["events"][0], draft.xp.unwrap()["events"][0]);
+        assert_eq!(fs::read(&backup).unwrap(), original);
+        assert_eq!(fs::read_dir(dir.path()).unwrap().count(), 2);
     }
 }

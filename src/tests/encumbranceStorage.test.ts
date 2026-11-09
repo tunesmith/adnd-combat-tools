@@ -218,7 +218,7 @@ test('V8 migration preserves original revisions and historical documents while o
     ],
   };
   const migrated = parseCampaign(JSON.stringify(old));
-  expect(migrated.schemaVersion).toBe(12);
+  expect(migrated.schemaVersion).toBe(13);
   expect(migrated.records).toEqual(baseline.records);
   expect(migrated.inventoryCheckpoints[0]?.document).toEqual(oldInventory);
   expect(migrated.workingInventories[0]?.document).toEqual({
