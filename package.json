@@ -23,7 +23,7 @@
     "test:coverage": "jest --coverage",
     "desktop:assets": "DESKTOP_BUILD=1 NEXT_PUBLIC_DESKTOP=1 next build && DESKTOP_BUILD=1 NEXT_PUBLIC_DESKTOP=1 next export -o out-desktop",
     "desktop:build": "tauri build --bundles app",
-    "desktop:run": "open \"src-tauri/target/release/bundle/macos/AD&D Tools.app\"",
+    "desktop:run": "open \"src-tauri/target/release/bundle/macos/AD&D Campaign.app\"",
     "desktop:test": "npm run desktop:boundary && cargo test --manifest-path src-tauri/Cargo.toml",
     "desktop:boundary": "node scripts/buildCampaignBoundary.cjs"
   },

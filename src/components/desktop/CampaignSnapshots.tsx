@@ -246,7 +246,7 @@ export default function CampaignSnapshots({
 
   return (
     <section className={styles['snapshots']} aria-label="Campaign snapshots">
-      <h3>Session imports</h3>
+      {activeSessionId === undefined && <h3>Session imports</h3>}
       {activeSessionId === undefined && (
         <fieldset disabled={busy || submitting}>
           <legend>Session</legend>
@@ -492,15 +492,6 @@ export default function CampaignSnapshots({
         </div>
       )}
       <p role="status">{message}</p>
-      <button
-        onClick={() => {
-          clearDraft();
-          setSelected('');
-          setMessage('');
-        }}
-      >
-        Import another source
-      </button>
       {(['combat', 'inventory'] as const).map((kind) => (
         <section key={kind}>
           <h4>{kind === 'combat' ? 'Combats' : 'Inventories'}</h4>

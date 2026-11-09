@@ -176,13 +176,10 @@ test('campaign-controlled edits survive navigation, and shortcuts do not steal t
   );
   const title = details.getByLabelText('Campaign title');
   const notes = details.getByLabelText('Campaign notes');
-  const imports = details.getByText('Import…', { selector: 'summary' });
   expect(
     title.compareDocumentPosition(notes) & Node.DOCUMENT_POSITION_FOLLOWING
   ).toBeTruthy();
-  expect(
-    notes.compareDocumentPosition(imports) & Node.DOCUMENT_POSITION_FOLLOWING
-  ).toBeTruthy();
+  expect(details.queryByText('Session imports')).not.toBeInTheDocument();
   expect(details.queryByText('synthetic.adnd')).not.toBeInTheDocument();
   expect(
     details.queryByText(/Choose a location with File/)
@@ -194,4 +191,11 @@ test('campaign-controlled edits survive navigation, and shortcuts do not steal t
     expect(native.document?.title).toBe('Edited synthetic title')
   );
   expect(native.document?.notes).toBe('Campaign-wide note');
+  fireEvent.click(screen.getByRole('button', { name: 'Session', exact: true }));
+  const overview = await screen.findByRole('region', {
+    name: 'Session overview',
+  });
+  expect(
+    within(overview).getByText('Session imports', { selector: 'summary' })
+  ).toBeInTheDocument();
 });

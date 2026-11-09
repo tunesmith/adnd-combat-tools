@@ -80,7 +80,7 @@ impl Session {
                     .document
                     .as_ref()
                     .map(|d| d.title.as_str())
-                    .unwrap_or("AD&D Tools"),
+                    .unwrap_or("AD&D Campaign"),
                 if self.view.dirty { " •" } else { "" }
             ));
         }
@@ -123,7 +123,7 @@ impl Session {
         Ok(())
     }
     fn prompt(app: &tauri::AppHandle, text: &str, first: &str, second: &str) -> String {
-        let mut d = app.dialog().message(text).title("AD&D Tools").buttons(
+        let mut d = app.dialog().message(text).title("AD&D Campaign").buttons(
             MessageDialogButtons::YesNoCancelCustom(first.into(), second.into(), "Cancel".into()),
         );
         if let Some(w) = app.get_webview_window("main") {

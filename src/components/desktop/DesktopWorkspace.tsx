@@ -288,6 +288,19 @@ export default function DesktopWorkspace() {
       : document?.workspace.view === 'tools'
       ? 'session'
       : document?.workspace.view || 'possessions';
+  const sessionList = useRef<HTMLDivElement>(null);
+  const selectedSessionTab = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const list = sessionList.current;
+    const tab = selectedSessionTab.current;
+    if (!list || !tab || activeTool) return;
+    const viewport = list.getBoundingClientRect();
+    const selected = tab.getBoundingClientRect();
+    if (selected.left < viewport.left + 4)
+      list.scrollLeft += selected.left - viewport.left - 4;
+    else if (selected.right > viewport.right - 4)
+      list.scrollLeft += selected.right - viewport.right + 4;
+  }, [state?.epoch, sessionId, view, activeTool]);
   const working = document?.workingInventories.find(
     (w) => w.sessionId === sessionId
   );
@@ -378,7 +391,7 @@ export default function DesktopWorkspace() {
       <header className={styles['header']}>
         <div>
           <small>
-            AD&amp;D TOOLS ·{' '}
+            AD&amp;D CAMPAIGN ·{' '}
             {activeTool ? 'STANDALONE TOOL' : 'CAMPAIGN WORKSPACE'}
           </small>
           <div className={styles['campaignHeading']}>
@@ -504,113 +517,123 @@ export default function DesktopWorkspace() {
           </main>
         ) : (
           <>
-            <div className={styles['sessionStrip']} aria-label="Sessions">
-              {document.sessions.map((s) => (
-                <div
-                  key={s.id}
-                  className={`${styles['sessionDrag']} ${
-                    dropSession === s.id ? styles['sessionDrop'] : ''
-                  }`}
-                  draggable={!document.xp?.events.length}
-                  title={
-                    document.xp?.events.length
-                      ? 'Session order is fixed after XP confirmation'
-                      : 'Drag to reorder sessions'
-                  }
-                  onDragStart={(event) => {
-                    if (
-                      document.xp?.events.length ||
-                      (event.target instanceof HTMLElement &&
-                        event.target.closest('input'))
-                    ) {
-                      event.preventDefault();
-                      return;
-                    }
-                    draggedSession.current = s.id;
-                    event.dataTransfer.setData(
-                      'application/x-adnd-session',
-                      s.id
-                    );
-                    event.dataTransfer.setData('text/plain', s.id);
-                    event.dataTransfer.effectAllowed = 'move';
-                  }}
-                  onDragOver={(event) => {
-                    if (draggedSession.current && !document.xp?.events.length) {
-                      event.preventDefault();
-                      event.dataTransfer.dropEffect = 'move';
-                      setDropSession(s.id);
-                    }
-                  }}
-                  onDrop={(event) => {
-                    event.preventDefault();
-                    const from = draggedSession.current;
-                    draggedSession.current = null;
-                    setDropSession(null);
-                    if (from)
-                      mutate(
-                        (d) => reorderCampaignSession(d, from, s.id),
-                        state
-                      );
-                  }}
-                  onDragEnd={() => {
-                    draggedSession.current = null;
-                    setDropSession(null);
-                  }}
-                  onKeyDown={(event) => {
-                    if (
-                      !event.altKey ||
-                      !event.shiftKey ||
-                      document.xp?.events.length ||
-                      event.target instanceof HTMLInputElement
-                    )
-                      return;
-                    const direction =
-                      event.key === 'ArrowLeft'
-                        ? -1
-                        : event.key === 'ArrowRight'
-                        ? 1
-                        : 0;
-                    const target =
-                      document.sessions[
-                        document.sessions.findIndex(
-                          (item) => item.id === s.id
-                        ) + direction
-                      ];
-                    if (direction && target) {
-                      event.preventDefault();
-                      mutate(
-                        (d) => reorderCampaignSession(d, s.id, target.id),
-                        state
-                      );
-                    }
-                  }}
-                >
-                  <RenamableTab
-                    kind="session"
+            <div
+              className={styles['sessionStrip']}
+              role="group"
+              aria-label="Sessions"
+            >
+              <div className={styles['sessionList']} ref={sessionList}>
+                {document.sessions.map((s) => (
+                  <div
+                    key={s.id}
+                    ref={s.id === sessionId ? selectedSessionTab : undefined}
+                    className={`${styles['sessionDrag']} ${
+                      dropSession === s.id ? styles['sessionDrop'] : ''
+                    }`}
                     draggable={!document.xp?.events.length}
-                    label={s.label}
-                    selected={s.id === sessionId}
-                    onSelect={() => {
-                      if (s.id !== sessionId)
-                        mutate((d) => ({
-                          ...d,
-                          workspace: { ...d.workspace, sessionId: s.id },
-                        }));
-                    }}
-                    onRename={(label) =>
-                      mutate(
-                        (d) => ({
-                          ...d,
-                          sessions: d.sessions.map((item) =>
-                            item.id === s.id ? { ...item, label } : item
-                          ),
-                        }),
-                        state
-                      )
+                    title={
+                      document.xp?.events.length
+                        ? 'Session order is fixed after XP confirmation'
+                        : 'Drag to reorder sessions'
                     }
-                  />
-                </div>
-              ))}
+                    onDragStart={(event) => {
+                      if (
+                        document.xp?.events.length ||
+                        (event.target instanceof HTMLElement &&
+                          event.target.closest('input'))
+                      ) {
+                        event.preventDefault();
+                        return;
+                      }
+                      draggedSession.current = s.id;
+                      event.dataTransfer.setData(
+                        'application/x-adnd-session',
+                        s.id
+                      );
+                      event.dataTransfer.setData('text/plain', s.id);
+                      event.dataTransfer.effectAllowed = 'move';
+                    }}
+                    onDragOver={(event) => {
+                      if (
+                        draggedSession.current &&
+                        !document.xp?.events.length
+                      ) {
+                        event.preventDefault();
+                        event.dataTransfer.dropEffect = 'move';
+                        setDropSession(s.id);
+                      }
+                    }}
+                    onDrop={(event) => {
+                      event.preventDefault();
+                      const from = draggedSession.current;
+                      draggedSession.current = null;
+                      setDropSession(null);
+                      if (from)
+                        mutate(
+                          (d) => reorderCampaignSession(d, from, s.id),
+                          state
+                        );
+                    }}
+                    onDragEnd={() => {
+                      draggedSession.current = null;
+                      setDropSession(null);
+                    }}
+                    onKeyDown={(event) => {
+                      if (
+                        !event.altKey ||
+                        !event.shiftKey ||
+                        document.xp?.events.length ||
+                        event.target instanceof HTMLInputElement
+                      )
+                        return;
+                      const direction =
+                        event.key === 'ArrowLeft'
+                          ? -1
+                          : event.key === 'ArrowRight'
+                          ? 1
+                          : 0;
+                      const target =
+                        document.sessions[
+                          document.sessions.findIndex(
+                            (item) => item.id === s.id
+                          ) + direction
+                        ];
+                      if (direction && target) {
+                        event.preventDefault();
+                        mutate(
+                          (d) => reorderCampaignSession(d, s.id, target.id),
+                          state
+                        );
+                      }
+                    }}
+                  >
+                    <RenamableTab
+                      kind="session"
+                      draggable={!document.xp?.events.length}
+                      label={s.label}
+                      selected={s.id === sessionId}
+                      onSelect={() => {
+                        if (s.id !== sessionId)
+                          mutate((d) => ({
+                            ...d,
+                            workspace: { ...d.workspace, sessionId: s.id },
+                          }));
+                      }}
+                      onRename={(label) =>
+                        mutate(
+                          (d) => ({
+                            ...d,
+                            sessions: d.sessions.map((item) =>
+                              item.id === s.id ? { ...item, label } : item
+                            ),
+                          }),
+                          state
+                        )
+                      }
+                    />
+                  </div>
+                ))}
+              </div>
               <button
                 className={styles['addTab']}
                 disabled={state.busy || pending.current > 0}
@@ -681,6 +704,18 @@ export default function DesktopWorkspace() {
                     />
                   </label>
                 </div>
+                {sessionId && (
+                  <details className={styles['secondary']}>
+                    <summary>Session imports</summary>
+                    <CampaignSnapshots
+                      key={`${state.epoch}:${sessionId}`}
+                      document={document}
+                      token={state.token}
+                      busy={state.busy || pending.current > 0}
+                      activeSessionId={sessionId}
+                    />
+                  </details>
+                )}
               </section>
               <section
                 className={styles['view']}
@@ -698,7 +733,8 @@ export default function DesktopWorkspace() {
                   <div className={styles['start']}>
                     <h3>Start this session’s working inventory</h3>
                     <p>
-                      Import an inventory in Campaign Details, or start empty.
+                      Import an inventory under Session → Session imports, or
+                      start empty.
                     </p>
                     <button
                       onClick={() =>
@@ -872,16 +908,6 @@ export default function DesktopWorkspace() {
                     }}
                   />
                 </label>
-                <details className={styles['secondary']}>
-                  <summary>Import…</summary>
-                  <CampaignSnapshots
-                    key={`${state.epoch}:${sessionId}`}
-                    document={document}
-                    token={state.token}
-                    busy={state.busy || pending.current > 0}
-                    activeSessionId={sessionId}
-                  />
-                </details>
               </section>
             </main>
           </>

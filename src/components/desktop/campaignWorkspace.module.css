@@ -62,8 +62,33 @@
   gap: 8px;
   align-items: center;
   padding: 10px 24px;
-  flex-wrap: wrap;
   border-bottom: 1px solid #d8ccbc;
+}
+.sessionList {
+  display: flex;
+  flex: 1 1 0;
+  min-width: 0;
+  gap: 8px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  padding: 4px;
+}
+.sessionList::-webkit-scrollbar {
+  display: none;
+}
+.sessionList > div {
+  flex: none;
+  max-width: calc(100% - 8px);
+  white-space: nowrap;
+}
+.sessionList > div > button {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sessionStrip > button {
+  flex: none;
+  white-space: nowrap;
 }
 :is(.sessionStrip, .navigation, .viewHeading, .historyGrid, .secondary, .welcome, .error)
   button,
@@ -389,6 +414,9 @@
   display: block;
   font-weight: 600;
 }
+.sessionNameField + .sessionNameField {
+  margin-top: 12px;
+}
 .sessionNameField input,
 .sessionNameField select {
   display: block;
@@ -416,6 +444,7 @@
   padding: 6px 0;
 }
 .continuationChoice input {
+  flex: none;
   margin: 0;
   accent-color: #57272d;
 }
@@ -524,11 +553,11 @@
   box-sizing: border-box;
   width: 100%;
   margin: 0;
-  padding: 3px 5px;
-  border: 1px solid transparent;
+  padding: 0 6px 3px;
+  border: 0;
   border-radius: 4px;
   font: inherit;
-  line-height: 1.4;
+  line-height: inherit;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
   color: inherit;
@@ -539,7 +568,7 @@
 .saveNoteEditor:hover,
 .saveNoteEditor:focus {
   background: #fff;
-  border-color: #b8a98e;
+  box-shadow: inset 0 0 0 1px #b8a98e;
 }
 .profileFields {
   display: grid;
@@ -560,10 +589,6 @@
 }
 .manualTargets legend {
   font-weight: 600;
-}
-.continuationDialog details label {
-  display: block;
-  margin: 8px 0;
 }
 .continuationDialog details select {
   max-width: 100%;

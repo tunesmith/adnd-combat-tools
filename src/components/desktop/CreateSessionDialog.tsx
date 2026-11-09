@@ -261,12 +261,14 @@ export default function CreateSessionDialog({
                             );
                           }}
                         />
-                        {index + 1}.{' '}
-                        {
-                          document.party?.roster.find(
-                            (c) => c.id === profile.characterId
-                          )?.name
-                        }
+                        <span>
+                          {index + 1}.{' '}
+                          {
+                            document.party?.roster.find(
+                              (c) => c.id === profile.characterId
+                            )?.name
+                          }
+                        </span>
                       </label>
                     ))}
                   </details>

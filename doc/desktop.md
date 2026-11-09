@@ -35,7 +35,7 @@ cargo fmt --manifest-path src-tauri/Cargo.toml --check
 npm run build
 ```
 
-The app is `src-tauri/target/release/bundle/macos/AD&D Tools.app`. The verified Apple Silicon bundle is approximately 11 MB. It uses macOS WebKit instead of shipping Chromium. Quit before rebuilding. The obsolete Electron build output is ignored and can be retained as a local fallback; the scripts and dependencies now target Tauri only.
+The app is `src-tauri/target/release/bundle/macos/AD&D Campaign.app`. The verified Apple Silicon bundle is approximately 11 MB. It uses macOS WebKit instead of shipping Chromium. Quit before rebuilding. The obsolete Electron build output is ignored and can be retained as a local fallback; the scripts and dependencies now target Tauri only.
 
 The verification environment used an ignored `.cargo-local` Cargo cache because its shell sandbox did not allow writes to the default Cargo cache. Ordinary local builds can use Cargo's default cache. Rust is only needed for desktop builds and native tests; the web target remains an npm/Next static export.
 
