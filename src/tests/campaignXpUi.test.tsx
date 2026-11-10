@@ -76,7 +76,7 @@ test('usable review flow establishes opening XP, keeps a scroll, creates an open
   }
   render(<Harness />);
   fireEvent.click(screen.getByRole('button', { name: 'Opening balances' }));
-  let dialog = within(screen.getByRole('dialog', { name: 'Opening XP' }));
+  const dialog = within(screen.getByRole('dialog', { name: 'Opening XP' }));
   expect(dialog.getByLabelText('Mira opening XP')).toHaveValue(null);
   fireEvent.click(
     dialog.getByRole('button', { name: 'Set listed unlocked balances to 0' })
@@ -86,29 +86,40 @@ test('usable review flow establishes opening XP, keeps a scroll, creates an open
   );
   expect(sessionXpBalances(current, 'xp-mira', 'session-1').closing).toBe(0);
   fireEvent.click(screen.getByRole('button', { name: '+ Award point' }));
-  fireEvent.click(
-    screen.getByRole('button', { name: 'Kept warding scroll', exact: true })
-  );
-  dialog = within(screen.getByRole('dialog', { name: 'XP event review' }));
+  const disposition = () =>
+    screen.getByLabelText('Disposition for Kept warding scroll');
+  expect(disposition()).toHaveValue('defer');
   expect(
-    dialog.queryByLabelText(
-      'I reviewed the inputs, participation and eligible recipients'
-    )
-  ).not.toBeInTheDocument();
-  fireEvent.change(dialog.getByLabelText('Disposition'), {
-    target: { value: 'keep' },
+    awardValues(within(screen.getByRole('table', { name: 'XP award' })))
+  ).toEqual(['0', '0', '0', '0', '0']);
+  fireEvent.change(disposition(), { target: { value: 'sell' } });
+  expect(
+    awardValues(within(screen.getByRole('table', { name: 'XP award' })))[0]
+  ).toBe('1,650');
+  fireEvent.change(disposition(), { target: { value: 'defer' } });
+  expect(
+    screen.getByLabelText('Include Kept warding scroll')
+  ).not.toBeChecked();
+  fireEvent.change(disposition(), { target: { value: 'keep' } });
+  expect(
+    awardValues(within(screen.getByRole('table', { name: 'XP award' })))[0]
+  ).toBe('330');
+  fireEvent.keyDown(screen.getByRole('dialog', { name: 'XP award' }), {
+    key: 'Escape',
   });
-  fireEvent.click(dialog.getByRole('button', { name: 'Save XP event' }));
+  expect(xpLedger(current).points).toHaveLength(0);
+  fireEvent.click(screen.getByRole('button', { name: '+ Award point' }));
+  expect(disposition()).toHaveValue('defer');
   renameNewAward('At the test refuge');
-  expect(screen.queryByLabelText('Position')).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Save draft' }));
   fireEvent.click(
     screen.getByRole('button', { name: 'Move At the test refuge earlier' })
   );
-  for (const title of [
-    'Seventeen tunnel raiders',
-    'Recovered coin lots',
-    'Kept warding scroll',
-  ])
+  fireEvent.click(
+    screen.getByRole('button', { name: /^At the test refuge Draft/ })
+  );
+  fireEvent.change(disposition(), { target: { value: 'keep' } });
+  for (const title of ['Seventeen tunnel raiders', 'Recovered coin lots'])
     fireEvent.click(screen.getByLabelText(`Include ${title}`));
   expect(screen.getByLabelText('Include Later alarm fungus')).toBeDisabled();
   expect(
@@ -117,7 +128,6 @@ test('usable review flow establishes opening XP, keeps a scroll, creates an open
   expect(
     screen.getByRole('button', { name: 'Edit Nera XP bonus' })
   ).toHaveTextContent('0%');
-  fireEvent.click(screen.getByRole('button', { name: 'Preview award' }));
   const preview = within(
     screen.getByRole('region', { name: 'Confirm XP award' })
   );
@@ -125,6 +135,9 @@ test('usable review flow establishes opening XP, keeps a scroll, creates an open
   expect(xpLedger(current).events).toHaveLength(0);
   fireEvent.click(preview.getByRole('button', { name: 'Confirm award' }));
   expect(xpLedger(current).events).toHaveLength(1);
+  expect(
+    xpLedger(current).rewards.find((r) => r.id === 'scroll')?.input
+  ).toMatchObject({ disposition: 'keep' });
   expect(
     screen.queryByRole('button', { name: 'Confirm award', exact: true })
   ).not.toBeInTheDocument();
@@ -592,7 +605,6 @@ test('money entry needs only value and recipients, then awards or deletes withou
   fireEvent.click(screen.getByRole('button', { name: '+ Award point' }));
   renameNewAward('Money settlement');
   fireEvent.click(screen.getByLabelText('Include 750 electrum'));
-  fireEvent.click(screen.getByRole('button', { name: 'Preview award' }));
   const preview = within(
     screen.getByRole('region', { name: 'Confirm XP award' })
   );
@@ -808,7 +820,6 @@ test('one award matrix handles inspection, bonus cancellation, final adjustments
     detail.getByText('Recorded historical award-row rounding')
   ).toBeInTheDocument();
   fireEvent.click(detail.getByRole('button', { name: 'Close' }));
-  fireEvent.click(screen.getByRole('button', { name: 'Preview award' }));
   expect(screen.getAllByRole('table', { name: 'XP award' })).toHaveLength(1);
   fireEvent.click(screen.getByRole('button', { name: 'Edit Mira XP bonus' }));
   let edit = within(screen.getByRole('dialog', { name: 'XP bonus' }));
@@ -828,10 +839,7 @@ test('one award matrix handles inspection, bonus cancellation, final adjustments
     target: { value: '0' },
   });
   fireEvent.click(edit.getByRole('button', { name: 'Apply' }));
-  expect(
-    screen.queryByRole('button', { name: 'Confirm award' })
-  ).not.toBeInTheDocument();
-  fireEvent.click(screen.getByRole('button', { name: 'Preview award' }));
+  expect(screen.getByRole('button', { name: 'Confirm award' })).toBeEnabled();
   expect(
     awardValues(within(screen.getByRole('table', { name: 'XP award' })))[0]
   ).toBe('461');
@@ -846,10 +854,7 @@ test('one award matrix handles inspection, bonus cancellation, final adjustments
     target: { value: 'Recorded DM cap' },
   });
   fireEvent.click(edit.getByRole('button', { name: 'Apply' }));
-  expect(
-    screen.queryByRole('button', { name: 'Confirm award' })
-  ).not.toBeInTheDocument();
-  fireEvent.click(screen.getByRole('button', { name: 'Preview award' }));
+  expect(screen.getByRole('button', { name: 'Confirm award' })).toBeEnabled();
   expect(
     awardValues(within(screen.getByRole('table', { name: 'XP award' })))[0]
   ).toBe('400 *');
@@ -888,7 +893,6 @@ test('one award matrix handles inspection, bonus cancellation, final adjustments
     target: { value: '' },
   });
   fireEvent.click(edit.getByRole('button', { name: 'Apply' }));
-  fireEvent.click(screen.getByRole('button', { name: 'Preview award' }));
   expect(
     awardValues(within(screen.getByRole('table', { name: 'XP award' })))
   ).toEqual(['507', '507', '507', '461', '507']);
@@ -955,7 +959,7 @@ test('timeline events and awards open modals without automatically showing an aw
   fireEvent.click(award.getByRole('button', { name: 'Edit award…' }));
   expect(screen.getByLabelText('Reason for changes')).toBeInTheDocument();
   expect(current.xp?.events).toEqual(JSON.parse(before).xp.events);
-  fireEvent.click(screen.getByRole('button', { name: 'Discard changes' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
   expect(
     screen.queryByRole('dialog', { name: 'XP award' })
   ).not.toBeInTheDocument();

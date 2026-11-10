@@ -5,7 +5,7 @@ import XpCapDialog from './XpCapDialog';
 import XpAwardTable from './XpAwardTable';
 import XpAwardEdit from './XpAwardEdit';
 import { compareXpAwards } from '../../helpers/campaignXpTimeline';
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import type { CampaignDocument } from '../../helpers/campaignDocument';
 import type {
   XpEvent,
@@ -29,16 +29,20 @@ import {
   saveXpOpening,
   saveXpPoint,
   saveXpReward,
-  selectXpRewards,
   sessionXpBalances,
   xpLedger,
   xpSessionOrder,
-  xpCapProfileSignature,
+  stageXpAward,
+  withXpDisposition,
+  withXpRewardSelection,
   xpOpeningLocked,
   historicalXpPoint,
   xpRewardFitsAward,
 } from '../../helpers/campaignXp';
-import type { XpAwardPreview } from '../../helpers/campaignXp';
+import type {
+  XpAwardPreview,
+  XpTreasureDisposition,
+} from '../../helpers/campaignXp';
 import { xpDisplay } from '../../helpers/xpArithmetic';
 import XpRewardEditor, { XpRewardCalculation } from './XpRewardEditor';
 import styles from './xpWorkspace.module.css';
@@ -296,7 +300,12 @@ export default function CampaignXp({
     .filter((p) => p.position.sessionId === sessionId)
     .sort((a, b) => compareXpAwards(document, a, b));
   const [selected, setSelected] = useState('');
-  const point = points.find((p) => p.id === selected);
+  const savedPoint = points.find((p) => p.id === selected);
+  const [draft, setDraft] = useState<XpPoint>();
+  const [dispositions, setDispositions] = useState<
+    Record<string, XpTreasureDisposition>
+  >({});
+  const point = savedPoint?.confirmedEventId ? savedPoint : draft;
   const [editor, setEditor] = useState<{
     reward: XpReward;
     pointId?: string;
@@ -304,12 +313,10 @@ export default function CampaignXp({
   const [openings, setOpenings] = useState(false),
     [error, setError] = useState('');
   const [extending, setExtending] = useState(false);
-  const [preview, setPreview] = useState<XpAwardPreview>();
-  const [reviewLater, setReviewLater] = useState(false);
+  const [reviewedFingerprint, setReviewedFingerprint] = useState<string>();
   const operation = useRef<{ fingerprint: string; id: string; at: string }>();
   const [historyId, setHistoryId] = useState('');
   const [inspectedEvent, setInspectedEvent] = useState<XpReward>();
-  const [renamePointId, setRenamePointId] = useState('');
   const [awardEdit, setAwardEdit] = useState<{
     review: XpBonusReview;
     mode: 'bonus' | 'final';
@@ -325,11 +332,6 @@ export default function CampaignXp({
     basis?: XpCapBasis;
     readOnly: boolean;
   }>();
-  const capSignature =
-    point && !point.confirmedEventId
-      ? xpCapProfileSignature(document, point)
-      : '';
-  useEffect(() => setPreview(undefined), [capSignature]);
   const inspectAllocation: InspectAllocation = (
     name,
     calculated,
@@ -353,86 +355,57 @@ export default function CampaignXp({
   const capPoint = visibleEvent?.point || point;
   function closeAward() {
     setSelected('');
+    setDraft(undefined);
+    setDispositions({});
     setHistoryId('');
-    setPreview(undefined);
+    setReviewedFingerprint(undefined);
     setAwardEdit(undefined);
     setAllocation(undefined);
     setError('');
-    setRenamePointId('');
     setCapEdit(undefined);
   }
   function changePoint(change: Partial<XpPoint>) {
-    if (!point) return false;
-    const next = { ...point, ...change };
-    setPreview(undefined);
+    if (!draft) return false;
+    setDraft({ ...draft, ...change });
     setError('');
-    return onChange((doc) => saveXpPoint(doc, next));
+    return true;
   }
-  function review() {
-    try {
-      if (!point) return;
-      const result = previewXpAward(document, point.id);
-      setPreview(result);
-      setReviewLater(false);
-      setError('');
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
-    }
+  function changeSelection(id: string, include: boolean) {
+    if (!draft) return;
+    const ids = include
+      ? draft.rewardIds.includes(id)
+        ? draft.rewardIds
+        : [...draft.rewardIds, id]
+      : draft.rewardIds.filter((rewardId) => rewardId !== id);
+    const { bonuses } = withXpRewardSelection(document, draft, ids);
+    changePoint({
+      rewardIds: ids,
+      bonuses: [
+        ...draft.bonuses,
+        ...bonuses.filter(
+          (bonus) =>
+            !draft.bonuses.some((old) => old.characterId === bonus.characterId)
+        ),
+      ],
+    });
   }
-  function confirm() {
-    if (!preview) return;
-    if (operation.current?.fingerprint !== preview.fingerprint)
-      operation.current = {
-        fingerprint: preview.fingerprint,
-        id: uid(),
-        at: new Date().toISOString(),
-      };
-    const request = operation.current;
-    try {
-      if (
-        onChange((doc) =>
-          confirmXpAward(
-            doc,
-            preview.point.id,
-            preview.fingerprint,
-            request.id,
-            request.at,
-            reviewLater
-          )
-        )
-      ) {
-        setPreview(undefined);
-        setError('');
-      }
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
-    }
+  function openDraft(next: XpPoint) {
+    setDraft(next);
+    setSelected(next.id);
+    setHistoryId('');
+    setDispositions({});
+    setReviewedFingerprint(undefined);
+    setError('');
   }
   function addPoint() {
-    const id = uid();
-    if (onChange((doc) => saveXpPoint(doc, newXpPoint(doc, sessionId, id)))) {
-      setSelected(id);
-      setHistoryId('');
-      setRenamePointId(id);
-      setPreview(undefined);
-      setError('');
-    }
+    const next = newXpPoint(document, sessionId, uid());
+    openDraft(next);
   }
   function correct(event: XpEvent) {
     const id = uid();
-    if (
-      onChange((doc) => {
-        const changed = beginXpCorrection(doc, event.id, id);
-        const draft = xpLedger(changed).points.find((p) => p.id === id);
-        if (!draft) throw Error('Award changes could not be opened.');
-        return saveXpPoint(changed, { ...draft, label: event.point.label });
-      })
-    ) {
-      setSelected(id);
-      setPreview(undefined);
-      setHistoryId('');
-      setError('');
-    }
+    const scratch = beginXpCorrection(document, event.id, id);
+    const next = xpLedger(scratch).points.find((p) => p.id === id);
+    if (next) openDraft({ ...next, label: event.point.label });
   }
   const historical =
     point && !point.confirmedEventId && historicalXpPoint(document, point);
@@ -441,13 +414,85 @@ export default function CampaignXp({
       !rewardSettlement(document, r.id) &&
       (!point || xpRewardFitsAward(document, point, r))
   );
-  const selectedRewards = point ? pointRewards(document, point) : [];
-  const rewards = point?.confirmedEventId
-    ? pending
-    : [
+  const rewards = Array.from(
+    new Map(
+      [
         ...pending,
-        ...selectedRewards.filter((r) => !pending.some((p) => p.id === r.id)),
-      ];
+        ...xp.rewards.filter((r) => point?.rewardIds.includes(r.id)),
+        ...(point?.rewardOverrides.filter((r) =>
+          point.rewardIds.includes(r.id)
+        ) ?? []),
+      ].map((r) => [r.id, r])
+    ).values()
+  );
+  let projection: CampaignDocument | undefined;
+  let projectedPoint: XpPoint | undefined;
+  let preview: XpAwardPreview | undefined;
+  let previewError = '';
+  if (draft && !visibleEvent) {
+    try {
+      projection = stageXpAward(document, draft, dispositions);
+      projectedPoint = xpLedger(projection).points.find(
+        (p) => p.id === draft.id
+      );
+      if (!historical && projectedPoint?.rewardIds.length)
+        preview = previewXpAward(projection, draft.id);
+    } catch (e) {
+      previewError = e instanceof Error ? e.message : String(e);
+    }
+  }
+  const reviewedLater =
+    !!preview && reviewedFingerprint === preview.fingerprint;
+  function confirm() {
+    if (!draft || !preview) return;
+    const { fingerprint } = preview;
+    if (operation.current?.fingerprint !== fingerprint)
+      operation.current = {
+        fingerprint,
+        id: uid(),
+        at: new Date().toISOString(),
+      };
+    const { id, at } = operation.current;
+    if (
+      onChange((doc) => {
+        if (
+          xpLedger(doc).points.find((p) => p.id === draft.id)
+            ?.confirmedEventId === id
+        )
+          return doc;
+        return confirmXpAward(
+          stageXpAward(doc, draft, dispositions),
+          draft.id,
+          fingerprint,
+          id,
+          at,
+          reviewedLater
+        );
+      })
+    ) {
+      setDraft(undefined);
+      setDispositions({});
+      setReviewedFingerprint(undefined);
+      setError('');
+    }
+  }
+  function saveDraft() {
+    if (!draft) return;
+    // A timeline draft can be positioned or used for history extension.
+    // Disposition experiments are kept in the dialog until confirmation.
+    const selectedIds = pointRewards(document, draft)
+      .filter(
+        (r) =>
+          r.input.category !== 'treasure' || r.input.disposition !== 'defer'
+      )
+      .map((r) => r.id);
+    if (
+      onChange((doc) =>
+        saveXpPoint(doc, withXpRewardSelection(doc, draft, selectedIds))
+      )
+    )
+      closeAward();
+  }
   return (
     <div className={styles['workspace']}>
       <div className={styles['heading']}>
@@ -485,15 +530,18 @@ export default function CampaignXp({
         sessionId={sessionId}
         selectedPointId={selected}
         onChange={(change) => {
-          setPreview(undefined);
+          setReviewedFingerprint(undefined);
           return onChange(change);
         }}
         onSelectPoint={(id) => {
           setHistoryId('');
           setAwardEdit(undefined);
+          const next = points.find((p) => p.id === id);
+          setDraft(next && !next.confirmedEventId ? next : undefined);
+          setDispositions({});
           setSelected(id);
           setInspectedEvent(undefined);
-          setPreview(undefined);
+          setReviewedFingerprint(undefined);
           setError('');
         }}
         onSelectEvent={(reward) => {
@@ -509,8 +557,6 @@ export default function CampaignXp({
         <XpAwardDialog
           title={visibleEvent?.point.label || point?.label || 'XP award'}
           editable={!visibleEvent && !!point && !point.confirmedEventId}
-          renameOnMount={renamePointId === point?.id}
-          onRenameEnd={() => setRenamePointId('')}
           onRename={(label) => {
             changePoint({ label });
           }}
@@ -555,23 +601,16 @@ export default function CampaignXp({
                 </p>
               )}
               <XpAwardTable
-                document={document}
-                point={point}
-                rewards={rewards.map(
-                  (r) => point.rewardOverrides.find((o) => o.id === r.id) || r
+                document={projection ?? document}
+                point={projectedPoint ?? point}
+                rewards={rewards.map((r) =>
+                  withXpDisposition(r, dispositions[r.id])
                 )}
                 rows={preview?.rows}
-                onSelect={(id, include) => {
-                  setPreview(undefined);
-                  onChange((doc) =>
-                    selectXpRewards(
-                      doc,
-                      point.id,
-                      include
-                        ? [...point.rewardIds, id]
-                        : point.rewardIds.filter((r) => r !== id)
-                    )
-                  );
+                onSelect={changeSelection}
+                onDisposition={(id, disposition) => {
+                  setDispositions({ ...dispositions, [id]: disposition });
+                  changeSelection(id, disposition !== 'defer');
                 }}
                 onOpen={(reward) => {
                   const accepted = xp.events.some((e) =>
@@ -584,7 +623,10 @@ export default function CampaignXp({
                     setInspectedEvent(reward);
                   else
                     setEditor({
-                      reward,
+                      reward:
+                        point.rewardOverrides.find((r) => r.id === reward.id) ||
+                        xp.rewards.find((r) => r.id === reward.id) ||
+                        reward,
                       pointId: point.correctionOf ? point.id : undefined,
                     });
                 }}
@@ -616,48 +658,51 @@ export default function CampaignXp({
                   <label className={styles['check']}>
                     <input
                       type="checkbox"
-                      checked={reviewLater}
-                      onChange={(e) => setReviewLater(e.target.checked)}
+                      checked={reviewedLater}
+                      onChange={(e) =>
+                        setReviewedFingerprint(
+                          e.target.checked ? preview?.fingerprint : undefined
+                        )
+                      }
                     />
                     I reviewed the recalculated later balances
                   </label>
                 </div>
               ) : null}
               <div className={styles['actions']}>
-                {!historical &&
-                  (preview ? (
-                    <button
-                      className={styles['primary']}
-                      disabled={preview.later.length > 0 && !reviewLater}
-                      onClick={confirm}
-                    >
-                      {preview.point.correctionOf
-                        ? 'Confirm changes'
-                        : 'Confirm award'}
-                    </button>
-                  ) : (
-                    <button className={styles['primary']} onClick={review}>
-                      Preview award
-                    </button>
-                  ))}
-                <button
-                  onClick={() => {
-                    if (onChange((doc) => discardXpPoint(doc, point.id))) {
-                      setSelected('');
-                      setPreview(undefined);
+                {!historical && (
+                  <button
+                    className={styles['primary']}
+                    disabled={
+                      !preview || (preview.later.length > 0 && !reviewedLater)
                     }
-                  }}
-                >
-                  {point.correctionOf
-                    ? 'Discard changes'
-                    : 'Discard award draft'}
-                </button>
+                    onClick={confirm}
+                  >
+                    {point.correctionOf ? 'Confirm changes' : 'Confirm award'}
+                  </button>
+                )}
+                <button onClick={closeAward}>Cancel</button>
+                {!point.correctionOf && (
+                  <button onClick={saveDraft}>Save draft</button>
+                )}
+                {savedPoint && !savedPoint.confirmedEventId && (
+                  <button
+                    onClick={() => {
+                      if (onChange((doc) => discardXpPoint(doc, point.id)))
+                        closeAward();
+                    }}
+                  >
+                    {point.correctionOf
+                      ? 'Discard changes'
+                      : 'Discard saved draft'}
+                  </button>
+                )}
               </div>
             </section>
           )}
-          {awardOpen && error && (
+          {awardOpen && (error || previewError) && (
             <p role="alert" className={styles['warning']}>
-              {error}
+              {error || previewError}
             </p>
           )}
         </XpAwardDialog>
@@ -674,7 +719,7 @@ export default function CampaignXp({
             <button
               onClick={() => {
                 setSelected('');
-                setPreview(undefined);
+                setReviewedFingerprint(undefined);
                 setHistoryId(event.id);
                 setError('');
               }}
@@ -752,10 +797,12 @@ export default function CampaignXp({
           onClose={() => setAwardEdit(undefined)}
           onSave={(updated) =>
             changePoint({
-              bonuses:
-                point?.bonuses.map((b) =>
-                  b.characterId === updated.characterId ? updated : b
-                ) || [],
+              bonuses: [
+                ...(draft?.bonuses.filter(
+                  (b) => b.characterId !== updated.characterId
+                ) ?? []),
+                updated,
+              ],
             })
           }
         />
@@ -844,34 +891,35 @@ export default function CampaignXp({
               e.rewards.some((r) => r.id === editor.reward.id)
             )
               ? () => {
-                  setPreview(undefined);
-                  return onChange((doc) =>
+                  setReviewedFingerprint(undefined);
+                  const removed = onChange((doc) =>
                     deleteXpReward(doc, editor.reward.id, editor.reward.version)
                   );
+                  if (removed) changeSelection(editor.reward.id, false);
+                  return removed;
                 }
               : undefined
           }
           onSave={(reward) => {
-            const pointId = editor.pointId;
-            const existing = pointId
-              ? xp.points
-                  .find((p) => p.id === pointId)
-                  ?.rewardOverrides.find((r) => r.id === reward.id)
-              : xp.rewards.find((r) => r.id === reward.id);
-            const next = {
-              ...reward,
-              version: existing ? existing.version + 1 : reward.version,
-            };
-            setPreview(undefined);
-            return onChange((doc) => {
-              const changed = saveXpReward(doc, next, pointId);
-              const p = pointId
-                ? xpLedger(changed).points.find((p) => p.id === pointId)
-                : point;
-              return p && !p.confirmedEventId && p.rewardIds.includes(reward.id)
-                ? selectXpRewards(changed, p.id, p.rewardIds)
-                : changed;
-            });
+            if (editor.pointId && draft?.id === editor.pointId) {
+              const updated = {
+                ...draft,
+                rewardOverrides: [
+                  ...draft.rewardOverrides.filter((r) => r.id !== reward.id),
+                  { ...reward, version: editor.reward.version + 1 },
+                ],
+              };
+              return changePoint(
+                withXpRewardSelection(document, updated, updated.rewardIds)
+              );
+            }
+            const existing = xp.rewards.find((r) => r.id === reward.id);
+            return onChange((doc) =>
+              saveXpReward(doc, {
+                ...reward,
+                version: existing ? existing.version + 1 : reward.version,
+              })
+            );
           }}
         />
       )}

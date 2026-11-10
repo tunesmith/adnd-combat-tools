@@ -23,7 +23,7 @@ beforeEach(() => {
     value: { randomUUID: () => `cap-ui-${++id}` },
   });
 });
-test('cap preview separates full/add/discard, invalidates on training and persists a frozen cap', () => {
+test('cap preview separates full/add/discard, recalculates on training and persists a frozen cap', () => {
   let current = capMoneyAward(capCampaign(), 'first', '500');
   function Harness() {
     const [doc, setDoc] = useState(current);
@@ -65,7 +65,6 @@ test('cap preview separates full/add/discard, invalidates on training and persis
   expect(
     table.getByRole('button', { name: 'Review Mira XP cap' })
   ).toHaveTextContent('35,001');
-  fireEvent.click(screen.getByRole('button', { name: 'Preview award' }));
   const value = (label: string) =>
     within(screen.getByRole('table', { name: 'XP award' }))
       .getByRole('row', { name: new RegExp(`^${label}`) })
@@ -74,15 +73,13 @@ test('cap preview separates full/add/discard, invalidates on training and persis
   expect(value('XP added')).toBe('201');
   expect(value('Discarded')).toBe('349');
   expect(value('New balance')).toBe('35,001');
+  expect(value('XP to cap')).toBe('0');
   fireEvent.click(screen.getByRole('button', { name: 'Synthetic training' }));
-  expect(
-    screen.queryByRole('button', { name: 'Confirm award' })
-  ).not.toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Confirm award' })).toBeEnabled();
   table = within(screen.getByRole('table', { name: 'XP award' }));
   expect(
     table.getByRole('button', { name: 'Review Mira XP cap' })
   ).toHaveTextContent('70,001');
-  fireEvent.click(screen.getByRole('button', { name: 'Preview award' }));
   expect(value('XP added')).toBe('550');
   expect(value('Discarded')).toBe('0');
   fireEvent.click(screen.getByRole('button', { name: 'Confirm award' }));
@@ -129,7 +126,6 @@ test('unknown caps need an explicit decision; cancellation cannot create an unca
   fireEvent.click(
     screen.getByRole('button', { name: /^Synthetic custom settlement Draft/ })
   );
-  fireEvent.click(screen.getByRole('button', { name: 'Preview award' }));
   expect(screen.getByRole('alert')).toHaveTextContent('cap is unknown');
   fireEvent.click(screen.getByRole('button', { name: 'Review Mira XP cap' }));
   let cap = within(screen.getByRole('dialog', { name: 'XP cap' }));
@@ -147,7 +143,6 @@ test('unknown caps need an explicit decision; cancellation cannot create an unca
     target: { value: 'Synthetic custom cap' },
   });
   fireEvent.click(cap.getByRole('button', { name: 'Apply cap' }));
-  fireEvent.click(screen.getByRole('button', { name: 'Preview award' }));
   expect(
     within(screen.getByRole('table', { name: 'XP award' })).getByRole('row', {
       name: /^XP added/,

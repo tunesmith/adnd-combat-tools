@@ -7,7 +7,12 @@ import type {
   XpPoint,
   XpReward,
 } from '../../helpers/campaignXpModel';
-import { resolveXpReward, rewardSettlement } from '../../helpers/campaignXp';
+import type { XpTreasureDisposition } from '../../helpers/campaignXp';
+import {
+  resolveXpReward,
+  rewardSettlement,
+  xpBalance,
+} from '../../helpers/campaignXp';
 import {
   compareXpTimeline,
   xpAwardRoot,
@@ -28,6 +33,7 @@ export default function XpAwardTable({
   rows,
   readOnly = false,
   onSelect,
+  onDisposition,
   onOpen,
   onBonus,
   onFinal,
@@ -40,6 +46,7 @@ export default function XpAwardTable({
   rows?: XpAwardRow[];
   readOnly?: boolean;
   onSelect?: (id: string, selected: boolean) => void;
+  onDisposition?: (id: string, disposition: XpTreasureDisposition) => void;
   onOpen: (reward: XpReward) => void;
   onBonus?: (review: XpBonusReview) => void;
   onFinal?: (review: XpBonusReview) => void;
@@ -90,12 +97,12 @@ export default function XpAwardTable({
         xpAwardRoot(document, point)
       ) > 0;
     const settled = !readOnly && rewardSettlement(document, reward.id);
-    const blocked = deferred
-      ? 'Deferred'
-      : future
+    const blocked = future
       ? 'After this award point'
       : settled && settled.id !== point.correctionOf
       ? 'Already awarded'
+      : deferred
+      ? 'Deferred'
       : '';
     let calculation: ReturnType<typeof resolveXpReward> | undefined,
       error = '';
@@ -127,6 +134,59 @@ export default function XpAwardTable({
       )
     );
   };
+  const totals = new Map(
+    characters.map(({ id }) => {
+      const row = rows?.find((r) => r.characterId === id);
+      const affected = resolved.some(
+        ({ reward, blocked }) =>
+          blocked !== 'Deferred' &&
+          point.rewardIds.includes(reward.id) &&
+          reward.recipients.some((r) => r.eligible && r.characterId === id)
+      );
+      const before =
+        row?.before ??
+        (readOnly
+          ? null
+          : xpBalance(
+              document,
+              id,
+              point.position,
+              false,
+              undefined,
+              xpAwardRoot(document, point)
+            ));
+      const after = row?.after ?? (affected ? null : before);
+      let cap = row?.cap;
+      let capError = '';
+      if (!readOnly && !cap) {
+        try {
+          cap = awardCapBasis(document, point, id);
+        } catch (e) {
+          capError = e instanceof Error ? e.message : String(e);
+        }
+      }
+      return [
+        id,
+        {
+          before,
+          after,
+          cap,
+          capError,
+          full: row
+            ? row.fullAward ?? row.award
+            : affected || readOnly
+            ? null
+            : 0,
+          added: row?.award ?? (affected || readOnly ? null : 0),
+          discarded: row?.discarded ?? (affected || readOnly ? null : 0),
+          toCap:
+            after !== null && cap?.limit != null
+              ? Math.max(0, cap.limit - after)
+              : null,
+        },
+      ] as const;
+    })
+  );
   return (
     <div className={styles['tableScroll']}>
       <table className={styles['awardMatrix']} aria-label="XP award">
@@ -142,7 +202,11 @@ export default function XpAwardTable({
         </thead>
         <tbody>
           {resolved.map(({ reward, blocked, calculation, error }) => {
-            const included = readOnly || point.rewardIds.includes(reward.id);
+            const included =
+              readOnly ||
+              (blocked !== 'Deferred' && point.rewardIds.includes(reward.id));
+            const treasure =
+              reward.input.category === 'treasure' ? reward.input : null;
             return (
               <tr
                 key={reward.id}
@@ -176,6 +240,26 @@ export default function XpAwardTable({
                             )?.label
                           }
                         </small>
+                      )}
+                      {treasure && !readOnly && onDisposition && (
+                        <select
+                          aria-label={`Disposition for ${reward.title}`}
+                          value={treasure.disposition}
+                          disabled={!!blocked && blocked !== 'Deferred'}
+                          onChange={(e) => {
+                            const choice = e.target.value;
+                            if (
+                              choice === 'keep' ||
+                              choice === 'sell' ||
+                              choice === 'defer'
+                            )
+                              onDisposition(reward.id, choice);
+                          }}
+                        >
+                          <option value="keep">Keep</option>
+                          <option value="sell">Sell</option>
+                          <option value="defer">Defer</option>
+                        </select>
                       )}
                       {blocked && <small>{blocked}</small>}
                       {error && (
@@ -280,15 +364,8 @@ export default function XpAwardTable({
           <tr>
             <th scope="row">XP cap</th>
             {characters.map((c) => {
-              const row = rows?.find((r) => r.characterId === c.id);
-              let cap = row?.cap;
-              let capError = '';
-              if (!readOnly && !cap)
-                try {
-                  cap = awardCapBasis(document, point, c.id);
-                } catch (e) {
-                  capError = e instanceof Error ? e.message : String(e);
-                }
+              const cap = totals.get(c.id)?.cap;
+              const capError = totals.get(c.id)?.capError;
               return (
                 <td key={c.id}>
                   {readOnly && !cap ? (
@@ -366,56 +443,37 @@ export default function XpAwardTable({
                       {review.finalOverride} *
                     </button>
                   ) : (
-                    '—'
+                    totals.get(c.id)?.full?.toLocaleString() ?? '—'
                   )}
                 </td>
               );
             })}
           </tr>
-          <tr className={styles['awardTotal']}>
-            <th scope="row">XP added</th>
-            {characters.map((c) => (
-              <td key={c.id}>
-                {rows
-                  ?.find((r) => r.characterId === c.id)
-                  ?.award?.toLocaleString() ?? '—'}
-              </td>
-            ))}
-          </tr>
-          <tr>
-            <th scope="row">Discarded</th>
-            {characters.map((c) => (
-              <td key={c.id}>
-                {rows
-                  ?.find((r) => r.characterId === c.id)
-                  ?.discarded?.toLocaleString() ?? (
-                  <span title="Legacy award: discarded XP was not recorded">
-                    —
-                  </span>
-                )}
-              </td>
-            ))}
-          </tr>
-          <tr>
-            <th scope="row">Previous balance</th>
-            {characters.map((c) => (
-              <td key={c.id}>
-                {rows
-                  ?.find((r) => r.characterId === c.id)
-                  ?.before?.toLocaleString() ?? '—'}
-              </td>
-            ))}
-          </tr>
-          <tr className={styles['awardTotal']}>
-            <th scope="row">New balance</th>
-            {characters.map((c) => (
-              <td key={c.id}>
-                {rows
-                  ?.find((r) => r.characterId === c.id)
-                  ?.after?.toLocaleString() ?? '—'}
-              </td>
-            ))}
-          </tr>
+          {(
+            [
+              ['XP added', 'added'],
+              ['Discarded', 'discarded'],
+              ['Previous balance', 'before'],
+              ['New balance', 'after'],
+              ['XP to cap', 'toCap'],
+            ] as const
+          ).map(([label, field]) => (
+            <tr
+              key={field}
+              className={
+                field === 'added' || field === 'after'
+                  ? styles['awardTotal']
+                  : undefined
+              }
+            >
+              <th scope="row">{label}</th>
+              {characters.map((c) => (
+                <td key={c.id}>
+                  {totals.get(c.id)?.[field]?.toLocaleString() ?? '—'}
+                </td>
+              ))}
+            </tr>
+          ))}
         </tfoot>
       </table>
     </div>

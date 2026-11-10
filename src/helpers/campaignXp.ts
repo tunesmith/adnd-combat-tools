@@ -538,6 +538,13 @@ export function selectXpRewards(
   const point =
     xpLedger(doc).points.find((p) => p.id === pointId) ||
     fail('Select an award point.');
+  return saveXpPoint(doc, withXpRewardSelection(doc, point, rewardIds));
+}
+export function withXpRewardSelection(
+  doc: CampaignDocument,
+  point: XpPoint,
+  rewardIds: string[]
+): XpPoint {
   const ids = Array.from(
     new Set(
       rewardIds.flatMap(
@@ -571,7 +578,67 @@ export function selectXpRewards(
         finalReason: '',
       }
   );
-  return saveXpPoint(doc, { ...point, rewardIds, bonuses });
+  return { ...point, rewardIds, bonuses };
+}
+export type XpTreasureDisposition = Extract<
+  XpReward['input'],
+  { category: 'treasure' }
+>['disposition'];
+
+export function withXpDisposition(
+  reward: XpReward,
+  disposition?: XpTreasureDisposition
+): XpReward {
+  if (
+    !disposition ||
+    reward.input.category !== 'treasure' ||
+    reward.input.disposition === disposition
+  )
+    return reward;
+  return { ...reward, input: { ...reward.input, disposition } };
+}
+
+// Build the same candidate ledger for preview and confirmation. Only included
+// treasure can change an event, and previously awarded sources stay frozen.
+export function stageXpAward(
+  doc: CampaignDocument,
+  draft: XpPoint,
+  dispositions: Record<string, XpTreasureDisposition>
+): CampaignDocument {
+  let next = doc;
+  const overrides = [...draft.rewardOverrides];
+  const selected = pointRewards(doc, draft).flatMap((reward) => {
+    const choice = withXpDisposition(reward, dispositions[reward.id]);
+    if (
+      choice.input.category === 'treasure' &&
+      choice.input.disposition === 'defer'
+    )
+      return [];
+    if (choice !== reward) {
+      const source = xpLedger(doc).rewards.find((r) => r.id === reward.id);
+      if (
+        source &&
+        !xpLedger(doc).events.some((e) =>
+          e.rewards.some((r) => r.id === reward.id)
+        )
+      ) {
+        next = saveXpReward(next, { ...choice, version: source.version + 1 });
+        const index = overrides.findIndex((r) => r.id === reward.id);
+        if (index >= 0) overrides.splice(index, 1);
+      } else {
+        const index = overrides.findIndex((r) => r.id === reward.id);
+        const revised = { ...choice, version: reward.version + 1 };
+        if (index >= 0) overrides[index] = revised;
+        else overrides.push(revised);
+      }
+    }
+    return [reward.id];
+  });
+  const point = {
+    ...draft,
+    rewardOverrides: overrides.filter((r) => selected.includes(r.id)),
+  };
+  return saveXpPoint(next, withXpRewardSelection(next, point, selected));
 }
 export function newXpPoint(
   doc: CampaignDocument,

@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { useEffect, useRef } from 'react';
 import RenamableTab from './RenamableTab';
 import styles from './xpWorkspace.module.css';
 
@@ -6,19 +7,20 @@ export default function XpAwardDialog({
   title,
   children,
   editable = false,
-  renameOnMount = false,
   onRename,
-  onRenameEnd,
   onClose,
 }: {
   title: string;
   children: ReactNode;
   editable?: boolean;
-  renameOnMount?: boolean;
   onRename: (label: string) => void;
-  onRenameEnd: () => void;
   onClose: () => void;
 }) {
+  const dialog = useRef<HTMLElement>(null);
+  useEffect(() => {
+    if (editable) dialog.current?.focus({ preventScroll: true });
+  }, [editable]);
+
   return (
     <div
       className={styles['backdrop']}
@@ -27,12 +29,15 @@ export default function XpAwardDialog({
       }}
     >
       <section
+        ref={dialog}
+        tabIndex={-1}
         className={`${styles['modal']} ${styles['awardModal']}`}
         role="dialog"
         aria-modal="true"
         aria-label="XP award"
-        onKeyDown={(e) => {
+        onKeyDownCapture={(e) => {
           if (e.key === 'Escape') {
+            e.preventDefault();
             e.stopPropagation();
             onClose();
           }
@@ -45,18 +50,18 @@ export default function XpAwardDialog({
                 label={title}
                 kind="award"
                 selected={false}
-                renameOnMount={renameOnMount}
                 onSelect={() => undefined}
                 onRename={onRename}
-                onRenameEnd={onRenameEnd}
               />
             ) : (
               title
             )}
           </h2>
-          <button autoFocus={!renameOnMount} onClick={onClose}>
-            Close award
-          </button>
+          {!editable && (
+            <button autoFocus onClick={onClose}>
+              Close award
+            </button>
+          )}
         </div>
         {children}
       </section>
