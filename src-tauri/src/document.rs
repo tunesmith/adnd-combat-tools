@@ -961,6 +961,11 @@ mod banking_tests {
             .find(|w| w["sessionId"] == "day3").unwrap()["document"] = opening_inventory;
         before.validate().unwrap();
         validate_replacement(&before, &after).unwrap();
+        let mut unbalanced = after.clone();
+        unbalanced.banking.as_mut().unwrap()["entries"][0]["kind"] = "transfer".into();
+        assert!(unbalanced.validate().is_err());
+        unbalanced.banking.as_mut().unwrap()["entries"][0]["kind"] = "exchange".into();
+        assert!(unbalanced.validate().is_err());
         let mut missing_money = after.clone();
         missing_money.working_inventories = before.working_inventories.clone();
         assert!(validate_replacement(&before, &missing_money).is_err());

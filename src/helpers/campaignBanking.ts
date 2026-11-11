@@ -345,7 +345,7 @@ function applyBankChanges(
   }
   return normalizeInventory(next);
 }
-function validateChanges(entry: BankEntry) {
+function validateChanges(entry: BankEntry, progressOnly = false) {
   if (!entry.description.trim())
     throw Error('Enter a transaction description.');
   const total = bankChangesAmounts(entry.changes);
@@ -391,6 +391,7 @@ function validateChanges(entry: BankEntry) {
     );
   if (
     entry.kind === 'transfer' &&
+    !progressOnly &&
     bankDenominations.some((c) => total[c] !== 0)
   )
     throw Error('A transfer must conserve each denomination.');
@@ -398,7 +399,8 @@ function validateChanges(entry: BankEntry) {
     const fee = entry.changes.filter((c) => c.fee);
     if (
       fee.some((c) => c.quantity >= 0) ||
-      bankGp(bankChangesAmounts(entry.changes.filter((c) => !c.fee))) !== '0'
+      (!progressOnly &&
+        bankGp(bankChangesAmounts(entry.changes.filter((c) => !c.fee))) !== '0')
     )
       throw Error(
         'An exchange must conserve GP value. Mark any fee as a separate outgoing change.'
@@ -817,6 +819,22 @@ export function previewBankTransaction(
   doc: CampaignDocument,
   request: BankTransactionRequest
 ) {
+  return projectBankTransaction(doc, request);
+}
+
+/** Read-only physical progress for transfers and exchanges, including unbalanced drafts. */
+export function previewBankProgress(
+  doc: CampaignDocument,
+  request: BankTransactionRequest
+) {
+  return projectBankTransaction(doc, request, true);
+}
+
+function projectBankTransaction(
+  doc: CampaignDocument,
+  request: BankTransactionRequest,
+  progress = false
+) {
   const ledger = bankLedger(doc),
     previous = currentTransaction(doc, request.transactionId);
   sessionIndex(doc, request.sessionId);
@@ -880,7 +898,12 @@ export function previewBankTransaction(
     changes,
     at: '2000-01-01T00:00:00.000Z',
   };
-  validateChanges(candidate);
+  const physicalProgress =
+    progress &&
+    (candidate.kind === 'transfer' || candidate.kind === 'exchange') &&
+    !candidate.receiptMode &&
+    !request.remove;
+  validateChanges(candidate, physicalProgress);
   let inventory = working.document;
   if (candidate.effect === 'inventory') {
     const deltas = [
@@ -916,8 +939,10 @@ export function previewBankTransaction(
     ...doc,
     banking: { ...ledger, entries: [...ledger.entries, candidate] },
   };
-  assertBankCutoffs(projection);
-  validateBankBalances(projection);
+  if (!physicalProgress) {
+    assertBankCutoffs(projection);
+    validateBankBalances(projection);
+  }
   return {
     candidate,
     inventory,

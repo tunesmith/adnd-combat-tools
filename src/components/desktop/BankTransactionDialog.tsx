@@ -13,6 +13,8 @@ import {
   holderMoney,
   bankGp,
   previewBankTransaction,
+  previewBankProgress,
+  bankChangesAmounts,
   commitBankTransaction,
 } from '../../helpers/campaignBanking';
 import type { BankTransactionRequest } from '../../helpers/campaignBanking';
@@ -252,21 +254,66 @@ export default function BankTransactionDialog({
       : [];
   });
   const incomplete = completed.length !== request.changes.length;
+  const ordinaryTransfer = request.kind === 'transfer' && !existingMode;
+  const ordinaryExchange = request.kind === 'exchange' && !existingMode;
+  const physicalProgress = ordinaryTransfer || ordinaryExchange;
+  const net = physicalProgress
+    ? bankChangesAmounts(
+        completed.filter((change) => !ordinaryExchange || !change.fee)
+      )
+    : zeroBankAmounts();
+  const exchangeValue = bankGp(net);
+  const unallocated = ordinaryExchange
+    ? exchangeValue === '0'
+      ? []
+      : [
+          `${exchangeValue.startsWith('-') ? '+' : '-'}${exchangeValue.replace(
+            /^-/,
+            ''
+          )} gp of value`,
+        ]
+    : bankDenominations.flatMap((code) => {
+        const quantity = net[code] ?? 0;
+        return quantity
+          ? [
+              `${
+                quantity < 0 ? '+' : ''
+              }${(-quantity).toLocaleString()} ${code}`,
+            ]
+          : [];
+      });
   let summaryPreview: ReturnType<typeof previewBankTransaction> | undefined;
+  let preview: ReturnType<typeof previewBankTransaction> | undefined;
   let invalid = '';
+  let saveError = '';
   if (completed.length) {
     try {
-      summaryPreview = previewBankTransaction(document, {
+      const candidate = {
         ...request,
         description: request.description.trim() || 'Transaction preview',
         changes: completed,
-      });
+      };
+      summaryPreview = physicalProgress
+        ? previewBankProgress(document, candidate)
+        : previewBankTransaction(document, candidate);
     } catch (e) {
       invalid = e instanceof Error ? e.message : String(e);
     }
   }
-  const preview =
-    !incomplete && request.description.trim() ? summaryPreview : undefined;
+  if (
+    summaryPreview &&
+    !incomplete &&
+    request.description.trim() &&
+    !unallocated.length
+  ) {
+    try {
+      preview = physicalProgress
+        ? previewBankTransaction(document, request)
+        : summaryPreview;
+    } catch (e) {
+      saveError = e instanceof Error ? e.message : String(e);
+    }
+  }
   const proposedInventory = summaryPreview?.inventory ?? working?.document;
   const projectedLedger = summaryPreview?.projection ?? document;
   const unknown = {
@@ -524,10 +571,12 @@ export default function BankTransactionDialog({
                   (s) => s.item.id === change.item.id
                 );
                 const resulting =
-                  preview &&
-                  bankHolders(preview.inventory)
+                  summaryPreview &&
+                  (bankHolders(summaryPreview.inventory)
                     .find((h) => h.id === change.holderId)
-                    ?.inventory.find((i) => i.id === change.item.id)?.quantity;
+                    ?.inventory.find((i) => i.id === change.item.id)
+                    ?.quantity ??
+                    0);
                 return (
                   <tr key={index}>
                     {existingTransfer && (
@@ -742,7 +791,9 @@ export default function BankTransactionDialog({
                         </small>
                       )}
                       {!existingMode &&
-                        preview?.candidate.status === 'posted' &&
+                        Number.isSafeInteger(change.quantity) &&
+                        change.quantity !== 0 &&
+                        summaryPreview?.candidate.status === 'posted' &&
                         resulting != null && (
                           <small>
                             Resulting stack {resulting?.toLocaleString()}
@@ -867,7 +918,11 @@ export default function BankTransactionDialog({
             <BankBalances
               showTotals
               label="Proposed possessions"
-              caption="Possessions after saving"
+              caption={
+                physicalProgress
+                  ? 'Possessions after entered changes'
+                  : 'Possessions after saving'
+              }
               rows={holders
                 .filter((h) => request.changes.some((c) => c.holderId === h.id))
                 .map((h) => ({
@@ -931,7 +986,12 @@ export default function BankTransactionDialog({
             </table>
           </details>
         )}
-        {(error || invalid) && <p role="alert">{error || invalid}</p>}
+        {physicalProgress && unallocated.length > 0 && !invalid && (
+          <p role="status">Still to enter: {unallocated.join(', ')}.</p>
+        )}
+        {(error || invalid || saveError) && (
+          <p role="alert">{error || invalid || saveError}</p>
+        )}
         <div className={styles['footer']}>
           {entry && (
             <button onClick={() => submit(true)}>Delete transaction</button>

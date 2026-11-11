@@ -12,6 +12,7 @@ import {
   confirmBankExtension,
   holderMoney,
   previewBankTransaction,
+  previewBankProgress,
   previewBankExtension,
   saveBankOpenings,
   newBankMoneyItem,
@@ -519,4 +520,110 @@ test('reviewed imports may relocate equal money without inventing income or losi
   expect(holderMoney(inventory(replaced), 'inventory-reatha')).toEqual(
     holderMoney(inventory(doc), 'inventory-reatha')
   );
+});
+
+test('ordinary transfer progress projects entered debits without allowing an unbalanced transaction to be saved', () => {
+  const doc = bankFixture();
+  const request = {
+    transactionId: 'progress-transfer',
+    sessionId: 'day3',
+    description: 'Take electrum to town',
+    kind: 'transfer' as const,
+    changes: [
+      bankLeg(doc, 'day3', 'castle-kifu-storage', 'ep', -300, 'castle-ep'),
+    ],
+  };
+  const progress = previewBankProgress(doc, request);
+  expect(holderMoney(progress.inventory, 'castle-kifu-storage')).toMatchObject({
+    ep: 400,
+    sp: 1000,
+    gp: 250,
+  });
+  expect(
+    inventory(doc).storageLocations[0]?.inventory.find(
+      (i) => i.id === 'castle-ep'
+    )?.quantity
+  ).toBe(700);
+  expect(() => previewBankTransaction(doc, request)).toThrow('conserve');
+  expect(() =>
+    commitBankTransaction(
+      doc,
+      request,
+      progress.fingerprint,
+      'cannot-post-progress',
+      bankingAt
+    )
+  ).toThrow('conserve');
+  const forged = {
+    ...doc,
+    banking: {
+      ...bankLedger(doc),
+      entries: [{ ...progress.candidate, id: 'forged', at: bankingAt }],
+    },
+    workingInventories: doc.workingInventories.map((w) =>
+      w.sessionId === 'day3' ? { ...w, document: progress.inventory } : w
+    ),
+  };
+  expect(() => serializeCampaign(forged)).toThrow('conserve');
+});
+
+test('exchange progress uses entered quantities before GP values balance, and fees never bypass validation', () => {
+  const doc = bankFixture();
+  const request = {
+    transactionId: 'exchange-progress',
+    sessionId: 'day3',
+    description: 'Exchange electrum for diamonds',
+    kind: 'exchange' as const,
+    changes: [
+      bankLeg(doc, 'day3', 'castle-kifu-storage', 'ep', -280, 'castle-ep'),
+    ],
+  };
+  const progress = previewBankProgress(doc, request);
+  expect(holderMoney(progress.inventory, 'castle-kifu-storage').ep).toBe(420);
+  expect(bankGp(holderMoney(progress.inventory, 'castle-kifu-storage'))).toBe(
+    '510'
+  );
+  expect(() => previewBankTransaction(doc, request)).toThrow('conserve GP');
+  expect(() =>
+    commitBankTransaction(
+      doc,
+      request,
+      progress.fingerprint,
+      'unbalanced-exchange',
+      bankingAt
+    )
+  ).toThrow('conserve GP');
+  const fractional = {
+    ...request,
+    changes: [
+      bankLeg(doc, 'day3', 'castle-kifu-storage', 'ep', -1, 'castle-ep'),
+      bankLeg(doc, 'day3', 'castle-kifu-storage', 'sp', 1, 'castle-sp'),
+    ],
+  };
+  expect(
+    bankGp(
+      bankChangesAmounts(previewBankProgress(doc, fractional).candidate.changes)
+    )
+  ).toBe('-0.45');
+  const fee = {
+    ...request,
+    changes: [
+      bankLeg(doc, 'day3', 'castle-kifu-storage', 'gp', -100, 'castle-gp'),
+      bankLeg(doc, 'day3', 'castle-kifu-storage', 'diamond', 1, 'new-diamond'),
+      {
+        ...bankLeg(doc, 'day3', 'castle-kifu-storage', 'gp', -1, 'castle-gp'),
+        fee: true,
+      },
+    ],
+  };
+  const balanced = previewBankTransaction(doc, fee);
+  expect(bankGp(holderMoney(balanced.inventory, 'castle-kifu-storage'))).toBe(
+    '649'
+  );
+  expect(() =>
+    previewBankProgress(doc, {
+      ...fee,
+      changes: fee.changes.map((c) => (c.fee ? { ...c, quantity: 1 } : c)),
+    })
+  ).toThrow('fee');
 });
