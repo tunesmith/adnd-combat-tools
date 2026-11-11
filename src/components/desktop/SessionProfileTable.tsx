@@ -97,29 +97,68 @@ export default function SessionProfileTable({
                   {reference?.race || '—'}
                   {reference?.alignment && <small>{reference.alignment}</small>}
                 </td>
-                <td>{profileClassLabel(profile.characterClass)}</td>
+                <td>
+                  {profile.classes ? (
+                    <div className={styles['profileClassValues']}>
+                      {profile.classes.map((c) => (
+                        <span key={c.id}>
+                          {profileClassLabel(c.characterClass)}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    profileClassLabel(profile.characterClass)
+                  )}
+                </td>
                 <td
                   title={
                     profile.adjustment
-                      ? `Base ${profile.baseLevel} · ${
-                          profile.adjustment.name
-                        } +1 ${profile.adjustment.enabled ? 'on' : 'off'}`
+                      ? `${profile.adjustment.name} +1 ${
+                          profile.adjustment.enabled ? 'on' : 'off'
+                        }`
                       : undefined
                   }
                 >
-                  {level}
-                  {profile.adjustment && (
-                    <button
-                      className={styles['sessionEffect']}
-                      title={`${profile.adjustment.name} +1 · ${
-                        profile.adjustment.enabled ? 'On' : 'Off'
-                      } · Base ${profile.baseLevel}`}
-                      aria-label={`${character.name} ${profile.adjustment.name} +1`}
-                      aria-pressed={profile.adjustment.enabled}
-                      onClick={() => onToggle(profile.characterId)}
-                    >
-                      +1
-                    </button>
+                  {profile.classes ? (
+                    <div className={styles['profileClassValues']}>
+                      {profile.classes.map((c) => (
+                        <span key={c.id}>
+                          {c.baseLevel +
+                            (profile.adjustment?.enabled &&
+                            profile.adjustment.classId === c.id
+                              ? 1
+                              : 0)}
+                          {profile.adjustment?.classId === c.id && (
+                            <button
+                              className={styles['sessionEffect']}
+                              title={profile.adjustment.name}
+                              aria-label={`${character.name} ${profile.adjustment.name} +1`}
+                              aria-pressed={profile.adjustment.enabled}
+                              onClick={() => onToggle(profile.characterId)}
+                            >
+                              +1
+                            </button>
+                          )}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <>
+                      {level}
+                      {profile.adjustment && (
+                        <button
+                          className={styles['sessionEffect']}
+                          title={`${profile.adjustment.name} +1 · ${
+                            profile.adjustment.enabled ? 'On' : 'Off'
+                          } · Base ${profile.baseLevel}`}
+                          aria-label={`${character.name} ${profile.adjustment.name} +1`}
+                          aria-pressed={profile.adjustment.enabled}
+                          onClick={() => onToggle(profile.characterId)}
+                        >
+                          +1
+                        </button>
+                      )}
+                    </>
                   )}
                 </td>
                 <td>{recorded(reference?.maxHp)}</td>
@@ -150,7 +189,17 @@ export default function SessionProfileTable({
                 </td>
                 <td>{signed(bonuses?.missileHit)}</td>
                 <td>{signed(bonuses?.reactionPercent, true)}</td>
-                <td>{signed(bonuses?.xpPercent, true)}</td>
+                <td>
+                  {profile.classes ? (
+                    <div className={styles['profileClassValues']}>
+                      {profile.classes.map((c) => (
+                        <span key={c.id}>{signed(c.xpPercent, true)}</span>
+                      ))}
+                    </div>
+                  ) : (
+                    signed(bonuses?.xpPercent, true)
+                  )}
+                </td>
               </tr>
             );
           })}

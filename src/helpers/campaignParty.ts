@@ -53,9 +53,50 @@ export const profileClassLabel = (value: string) =>
   value === 'manual'
     ? 'Manual / creature'
     : value.charAt(0).toUpperCase() + value.slice(1).replace('-', ' ');
+export const profileLabel = (p: PartyProfile) =>
+  p.classes
+    ?.map(
+      (c) =>
+        `${profileClassLabel(c.characterClass)} ${c.baseLevel}${
+          p.adjustment?.enabled && p.adjustment.classId === c.id
+            ? ' → ' + (c.baseLevel + 1)
+            : ''
+        }`
+    )
+    .join(' / ') ??
+  `${profileClassLabel(p.characterClass)} ${p.baseLevel}${
+    effectiveLevel(p) !== p.baseLevel ? ' → ' + effectiveLevel(p) : ''
+  }`;
+export function classProfile(
+  p: PartyProfile,
+  c: NonNullable<PartyProfile['classes']>[number]
+): PartyProfile {
+  return {
+    ...p,
+    classes: undefined,
+    characterClass: c.characterClass,
+    baseLevel: c.baseLevel,
+    adjustment: p.adjustment?.classId === c.id ? p.adjustment : null,
+  };
+}
+export function encounterLevel(p: PartyProfile): string | null {
+  return !p.classes ||
+    p.classes.every((c) => c.baseLevel === p.classes?.[0]?.baseLevel)
+    ? String(p.classes?.[0]?.baseLevel ?? p.baseLevel)
+    : null;
+}
 export const effectiveLevel = (profile: PartyProfile) =>
   profile.baseLevel + (profile.adjustment?.enabled ? 1 : 0);
 export function calculatedSaves(profile: PartyProfile): SaveTargets | null {
+  if (profile.classes && profile.saveBasis !== 'manual') {
+    const targets = profile.classes.map((c) =>
+      calculatedSaves({ ...classProfile(profile, c), saveBasis: 'printed' })
+    );
+    if (targets.some((t) => !t)) return null;
+    const best = (i: 0 | 1 | 2 | 3 | 4) =>
+      Math.min(...targets.map((t) => t?.[i] ?? 99));
+    return [best(0), best(1), best(2), best(3), best(4)];
+  }
   const level = effectiveLevel(profile);
   if (profile.saveBasis === 'manual') return null;
   if (profile.saveBasis !== 'printed')
@@ -79,6 +120,14 @@ export function calculatedSaves(profile: PartyProfile): SaveTargets | null {
 export function combatValuesForProfile(
   profile: PartyProfile
 ): Pick<TrackerCombatant, 'class' | 'level'> | undefined {
+  if (profile.classes) {
+    const chosen =
+      profile.classes.find((c) => c.id === profile.combatClassId) ??
+      profile.classes[0];
+    return chosen
+      ? combatValuesForProfile(classProfile(profile, chosen))
+      : undefined;
+  }
   const combatClass = combatClasses[profile.characterClass];
   if (profile.combatBasis === 'manual' || combatClass === undefined) return;
   const level =
@@ -311,6 +360,21 @@ export function updatePartyProfile(
   const previous = party.profiles.find(matches);
   const known = party.roster.find((c) => c.id === profile.characterId);
   if (
+    previous?.classes &&
+    doc.xp?.events.some((e) =>
+      e.rows.some((r) => r.characterId === profile.characterId && r.classes)
+    ) &&
+    previous.classes.some(
+      (c) =>
+        !profile.classes?.some(
+          (v) => v.id === c.id && v.characterClass === c.characterClass
+        )
+    )
+  )
+    throw Error(
+      'Retain class identities used by confirmed XP. Change trained levels independently.'
+    );
+  if (
     profile.participating &&
     !previous?.participating &&
     known &&
@@ -375,6 +439,7 @@ export function copyPartyProfile(
     ...p,
     sessionId,
     participating: true,
+    ...(p.classes ? { classes: p.classes.map((c) => ({ ...c })) } : {}),
     adjustment: p.adjustment ? { ...p.adjustment } : null,
     overrides: [...p.overrides],
     saveNotes: [...p.saveNotes],
@@ -426,6 +491,46 @@ export function validatePartyReferences(
       !doc.sessions.some((s) => s.id === p.sessionId)
     )
       throw new Error('Invalid party profile reference.');
+    if (p.classes) {
+      if (
+        p.characterClass !== p.classes[0]?.characterClass ||
+        p.baseLevel !== p.classes[0]?.baseLevel
+      )
+        throw Error(
+          'The primary profile class must match its first class entry.'
+        );
+      if (
+        new Set(p.classes.map((c) => c.id)).size !== p.classes.length ||
+        new Set(p.classes.map((c) => c.characterClass)).size !==
+          p.classes.length ||
+        p.classes.some(
+          (c) => c.characterClass === 'manual' || c.characterClass === 'bard'
+        )
+      )
+        throw Error(
+          'Choose distinct calculated classes for a multiclass profile.'
+        );
+      if (!p.classes.some((c) => c.id === p.combatClassId))
+        throw Error('Choose a combat basis from this profile’s classes.');
+      if (
+        p.adjustment &&
+        !p.classes.some((c) => c.id === p.adjustment?.classId)
+      )
+        throw Error('Choose the class affected by the temporary level effect.');
+      for (const c of p.classes)
+        if (
+          profiles.some(
+            (other) =>
+              other.characterId === p.characterId &&
+              other.classes?.some(
+                (v) => v.id === c.id && v.characterClass !== c.characterClass
+              )
+          )
+        )
+          throw Error(
+            'A class identity cannot change its class across sessions.'
+          );
+    }
     profileKeys.add(key);
   }
   if (

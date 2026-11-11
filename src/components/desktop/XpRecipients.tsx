@@ -1,4 +1,7 @@
-import { xpRecipientAvailable } from '../../helpers/campaignParty';
+import {
+  xpRecipientAvailable,
+  profileLabel,
+} from '../../helpers/campaignParty';
 import { useState } from 'react';
 import type { CampaignDocument } from '../../helpers/campaignDocument';
 import type { XpReward, XpRecipient } from '../../helpers/campaignXpModel';
@@ -209,6 +212,21 @@ export default function XpRecipients({
                         })
                       }
                     />
+                    {document.party?.profiles
+                      .filter(
+                        (p) =>
+                          p.characterId === r.characterId &&
+                          p.sessionId === reward.origin.sessionId &&
+                          p.classes
+                      )
+                      .map((p) => (
+                        <small
+                          key={p.characterId}
+                          title="Encounter difficulty uses this editable level, independently of the XP split."
+                        >
+                          {profileLabel(p)} · choose encounter level
+                        </small>
+                      ))}
                   </td>
                   <td>
                     {r.eligible ? (

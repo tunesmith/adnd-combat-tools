@@ -946,3 +946,41 @@
   font-family: 'Poppins', sans-serif;
   font-size: 12px;
 }
+
+.xpClassReference {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+.xpClassReference th,
+.xpClassReference td {
+  padding: 0.3rem 0.45rem;
+  border-bottom: 1px solid #d5ccbd;
+  text-align: right;
+  white-space: nowrap;
+}
+.xpClassReference thead th:nth-child(-n + 2),
+.xpClassReference tbody th,
+.xpClassReference tbody td:first-of-type {
+  text-align: left;
+}
+.xpClassReference th,
+.xpClassReference td {
+  vertical-align: middle;
+  font-variant-numeric: tabular-nums;
+}
+.profileClassValues {
+  display: grid;
+  gap: 2px;
+}
+.profileClassValues > span {
+  white-space: nowrap;
+}
+.xpClassReference thead {
+  background: #ede6d9;
+}
+.xpClassReference caption {
+  text-align: left;
+  font-weight: 650;
+  margin-bottom: 0.4rem;
+}

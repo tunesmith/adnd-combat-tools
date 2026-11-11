@@ -94,12 +94,23 @@ export const rosterCharacterSchema = legacyRosterCharacterSchema.extend({
   earnsXp: z.boolean().optional(),
   lastEligibleSessionId: id.optional(),
 });
+const profileClassSchema = z
+  .object({
+    id,
+    characterClass: z.enum(partyClasses),
+    baseLevel: level,
+    xpPercent: bonus,
+  })
+  .strict();
+export type ProfileClass = z.infer<typeof profileClassSchema>;
 export const partyProfileSchema = z
   .object({
     characterId: id,
     sessionId: id,
     characterClass: z.enum(partyClasses),
     baseLevel: level,
+    classes: z.array(profileClassSchema).min(2).max(3).optional(),
+    combatClassId: id.optional(),
     saveBasis: z.enum([
       'printed',
       'manual',
@@ -115,6 +126,7 @@ export const partyProfileSchema = z
       .object({
         name: z.string().trim().min(1).max(1000),
         enabled: z.boolean(),
+        classId: id.optional(),
       })
       .strict()
       .nullable(),

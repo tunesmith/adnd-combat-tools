@@ -1,4 +1,8 @@
-import { profilesInSession, xpRecipientAvailable } from './campaignParty';
+import {
+  profilesInSession,
+  xpRecipientAvailable,
+  encounterLevel,
+} from './campaignParty';
 import { xpExact, xpMultiply, xpNumber } from './xpArithmetic';
 import { ownedHistory } from './campaignHistory';
 import type { CampaignDocument } from './campaignDocument';
@@ -25,7 +29,7 @@ function defaultXpRecipients(
             name: c.name,
             participated: false,
             eligible: false,
-            level: String(p.baseLevel),
+            level: encounterLevel(p),
             shares: '1',
             allocationOverride: null,
             allocationReason: '',

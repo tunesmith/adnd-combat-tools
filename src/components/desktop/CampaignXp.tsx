@@ -1,3 +1,6 @@
+import { profileClassReviews } from '../../helpers/campaignXpClasses';
+import ClassXpBalancesFields from './ClassXpBalancesFields';
+import XpClassAwardEdit from './XpClassAwardEdit';
 import { pendingXpReward } from '../../helpers/campaignParty';
 import XpHistoryExtension from './XpHistoryExtension';
 import XpTimeline from './XpTimeline';
@@ -5,7 +8,7 @@ import XpAwardDialog from './XpAwardDialog';
 import XpCapDialog from './XpCapDialog';
 import XpAwardTable from './XpAwardTable';
 import XpAwardEdit from './XpAwardEdit';
-import { compareXpAwards } from '../../helpers/campaignXpTimeline';
+import { compareXpAwards, xpAwardRoot } from '../../helpers/campaignXpTimeline';
 import { useRef, useState } from 'react';
 import type { CampaignDocument } from '../../helpers/campaignDocument';
 import type {
@@ -37,6 +40,8 @@ import {
   withXpDisposition,
   withXpRewardSelection,
   xpOpeningLocked,
+  xpBalance,
+  xpClassBalances,
   historicalXpPoint,
   xpRewardFitsAward,
 } from '../../helpers/campaignXp';
@@ -86,6 +91,21 @@ function AwardDetails({
     </div>
   );
 }
+const XpAwardEditor = (
+  props: React.ComponentProps<typeof XpAwardEdit> & {
+    mappingBalance?: number | null;
+  }
+) =>
+  props.review.classes ? (
+    <XpClassAwardEdit
+      review={props.review}
+      mappingBalance={props.mappingBalance}
+      onSave={props.onSave}
+      onClose={props.onClose}
+    />
+  ) : (
+    <XpAwardEdit {...props} />
+  );
 function OpeningBalances({
   document,
   sessionId,
@@ -100,16 +120,38 @@ function OpeningBalances({
   onExtend: () => void;
 }) {
   const [entries, setEntries] = useState<Ledger['openings']>(() =>
-    (document.party?.roster || []).map(
-      (c) =>
-        xpLedger(document).openings.find((o) => o.characterId === c.id) || {
-          id: uid(),
-          characterId: c.id,
-          sessionId: xpSessionOrder(document)[0] || sessionId,
-          balance: null,
-          reason: '',
-        }
-    )
+    (document.party?.roster || []).map((c) => {
+      const profile = document.party?.profiles.find(
+        (p) => p.characterId === c.id && p.sessionId === sessionId
+      );
+      const existing = xpLedger(document).openings.find(
+        (o) => o.characterId === c.id
+      );
+      if (
+        existing &&
+        (existing.classes ||
+          !profile?.classes ||
+          xpOpeningLocked(document, c.id))
+      )
+        return existing;
+      return {
+        id: existing?.id ?? uid(),
+        characterId: c.id,
+        sessionId:
+          existing?.sessionId ?? xpSessionOrder(document)[0] ?? sessionId,
+        balance: null,
+        reason: existing?.reason ?? '',
+        ...(profile?.classes
+          ? {
+              classes: profile.classes.map((v) => ({
+                classId: v.id,
+                characterClass: v.characterClass,
+                balance: null,
+              })),
+            }
+          : {}),
+      };
+    })
   );
   const [error, setError] = useState('');
   const locked = (id: string) => xpOpeningLocked(document, id);
@@ -133,7 +175,20 @@ function OpeningBalances({
           onClick={() =>
             setEntries(
               entries.map((entry) =>
-                locked(entry.characterId) ? entry : { ...entry, balance: 0 }
+                locked(entry.characterId)
+                  ? entry
+                  : {
+                      ...entry,
+                      balance: 0,
+                      ...(entry.classes
+                        ? {
+                            classes: entry.classes.map((c) => ({
+                              ...c,
+                              balance: 0,
+                            })),
+                          }
+                        : {}),
+                    }
               )
             )
           }
@@ -179,22 +234,33 @@ function OpeningBalances({
                       </select>
                     </td>
                     <td>
-                      <input
-                        aria-label={`${name} opening XP`}
-                        type="number"
-                        min={0}
-                        disabled={locked(entry.characterId)}
-                        placeholder="Unknown"
-                        value={entry.balance ?? ''}
-                        onChange={(e) =>
-                          update({
-                            balance:
-                              e.target.value === ''
-                                ? null
-                                : Number(e.target.value),
-                          })
-                        }
-                      />
+                      {entry.classes ? (
+                        <ClassXpBalancesFields
+                          name={name}
+                          classes={entry.classes}
+                          disabled={locked(entry.characterId)}
+                          onChange={(classes, balance) =>
+                            update({ classes, balance })
+                          }
+                        />
+                      ) : (
+                        <input
+                          aria-label={`${name} opening XP`}
+                          type="number"
+                          min={0}
+                          disabled={locked(entry.characterId)}
+                          placeholder="Unknown"
+                          value={entry.balance ?? ''}
+                          onChange={(e) =>
+                            update({
+                              balance:
+                                e.target.value === ''
+                                  ? null
+                                  : Number(e.target.value),
+                            })
+                          }
+                        />
+                      )}
                     </td>
                     <td>
                       <input
@@ -391,7 +457,39 @@ export default function CampaignXp({
     });
   }
   function openDraft(next: XpPoint) {
-    setDraft(next);
+    setDraft(
+      next.correctionOf
+        ? next
+        : {
+            ...next,
+            bonuses: next.bonuses.map((b) => ({
+              ...b,
+              classes: profileClassReviews(
+                document.party?.profiles.find(
+                  (p) =>
+                    p.characterId === b.characterId &&
+                    p.sessionId === next.position.sessionId
+                ),
+                b.classes
+              )?.map((c) => {
+                const current = document.party?.profiles
+                  .find(
+                    (p) =>
+                      p.characterId === b.characterId &&
+                      p.sessionId === next.position.sessionId
+                  )
+                  ?.classes?.find((p) => p.id === c.classId);
+                return current
+                  ? {
+                      ...c,
+                      characterClass: current.characterClass,
+                      baseLevel: current.baseLevel,
+                    }
+                  : c;
+              }),
+            })),
+          }
+    );
     setSelected(next.id);
     setHistoryId('');
     setDispositions({});
@@ -799,8 +897,30 @@ export default function CampaignXp({
         />
       )}
       {awardEdit && (
-        <XpAwardEdit
+        <XpAwardEditor
           review={awardEdit.review}
+          mappingBalance={
+            draft &&
+            !Object.keys(
+              xpClassBalances(
+                document,
+                awardEdit.review.characterId,
+                draft.position,
+                false,
+                undefined,
+                xpAwardRoot(document, draft)
+              )
+            ).length
+              ? xpBalance(
+                  document,
+                  awardEdit.review.characterId,
+                  draft.position,
+                  false,
+                  undefined,
+                  xpAwardRoot(document, draft)
+                )
+              : undefined
+          }
           mode={awardEdit.mode}
           onClose={() => setAwardEdit(undefined)}
           onSave={(updated) =>

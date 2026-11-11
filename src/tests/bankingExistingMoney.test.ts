@@ -385,7 +385,7 @@ test('V15 ordinary and reconciliation records migrate without being reinterprete
   );
   const legacy = { ...balanced, schemaVersion: 15 };
   const loaded = parseCampaign(JSON.stringify(legacy));
-  expect(loaded.schemaVersion).toBe(17);
+  expect(loaded.schemaVersion).toBe(18);
   expect(loaded.banking).toEqual(balanced.banking);
   expect(loaded.banking?.entries[0]?.receiptMode).toBeUndefined();
   expect(bankBoundaryDifference(loaded, 'day1')).toEqual([]);

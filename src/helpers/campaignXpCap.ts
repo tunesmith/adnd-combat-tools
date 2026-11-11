@@ -5,7 +5,7 @@ import { nextLevelXp } from '../tables/classExperience';
 import { canonical } from './campaignSnapshots';
 
 export function profileXpCap(
-  profile: PartyProfile | undefined
+  profile: Pick<PartyProfile, 'characterClass' | 'baseLevel'> | undefined
 ): XpCapBasis | null {
   if (!profile) return null;
   const limit = nextLevelXp(profile.characterClass, profile.baseLevel);

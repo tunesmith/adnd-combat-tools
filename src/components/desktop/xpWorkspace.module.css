@@ -487,3 +487,40 @@
   display: grid;
   gap: 8px;
 }
+
+.classValues {
+  display: grid;
+  gap: 0.3rem;
+}
+.classValues > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.65rem;
+  align-items: baseline;
+  white-space: nowrap;
+}
+.classValues small {
+  font-weight: 400;
+  color: #70634f;
+}
+.classBalances {
+  display: grid;
+  gap: 0.35rem;
+}
+.classBalances label,
+.classMapping {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  justify-content: space-between;
+}
+.classBalances input {
+  max-width: 8rem;
+}
+.classBalances label {
+  display: grid;
+  grid-template-columns: 6rem minmax(0, 8rem);
+}
+.classMapping {
+  margin: 0.5rem 0;
+}

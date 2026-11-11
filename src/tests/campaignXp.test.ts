@@ -396,7 +396,7 @@ test('corrections retain originals, reject stale previews/retries and atomically
 });
 test('migration creates no rewards or balances, and confirms invalid confirmed calculations cannot reach disk', () => {
   const doc = parseCampaign(JSON.stringify(baseline));
-  expect(doc.schemaVersion).toBe(17);
+  expect(doc.schemaVersion).toBe(18);
   expect(doc.xp).toBeUndefined();
   expect(doc.records).toEqual(baseline.records);
   const tampered = confirmed();

@@ -1,7 +1,7 @@
+import ProfileClassesFields from './ProfileClassesFields';
 import { useEffect, useRef, useState } from 'react';
 import type { CampaignDocument } from '../../helpers/campaignDocument';
 import {
-  partyClasses,
   partyProfileSchema,
   rosterCharacterSchema,
 } from '../../helpers/campaignPartyModel';
@@ -12,6 +12,7 @@ import type {
 import {
   profileClassLabel as classLabel,
   calculatedSaves,
+  profileLabel,
   effectiveLevel,
   emptyProfile,
   copyPartyProfile,
@@ -224,36 +225,11 @@ export default function ProfileDialog({
                 }
               />
             </label>
-            <label>
-              Class
-              <select
-                value={draft.characterClass}
-                onChange={(e) => {
-                  const chosen = partyClasses.find((c) => c === e.target.value);
-                  if (chosen) patch({ characterClass: chosen });
-                }}
-              >
-                {partyClasses.map((c) => (
-                  <option key={c} value={c}>
-                    {classLabel(c)}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              Base level
-              <input
-                type="number"
-                required
-                min={0}
-                max={99}
-                value={Number.isNaN(draft.baseLevel) ? '' : draft.baseLevel}
-                onChange={(e) => patch({ baseLevel: e.target.valueAsNumber })}
-              />
-            </label>
           </div>
+          <ProfileClassesFields value={draft} onChange={patch} />
           <ProfileReferenceFields
             value={draft.reference}
+            showXpBonus={!draft.classes}
             onChange={(reference) => patch({ reference })}
           />
           <label className={styles['sessionNameField']}>
@@ -267,12 +243,43 @@ export default function ProfileDialog({
                     ? {
                         name: e.target.value,
                         enabled: draft.adjustment?.enabled ?? false,
+                        ...(draft.classes
+                          ? {
+                              classId:
+                                draft.adjustment?.classId ??
+                                draft.classes[0]?.id,
+                            }
+                          : {}),
                       }
                     : null,
                 })
               }
             />
           </label>
+          {draft.adjustment && draft.classes && (
+            <label className={styles['sessionNameField']}>
+              Affected class
+              <select
+                aria-label="Temporary effect class"
+                value={draft.adjustment.classId}
+                onChange={(e) => {
+                  if (draft.adjustment)
+                    patch({
+                      adjustment: {
+                        ...draft.adjustment,
+                        classId: e.target.value,
+                      },
+                    });
+                }}
+              >
+                {draft.classes.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {classLabel(c.characterClass)}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
           {draft.adjustment && (
             <label className={styles['continuationChoice']}>
               <input
@@ -463,7 +470,13 @@ export default function ProfileDialog({
           {error && <p role="alert">{error}</p>}
           <footer className={styles['sessionDialogFooter']}>
             <span>
-              Base {draft.baseLevel} · Effective {effectiveLevel(draft)}
+              {draft.classes ? (
+                profileLabel(draft)
+              ) : (
+                <>
+                  Base {draft.baseLevel} · Effective {effectiveLevel(draft)}
+                </>
+              )}
             </span>
             {saved && (
               <button

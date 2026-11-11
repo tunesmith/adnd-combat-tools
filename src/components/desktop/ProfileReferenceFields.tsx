@@ -93,7 +93,9 @@ function BonusField({
 export default function ProfileReferenceFields({
   value,
   onChange,
+  showXpBonus = true,
 }: {
+  showXpBonus?: boolean;
   value: ProfileReference | undefined;
   onChange: (value: ProfileReference) => void;
 }) {
@@ -227,61 +229,63 @@ export default function ProfileReferenceFields({
               }
             />
           ))}
-          <div className={styles['xpBonusField']}>
-            <span>XP bonus</span>
-            <label
-              title={
-                reference.bonuses.xpPercent === null
-                  ? 'XP bonus not recorded'
-                  : 'Record whether the +10% XP bonus applies'
-              }
-            >
-              <input
-                type="checkbox"
-                aria-label="+10% XP bonus"
-                ref={(input) => {
-                  if (input)
-                    input.indeterminate =
-                      reference.bonuses.xpPercent === null ||
-                      (reference.bonuses.xpPercent !== 0 &&
-                        reference.bonuses.xpPercent !== 10);
-                }}
-                checked={reference.bonuses.xpPercent === 10}
-                onChange={(event) =>
-                  onChange({
-                    ...reference,
-                    bonuses: {
-                      ...reference.bonuses,
-                      xpPercent: event.target.checked ? 10 : 0,
-                    },
-                  })
-                }
-              />
-              +10%
-            </label>
-            {reference.bonuses.xpPercent !== null && (
-              <button
-                type="button"
-                aria-label="Clear XP bonus"
-                title="Mark the XP bonus as not recorded"
-                onClick={() =>
-                  onChange({
-                    ...reference,
-                    bonuses: { ...reference.bonuses, xpPercent: null },
-                  })
+          {showXpBonus && (
+            <div className={styles['xpBonusField']}>
+              <span>XP bonus</span>
+              <label
+                title={
+                  reference.bonuses.xpPercent === null
+                    ? 'XP bonus not recorded'
+                    : 'Record whether the +10% XP bonus applies'
                 }
               >
-                Clear
-              </button>
-            )}
-            {reference.bonuses.xpPercent !== null &&
-              reference.bonuses.xpPercent !== 0 &&
-              reference.bonuses.xpPercent !== 10 && (
-                <small>
-                  Recorded {formatSignedBonus(reference.bonuses.xpPercent)}%
-                </small>
+                <input
+                  type="checkbox"
+                  aria-label="+10% XP bonus"
+                  ref={(input) => {
+                    if (input)
+                      input.indeterminate =
+                        reference.bonuses.xpPercent === null ||
+                        (reference.bonuses.xpPercent !== 0 &&
+                          reference.bonuses.xpPercent !== 10);
+                  }}
+                  checked={reference.bonuses.xpPercent === 10}
+                  onChange={(event) =>
+                    onChange({
+                      ...reference,
+                      bonuses: {
+                        ...reference.bonuses,
+                        xpPercent: event.target.checked ? 10 : 0,
+                      },
+                    })
+                  }
+                />
+                +10%
+              </label>
+              {reference.bonuses.xpPercent !== null && (
+                <button
+                  type="button"
+                  aria-label="Clear XP bonus"
+                  title="Mark the XP bonus as not recorded"
+                  onClick={() =>
+                    onChange({
+                      ...reference,
+                      bonuses: { ...reference.bonuses, xpPercent: null },
+                    })
+                  }
+                >
+                  Clear
+                </button>
               )}
-          </div>
+              {reference.bonuses.xpPercent !== null &&
+                reference.bonuses.xpPercent !== 0 &&
+                reference.bonuses.xpPercent !== 10 && (
+                  <small>
+                    Recorded {formatSignedBonus(reference.bonuses.xpPercent)}%
+                  </small>
+                )}
+            </div>
+          )}
         </div>
       </fieldset>
     </>

@@ -1,3 +1,9 @@
+import {
+  calculateClassAwards,
+  profileClassReviews,
+  rebaseClassAwards,
+  validateClassOpening,
+} from './campaignXpClasses';
 import { pendingXpReward } from './campaignParty';
 import { validHistoricalSessionMove } from './campaignSessionOrder';
 import {
@@ -110,6 +116,56 @@ export function xpBalance(
           (event.rows.find((r) => r.characterId === characterId)?.award || 0)
       : sum;
   }, opening.balance);
+}
+export function xpClassBalances(
+  doc: CampaignDocument,
+  characterId: string,
+  position: XpPosition,
+  inclusive = true,
+  events = xpLedger(doc).events,
+  pointId?: string
+): Record<string, number | null> {
+  const opening = xpLedger(doc).openings.find(
+    (o) => o.characterId === characterId
+  );
+  if (
+    !opening ||
+    compareXpPosition(
+      doc,
+      { sessionId: opening.sessionId, phase: 'opening', order: 0 },
+      position
+    ) > 0
+  )
+    return {};
+  let balances: Record<string, number | null> = Object.fromEntries(
+    opening.classes?.map((c) => [c.classId, c.balance]) ?? []
+  );
+  for (const event of activeXpEvents(events).sort((a, b) =>
+    compareXpAwards(doc, a.point, b.point)
+  )) {
+    const order = compareXpTimeline(
+      doc,
+      event.point.position,
+      position,
+      xpAwardRoot(doc, event.point),
+      pointId
+    );
+    if (order > 0 || (!inclusive && order === 0)) continue;
+    const row = event.rows.find((r) => r.characterId === characterId);
+    if (!row) continue;
+    if (row.classes)
+      balances = Object.fromEntries(
+        row.classes.map((c) => [
+          c.classId,
+          (balances[c.classId] ?? c.before) + c.award,
+        ])
+      );
+    else if (Object.keys(balances).length)
+      throw Error(
+        'A single-class award cannot silently replace per-class XP balances.'
+      );
+  }
+  return balances;
 }
 export function sessionXpBalances(
   doc: CampaignDocument,
@@ -318,7 +374,8 @@ function calculateXpRows(
   rewards: XpReward[],
   bonuses: XpBonusReview[],
   before: Record<string, number>,
-  caps?: Map<string, XpCapBasis>
+  caps?: Map<string, XpCapBasis>,
+  classBalances: Map<string, Record<string, number | null>> = new Map()
 ): XpAwardRow[] {
   const resolutions = rewards.map(resolveXpReward);
   const ids = Array.from(
@@ -328,7 +385,7 @@ function calculateXpRows(
     const review =
       bonuses.find((r) => r.characterId === characterId) ||
       fail('Review every recipient’s XP bonus.');
-    if (review.percent === null)
+    if (review.percent === null && !review.classes)
       fail(
         `${review.name}: confirm an XP bonus, including an explicit 0 if none.`
       );
@@ -348,7 +405,7 @@ function calculateXpRows(
     );
     const bonus = xpMultiply(
       base,
-      xpDivide(xpNumber(review.percent), xpNumber(100))
+      xpDivide(xpNumber(review.percent ?? '0'), xpNumber(100))
     );
     const unrounded = xpAdd(base, bonus),
       rounded = xpRound(unrounded);
@@ -363,14 +420,15 @@ function calculateXpRows(
     if (!caps && !Number.isSafeInteger(previous + award))
       fail('XP balance exceeds the supported integer range.');
     const cap = caps?.get(characterId);
-    if (caps && !cap) fail(`${review.name}: XP cap is unknown.`);
+    if (caps && !cap && !review.classes)
+      fail(`${review.name}: XP cap is unknown.`);
     const addition = cap ? cappedXp(award, previous, cap) : null;
-    return {
+    const row: XpAwardRow = {
       characterId,
       name: review.name,
       allocations,
       base: xpExact(base),
-      bonusPercent: xpExact(xpNumber(review.percent)),
+      bonusPercent: xpExact(xpNumber(review.percent ?? '0')),
       bonus: xpExact(bonus),
       unrounded: xpExact(unrounded),
       rounded,
@@ -382,6 +440,7 @@ function calculateXpRows(
         ? { ...addition, fullAward: award, cap: clone(cap) }
         : {}),
     };
+    return calculateClassAwards(row, review, classBalances.get(characterId));
   });
 }
 function withLedger(doc: CampaignDocument, xp: CampaignXp): CampaignDocument {
@@ -408,6 +467,7 @@ export function saveXpOpening(
   doc: CampaignDocument,
   entry: CampaignXp['openings'][number]
 ): CampaignDocument {
+  validateClassOpening(entry);
   const xp = xpLedger(doc),
     old = xp.openings.find((o) => o.characterId === entry.characterId);
   if (xpOpeningLocked(doc, entry.characterId))
@@ -589,6 +649,13 @@ export function withXpRewardSelection(
         reason: '',
         finalOverride: null,
         finalReason: '',
+        classes: profileClassReviews(
+          doc.party?.profiles.find(
+            (p) =>
+              p.characterId === characterId &&
+              p.sessionId === point.position.sessionId
+          )
+        ),
       }
   );
   return { ...point, rewardIds, bonuses };
@@ -766,6 +833,7 @@ export function xpCapProfileSignature(doc: CampaignDocument, point: XpPoint) {
         id: p.characterId,
         characterClass: p.characterClass,
         baseLevel: p.baseLevel,
+        classes: p.classes,
       }))
       .sort((a, b) => a.id.localeCompare(b.id)) || []
   );
@@ -958,10 +1026,53 @@ function reviewXpAward(
     );
     if (balance !== null) before[r.characterId] = balance;
   }
+  if (!point.correctionOf)
+    for (const bonus of point.bonuses) {
+      const profile = doc.party?.profiles.find(
+        (p) =>
+          p.characterId === bonus.characterId &&
+          p.sessionId === point.position.sessionId
+      );
+      if (
+        profile?.classes &&
+        canonical(
+          profile.classes.map((c) => [c.id, c.characterClass, c.baseLevel])
+        ) !==
+          canonical(
+            bonus.classes?.map((c) => [
+              c.classId,
+              c.characterClass,
+              c.baseLevel,
+            ])
+          )
+      )
+        fail(
+          'Class levels changed: reopen this draft to review its current trained levels.'
+        );
+      if (!profile?.classes && bonus.classes)
+        fail(
+          'Retain the multiclass profile for this award or review its class identities.'
+        );
+    }
   const caps = new Map(
-    Object.keys(before).map((id) => [id, awardCapBasis(doc, point, id)])
+    Object.keys(before)
+      .filter((id) => !point.bonuses.find((b) => b.characterId === id)?.classes)
+      .map((id) => [id, awardCapBasis(doc, point, id)])
   );
-  const rows = calculateXpRows(rewards, point.bonuses, before, caps);
+  const classes = new Map(
+    Object.keys(before).map((id) => [
+      id,
+      xpClassBalances(
+        doc,
+        id,
+        point.position,
+        false,
+        xp.events,
+        xpAwardRoot(doc, point)
+      ),
+    ])
+  );
+  const rows = calculateXpRows(rewards, point.bonuses, before, caps, classes);
   const revised: XpEvent = {
     id: 'preview',
     point: clone(reviewedPoint),
@@ -969,7 +1080,7 @@ function reviewXpAward(
     replaces: point.correctionOf,
     correctionRoot: null,
     reason: point.correctionReason,
-    calculatorVersion: 2,
+    calculatorVersion: rows.some((r) => r.classes) ? 3 : 2,
     rounding: 'nearest-whole-half-up-after-bonus',
     rewards,
     rows,
@@ -990,7 +1101,19 @@ function reviewXpAward(
         xpAwardRoot(doc, event.point)
       );
       if (balance === null) fail('A later balance cannot be rebased.');
-      return rebaseXpRow(r, balance);
+      return r.classes
+        ? rebaseClassAwards(
+            r,
+            xpClassBalances(
+              doc,
+              r.characterId,
+              event.point.position,
+              false,
+              simulated,
+              xpAwardRoot(doc, event.point)
+            )
+          )
+        : rebaseXpRow(r, balance);
     });
     later.push({ event, rows: rebased });
     simulated.push({
@@ -1077,14 +1200,17 @@ function awardEvent(
     replaces: preview.point.correctionOf,
     correctionRoot: null,
     reason: preview.point.correctionReason,
-    calculatorVersion: 2,
+    calculatorVersion: preview.rows.some((r) => r.classes) ? 3 : 2,
     rounding: 'nearest-whole-half-up-after-bonus',
     rewards: preview.rewards,
     rows: preview.rows,
     resolutions: preview.resolutions,
   };
 }
-type EarlierOpening = Pick<XpOpening, 'characterId' | 'sessionId' | 'balance'>;
+type EarlierOpening = Pick<
+  XpOpening,
+  'characterId' | 'sessionId' | 'balance' | 'classes'
+>;
 export interface XpExtensionRequest {
   pointIds: string[];
   openings: EarlierOpening[];
@@ -1095,6 +1221,13 @@ interface XpReconciliationRow {
   applied: number | null;
   reconstructed: number | null;
   difference: number | null;
+  classes?: {
+    classId: string;
+    characterClass: string;
+    applied: number;
+    reconstructed: number | null;
+    difference: number | null;
+  }[];
 }
 export function xpExtensionDrafts(doc: CampaignDocument) {
   const xp = xpLedger(doc);
@@ -1153,6 +1286,19 @@ export function previewXpExtension(
     difference: null,
   }));
   for (const { previous, replacement } of rows) {
+    validateClassOpening(replacement);
+    if (
+      previous?.classes &&
+      replacement.sessionId &&
+      (!replacement.classes ||
+        canonical(
+          previous.classes.map((c) => [c.classId, c.characterClass])
+        ) !==
+          canonical(
+            replacement.classes.map((c) => [c.classId, c.characterClass])
+          ))
+    )
+      fail('Enter the earlier opening for each existing class identity.');
     if (
       replacement.balance !== null &&
       (!Number.isSafeInteger(replacement.balance) || replacement.balance < 0)
@@ -1258,6 +1404,37 @@ export function previewXpExtension(
     row.applied = change.applied;
     row.reconstructed = change.replacement.balance + row.applied;
     row.difference = row.reconstructed - change.previous.balance;
+    if (change.previous.classes) {
+      row.classes = change.previous.classes.map((c) => {
+        const prior = change.replacement.classes?.find(
+          (v) => v.classId === c.classId
+        )?.balance;
+        const applied = awards.reduce(
+          (s, a) =>
+            s +
+            a.rows
+              .filter((r) => r.characterId === change.previous.characterId)
+              .reduce(
+                (n, r) =>
+                  n +
+                  (r.classes?.find((v) => v.classId === c.classId)?.award ?? 0),
+                0
+              ),
+          0
+        );
+        const reconstructed = prior == null ? null : prior + applied;
+        return {
+          classId: c.classId,
+          characterClass: c.characterClass,
+          applied,
+          reconstructed,
+          difference:
+            reconstructed === null || c.balance === null
+              ? null
+              : reconstructed - c.balance,
+        };
+      });
+    }
   }
   return result;
 }
@@ -1274,7 +1451,12 @@ export function confirmXpExtension(
   const preview = previewXpExtension(doc, request);
   if (preview.fingerprint !== expected)
     fail('XP history changed. Review a fresh reconciliation.');
-  if (!preview.awards.length || preview.rows.some((r) => r.difference !== 0))
+  if (
+    !preview.awards.length ||
+    preview.rows.some(
+      (r) => r.difference !== 0 || r.classes?.some((c) => c.difference !== 0)
+    )
+  )
     fail('Every earlier opening must match the existing cutoff exactly.');
   const events = preview.awards.map((award, index) =>
     awardEvent(award, `${operationId}-award-${index}`, at)
@@ -1305,22 +1487,29 @@ export function confirmXpExtension(
 
 function verifyExtensionCutoffs(doc: CampaignDocument) {
   for (const extension of xpLedger(doc).extensions ?? [])
-    for (const { previous } of extension.openings)
+    for (const { previous } of extension.openings) {
+      const position: XpPosition = {
+        sessionId: previous.sessionId,
+        phase: 'opening',
+        order: 0,
+      };
+      const balances = xpClassBalances(
+        doc,
+        previous.characterId,
+        position,
+        false
+      );
       if (
-        xpBalance(
-          doc,
-          previous.characterId,
-          {
-            sessionId: previous.sessionId,
-            phase: 'opening',
-            order: 0,
-          },
-          false
-        ) !== previous.balance
+        xpBalance(doc, previous.characterId, position, false) !==
+          previous.balance ||
+        previous.classes?.some(
+          (c) => c.balance === null || balances[c.classId] !== c.balance
+        )
       )
         fail(
           'The reconciled XP balance at an original cutoff must stay unchanged.'
         );
+    }
 }
 
 function verifyXpBalances(doc: CampaignDocument, events: XpEvent[]) {
@@ -1334,7 +1523,20 @@ function verifyXpBalances(doc: CampaignDocument, events: XpEvent[]) {
         xpLedger(doc).events,
         xpAwardRoot(doc, event.point)
       );
-      if (before !== row.before)
+      const classes = xpClassBalances(
+        doc,
+        row.characterId,
+        event.point.position,
+        false,
+        xpLedger(doc).events,
+        xpAwardRoot(doc, event.point)
+      );
+      if (
+        before !== row.before ||
+        row.classes?.some(
+          (c) => classes[c.classId] != null && classes[c.classId] !== c.before
+        )
+      )
         fail(
           'Later award balances need an explicit atomic review after an earlier correction.'
         );
@@ -1365,7 +1567,7 @@ function extensionReplay(
         (e) =>
           e.replaces ||
           e.correctionRoot ||
-          e.calculatorVersion !== 2 ||
+          (e.calculatorVersion !== 2 && e.calculatorVersion !== 3) ||
           e.confirmedAt !== extension.confirmedAt
       ) ||
       events.some((e, i) => {
@@ -1385,6 +1587,8 @@ function extensionReplay(
     )
       fail('Invalid historical XP reconciliation recipients.');
     for (const { previous, replacement, applied } of extension.openings) {
+      validateClassOpening(previous);
+      validateClassOpening(replacement);
       const awards = rows.filter(
         ({ row }) => row.characterId === previous.characterId
       );
@@ -1453,9 +1657,37 @@ export function validateCampaignXp(
       fail('Invalid pending XP recipient reset.');
     ids.forEach(recipient);
   }
+  const knownClasses = new Map<string, string>();
+  const registerClass = (
+    characterId: string,
+    classId: string,
+    characterClass: string
+  ) => {
+    const key = canonical([characterId, classId]),
+      previous = knownClasses.get(key);
+    if (previous && previous !== characterClass)
+      fail('An XP class identity cannot change class.');
+    knownClasses.set(key, characterClass);
+  };
+  doc.party?.profiles.forEach((p) =>
+    p.classes?.forEach((c) =>
+      registerClass(p.characterId, c.id, c.characterClass)
+    )
+  );
+  xp.events.forEach((e) =>
+    e.rows.forEach((r) =>
+      r.classes?.forEach((c) =>
+        registerClass(r.characterId, c.classId, c.characterClass)
+      )
+    )
+  );
   const openingCharacters = new Set<string>();
   for (const o of xp.openings) {
     unique(o.id);
+    validateClassOpening(o);
+    o.classes?.forEach((c) =>
+      registerClass(o.characterId, c.classId, c.characterClass)
+    );
     recipient(o.characterId);
     if (!sessions.has(o.sessionId) || openingCharacters.has(o.characterId))
       fail('Invalid or duplicate opening XP.');
@@ -1489,7 +1721,12 @@ export function validateCampaignXp(
       new Set(p.bonuses.map((b) => b.characterId)).size !== p.bonuses.length
     )
       fail('Duplicate award selection.');
-    p.bonuses.forEach((b) => recipient(b.characterId));
+    p.bonuses.forEach((b) => {
+      recipient(b.characterId);
+      b.classes?.forEach((c) =>
+        registerClass(b.characterId, c.classId, c.characterClass)
+      );
+    });
     if (
       new Set(p.caps?.map((c) => c.characterId)).size !== (p.caps?.length ?? 0)
     )
@@ -1604,18 +1841,20 @@ export function validateCampaignXp(
       before[r.characterId] = balance;
     });
     const caps =
-      event.calculatorVersion === 2
+      event.calculatorVersion >= 2
         ? new Map(
-            event.rows.map((r) => {
-              if (
-                !r.cap ||
-                r.fullAward === undefined ||
-                r.discarded === undefined
-              )
-                fail('Missing capped award snapshot.');
-              validateXpCap(r.cap);
-              return [r.characterId, r.cap];
-            })
+            event.rows
+              .filter((r) => !r.classes)
+              .map((r) => {
+                if (
+                  !r.cap ||
+                  r.fullAward === undefined ||
+                  r.discarded === undefined
+                )
+                  fail('Missing capped award snapshot.');
+                validateXpCap(r.cap);
+                return [r.characterId, r.cap];
+              })
           )
         : undefined;
     if (
@@ -1632,8 +1871,27 @@ export function validateCampaignXp(
       event.rewards,
       event.point.bonuses,
       before,
-      caps
+      caps,
+      new Map(
+        event.rows.map((r) => [
+          r.characterId,
+          xpClassBalances(
+            asRecorded,
+            r.characterId,
+            event.point.position,
+            false,
+            prefix,
+            xpAwardRoot(doc, event.point)
+          ),
+        ])
+      )
     );
+    if (
+      event.calculatorVersion < 3 &&
+      (event.rows.some((r) => r.classes) ||
+        event.point.bonuses.some((b) => b.classes))
+    )
+      fail('Legacy awards cannot claim multiclass history.');
     if (
       canonical(expected) !== canonical(event.rows) ||
       canonical(event.resolutions) !==
@@ -1717,10 +1975,11 @@ export function validateXpTransition(
     const request = {
       pointIds: awards.map((e) => e.point.id),
       openings: extension.openings.map(
-        ({ replacement: { characterId, sessionId, balance } }) => ({
+        ({ replacement: { characterId, sessionId, balance, classes } }) => ({
           characterId,
           sessionId,
           balance,
+          ...(classes ? { classes } : {}),
         })
       ),
     };
@@ -1762,13 +2021,36 @@ export function validateXpTransition(
   }
   for (const event of current.events
     .slice(previous.events.length)
-    .filter((e) => e.calculatorVersion === 2 && !e.correctionRoot)) {
-    for (const row of event.rows)
+    .filter((e) => e.calculatorVersion >= 2 && !e.correctionRoot)) {
+    for (const row of event.rows.filter((r) => !r.classes))
       if (
         canonical(awardCapBasis(next, event.point, row.characterId)) !==
         canonical(row.cap)
       )
         fail('Award cap basis changed before confirmation.');
+  }
+  for (const event of current.events
+    .slice(previous.events.length)
+    .filter(
+      (e) => e.calculatorVersion === 3 && !e.correctionRoot && !e.replaces
+    )) {
+    for (const row of event.rows.filter((r) => r.classes)) {
+      const profile = next.party?.profiles.find(
+        (p) =>
+          p.characterId === row.characterId &&
+          p.sessionId === event.point.position.sessionId
+      );
+      if (
+        !profile?.classes ||
+        canonical(
+          profile.classes.map((c) => [c.id, c.characterClass, c.baseLevel])
+        ) !==
+          canonical(
+            row.classes?.map((c) => [c.classId, c.characterClass, c.baseLevel])
+          )
+      )
+        fail('Multiclass trained levels changed before confirmation.');
+    }
   }
   for (const p of previous.points.filter((p) => p.confirmedEventId))
     if (canonical(current.points.find((n) => n.id === p.id)) !== canonical(p))

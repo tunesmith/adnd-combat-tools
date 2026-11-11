@@ -1,3 +1,5 @@
+import ClassXpBalancesFields from './ClassXpBalancesFields';
+import { profileClassLabel } from '../../helpers/campaignParty';
 import { useRef, useState } from 'react';
 import type { CampaignDocument } from '../../helpers/campaignDocument';
 import {
@@ -55,6 +57,13 @@ export default function XpHistoryExtension({
         characterId,
         sessionId: '',
         balance: null,
+        ...(xp.openings.find((o) => o.characterId === characterId)?.classes
+          ? {
+              classes: xp.openings
+                .find((o) => o.characterId === characterId)
+                ?.classes?.map((c) => ({ ...c, balance: null })),
+            }
+          : {}),
       }
   );
   const request = { pointIds: selected.map((p) => p.id), openings };
@@ -189,33 +198,81 @@ export default function XpHistoryExtension({
                         </select>
                       </td>
                       <td>
-                        <input
-                          aria-label={`${name(id)} earlier opening XP`}
-                          type="number"
-                          min={0}
-                          value={opening.balance ?? ''}
-                          disabled={busy}
-                          onChange={(e) =>
-                            update({
-                              ...opening,
-                              balance:
-                                e.target.value === ''
-                                  ? null
-                                  : e.target.valueAsNumber,
-                            })
-                          }
-                        />
+                        {opening.classes ? (
+                          <ClassXpBalancesFields
+                            name={`${name(id)} earlier`}
+                            classes={opening.classes}
+                            disabled={busy}
+                            onChange={(classes, balance) =>
+                              update({ ...opening, classes, balance })
+                            }
+                          />
+                        ) : (
+                          <input
+                            aria-label={`${name(id)} earlier opening XP`}
+                            type="number"
+                            min={0}
+                            value={opening.balance ?? ''}
+                            disabled={busy}
+                            onChange={(e) =>
+                              update({
+                                ...opening,
+                                balance:
+                                  e.target.value === ''
+                                    ? null
+                                    : e.target.valueAsNumber,
+                              })
+                            }
+                          />
+                        )}
                       </td>
-                      <td>{row ? amount(row.applied) : '—'}</td>
-                      <td>{row ? amount(row.reconstructed) : '—'}</td>
                       <td>
-                        {amount(prior?.balance)}
+                        {row?.classes
+                          ? row.classes.map((c) => (
+                              <small key={c.classId}>
+                                {profileClassLabel(c.characterClass)}{' '}
+                                {amount(c.applied)}
+                              </small>
+                            ))
+                          : row
+                          ? amount(row.applied)
+                          : '—'}
+                      </td>
+                      <td>
+                        {row?.classes
+                          ? row.classes.map((c) => (
+                              <small key={c.classId}>
+                                {profileClassLabel(c.characterClass)}{' '}
+                                {amount(c.reconstructed)}
+                              </small>
+                            ))
+                          : row
+                          ? amount(row.reconstructed)
+                          : '—'}
+                      </td>
+                      <td>
+                        {prior?.classes
+                          ? prior.classes.map((c) => (
+                              <small key={c.classId}>
+                                {profileClassLabel(c.characterClass)}{' '}
+                                {amount(c.balance)}
+                              </small>
+                            ))
+                          : amount(prior?.balance)}
                         {prior && (
                           <small>{sessionLabel(prior.sessionId)}</small>
                         )}
                       </td>
                       <td>
-                        {row
+                        {row?.classes
+                          ? row.classes.map((c) => (
+                              <small key={c.classId}>
+                                {profileClassLabel(c.characterClass)}{' '}
+                                {c.difference && c.difference > 0 ? '+' : ''}
+                                {amount(c.difference)}
+                              </small>
+                            ))
+                          : row
                           ? (difference && difference > 0 ? '+' : '') +
                             amount(difference)
                           : '—'}
@@ -227,7 +284,10 @@ export default function XpHistoryExtension({
             </table>
           </div>
         )}
-        {preview?.rows.some((row) => row.difference !== 0) && (
+        {preview?.rows.some(
+          (row) =>
+            row.difference !== 0 || row.classes?.some((c) => c.difference !== 0)
+        ) && (
           <p role="status">
             Every earlier opening must reconcile exactly with the existing
             cutoff.
@@ -247,7 +307,11 @@ export default function XpHistoryExtension({
               disabled={
                 busy ||
                 !preview.awards.length ||
-                preview.rows.some((row) => row.difference !== 0)
+                preview.rows.some(
+                  (row) =>
+                    row.difference !== 0 ||
+                    row.classes?.some((c) => c.difference !== 0)
+                )
               }
               onClick={() => void confirm()}
             >

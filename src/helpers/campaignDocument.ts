@@ -47,7 +47,7 @@ import {
 import type { CampaignRecord, CampaignSession } from './campaignSnapshots';
 export interface CampaignDocument {
   kind: 'adnd-campaign';
-  schemaVersion: 17;
+  schemaVersion: 18;
   xp?: CampaignXp;
   banking?: CampaignBanking;
   party?: CampaignParty;
@@ -234,6 +234,7 @@ const v16 = v15.extend({
 });
 
 const v17 = v16.extend({ schemaVersion: z.literal(17) });
+const v18 = v17.extend({ schemaVersion: z.literal(18) });
 
 export function validateCampaign(value: unknown): CampaignDocument {
   if (!value || typeof value !== 'object')
@@ -258,10 +259,11 @@ export function validateCampaign(value: unknown): CampaignDocument {
     header['schemaVersion'] !== 14 &&
     header['schemaVersion'] !== 15 &&
     header['schemaVersion'] !== 16 &&
-    header['schemaVersion'] !== 17
+    header['schemaVersion'] !== 17 &&
+    header['schemaVersion'] !== 18
   )
     throw new Error(
-      'Unsupported campaign schema version. This app supports versions 1 through 17.'
+      'Unsupported campaign schema version. This app supports versions 1 through 18.'
     );
   if (
     value &&
@@ -270,7 +272,7 @@ export function validateCampaign(value: unknown): CampaignDocument {
   ) {
     return {
       ...v1.parse(value),
-      schemaVersion: 17,
+      schemaVersion: 18,
       workingCombats: [],
       combatCheckpoints: [],
       sessions: [],
@@ -317,7 +319,9 @@ export function validateCampaign(value: unknown): CampaignDocument {
       ? v15.parse(value)
       : header['schemaVersion'] === 16
       ? v16.parse(value)
-      : v17.parse(value);
+      : header['schemaVersion'] === 17
+      ? v17.parse(value)
+      : v18.parse(value);
   const migrated =
     legacy.schemaVersion === 3
       ? {
@@ -331,7 +335,7 @@ export function validateCampaign(value: unknown): CampaignDocument {
   const parsed = (migrated.schemaVersion === 4
     ? {
         ...migrated,
-        schemaVersion: 17 as const,
+        schemaVersion: 18 as const,
         sessions: migrated.sessions.map((s) => ({ ...s, notes: '' })),
         workingCombats: migrated.workingCombats.map((c) => ({
           ...c,
@@ -341,7 +345,7 @@ export function validateCampaign(value: unknown): CampaignDocument {
       }
     : {
         ...migrated,
-        schemaVersion: 17 as const,
+        schemaVersion: 18 as const,
       }) as unknown as CampaignDocument;
   if (Number(header['schemaVersion']) < 9)
     parsed.workingInventories = parsed.workingInventories.map((w) => {

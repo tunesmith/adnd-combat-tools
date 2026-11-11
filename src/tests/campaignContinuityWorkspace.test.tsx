@@ -124,10 +124,10 @@ test('workspace starts the selected continuation atomically, edits notes indepen
   ).toEqual([
     'Session',
     'References',
+    'Banking',
     'Possessions',
     'Combats',
     'XP',
-    'Banking',
   ]);
   fireEvent.change(screen.getByRole('combobox', { name: 'Version' }), {
     target: { value: 'source-history' },

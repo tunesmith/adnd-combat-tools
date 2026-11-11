@@ -1,3 +1,5 @@
+import { profileClassLabel } from '../../helpers/campaignParty';
+import { classReviewCap } from '../../helpers/campaignXpClasses';
 import { xpRecipientAvailable } from '../../helpers/campaignParty';
 import { awardCapBasis } from '../../helpers/campaignXpCap';
 import type { CampaignDocument } from '../../helpers/campaignDocument';
@@ -196,6 +198,80 @@ export default function XpAwardTable({
       ] as const;
     })
   );
+  const classCell = (id: string, field: string) => {
+    const review = point.bonuses.find((b) => b.characterId === id),
+      row = rows?.find((r) => r.characterId === id);
+    const classes = row?.classes ?? review?.classes;
+    if (!classes) return null;
+    return (
+      <div className={styles['classValues']}>
+        {classes.map((c) => {
+          const snapshot = row?.classes?.find((v) => v.classId === c.classId);
+          const draft = review?.classes?.find((v) => v.classId === c.classId);
+          let cap = snapshot?.cap;
+          try {
+            cap = cap ?? (draft ? classReviewCap(draft) : undefined);
+          } catch {
+            /* Display an incomplete review. */
+          }
+          const numeric =
+            field === 'added'
+              ? snapshot?.award
+              : field === 'discarded'
+              ? snapshot?.discarded
+              : field === 'before'
+              ? snapshot?.before
+              : field === 'after'
+              ? snapshot?.after
+              : field === 'full'
+              ? snapshot?.fullAward
+              : field === 'toCap' && snapshot && cap?.limit != null
+              ? Math.max(0, cap.limit - snapshot.after)
+              : undefined;
+          const text =
+            field === 'base' && snapshot
+              ? xpDisplay(snapshot.base)
+              : field === 'level'
+              ? String(c.baseLevel)
+              : field === 'bonus'
+              ? snapshot
+                ? `+${xpDisplay(snapshot.bonus)} (${xpDisplay(
+                    snapshot.bonusPercent
+                  )}%)`
+                : draft?.percent == null
+                ? 'Unknown'
+                : `${draft.percent}%`
+              : field === 'cap'
+              ? cap?.mode === 'uncapped'
+                ? 'Uncapped'
+                : cap?.limit?.toLocaleString() ?? 'Review…'
+              : numeric?.toLocaleString() ?? '—';
+          return (
+            <div key={c.classId}>
+              <small>{profileClassLabel(c.characterClass)}</small>
+              {!readOnly &&
+              review &&
+              (field === 'bonus' ||
+                field === 'cap' ||
+                (field === 'before' && !snapshot)) ? (
+                <button
+                  className={styles['textButton']}
+                  aria-label={`Review ${review.name} ${profileClassLabel(
+                    c.characterClass
+                  )} ${field}`}
+                  onClick={() => onBonus?.(review)}
+                >
+                  {text}
+                </button>
+              ) : (
+                <span>{text}</span>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
   return (
     <div className={styles['tableScroll']}>
       <table className={styles['awardMatrix']} aria-label="XP award">
@@ -329,6 +405,18 @@ export default function XpAwardTable({
           })}
         </tbody>
         <tfoot>
+          {point.bonuses.some((b) => b.classes) && (
+            <tr>
+              <th scope="row">Trained level</th>
+              {characters.map((c) => (
+                <td key={c.id}>
+                  {classCell(c.id, 'level') ??
+                    totals.get(c.id)?.cap?.baseLevel ??
+                    '—'}
+                </td>
+              ))}
+            </tr>
+          )}
           <tr>
             <th scope="row">Base XP</th>
             {characters.map((c) => {
@@ -336,7 +424,10 @@ export default function XpAwardTable({
                 rows?.find((r) => r.characterId === c.id)?.base ??
                 (!readOnly ? base(c.id) : null);
               return (
-                <td key={c.id}>{value === null ? '—' : xpDisplay(value)}</td>
+                <td key={c.id}>
+                  {classCell(c.id, 'base') ??
+                    (value === null ? '—' : xpDisplay(value))}
+                </td>
               );
             })}
           </tr>
@@ -352,20 +443,21 @@ export default function XpAwardTable({
                 : `${review.percent}%`;
               return (
                 <td key={c.id}>
-                  {!readOnly && review ? (
-                    <button
-                      className={styles['textButton']}
-                      aria-label={`Edit ${c.name} XP bonus`}
-                      title={review.reason || undefined}
-                      onClick={() => onBonus?.(review)}
-                    >
-                      {value}
-                    </button>
-                  ) : row ? (
-                    value
-                  ) : (
-                    '—'
-                  )}
+                  {classCell(c.id, 'bonus') ??
+                    (!readOnly && review ? (
+                      <button
+                        className={styles['textButton']}
+                        aria-label={`Edit ${c.name} XP bonus`}
+                        title={review.reason || undefined}
+                        onClick={() => onBonus?.(review)}
+                      >
+                        {value}
+                      </button>
+                    ) : row ? (
+                      value
+                    ) : (
+                      '—'
+                    ))}
                 </td>
               );
             })}
@@ -377,34 +469,35 @@ export default function XpAwardTable({
               const capError = totals.get(c.id)?.capError;
               return (
                 <td key={c.id}>
-                  {readOnly && !cap ? (
-                    <span title="Legacy award: no cap was recorded">
-                      Not recorded
-                    </span>
-                  ) : (
-                    <button
-                      className={styles['textButton']}
-                      aria-label={`${readOnly ? 'Inspect' : 'Review'} ${
-                        c.name
-                      } XP cap`}
-                      title={
-                        cap
-                          ? `${
-                              cap.characterClass || 'Unknown class'
-                            } · trained level ${cap.baseLevel ?? 'unknown'}${
-                              cap.reason ? ` · ${cap.reason}` : ''
-                            }`
-                          : capError
-                      }
-                      onClick={() => onCap?.(c.id, cap)}
-                    >
-                      {cap
-                        ? cap.mode === 'uncapped'
-                          ? 'Uncapped'
-                          : cap.limit?.toLocaleString()
-                        : 'Review…'}
-                    </button>
-                  )}
+                  {classCell(c.id, 'cap') ??
+                    (readOnly && !cap ? (
+                      <span title="Legacy award: no cap was recorded">
+                        Not recorded
+                      </span>
+                    ) : (
+                      <button
+                        className={styles['textButton']}
+                        aria-label={`${readOnly ? 'Inspect' : 'Review'} ${
+                          c.name
+                        } XP cap`}
+                        title={
+                          cap
+                            ? `${
+                                cap.characterClass || 'Unknown class'
+                              } · trained level ${cap.baseLevel ?? 'unknown'}${
+                                cap.reason ? ` · ${cap.reason}` : ''
+                              }`
+                            : capError
+                        }
+                        onClick={() => onCap?.(c.id, cap)}
+                      >
+                        {cap
+                          ? cap.mode === 'uncapped'
+                            ? 'Uncapped'
+                            : cap.limit?.toLocaleString()
+                          : 'Review…'}
+                      </button>
+                    ))}
                 </td>
               );
             })}
@@ -416,44 +509,45 @@ export default function XpAwardTable({
                 review = point.bonuses.find((b) => b.characterId === c.id);
               return (
                 <td key={c.id}>
-                  {row ? (
-                    !readOnly && review ? (
+                  {classCell(c.id, 'full') ??
+                    (row ? (
+                      !readOnly && review ? (
+                        <button
+                          className={styles['textButton']}
+                          aria-label={`Adjust ${c.name} full award`}
+                          title={`Before rounding: ${xpDisplay(row.unrounded)}${
+                            row.overrideReason
+                              ? `; calculated ${row.rounded}; ${row.overrideReason}`
+                              : ''
+                          }`}
+                          onClick={() => onFinal?.(review)}
+                        >
+                          {(row.fullAward ?? row.award).toLocaleString()}
+                          {row.overrideReason ? ' *' : ''}
+                        </button>
+                      ) : (
+                        <span
+                          title={`Before rounding: ${xpDisplay(row.unrounded)}${
+                            row.overrideReason
+                              ? `; calculated ${row.rounded}; ${row.overrideReason}`
+                              : ''
+                          }`}
+                        >
+                          {(row.fullAward ?? row.award).toLocaleString()}
+                          {row.overrideReason ? ' *' : ''}
+                        </span>
+                      )
+                    ) : review?.finalOverride != null ? (
                       <button
                         className={styles['textButton']}
                         aria-label={`Adjust ${c.name} full award`}
-                        title={`Before rounding: ${xpDisplay(row.unrounded)}${
-                          row.overrideReason
-                            ? `; calculated ${row.rounded}; ${row.overrideReason}`
-                            : ''
-                        }`}
                         onClick={() => onFinal?.(review)}
                       >
-                        {(row.fullAward ?? row.award).toLocaleString()}
-                        {row.overrideReason ? ' *' : ''}
+                        {review.finalOverride} *
                       </button>
                     ) : (
-                      <span
-                        title={`Before rounding: ${xpDisplay(row.unrounded)}${
-                          row.overrideReason
-                            ? `; calculated ${row.rounded}; ${row.overrideReason}`
-                            : ''
-                        }`}
-                      >
-                        {(row.fullAward ?? row.award).toLocaleString()}
-                        {row.overrideReason ? ' *' : ''}
-                      </span>
-                    )
-                  ) : review?.finalOverride != null ? (
-                    <button
-                      className={styles['textButton']}
-                      aria-label={`Adjust ${c.name} full award`}
-                      onClick={() => onFinal?.(review)}
-                    >
-                      {review.finalOverride} *
-                    </button>
-                  ) : (
-                    totals.get(c.id)?.full?.toLocaleString() ?? '—'
-                  )}
+                      totals.get(c.id)?.full?.toLocaleString() ?? '—'
+                    ))}
                 </td>
               );
             })}
@@ -478,7 +572,9 @@ export default function XpAwardTable({
               <th scope="row">{label}</th>
               {characters.map((c) => (
                 <td key={c.id}>
-                  {totals.get(c.id)?.[field]?.toLocaleString() ?? '—'}
+                  {classCell(c.id, field) ??
+                    totals.get(c.id)?.[field]?.toLocaleString() ??
+                    '—'}
                 </td>
               ))}
             </tr>

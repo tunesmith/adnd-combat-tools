@@ -1,3 +1,4 @@
+import { profileLabel } from '../../helpers/campaignParty';
 import { useState } from 'react';
 import type { CampaignDocument } from '../../helpers/campaignDocument';
 import type {
@@ -5,9 +6,7 @@ import type {
   RosterCharacter,
 } from '../../helpers/campaignPartyModel';
 import {
-  profileClassLabel as classLabel,
   calculatedSaves,
-  effectiveLevel,
   emptyProfile,
   profilesInSession,
   updatePartyProfile,
@@ -133,7 +132,6 @@ export default function PartyReference({
                 if (!character) return null;
                 const saves = calculatedSaves(p);
                 const targets = saves ?? p.overrides;
-                const level = effectiveLevel(p);
                 return (
                   <tr key={p.characterId}>
                     <th scope="row">
@@ -176,9 +174,7 @@ export default function PartyReference({
                       <small>
                         {[
                           character.player,
-                          `${classLabel(p.characterClass)} ${p.baseLevel}${
-                            level !== p.baseLevel ? ` → ${level}` : ''
-                          }`,
+                          profileLabel(p),
                           !saves ? 'Manual saves' : '',
                         ]
                           .filter(Boolean)

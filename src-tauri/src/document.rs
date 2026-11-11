@@ -30,7 +30,7 @@ impl Document {
     pub fn new() -> Self {
         Self {
             kind: "adnd-campaign".into(),
-            schema_version: 17,
+            schema_version: 18,
             id: uuid::Uuid::new_v4().to_string(),
             title: "Untitled campaign".into(),
             notes: String::new(),
@@ -219,7 +219,7 @@ mod tests {
     fn rejects_unknown_malformed_future() {
         assert!(parse(b"{bad").is_err());
         let mut v = serde_json::to_value(Document::new()).unwrap();
-        v["schemaVersion"] = 18.into();
+        v["schemaVersion"] = 19.into();
         assert!(parse(&serde_json::to_vec(&v).unwrap())
             .unwrap_err()
             .contains("schema version"));
@@ -370,7 +370,7 @@ mod b1_tests {
         let bytes=br#"{"kind":"adnd-campaign","schemaVersion":1,"id":"kept","title":"Old","notes":"Keep"}"#;
         fs::write(&path, bytes).unwrap();
         let doc = parse(bytes).unwrap();
-        assert_eq!(doc.schema_version, 17);
+        assert_eq!(doc.schema_version, 18);
         assert_eq!(fs::read(&path).unwrap(), bytes);
         save(&path, &doc, Some(&hash(bytes))).unwrap();
         assert_eq!(fs::read(format!("{}.bak", path.display())).unwrap(), bytes);
@@ -432,7 +432,7 @@ mod v2_migration_tests {
         let path = dir.path().join("v2.adnd");
         fs::write(&path, bytes).unwrap();
         let doc = parse(&fs::read(&path).unwrap()).unwrap();
-        assert_eq!(doc.schema_version, 17);
+        assert_eq!(doc.schema_version, 18);
         assert_eq!(fs::read(&path).unwrap(), bytes);
         save(&path, &doc, Some(&hash(bytes))).unwrap();
         assert_eq!(fs::read(format!("{}.bak", path.display())).unwrap(), bytes);
@@ -560,7 +560,7 @@ mod continuity_tests {
         }
         let bytes = serde_json::to_vec_pretty(&legacy).unwrap();
         let migrated = parse(&bytes).unwrap();
-        assert_eq!(migrated.schema_version, 17);
+        assert_eq!(migrated.schema_version, 18);
         assert!(migrated.party.as_ref().unwrap()["profiles"][0]["reference"].is_null());
         validate_replacement(&migrated, &expanded).unwrap();
         let dir = tempfile::tempdir().unwrap();
@@ -797,7 +797,7 @@ mod xp_tests {
         legacy.as_object_mut().unwrap().remove("xp");
         let original = serde_json::to_vec_pretty(&legacy).unwrap();
         let migrated = parse(&original).unwrap();
-        assert_eq!(migrated.schema_version, 17);
+        assert_eq!(migrated.schema_version, 18);
         assert!(migrated.xp.is_none());
         validate_replacement(&migrated, &accepted).unwrap();
         let dir = tempfile::tempdir().unwrap();
@@ -870,7 +870,7 @@ mod xp_cap_tests {
         assert_eq!(fs::read(&path).unwrap(),b"external synthetic change");
         let legacy=dir.path().join("legacy.adnd");let original=serde_json::to_vec_pretty(&fixture["legacy"]).unwrap();
         fs::write(&legacy,&original).unwrap();fs::write(dir.path().join("legacy.adnd.bak"),b"existing backup").unwrap();
-        let migrated=parse(&original).unwrap();assert_eq!(migrated.schema_version,17);
+        let migrated=parse(&original).unwrap();assert_eq!(migrated.schema_version,18);
         assert_eq!(migrated.xp.as_ref().unwrap()["events"],fixture["legacy"]["xp"]["events"]);
         save(&legacy,&migrated,Some(&hash(&original))).unwrap();
         assert_eq!(fs::read(dir.path().join("legacy.adnd.bak")).unwrap(),b"existing backup");
@@ -983,7 +983,7 @@ mod banking_tests {
         let original = serde_json::to_vec(&old).unwrap();
         fs::write(&path, &original).unwrap();
         let migrated = parse(&original).unwrap();
-        assert_eq!(migrated.schema_version, 17);
+        assert_eq!(migrated.schema_version, 18);
         let revision = save(&path, &before, Some(&hash(&original))).unwrap();
         assert_eq!(fs::read(dir.path().join("synthetic-bank.adnd.bak")).unwrap(), original);
         let saved = fs::read(&path).unwrap();
@@ -1133,5 +1133,40 @@ mod existing_transfer_tests {
         assert_eq!(reopened.working_inventories, before.working_inventories);
         assert_eq!(fs::read_dir(dir.path()).unwrap().count(), 2);
         assert_eq!(fs::read(dir.path().join("synthetic-existing-transfer.adnd.bak")).unwrap(), original);
+    }
+}
+
+#[cfg(test)]
+mod multiclass_tests {
+    use super::*;
+    #[test]
+    fn multiclass_awards_round_trip_atomically_with_independent_caps() {
+        let after = parse(include_bytes!("../../src/tests/fixtures/multiclassNative.json")).unwrap();
+        let row = &after.xp.as_ref().unwrap()["events"][0]["rows"][0];
+        assert_eq!(row["award"], 66);
+        assert_eq!(row["classes"][0]["award"], 11);
+        assert_eq!(row["classes"][0]["discarded"], 44);
+        assert_eq!(row["classes"][1]["after"], 1155);
+        let mut before = after.clone();
+        before.xp.as_mut().unwrap()["events"] = serde_json::json!([]);
+        before.xp.as_mut().unwrap()["points"][0]["confirmedEventId"] = serde_json::Value::Null;
+        before.validate().unwrap();
+        validate_replacement(&before, &after).unwrap();
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("multiclass.adnd");
+        let revision=save(&path, &before, None).unwrap();
+        let original=fs::read(&path).unwrap();
+        assert!(save_with_hook(&path, &after, Some(&revision), || Err("Synthetic failed save".into())).is_err());
+        assert_eq!(fs::read(&path).unwrap(), original);
+        let revision=save(&path, &after, Some(&revision)).unwrap();
+        assert_eq!(parse(&fs::read(&path).unwrap()).unwrap(), after);
+        assert_eq!(fs::read_dir(dir.path()).unwrap().count(), 1);
+        let mut tampered=after.clone();
+        tampered.xp.as_mut().unwrap()["events"][0]["rows"][0]["classes"][0]["award"]=55.into();
+        assert!(tampered.validate().is_err());
+        assert!(validate_replacement(&after, &tampered).is_err());
+        fs::write(&path,b"external synthetic edit").unwrap();
+        assert_eq!(save(&path,&after,Some(&revision)).unwrap_err(),CONFLICT);
+        assert_eq!(fs::read(&path).unwrap(),b"external synthetic edit");
     }
 }

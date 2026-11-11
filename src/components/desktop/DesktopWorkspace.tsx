@@ -677,10 +677,10 @@ export default function DesktopWorkspace() {
                 [
                   ['session', 'Session'],
                   ['party', 'References'],
+                  ['banking', 'Banking'],
                   ['possessions', 'Possessions'],
                   ['combats', 'Combats'],
                   ['xp', 'XP'],
-                  ['banking', 'Banking'],
                 ] as const
               ).map(([id, label]) => (
                 <button

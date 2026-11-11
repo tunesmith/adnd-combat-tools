@@ -127,6 +127,26 @@ const xpCapBasisSchema = z
   })
   .strict();
 export type XpCapBasis = z.infer<typeof xpCapBasisSchema>;
+const xpClassOpeningSchema = z
+  .object({
+    classId: id,
+    characterClass: z.enum(partyClasses),
+    balance: integer.nullable(),
+  })
+  .strict();
+export type XpClassOpening = z.infer<typeof xpClassOpeningSchema>;
+const xpClassReviewSchema = z
+  .object({
+    classId: id,
+    characterClass: z.enum(partyClasses),
+    baseLevel: z.number().int().min(0).max(99),
+    percent: rational.nullable(),
+    cap: xpCapBasisSchema.optional(),
+    opening: integer.nullable().optional(),
+    reason: note,
+  })
+  .strict();
+export type XpClassReview = z.infer<typeof xpClassReviewSchema>;
 const capReviewSchema = z
   .object({ characterId: id, basis: xpCapBasisSchema })
   .strict();
@@ -138,6 +158,7 @@ const xpBonusReviewSchema = z
     reason: note,
     finalOverride: integer.nullable(),
     finalReason: note,
+    classes: z.array(xpClassReviewSchema).min(2).max(3).optional(),
   })
   .strict();
 export type XpBonusReview = z.infer<typeof xpBonusReviewSchema>;
@@ -164,7 +185,7 @@ const allocationSchema = z
     reason: note,
   })
   .strict();
-const awardRowSchema = z
+const singleAwardRowSchema = z
   .object({
     characterId: id,
     name: z.string(),
@@ -183,6 +204,15 @@ const awardRowSchema = z
     cap: xpCapBasisSchema.optional(),
   })
   .strict();
+const xpClassAwardSchema = singleAwardRowSchema.extend({
+  classId: id,
+  characterClass: z.enum(partyClasses),
+  baseLevel: z.number().int().min(0).max(99),
+});
+export type XpClassAward = z.infer<typeof xpClassAwardSchema>;
+const awardRowSchema = singleAwardRowSchema.extend({
+  classes: z.array(xpClassAwardSchema).min(2).max(3).optional(),
+});
 export type XpAwardRow = z.infer<typeof awardRowSchema>;
 const xpEventSchema = z
   .object({
@@ -192,7 +222,7 @@ const xpEventSchema = z
     replaces: id.nullable(),
     correctionRoot: id.nullable(),
     reason: note,
-    calculatorVersion: z.union([z.literal(1), z.literal(2)]),
+    calculatorVersion: z.union([z.literal(1), z.literal(2), z.literal(3)]),
     rounding: z.literal('nearest-whole-half-up-after-bonus'),
     rewards: z.array(xpRewardSchema).min(1),
     rows: z.array(awardRowSchema).min(1),
@@ -206,6 +236,7 @@ const xpOpeningSchema = z
     characterId: id,
     sessionId: id,
     balance: integer.nullable(),
+    classes: z.array(xpClassOpeningSchema).min(2).max(3).optional(),
     reason: note,
   })
   .strict();
