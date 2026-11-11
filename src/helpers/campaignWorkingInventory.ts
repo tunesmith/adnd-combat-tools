@@ -1,3 +1,8 @@
+import {
+  recordInventoryMoneyEdit,
+  recordBankingReplacement,
+} from './campaignBanking';
+import type { BankMutation } from './campaignBanking';
 import { continuedFromSchema } from './campaignContinuityModel';
 import type { ContinuedFrom } from './campaignContinuityModel';
 import { z } from 'zod';
@@ -16,7 +21,8 @@ export type WorkspaceView =
   | 'tools'
   | 'session'
   | 'party'
-  | 'xp';
+  | 'xp'
+  | 'banking';
 export interface WorkingInventory {
   continuedFrom?: ContinuedFrom;
   id: string;
@@ -130,22 +136,30 @@ export function startWorkingInventory(
   origin: WorkingInventory['origin'],
   id: string,
   checkpointId: string,
-  at: string
+  at: string,
+  bankingReview?: string
 ): CampaignDocument {
   if (!campaign.sessions.some((s) => s.id === sessionId))
     throw new Error('Select a session first.');
   const previous = campaign.workingInventories.find(
     (w) => w.sessionId === sessionId
   );
+  const reviewed = recordBankingReplacement(
+    campaign,
+    sessionId,
+    normalizeWorkingInventory(document),
+    bankingReview,
+    { id: checkpointId + '-bank', at }
+  );
   const preserved = previous
     ? captureInventoryCheckpoint(
-        campaign,
+        reviewed,
         previous.id,
         'Before replacing working inventory',
         checkpointId,
         at
       )
-    : campaign;
+    : reviewed;
   const working: WorkingInventory = {
     id,
     sessionId,
@@ -165,7 +179,8 @@ export function changeWorkingInventory(
   campaign: CampaignDocument,
   workingId: string,
   sessionId: string,
-  document: EncumbranceDmDocument
+  document: EncumbranceDmDocument,
+  mutation?: BankMutation
 ): CampaignDocument {
   if (
     !campaign.workingInventories.some(
@@ -176,9 +191,18 @@ export function changeWorkingInventory(
       'Working inventory was replaced; this delayed edit was cancelled.'
     );
   const normalized = normalizeWorkingInventory(document);
+  const previous = campaign.workingInventories.find((w) => w.id === workingId);
+  if (!previous) throw new Error('Working inventory missing.');
+  const recorded = recordInventoryMoneyEdit(
+    campaign,
+    workingId,
+    previous.document,
+    normalized,
+    mutation
+  );
   return {
-    ...campaign,
-    workingInventories: campaign.workingInventories.map((w) =>
+    ...recorded,
+    workingInventories: recorded.workingInventories.map((w) =>
       w.id === workingId ? { ...w, document: normalized } : w
     ),
   };

@@ -92,7 +92,6 @@ export default function SessionProfileTable({
                     {character.name}
                   </button>
                   {details && <small>{details}</small>}
-                  {!profile.participating && <small>Not participating</small>}
                 </th>
                 <td>
                   {reference?.race || '—'}

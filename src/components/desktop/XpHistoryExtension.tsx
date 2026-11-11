@@ -2,7 +2,7 @@ import { useRef, useState } from 'react';
 import type { CampaignDocument } from '../../helpers/campaignDocument';
 import {
   confirmXpExtension,
-  pointRewards,
+  draftPointRewards,
   previewXpExtension,
   xpExtensionDrafts,
   xpLedger,
@@ -40,7 +40,7 @@ export default function XpHistoryExtension({
   const selected = drafts.filter((p) => pointIds.includes(p.id));
   const characters = new Set(
     selected.flatMap((p) =>
-      pointRewards(document, p).flatMap((r) =>
+      draftPointRewards(document, p).flatMap((r) =>
         r.recipients.filter((c) => c.eligible).map((c) => c.characterId)
       )
     )

@@ -1,3 +1,4 @@
+import { validateBankingTransition } from './campaignBanking';
 import { validateXpTransition } from './campaignXp';
 import { validateEncounterRemoval } from './campaignEncounterRemoval';
 import { validateContinuityTransition } from './campaignContinuity';
@@ -75,6 +76,7 @@ export function validateHistoryTransition(
 ) {
   validateContinuityTransition(old, next);
   validateXpTransition(old, next);
+  validateBankingTransition(old, next);
   if (
     old.party?.roster.some(
       (c) => !next.party?.roster.some((n) => n.id === c.id)

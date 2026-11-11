@@ -14,6 +14,13 @@ import baseline from './fixtures/campaignB1V2.json';
 import { createWorkingCombat } from '../helpers/campaignWorkingCombat';
 import { syntheticCombat, syntheticInventory } from './fixtures/campaignB1';
 import type { DocumentState, CampaignStorage } from '../types/campaignStorage';
+beforeEach(() => {
+  let id = 0;
+  Object.defineProperty(window, 'crypto', {
+    configurable: true,
+    value: { randomUUID: () => `workspace-bank-${++id}` },
+  });
+});
 afterEach(() => {
   delete window.campaignStorage;
   jest.restoreAllMocks();

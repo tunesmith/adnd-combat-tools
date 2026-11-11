@@ -1,3 +1,4 @@
+import { pendingXpReward } from '../../helpers/campaignParty';
 import XpRecipients from './XpRecipients';
 import { useState } from 'react';
 import type { SetStateAction } from 'react';
@@ -170,15 +171,17 @@ export default function XpRewardEditor({
   reward,
   onSave,
   onDelete,
+  correction = false,
   onClose,
 }: {
   document: CampaignDocument;
   reward: XpReward;
   onSave: (reward: XpReward) => boolean;
   onDelete?: () => boolean;
+  correction?: boolean;
   onClose: () => void;
 }) {
-  const [draft, updateDraft] = useState(() =>
+  const [storedDraft, updateDraft] = useState(() =>
       defaultDraftRatio(
         reward.input.category === 'monster' &&
           reward.input.monsters.length === 1 &&
@@ -197,9 +200,14 @@ export default function XpRewardEditor({
       )
     ),
     [error, setError] = useState('');
+  const draft = pendingXpReward(document, storedDraft, correction);
   const setDraft = (change: SetStateAction<XpReward>) =>
     updateDraft((current) =>
-      defaultDraftRatio(typeof change === 'function' ? change(current) : change)
+      defaultDraftRatio(
+        typeof change === 'function'
+          ? change(pendingXpReward(document, current, correction))
+          : change
+      )
     );
   const [encounterId, setEncounterId] = useState(''),
     [keys, setKeys] = useState<string[]>([]),

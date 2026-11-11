@@ -1,3 +1,9 @@
+import CampaignBanking from './CampaignBanking';
+import {
+  bankingReplacementReview,
+  bankHolderName,
+} from '../../helpers/campaignBanking';
+import BankBalances from './BankBalances';
 import { reorderCampaignSession } from '../../helpers/campaignSessionOrder';
 import CampaignXp from './CampaignXp';
 import PartyReference from './PartyReference';
@@ -356,7 +362,8 @@ export default function DesktopWorkspace() {
   );
   function start(
     inventory: EncumbranceDmDocument,
-    origin: WorkingInventory['origin']
+    origin: WorkingInventory['origin'],
+    bankingReview?: string
   ) {
     const id = uid(),
       checkpointId = uid(),
@@ -380,7 +387,8 @@ export default function DesktopWorkspace() {
         origin,
         id,
         checkpointId,
-        at
+        at,
+        bankingReview
       ),
       workspace: { ...d.workspace, sessionId, view: 'possessions' },
     }));
@@ -530,15 +538,25 @@ export default function DesktopWorkspace() {
                     className={`${styles['sessionDrag']} ${
                       dropSession === s.id ? styles['sessionDrop'] : ''
                     }`}
-                    draggable={!document.xp?.events.length}
+                    draggable={
+                      !(
+                        document.xp?.events.length ||
+                        document.banking?.entries.length ||
+                        document.banking?.openings.length
+                      )
+                    }
                     title={
-                      document.xp?.events.length
-                        ? 'Session order is fixed after XP confirmation'
+                      document.xp?.events.length ||
+                      document.banking?.entries.length ||
+                      document.banking?.openings.length
+                        ? 'Session order is fixed after recorded history'
                         : 'Drag to reorder sessions'
                     }
                     onDragStart={(event) => {
                       if (
                         document.xp?.events.length ||
+                        document.banking?.entries.length ||
+                        document.banking?.openings.length ||
                         (event.target instanceof HTMLElement &&
                           event.target.closest('input'))
                       ) {
@@ -556,7 +574,11 @@ export default function DesktopWorkspace() {
                     onDragOver={(event) => {
                       if (
                         draggedSession.current &&
-                        !document.xp?.events.length
+                        !(
+                          document.xp?.events.length ||
+                          document.banking?.entries.length ||
+                          document.banking?.openings.length
+                        )
                       ) {
                         event.preventDefault();
                         event.dataTransfer.dropEffect = 'move';
@@ -583,6 +605,8 @@ export default function DesktopWorkspace() {
                         !event.altKey ||
                         !event.shiftKey ||
                         document.xp?.events.length ||
+                        document.banking?.entries.length ||
+                        document.banking?.openings.length ||
                         event.target instanceof HTMLInputElement
                       )
                         return;
@@ -609,7 +633,13 @@ export default function DesktopWorkspace() {
                   >
                     <RenamableTab
                       kind="session"
-                      draggable={!document.xp?.events.length}
+                      draggable={
+                        !(
+                          document.xp?.events.length ||
+                          document.banking?.entries.length ||
+                          document.banking?.openings.length
+                        )
+                      }
                       label={s.label}
                       selected={s.id === sessionId}
                       onSelect={() => {
@@ -650,6 +680,7 @@ export default function DesktopWorkspace() {
                   ['possessions', 'Possessions'],
                   ['combats', 'Combats'],
                   ['xp', 'XP'],
+                  ['banking', 'Banking'],
                 ] as const
               ).map(([id, label]) => (
                 <button
@@ -765,9 +796,19 @@ export default function DesktopWorkspace() {
                           )
                         )
                           return false;
+                        const moneyMutation = {
+                          id: uid(),
+                          at: new Date().toISOString(),
+                        };
                         return mutate(
                           (d) =>
-                            changeWorkingInventory(d, workId, sessionId, next),
+                            changeWorkingInventory(
+                              d,
+                              workId,
+                              sessionId,
+                              next,
+                              moneyMutation
+                            ),
                           owner
                         );
                       },
@@ -784,7 +825,17 @@ export default function DesktopWorkspace() {
                   replacementName={`${working?.title || 'inventory'} in ${
                     document.sessions.find((s) => s.id === sessionId)?.label
                   }`}
-                  firstActivation={!working}
+                  firstActivation={
+                    !working &&
+                    !(
+                      historicalInventory &&
+                      bankingReplacementReview(
+                        document,
+                        sessionId,
+                        historicalInventory.document
+                      ).required
+                    )
+                  }
                   versions={inventoryVersions}
                   value={historicalInventory?.id || ''}
                   onSelect={setInventoryVersion}
@@ -805,12 +856,45 @@ export default function DesktopWorkspace() {
                         }
                       : undefined
                   }
+                  replacementDetails={
+                    historicalInventory &&
+                    document && (
+                      <BankBalances
+                        label="Inventory money replacement"
+                        rows={bankingReplacementReview(
+                          document,
+                          sessionId,
+                          historicalInventory.document
+                        ).comparison.flatMap((r) => [
+                          {
+                            id: r.holderId + '-before',
+                            label:
+                              bankHolderName(document, r.holderId) +
+                              ' · current',
+                            amounts: r.before,
+                          },
+                          {
+                            id: r.holderId + '-after',
+                            label:
+                              bankHolderName(document, r.holderId) +
+                              ' · replacement',
+                            amounts: r.after,
+                          },
+                        ])}
+                      />
+                    )
+                  }
                   onRestore={
                     historicalInventory
                       ? () => {
                           start(
                             historicalInventory.document,
-                            historicalInventory.origin
+                            historicalInventory.origin,
+                            bankingReplacementReview(
+                              document,
+                              sessionId,
+                              historicalInventory.document
+                            ).fingerprint
                           );
                           setInventoryVersion('');
                         }
@@ -856,6 +940,16 @@ export default function DesktopWorkspace() {
                   }}
                 />
               </section>
+              {view === 'banking' && (
+                <section className={styles['view']} aria-label="Banking">
+                  <CampaignBanking
+                    key={`${state.epoch}:${sessionId}:${editorVersion}`}
+                    document={document}
+                    sessionId={sessionId}
+                    onChange={(change) => mutate(change, scope)}
+                  />
+                </section>
+              )}
               {view === 'xp' && (
                 <section className={styles['view']} aria-label="XP">
                   <CampaignXp

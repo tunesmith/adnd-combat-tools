@@ -1,4 +1,5 @@
 import type { CampaignDocument } from './campaignDocument';
+import type { XpReward } from './campaignXpModel';
 import type { TrackerCombatant } from '../types/tracker';
 import type {
   CampaignParty,
@@ -113,7 +114,192 @@ export const emptyProfile = (
   saveNotes: ['', '', ''],
 });
 export const profilesInSession = (doc: CampaignDocument, sessionId: string) =>
-  doc.party?.profiles.filter((p) => p.sessionId === sessionId) || [];
+  doc.party?.profiles.filter(
+    (p) => p.sessionId === sessionId && p.participating
+  ) || [];
+
+export function rosterEligibleForSession(
+  doc: CampaignDocument,
+  character: RosterCharacter,
+  sessionId: string | null
+) {
+  if (!character.lastEligibleSessionId) return true;
+  const cutoff = doc.sessions.findIndex(
+    (s) => s.id === character.lastEligibleSessionId
+  );
+  return (
+    sessionId !== null &&
+    cutoff >= 0 &&
+    doc.sessions.some((s, index) => s.id === sessionId && index <= cutoff)
+  );
+}
+
+export function priorProfileChoices(
+  doc: CampaignDocument,
+  sessionId: string,
+  characterId: string
+) {
+  const profiles =
+    doc.party?.profiles.filter((p) => p.characterId === characterId) ?? [];
+  const position = doc.sessions.findIndex((s) => s.id === sessionId);
+  const retained = profiles.find(
+    (p) => p.sessionId === sessionId && !p.participating
+  );
+  const earlier = doc.sessions
+    .slice(0, Math.max(0, position))
+    .reverse()
+    .map((s) => profiles.find((p) => p.sessionId === s.id))
+    .find((p) => p !== undefined);
+  return [retained, earlier].filter((p): p is PartyProfile => p !== undefined);
+}
+
+export function xpRecipientAvailable(
+  doc: CampaignDocument,
+  sessionId: string,
+  characterId: string
+) {
+  const character = doc.party?.roster.find((c) => c.id === characterId);
+  return (
+    !!character &&
+    character.earnsXp !== false &&
+    !doc.party?.profiles.some(
+      (p) =>
+        p.characterId === characterId &&
+        p.sessionId === sessionId &&
+        !p.participating
+    )
+  );
+}
+
+function settledXpRewardIds(xp: NonNullable<CampaignDocument['xp']>) {
+  const replaced = new Set(xp.events.map((e) => e.replaces));
+  return new Set(
+    xp.events
+      .filter((e) => !replaced.has(e.id))
+      .flatMap((e) => e.rewards.map((r) => r.id))
+  );
+}
+
+function recipientResets(xp: CampaignDocument['xp'], rewardId: string) {
+  const resets = xp?.pendingRecipientResets;
+  return resets && Object.prototype.hasOwnProperty.call(resets, rewardId)
+    ? resets[rewardId]
+    : undefined;
+}
+
+function pendingXpRewards(
+  doc: CampaignDocument,
+  characterId: string,
+  sessionId?: string
+) {
+  const xp = doc.xp;
+  if (!xp) return [];
+  const settled = settledXpRewardIds(xp);
+  return xp.rewards.filter(
+    (r) =>
+      !settled.has(r.id) &&
+      (sessionId === undefined || r.origin.sessionId === sessionId) &&
+      !recipientResets(xp, r.id)?.includes(characterId) &&
+      r.recipients.some(
+        (c) => c.characterId === characterId && (c.eligible || c.participated)
+      )
+  );
+}
+
+export const pendingXpRecipientCount = (
+  doc: CampaignDocument,
+  characterId: string,
+  sessionId?: string
+) => pendingXpRewards(doc, characterId, sessionId).length;
+
+function clearRecipientFlags(
+  reward: XpReward,
+  shouldClear: (id: string) => boolean
+) {
+  let changed = false;
+  const recipients = reward.recipients.map((r) => {
+    if ((!r.eligible && !r.participated) || !shouldClear(r.characterId))
+      return r;
+    changed = true;
+    return { ...r, eligible: false, participated: false };
+  });
+  return changed ? { ...reward, recipients } : reward;
+}
+
+export function pendingXpReward(
+  doc: CampaignDocument,
+  reward: XpReward,
+  explicitOverride = false
+) {
+  const resets = explicitOverride
+    ? undefined
+    : recipientResets(doc.xp, reward.id);
+  return clearRecipientFlags(
+    reward,
+    (id) =>
+      !!resets?.includes(id) ||
+      !xpRecipientAvailable(doc, reward.origin.sessionId, id)
+  );
+}
+
+function clearPendingXpRecipient(
+  doc: CampaignDocument,
+  characterId: string,
+  sessionId?: string
+): CampaignDocument {
+  const xp = doc.xp;
+  if (!xp) return doc;
+  const pending = new Set(
+    pendingXpRewards(doc, characterId, sessionId).map((r) => r.id)
+  );
+  const frozen = new Set(xp.events.flatMap((e) => e.rewards.map((r) => r.id)));
+  const resets = new Map(Object.entries(xp.pendingRecipientResets ?? {}));
+  const settled = settledXpRewardIds(xp);
+  const clear = (r: XpReward) =>
+    clearRecipientFlags(r, (id) => id === characterId);
+  const rewards = xp.rewards.map((r) => {
+    if (!pending.has(r.id)) return r;
+    if (!frozen.has(r.id)) return { ...clear(r), version: r.version + 1 };
+    resets.set(r.id, [...(resets.get(r.id) ?? []), characterId]);
+    return r;
+  });
+  const points = xp.points.map((p) => {
+    if (p.confirmedEventId) return p;
+    const rewardOverrides = p.rewardOverrides.map((r) =>
+      !settled.has(r.id) &&
+      (sessionId === undefined || r.origin.sessionId === sessionId)
+        ? clear(r)
+        : r
+    );
+    return rewardOverrides.some((r, i) => r !== p.rewardOverrides[i])
+      ? { ...p, rewardOverrides }
+      : p;
+  });
+  return {
+    ...doc,
+    xp: {
+      ...xp,
+      rewards,
+      points,
+      ...(resets.size
+        ? { pendingRecipientResets: Object.fromEntries(resets) }
+        : {}),
+    },
+  };
+}
+
+export function removePartyProfile(
+  doc: CampaignDocument,
+  sessionId: string,
+  characterId: string
+) {
+  const profile = profilesInSession(doc, sessionId).find(
+    (p) => p.characterId === characterId
+  );
+  if (!profile) throw new Error('This character is no longer in the session.');
+  return updatePartyProfile(doc, { ...profile, participating: false });
+}
+
 export function updatePartyProfile(
   doc: CampaignDocument,
   profile: PartyProfile,
@@ -122,6 +308,15 @@ export function updatePartyProfile(
   const party = doc.party || emptyParty();
   const matches = (p: PartyProfile) =>
     p.sessionId === profile.sessionId && p.characterId === profile.characterId;
+  const previous = party.profiles.find(matches);
+  const known = party.roster.find((c) => c.id === profile.characterId);
+  if (
+    profile.participating &&
+    !previous?.participating &&
+    known &&
+    !rosterEligibleForSession(doc, known, profile.sessionId)
+  )
+    throw new Error('This character is retired for the selected session.');
   const roster = !character
     ? party.roster
     : party.roster.some((c) => c.id === character.id)
@@ -130,7 +325,16 @@ export function updatePartyProfile(
   const profiles = party.profiles.some(matches)
     ? party.profiles.map((p) => (matches(p) ? profile : p))
     : [...party.profiles, profile];
-  return { ...doc, party: { ...party, roster, profiles } };
+  const next = { ...doc, party: { ...party, roster, profiles } };
+  if (known && character?.earnsXp === false && known.earnsXp !== false)
+    return clearPendingXpRecipient(next, character.id);
+  if (previous && previous.participating !== profile.participating)
+    return clearPendingXpRecipient(
+      next,
+      profile.characterId,
+      profile.sessionId
+    );
+  return next;
 }
 export function carriedPartyProfiles(
   doc: CampaignDocument,
@@ -138,7 +342,7 @@ export function carriedPartyProfiles(
   destinationId: string,
   ids: string[]
 ): PartyProfile[] {
-  const source = profilesInSession(doc, sourceId);
+  const source = carryablePartyProfiles(doc, sourceId, destinationId);
   if (
     new Set(ids).size !== ids.length ||
     ids.some((id) => !source.some((p) => p.characterId === id))
@@ -146,26 +350,49 @@ export function carriedPartyProfiles(
     throw new Error('Selected character profiles changed.');
   return source
     .filter((p) => ids.includes(p.characterId))
-    .map((p) => ({
-      ...p,
-      sessionId: destinationId,
-      adjustment: p.adjustment ? { ...p.adjustment } : null,
-      overrides: [...p.overrides],
-      saveNotes: [...p.saveNotes],
-      ...(p.reference
-        ? {
-            reference: {
-              ...p.reference,
-              attributes: {
-                ...p.reference.attributes,
-                strength: { ...p.reference.attributes.strength },
-              },
-              bonuses: { ...p.reference.bonuses },
-            },
-          }
-        : {}),
-    }));
+    .map((p) => copyPartyProfile(p, destinationId));
 }
+
+export function carryablePartyProfiles(
+  doc: CampaignDocument,
+  sourceId: string,
+  destinationId: string | null = null
+) {
+  const destination = doc.sessions.some((s) => s.id === destinationId)
+    ? destinationId
+    : null;
+  return profilesInSession(doc, sourceId).filter((p) => {
+    const character = doc.party?.roster.find((c) => c.id === p.characterId);
+    return !!character && rosterEligibleForSession(doc, character, destination);
+  });
+}
+
+export function copyPartyProfile(
+  p: PartyProfile,
+  sessionId: string
+): PartyProfile {
+  return {
+    ...p,
+    sessionId,
+    participating: true,
+    adjustment: p.adjustment ? { ...p.adjustment } : null,
+    overrides: [...p.overrides],
+    saveNotes: [...p.saveNotes],
+    ...(p.reference
+      ? {
+          reference: {
+            ...p.reference,
+            attributes: {
+              ...p.reference.attributes,
+              strength: { ...p.reference.attributes.strength },
+            },
+            bonuses: { ...p.reference.bonuses },
+          },
+        }
+      : {}),
+  };
+}
+
 export function validatePartyReferences(
   doc: CampaignDocument,
   unique: (id: string) => void
@@ -182,7 +409,14 @@ export function validatePartyReferences(
     return;
   }
   const { roster, profiles } = doc.party;
-  roster.forEach((c) => unique(c.id));
+  roster.forEach((c) => {
+    unique(c.id);
+    if (
+      c.lastEligibleSessionId &&
+      !doc.sessions.some((s) => s.id === c.lastEligibleSessionId)
+    )
+      throw new Error('Invalid last eligible session for roster character.');
+  });
   const profileKeys = new Set<string>();
   for (const p of profiles) {
     const key = canonical([p.sessionId, p.characterId]);

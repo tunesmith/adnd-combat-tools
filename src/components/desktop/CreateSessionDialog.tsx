@@ -2,7 +2,7 @@ import {
   historicalSessionTargets,
   placeHistoricalSession,
 } from '../../helpers/campaignSessionOrder';
-import { profilesInSession } from '../../helpers/campaignParty';
+import { carryablePartyProfiles } from '../../helpers/campaignParty';
 import { useEffect, useRef, useState } from 'react';
 import {
   sessionFingerprint,
@@ -42,7 +42,9 @@ export default function CreateSessionDialog({
   const [selected, setSelected] = useState<string[]>([]);
   const [carryInventory, setCarryInventory] = useState(false);
   const [copyNotes, setCopyNotes] = useState(false);
-  const [profiles] = useState(() => profilesInSession(document, sessionId));
+  const [profiles] = useState(() =>
+    carryablePartyProfiles(document, sessionId)
+  );
   const [partyIds, setPartyIds] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');

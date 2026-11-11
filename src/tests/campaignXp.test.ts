@@ -273,7 +273,6 @@ test('profile edits, custody changes, labels and continuation do not rewrite acc
           ...doc.party,
           profiles: doc.party.profiles.map((p) => ({
             ...p,
-            participating: false,
             baseLevel: 9,
             reference: p.reference
               ? {
@@ -397,7 +396,7 @@ test('corrections retain originals, reject stale previews/retries and atomically
 });
 test('migration creates no rewards or balances, and confirms invalid confirmed calculations cannot reach disk', () => {
   const doc = parseCampaign(JSON.stringify(baseline));
-  expect(doc.schemaVersion).toBe(13);
+  expect(doc.schemaVersion).toBe(16);
   expect(doc.xp).toBeUndefined();
   expect(doc.records).toEqual(baseline.records);
   const tampered = confirmed();

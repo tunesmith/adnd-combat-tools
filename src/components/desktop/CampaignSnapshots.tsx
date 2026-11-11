@@ -1,3 +1,8 @@
+import {
+  bankingReplacementReview,
+  bankHolderName,
+} from '../../helpers/campaignBanking';
+import BankBalances from './BankBalances';
 import { useEffect, useRef, useState } from 'react';
 import HistoricalCombat from './HistoricalCombat';
 import type { CampaignDocument } from '../../helpers/campaignDocument';
@@ -162,11 +167,17 @@ export default function CampaignSnapshots({
     if (
       useImport &&
       type === 'inventory' &&
-      currentInventory &&
+      (currentInventory ||
+        bankingReplacementReview(
+          document,
+          sessionId,
+          preview.payload as unknown as EncumbranceDmDocument
+        ).required) &&
       !confirmed &&
       !(
         target !== 'new' &&
         matches.some((r) => r.id === target) &&
+        currentInventory &&
         ownedHistory(document, 'inventory', currentInventory).records.has(
           target
         )
@@ -198,6 +209,14 @@ export default function CampaignSnapshots({
           importedAt: new Date().toISOString(),
           workingId: uid(),
           checkpointId: uid(),
+          bankingReview:
+            confirmed && type === 'inventory'
+              ? bankingReplacementReview(
+                  document,
+                  sessionId,
+                  preview.payload as unknown as EncumbranceDmDocument
+                ).fingerprint
+              : undefined,
         },
         useImport
       );
@@ -232,7 +251,19 @@ export default function CampaignSnapshots({
         record.id,
         revision.id,
         sessionId,
-        { workingId: uid(), checkpointId: uid(), at: new Date().toISOString() },
+        {
+          workingId: uid(),
+          checkpointId: uid(),
+          at: new Date().toISOString(),
+          bankingReview:
+            activation && record.type === 'inventory'
+              ? bankingReplacementReview(
+                  document,
+                  sessionId,
+                  revision.payload as unknown as EncumbranceDmDocument
+                ).fingerprint
+              : undefined,
+        },
         reuse
       );
       if (await apply(next, token, 'activate-source')) setActivation(false);
@@ -483,6 +514,27 @@ export default function CampaignSnapshots({
             {document.sessions.find((s) => s.id === sessionId)?.label}? Current
             possessions will be preserved in a checkpoint.
           </p>
+          {preview && type === 'inventory' && (
+            <BankBalances
+              label="Import money comparison"
+              rows={bankingReplacementReview(
+                document,
+                sessionId,
+                preview.payload as unknown as EncumbranceDmDocument
+              ).comparison.flatMap((r) => [
+                {
+                  id: r.holderId + '-before',
+                  label: bankHolderName(document, r.holderId) + ' · current',
+                  amounts: r.before,
+                },
+                {
+                  id: r.holderId + '-after',
+                  label: bankHolderName(document, r.holderId) + ' · imported',
+                  amounts: r.after,
+                },
+              ])}
+            />
+          )}
           <button autoFocus onClick={() => setConfirmInventory(false)}>
             Cancel
           </button>
@@ -616,7 +668,15 @@ export default function CampaignSnapshots({
           <button
             disabled={busy || submitting}
             onClick={() => {
-              if (record.type === 'inventory' && currentInventory)
+              if (
+                record.type === 'inventory' &&
+                (currentInventory ||
+                  bankingReplacementReview(
+                    document,
+                    sessionId,
+                    revision.payload as unknown as EncumbranceDmDocument
+                  ).required)
+              )
                 setActivation(true);
               else void openStored();
             }}
@@ -641,6 +701,28 @@ export default function CampaignSnapshots({
                 {document.sessions.find((s) => s.id === sessionId)?.label}?
                 Current possessions will be checkpointed.
               </p>
+              {record.type === 'inventory' && (
+                <BankBalances
+                  label="Stored inventory money comparison"
+                  rows={bankingReplacementReview(
+                    document,
+                    sessionId,
+                    revision.payload as unknown as EncumbranceDmDocument
+                  ).comparison.flatMap((r) => [
+                    {
+                      id: r.holderId + '-before',
+                      label:
+                        bankHolderName(document, r.holderId) + ' · current',
+                      amounts: r.before,
+                    },
+                    {
+                      id: r.holderId + '-after',
+                      label: bankHolderName(document, r.holderId) + ' · stored',
+                      amounts: r.after,
+                    },
+                  ])}
+                />
+              )}
               <button autoFocus onClick={() => setActivation(false)}>
                 Cancel
               </button>

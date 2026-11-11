@@ -1,3 +1,4 @@
+import { pendingXpReward } from './campaignParty';
 import { validHistoricalSessionMove } from './campaignSessionOrder';
 import {
   awardCapBasis,
@@ -431,7 +432,9 @@ export function saveXpReward(
   reward: XpReward,
   correctionPointId?: string
 ): CampaignDocument {
-  const accepted = xpRewardSchema.parse(reward),
+  const accepted = xpRewardSchema.parse(
+      pendingXpReward(doc, reward, !!correctionPointId)
+    ),
     xp = xpLedger(doc);
   if (correctionPointId) {
     const point = xp.points.find((p) => p.id === correctionPointId);
@@ -530,6 +533,26 @@ export function pointRewards(
       fail('Selected reward is missing.')
   );
 }
+export function draftPointRewards(
+  doc: CampaignDocument,
+  point: XpPoint,
+  allowMissing = false
+) {
+  const ids = allowMissing
+    ? point.rewardIds.filter(
+        (id) =>
+          point.rewardOverrides.some((r) => r.id === id) ||
+          xpLedger(doc).rewards.some((r) => r.id === id)
+      )
+    : point.rewardIds;
+  return pointRewards(doc, { ...point, rewardIds: ids }).map((reward) =>
+    pendingXpReward(
+      doc,
+      reward,
+      point.rewardOverrides.some((r) => r.id === reward.id)
+    )
+  );
+}
 export function selectXpRewards(
   doc: CampaignDocument,
   pointId: string,
@@ -545,18 +568,8 @@ export function withXpRewardSelection(
   point: XpPoint,
   rewardIds: string[]
 ): XpPoint {
-  const ids = Array.from(
-    new Set(
-      rewardIds.flatMap(
-        (id) =>
-          (
-            point.rewardOverrides.find((r) => r.id === id) ||
-            xpLedger(doc).rewards.find((r) => r.id === id)
-          )?.recipients
-            .filter((r) => r.eligible)
-            .map((r) => r.characterId) || []
-      )
-    )
+  const ids = eligibleCharacters(
+    draftPointRewards(doc, { ...point, rewardIds }, true)
   );
   const bonuses = ids.map(
     (characterId) =>
@@ -607,7 +620,7 @@ export function stageXpAward(
 ): CampaignDocument {
   let next = doc;
   const overrides = [...draft.rewardOverrides];
-  const selected = pointRewards(doc, draft).flatMap((reward) => {
+  const selected = draftPointRewards(doc, draft).flatMap((reward) => {
     const choice = withXpDisposition(reward, dispositions[reward.id]);
     if (
       choice.input.category === 'treasure' &&
@@ -807,7 +820,7 @@ export function historicalXpPoint(doc: CampaignDocument, point: XpPoint) {
     historicalPosition(
       doc,
       point.position.sessionId,
-      eligibleCharacters(pointRewards(doc, point))
+      eligibleCharacters(draftPointRewards(doc, point))
     )
   );
 }
@@ -876,7 +889,22 @@ function reviewXpAward(
     new Set(point.rewardIds).size !== point.rewardIds.length
   )
     fail('Select rewards once each.');
-  const rewards = pointRewards(doc, point);
+  const originalRewards = pointRewards(doc, point);
+  const rewards = draftPointRewards(doc, point);
+  const overrides = rewards.filter(
+    (reward, i) => reward !== originalRewards[i]
+  );
+  const reviewedPoint = overrides.length
+    ? {
+        ...point,
+        rewardOverrides: [
+          ...point.rewardOverrides.filter(
+            (r) => !overrides.some((o) => o.id === r.id)
+          ),
+          ...overrides,
+        ],
+      }
+    : point;
   if (
     !reconstructing &&
     (historicalXpPoint(doc, point) ||
@@ -936,7 +964,7 @@ function reviewXpAward(
   const rows = calculateXpRows(rewards, point.bonuses, before, caps);
   const revised: XpEvent = {
     id: 'preview',
-    point: clone(point),
+    point: clone(reviewedPoint),
     confirmedAt: '2000-01-01T00:00:00.000Z',
     replaces: point.correctionOf,
     correctionRoot: null,
@@ -973,7 +1001,7 @@ function reviewXpAward(
     });
   }
   const result = {
-    point: clone(point),
+    point: clone(reviewedPoint),
     rewards: clone(rewards),
     rows,
     resolutions: rewards.map(resolveXpReward),
@@ -1030,7 +1058,7 @@ export function confirmXpAward(
   const next = withLedger(doc, {
     ...xp,
     points: xp.points.map((p) =>
-      p.id === pointId ? { ...p, confirmedEventId: eventId } : p
+      p.id === pointId ? { ...preview.point, confirmedEventId: eventId } : p
     ),
     events: [...xp.events, event, ...rebased],
   });
@@ -1102,7 +1130,7 @@ export function previewXpExtension(
     .sort((a, b) => compareXpAwards(doc, a, b));
   const affected = Array.from(
     new Set([
-      ...eligibleCharacters(points.flatMap((p) => pointRewards(doc, p))),
+      ...eligibleCharacters(points.flatMap((p) => draftPointRewards(doc, p))),
       ...request.openings.map((o) => o.characterId),
     ])
   );
@@ -1181,7 +1209,7 @@ export function previewXpExtension(
     },
   };
   for (const point of points) {
-    for (const id of eligibleCharacters(pointRewards(doc, point))) {
+    for (const id of eligibleCharacters(draftPointRewards(doc, point))) {
       const change = changes.find((c) => c.previous.characterId === id);
       if (
         !change ||
@@ -1267,7 +1295,7 @@ export function confirmXpExtension(
     events: [...xp.events, ...events],
     points: xp.points.map((point) => {
       const event = events.find((e) => e.point.id === point.id);
-      return event ? { ...point, confirmedEventId: event.id } : point;
+      return event ? { ...event.point, confirmedEventId: event.id } : point;
     }),
   });
   verifyExtensionCutoffs(next);
@@ -1412,6 +1440,19 @@ export function validateCampaignXp(
     if (!characters.has(id))
       fail('XP requires a stable campaign character identity.');
   };
+  for (const [rewardId, ids] of Object.entries(
+    xp.pendingRecipientResets ?? {}
+  )) {
+    if (
+      !xp.rewards.some((r) => r.id === rewardId) ||
+      !xp.events.some((event) =>
+        event.rewards.some((r) => r.id === rewardId)
+      ) ||
+      new Set(ids).size !== ids.length
+    )
+      fail('Invalid pending XP recipient reset.');
+    ids.forEach(recipient);
+  }
   const openingCharacters = new Set<string>();
   for (const o of xp.openings) {
     unique(o.id);
@@ -1698,6 +1739,18 @@ export function validateXpTransition(
     return;
   }
   for (const event of current.events.slice(previous.events.length)) {
+    if (
+      !event.correctionRoot &&
+      event.rewards.some(
+        (reward) =>
+          pendingXpReward(
+            next,
+            reward,
+            event.point.rewardOverrides.some((r) => r.id === reward.id)
+          ) !== reward
+      )
+    )
+      fail('Award recipients changed before confirmation.');
     if (
       !event.correctionRoot &&
       (historicalXpPoint(next, event.point) ||

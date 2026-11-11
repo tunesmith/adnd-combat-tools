@@ -14,6 +14,11 @@ import {
   calculatedSaves,
   effectiveLevel,
   emptyProfile,
+  copyPartyProfile,
+  priorProfileChoices,
+  rosterEligibleForSession,
+  pendingXpRecipientCount,
+  removePartyProfile,
   profilesInSession,
   updatePartyProfile,
 } from '../../helpers/campaignParty';
@@ -37,6 +42,7 @@ export default function ProfileDialog({
 }) {
   const [draft, setDraft] = useState(profile),
     [identity, setIdentity] = useState(character);
+  const [profileSource, setProfileSource] = useState('');
   const [error, setError] = useState('');
   const dialog = useRef<HTMLElement>(null);
   const trigger = useRef(window.document.activeElement);
@@ -48,16 +54,33 @@ export default function ProfileDialog({
     };
   }, []);
   const manualSaves = calculatedSaves(draft) === null;
-  const saved = document.party?.profiles.some(
-    (p) =>
-      p.sessionId === profile.sessionId && p.characterId === profile.characterId
+  const sessionProfiles = profilesInSession(document, profile.sessionId);
+  const saved = sessionProfiles.some(
+    (p) => p.characterId === profile.characterId
   );
   const existing = (document.party?.roster || []).filter(
     (c) =>
-      !profilesInSession(document, profile.sessionId).some(
-        (p) => p.characterId === c.id
-      )
+      rosterEligibleForSession(document, c, profile.sessionId) &&
+      !sessionProfiles.some((p) => p.characterId === c.id)
   );
+  const sources = saved
+    ? []
+    : priorProfileChoices(document, profile.sessionId, identity.id);
+  const xpPending = pendingXpRecipientCount(document, identity.id);
+  const sessionXpPending = pendingXpRecipientCount(
+    document,
+    identity.id,
+    profile.sessionId
+  );
+
+  function chooseProfile(source?: PartyProfile, id = identity.id) {
+    setProfileSource(source?.sessionId ?? '');
+    setDraft(
+      source
+        ? copyPartyProfile(source, profile.sessionId)
+        : emptyProfile(profile.sessionId, id)
+    );
+  }
   const patch = (changes: Partial<PartyProfile>) =>
     setDraft((p) => ({ ...p, ...changes }));
   function save() {
@@ -126,7 +149,14 @@ export default function ProfileDialog({
                 const chosen =
                   existing.find((c) => c.id === e.target.value) || character;
                 setIdentity(chosen);
-                setDraft(emptyProfile(profile.sessionId, chosen.id));
+                chooseProfile(
+                  priorProfileChoices(
+                    document,
+                    profile.sessionId,
+                    chosen.id
+                  )[0],
+                  chosen.id
+                );
               }}
             >
               <option value="">New identity</option>
@@ -136,6 +166,32 @@ export default function ProfileDialog({
                   {c.player ? ` · ${c.player}` : ''}
                 </option>
               ))}
+            </select>
+          </label>
+        )}
+        {sources.length > 0 && (
+          <label>
+            Starting stats
+            <select
+              value={profileSource}
+              onChange={(e) =>
+                chooseProfile(
+                  sources.find((p) => p.sessionId === e.target.value)
+                )
+              }
+            >
+              {sources.map((source) => (
+                <option key={source.sessionId} value={source.sessionId}>
+                  {source.sessionId === profile.sessionId
+                    ? 'Restore saved profile from '
+                    : 'Copy profile from '}
+                  {
+                    document.sessions.find((s) => s.id === source.sessionId)
+                      ?.label
+                  }
+                </option>
+              ))}
+              <option value="">Blank profile</option>
             </select>
           </label>
         )}
@@ -200,14 +256,6 @@ export default function ProfileDialog({
             value={draft.reference}
             onChange={(reference) => patch({ reference })}
           />
-          <label className={styles['continuationChoice']}>
-            <input
-              type="checkbox"
-              checked={draft.participating}
-              onChange={(e) => patch({ participating: e.target.checked })}
-            />
-            Participating this session
-          </label>
           <label className={styles['sessionNameField']}>
             Temporary +1 level effect
             <input
@@ -355,11 +403,92 @@ export default function ProfileDialog({
               />
             </label>
           </details>
+          <details>
+            <summary>Roster settings</summary>
+            <label className={styles['continuationChoice']}>
+              <input
+                type="checkbox"
+                checked={identity.earnsXp !== false}
+                onChange={(e) =>
+                  setIdentity({ ...identity, earnsXp: e.target.checked })
+                }
+              />
+              <span>Earns XP</span>
+            </label>
+            {identity.earnsXp === false && xpPending > 0 && (
+              <p role="status">
+                Saving will clear Participated and Receives XP on {xpPending}{' '}
+                pending XP {xpPending === 1 ? 'event' : 'events'}.
+              </p>
+            )}
+            {(saved || existing.some((c) => c.id === identity.id)) &&
+              (identity.lastEligibleSessionId ? (
+                <>
+                  <label>
+                    Last eligible session
+                    <select
+                      value={identity.lastEligibleSessionId}
+                      onChange={(e) =>
+                        setIdentity({
+                          ...identity,
+                          lastEligibleSessionId: e.target.value,
+                        })
+                      }
+                    >
+                      {document.sessions.map((s) => (
+                        <option key={s.id} value={s.id}>
+                          {s.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <small>
+                    This session is included. Existing profiles are retained.
+                  </small>
+                </>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() =>
+                    setIdentity({
+                      ...identity,
+                      lastEligibleSessionId: profile.sessionId,
+                    })
+                  }
+                >
+                  Retire from roster
+                </button>
+              ))}
+          </details>
           {error && <p role="alert">{error}</p>}
           <footer className={styles['sessionDialogFooter']}>
             <span>
               Base {draft.baseLevel} · Effective {effectiveLevel(draft)}
             </span>
+            {saved && (
+              <button
+                type="button"
+                title={
+                  sessionXpPending
+                    ? 'Also clears participation and eligibility on pending XP events for this session.'
+                    : undefined
+                }
+                onClick={() => {
+                  if (
+                    onChange((doc) =>
+                      removePartyProfile(
+                        doc,
+                        profile.sessionId,
+                        profile.characterId
+                      )
+                    )
+                  )
+                    onClose();
+                }}
+              >
+                Remove from session
+              </button>
+            )}
             <button type="button" onClick={onClose}>
               Cancel
             </button>

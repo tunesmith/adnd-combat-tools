@@ -10,7 +10,12 @@ export function activateSource(
   recordId: string,
   revisionId: string,
   sessionId: string,
-  ids: { workingId: string; checkpointId: string; at: string },
+  ids: {
+    workingId: string;
+    checkpointId: string;
+    at: string;
+    bankingReview?: string;
+  },
   reuse = true
 ) {
   const record = doc.records.find((r) => r.id === recordId),
@@ -66,7 +71,8 @@ export function activateSource(
       origin,
       ids.workingId,
       ids.checkpointId,
-      ids.at
+      ids.at,
+      ids.bankingReview
     ),
     workspace: { ...doc.workspace, sessionId, view: 'possessions' as const },
   };
@@ -77,6 +83,7 @@ export function importCampaignSource(
   ids: Parameters<typeof captureSnapshot>[2] & {
     workingId: string;
     checkpointId: string;
+    bankingReview?: string;
   },
   use: boolean
 ) {
@@ -95,6 +102,7 @@ export function importCampaignSource(
       workingId: ids.workingId,
       checkpointId: ids.checkpointId,
       at: ids.importedAt,
+      bankingReview: ids.bankingReview,
     },
     captured.duplicate || (!!input.targetId && record.type === 'combat')
   );
@@ -116,7 +124,12 @@ export function activateCheckpoint(
   type: 'combat' | 'inventory',
   checkpointId: string,
   sessionId: string,
-  ids: { workingId: string; checkpointId: string; at: string }
+  ids: {
+    workingId: string;
+    checkpointId: string;
+    at: string;
+    bankingReview?: string;
+  }
 ) {
   const origin = { kind: 'checkpoint' as const, checkpointId };
   if (type === 'combat') {
@@ -141,7 +154,8 @@ export function activateCheckpoint(
       origin,
       ids.workingId,
       ids.checkpointId,
-      ids.at
+      ids.at,
+      ids.bankingReview
     ),
     workspace: { ...doc.workspace, sessionId, view: 'possessions' as const },
   };

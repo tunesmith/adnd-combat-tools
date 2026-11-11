@@ -1,3 +1,4 @@
+import { pendingXpReward } from '../../helpers/campaignParty';
 import XpHistoryExtension from './XpHistoryExtension';
 import XpTimeline from './XpTimeline';
 import XpAwardDialog from './XpAwardDialog';
@@ -604,7 +605,14 @@ export default function CampaignXp({
                 document={projection ?? document}
                 point={projectedPoint ?? point}
                 rewards={rewards.map((r) =>
-                  withXpDisposition(r, dispositions[r.id])
+                  withXpDisposition(
+                    pendingXpReward(
+                      document,
+                      r,
+                      point.rewardOverrides.some((o) => o.id === r.id)
+                    ),
+                    dispositions[r.id]
+                  )
                 )}
                 rows={preview?.rows}
                 onSelect={changeSelection}
@@ -883,6 +891,7 @@ export default function CampaignXp({
           key={`${editor.reward.id}:${editor.pointId || ''}`}
           document={document}
           reward={editor.reward}
+          correction={!!editor.pointId}
           onClose={() => setEditor(undefined)}
           onDelete={
             !editor.pointId &&

@@ -4,8 +4,12 @@ export function reorderCampaignSession(
   fromId: string,
   targetId: string
 ): CampaignDocument {
-  if (doc.xp?.events.length)
-    throw new Error('Session order is fixed after XP confirmation.');
+  if (
+    doc.xp?.events.length ||
+    doc.banking?.entries.length ||
+    doc.banking?.openings.length
+  )
+    throw new Error('Session order is fixed after recorded history.');
   if (fromId === targetId) return doc;
   const from = doc.sessions.find((s) => s.id === fromId),
     target = doc.sessions.findIndex((s) => s.id === targetId);
@@ -27,36 +31,47 @@ export function historicalSessionTargets(
   fromId?: string
 ) {
   const xp = doc.xp;
-  if (!xp?.openings.length) return [];
+  const cutoffs = [
+    ...(xp?.openings.map((o) => o.sessionId) ?? []),
+    ...(doc.banking?.openings.map((o) => o.sessionId) ?? []),
+  ];
+  if (!cutoffs.length) return [];
   if (fromId) {
     const tail = doc.sessions[doc.sessions.length - 1];
     if (
       tail?.id !== fromId ||
       tail.continuation ||
       doc.sessions.some((s) => s.continuation?.sourceSessionId === fromId) ||
-      xp.openings.some((o) => o.sessionId === fromId) ||
-      xp.extensions?.some((e) =>
+      xp?.openings.some((o) => o.sessionId === fromId) ||
+      xp?.extensions?.some((e) =>
         e.openings.some(
           (o) =>
             o.previous.sessionId === fromId ||
             o.replacement.sessionId === fromId
         )
       ) ||
-      xp.events.some(
+      xp?.events.some(
         (e) =>
           e.point.position.sessionId === fromId ||
           e.rewards.some(
             (r) =>
               r.origin.sessionId === fromId || r.evidence.sessionId === fromId
           )
+      ) ||
+      doc.banking?.entries.some((e) => e.sessionId === fromId) ||
+      doc.banking?.openings.some((o) => o.sessionId === fromId) ||
+      doc.banking?.extensions.some((e) =>
+        e.openings.some(
+          (o) =>
+            o.previous.sessionId === fromId ||
+            o.replacement.sessionId === fromId
+        )
       )
     )
       return [];
   }
   const lastCutoff = Math.max(
-    ...xp.openings.map((o) =>
-      doc.sessions.findIndex((s) => s.id === o.sessionId)
-    )
+    ...cutoffs.map((id) => doc.sessions.findIndex((s) => s.id === id))
   );
   return doc.sessions.slice(0, lastCutoff + 1);
 }

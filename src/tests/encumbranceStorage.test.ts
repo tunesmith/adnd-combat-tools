@@ -1,3 +1,4 @@
+import { bankingReplacementReview } from '../helpers/campaignBanking';
 import baseline from './fixtures/campaignB1V2.json';
 import { storageInventory } from './fixtures/storageInventory';
 import {
@@ -218,7 +219,7 @@ test('V8 migration preserves original revisions and historical documents while o
     ],
   };
   const migrated = parseCampaign(JSON.stringify(old));
-  expect(migrated.schemaVersion).toBe(13);
+  expect(migrated.schemaVersion).toBe(16);
   expect(migrated.records).toEqual(baseline.records);
   expect(migrated.inventoryCheckpoints[0]?.document).toEqual(oldInventory);
   expect(migrated.workingInventories[0]?.document).toEqual({
@@ -292,7 +293,12 @@ test('storage checkpoints, restore, save/reopen and explicit session carry remai
     { kind: 'checkpoint', checkpointId: 'checkpoint' },
     'restored',
     'before-restore',
-    at
+    at,
+    bankingReplacementReview(
+      reopened,
+      'session-2',
+      required(reopened.inventoryCheckpoints[0]).document
+    ).fingerprint
   );
   expect(
     restored.workingInventories.find((w) => w.id === 'restored')?.document

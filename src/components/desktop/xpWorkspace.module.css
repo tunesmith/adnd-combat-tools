@@ -439,3 +439,51 @@
   font: inherit;
   text-align: left;
 }
+
+.modal .addBankRow {
+  align-self: flex-start;
+}
+.bankCaption,
+.bankSummaryTitle {
+  text-align: left;
+  font-size: 14px;
+  font-weight: 600;
+  color: #443b2c;
+  margin: 0;
+  padding: 0 0 6px;
+}
+
+.bankBalances {
+  table-layout: fixed;
+  min-width: 760px;
+}
+.bankHolderColumn {
+  width: 28%;
+}
+.bankTotalColumn {
+  width: 16%;
+}
+.bankBalances td:not(:first-child),
+.bankBalances thead th:not(:first-child) {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.bankBalances .bankTotalCell {
+  border-left: 1px solid #d8ccbc;
+  background: #f3eee4;
+  font-weight: 600;
+}
+.bankBalances tfoot th,
+.bankBalances tfoot td {
+  border-top: 2px solid #b8a98e;
+  background: #ede6d9;
+  font-weight: 600;
+}
+.bankBalances tfoot .bankTotalCell {
+  background: #e8dfcf;
+}
+
+.bankDifference {
+  display: grid;
+  gap: 8px;
+}

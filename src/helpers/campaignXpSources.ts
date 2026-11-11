@@ -1,3 +1,4 @@
+import { profilesInSession, xpRecipientAvailable } from './campaignParty';
 import { xpExact, xpMultiply, xpNumber } from './xpArithmetic';
 import { ownedHistory } from './campaignHistory';
 import type { CampaignDocument } from './campaignDocument';
@@ -15,11 +16,9 @@ function defaultXpRecipients(
   doc: CampaignDocument,
   sessionId: string
 ): XpRecipient[] {
-  return (
-    doc.party?.profiles.filter((p) => p.sessionId === sessionId) || []
-  ).flatMap((p) => {
+  return profilesInSession(doc, sessionId).flatMap((p) => {
     const c = doc.party?.roster.find((c) => c.id === p.characterId);
-    return c
+    return c && xpRecipientAvailable(doc, sessionId, c.id)
       ? [
           {
             characterId: c.id,

@@ -180,7 +180,6 @@ export default function PartyReference({
                             level !== p.baseLevel ? ` → ${level}` : ''
                           }`,
                           !saves ? 'Manual saves' : '',
-                          !p.participating ? 'Not participating' : '',
                         ]
                           .filter(Boolean)
                           .join(' · ')}

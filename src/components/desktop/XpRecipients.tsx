@@ -1,3 +1,4 @@
+import { xpRecipientAvailable } from '../../helpers/campaignParty';
 import { useState } from 'react';
 import type { CampaignDocument } from '../../helpers/campaignDocument';
 import type { XpReward, XpRecipient } from '../../helpers/campaignXpModel';
@@ -24,6 +25,17 @@ export default function XpRecipients({
   reward: XpReward;
   onChange: (reward: XpReward) => void;
 }) {
+  const available = (id: string) =>
+    xpRecipientAvailable(document, reward.origin.sessionId, id);
+  const visibleRecipients = reward.recipients.filter((r) =>
+    available(r.characterId)
+  );
+  const candidates =
+    document.party?.roster.filter(
+      (c) =>
+        available(c.id) &&
+        !reward.recipients.some((r) => r.characterId === c.id)
+    ) ?? [];
   const [adjusting, setAdjusting] = useState(false);
   const [ratioEdit, setRatioEdit] = useState(false);
   const [ratio, setRatio] = useState('');
@@ -87,11 +99,13 @@ export default function XpRecipients({
       ? xpDivide(xpNumber(challenge.difficulty), xpNumber(challenge.levels))
       : null;
   const allChecked = (key: 'participated' | 'eligible') =>
-    reward.recipients.length > 0 && reward.recipients.every((r) => r[key]);
+    visibleRecipients.length > 0 && visibleRecipients.every((r) => r[key]);
   const toggleAll = (key: 'participated' | 'eligible', checked: boolean) =>
     onChange({
       ...reward,
-      recipients: reward.recipients.map((r) => ({ ...r, [key]: checked })),
+      recipients: reward.recipients.map((r) =>
+        available(r.characterId) ? { ...r, [key]: checked } : r
+      ),
     });
   return (
     <>
@@ -152,7 +166,7 @@ export default function XpRecipients({
             </tr>
           </thead>
           <tbody>
-            {reward.recipients.map((r) => {
+            {visibleRecipients.map((r) => {
               const a = result?.allocations.find(
                 (a) => a.characterId === r.characterId
               );
@@ -224,16 +238,12 @@ export default function XpRecipients({
       {notes.length > 0 && (
         <p className={styles['muted']}>{notes.join(' · ')}</p>
       )}
-      {document.party?.roster.some(
-        (c) => !reward.recipients.some((r) => r.characterId === c.id)
-      ) && (
+      {candidates.length > 0 && (
         <select
           aria-label="Add XP recipient"
           value=""
           onChange={(e) => {
-            const c = document.party?.roster.find(
-              (c) => c.id === e.target.value
-            );
+            const c = candidates.find((c) => c.id === e.target.value);
             if (!c) return;
             const p = document.party?.profiles.find(
               (p) =>
@@ -259,15 +269,11 @@ export default function XpRecipients({
           }}
         >
           <option value="">+ Recipient…</option>
-          {document.party?.roster
-            .filter(
-              (c) => !reward.recipients.some((r) => r.characterId === c.id)
-            )
-            .map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
+          {candidates.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.name}
+            </option>
+          ))}
         </select>
       )}
       <div className={styles['challenge']}>
@@ -395,8 +401,18 @@ export default function XpRecipients({
       </div>
       {adjusting && (
         <XpAdjustment
-          reward={reward}
-          onChange={onChange}
+          reward={{ ...reward, recipients: visibleRecipients }}
+          onChange={(adjustedReward) =>
+            onChange({
+              ...adjustedReward,
+              recipients: reward.recipients.map(
+                (r) =>
+                  adjustedReward.recipients.find(
+                    (updated) => updated.characterId === r.characterId
+                  ) ?? r
+              ),
+            })
+          }
           onClose={() => setAdjusting(false)}
         />
       )}

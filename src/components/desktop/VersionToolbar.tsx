@@ -11,6 +11,7 @@ export default function VersionToolbar({
   replacementName,
   firstActivation,
   secondaryActions,
+  replacementDetails,
 }: {
   versions: { id: string; title: string; time: string }[];
   value: string;
@@ -21,6 +22,7 @@ export default function VersionToolbar({
   replacementName?: string;
   firstActivation?: boolean;
   secondaryActions?: ReactNode;
+  replacementDetails?: ReactNode;
 }) {
   const menu = useRef<HTMLDetailsElement>(null);
   const openAction = (next: 'capture' | 'restore') => {
@@ -112,6 +114,7 @@ export default function VersionToolbar({
                 version? Current work will be preserved in a checkpoint.
               </p>
             )}
+            {action === 'restore' && replacementDetails}
             <button
               autoFocus={action === 'restore'}
               onClick={() => setAction(null)}

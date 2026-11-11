@@ -1,3 +1,4 @@
+import { xpRecipientAvailable } from '../../helpers/campaignParty';
 import { awardCapBasis } from '../../helpers/campaignXpCap';
 import type { CampaignDocument } from '../../helpers/campaignDocument';
 import type {
@@ -64,19 +65,27 @@ export default function XpAwardTable({
       : Array.from(
           new Map(
             rewards.flatMap((r) =>
-              r.recipients.map(
-                (c) =>
-                  [
-                    c.characterId,
-                    {
-                      id: c.characterId,
-                      name:
-                        point.bonuses.find(
-                          (b) => b.characterId === c.characterId
-                        )?.name || c.name,
-                    },
-                  ] as const
-              )
+              r.recipients
+                .filter((c) =>
+                  xpRecipientAvailable(
+                    document,
+                    r.origin.sessionId,
+                    c.characterId
+                  )
+                )
+                .map(
+                  (c) =>
+                    [
+                      c.characterId,
+                      {
+                        id: c.characterId,
+                        name:
+                          point.bonuses.find(
+                            (b) => b.characterId === c.characterId
+                          )?.name || c.name,
+                      },
+                    ] as const
+                )
             )
           ).values()
         );

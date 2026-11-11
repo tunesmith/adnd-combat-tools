@@ -1,9 +1,18 @@
+import {
+  campaignBankingSchema,
+  legacyCampaignBankingSchema,
+} from './campaignBankingModel';
+import type { CampaignBanking } from './campaignBankingModel';
+import { validateCampaignBanking } from './campaignBanking';
 import { migrateXpTimeline } from './campaignXpTimeline';
 import { campaignXpSchema, legacyCampaignXpSchema } from './campaignXpModel';
 import type { CampaignXp } from './campaignXpModel';
 import { validateCampaignXp } from './campaignXp';
 import { parseEncumbranceDocument } from './encumbranceDocument';
-import { campaignPartySchema } from './campaignPartyModel';
+import {
+  campaignPartySchema,
+  legacyCampaignPartySchema,
+} from './campaignPartyModel';
 import type { CampaignParty } from './campaignPartyModel';
 import { validatePartyReferences } from './campaignParty';
 import { validateContinuationReferences } from './campaignContinuity';
@@ -38,8 +47,9 @@ import {
 import type { CampaignRecord, CampaignSession } from './campaignSnapshots';
 export interface CampaignDocument {
   kind: 'adnd-campaign';
-  schemaVersion: 13;
+  schemaVersion: 16;
   xp?: CampaignXp;
+  banking?: CampaignBanking;
   party?: CampaignParty;
   workingCombats: WorkingCombat[];
   combatCheckpoints: CombatCheckpoint[];
@@ -129,7 +139,7 @@ const v5 = v4
 const v6 = v5
   .extend({
     schemaVersion: z.literal(6),
-    party: campaignPartySchema
+    party: legacyCampaignPartySchema
       .extend({ inventoryLinks: z.tuple([]), combatLinks: z.tuple([]) })
       .transform(({ roster, profiles }) => ({ roster, profiles }))
       .optional(),
@@ -157,7 +167,7 @@ const v6 = v5
   .strict();
 const v7 = v6.extend({
   schemaVersion: z.literal(7),
-  party: campaignPartySchema.optional(),
+  party: legacyCampaignPartySchema.optional(),
 });
 const v8 = v7.extend({ schemaVersion: z.literal(8) });
 const v9 = v8.extend({ schemaVersion: z.literal(9) });
@@ -182,13 +192,45 @@ const v10 = v9.extend({
 
 const v11 = v10.extend({
   schemaVersion: z.literal(11),
-  xp: campaignXpSchema.omit({ extensions: true }).optional(),
+  xp: campaignXpSchema
+    .omit({ extensions: true, pendingRecipientResets: true })
+    .optional(),
 });
 
 const v12 = v11.extend({ schemaVersion: z.literal(12) });
 const v13 = v12.extend({
   schemaVersion: z.literal(13),
+  xp: campaignXpSchema.omit({ pendingRecipientResets: true }).optional(),
+});
+const v14 = v13.extend({
+  schemaVersion: z.literal(14),
+  party: campaignPartySchema.optional(),
   xp: campaignXpSchema.optional(),
+});
+
+const v15 = v14.extend({
+  schemaVersion: z.literal(15),
+  banking: legacyCampaignBankingSchema.optional(),
+  workspace: v14.shape.workspace
+    .extend({
+      view: z.enum([
+        'possessions',
+        'combats',
+        'history',
+        'details',
+        'tools',
+        'session',
+        'party',
+        'xp',
+        'banking',
+      ]),
+    })
+    .strict(),
+});
+
+const v16 = v15.extend({
+  schemaVersion: z.literal(16),
+  banking: campaignBankingSchema.optional(),
 });
 
 export function validateCampaign(value: unknown): CampaignDocument {
@@ -210,10 +252,13 @@ export function validateCampaign(value: unknown): CampaignDocument {
     header['schemaVersion'] !== 10 &&
     header['schemaVersion'] !== 11 &&
     header['schemaVersion'] !== 12 &&
-    header['schemaVersion'] !== 13
+    header['schemaVersion'] !== 13 &&
+    header['schemaVersion'] !== 14 &&
+    header['schemaVersion'] !== 15 &&
+    header['schemaVersion'] !== 16
   )
     throw new Error(
-      'Unsupported campaign schema version. This app supports versions 1 through 13.'
+      'Unsupported campaign schema version. This app supports versions 1 through 16.'
     );
   if (
     value &&
@@ -222,7 +267,7 @@ export function validateCampaign(value: unknown): CampaignDocument {
   ) {
     return {
       ...v1.parse(value),
-      schemaVersion: 13,
+      schemaVersion: 16,
       workingCombats: [],
       combatCheckpoints: [],
       sessions: [],
@@ -261,7 +306,13 @@ export function validateCampaign(value: unknown): CampaignDocument {
       ? v11.parse(value)
       : header['schemaVersion'] === 12
       ? v12.parse(value)
-      : v13.parse(value);
+      : header['schemaVersion'] === 13
+      ? v13.parse(value)
+      : header['schemaVersion'] === 14
+      ? v14.parse(value)
+      : header['schemaVersion'] === 15
+      ? v15.parse(value)
+      : v16.parse(value);
   const migrated =
     legacy.schemaVersion === 3
       ? {
@@ -275,7 +326,7 @@ export function validateCampaign(value: unknown): CampaignDocument {
   const parsed = (migrated.schemaVersion === 4
     ? {
         ...migrated,
-        schemaVersion: 13 as const,
+        schemaVersion: 16 as const,
         sessions: migrated.sessions.map((s) => ({ ...s, notes: '' })),
         workingCombats: migrated.workingCombats.map((c) => ({
           ...c,
@@ -285,7 +336,7 @@ export function validateCampaign(value: unknown): CampaignDocument {
       }
     : {
         ...migrated,
-        schemaVersion: 13 as const,
+        schemaVersion: 16 as const,
       }) as unknown as CampaignDocument;
   if (Number(header['schemaVersion']) < 9)
     parsed.workingInventories = parsed.workingInventories.map((w) => {
@@ -424,6 +475,7 @@ export function validateCampaign(value: unknown): CampaignDocument {
   validatePartyReferences(parsed, unique);
   validateContinuationReferences(parsed);
   if (parsed.xp) parsed.xp = migrateXpTimeline(parsed.xp);
+  validateCampaignBanking(parsed, unique);
   validateCampaignXp(parsed, unique);
   return parsed;
 }

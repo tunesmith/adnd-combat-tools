@@ -239,6 +239,8 @@ export const campaignXpSchema = z
     sessionOrder: z.array(id).max(500),
     openings: z.array(xpOpeningSchema).max(500),
     extensions: z.array(xpExtensionSchema).max(500).optional(),
+    // Only needed when a correction releases a reward whose original source is frozen.
+    pendingRecipientResets: z.record(z.array(id).max(500)).optional(),
     rewards: z.array(xpRewardSchema).max(2000),
     points: z.array(xpPointSchema).max(1000),
     events: z.array(xpEventSchema).max(2000),
@@ -256,5 +258,5 @@ export const emptyCampaignXp = (): CampaignXp => ({
 });
 
 export const legacyCampaignXpSchema = campaignXpSchema
-  .omit({ timeline: true, extensions: true })
+  .omit({ timeline: true, extensions: true, pendingRecipientResets: true })
   .extend({ version: z.literal(1) });

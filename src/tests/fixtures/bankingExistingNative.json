@@ -1,0 +1,312 @@
+{
+  "kind": "adnd-campaign",
+  "id": "synthetic-existing-money",
+  "title": "Synthetic SOCK Day1 existing money",
+  "notes": "",
+  "schemaVersion": 16,
+  "workingCombats": [],
+  "combatCheckpoints": [],
+  "sessions": [
+    {
+      "id": "day1",
+      "label": "Day 1"
+    }
+  ],
+  "records": [],
+  "workingInventories": [
+    {
+      "id": "day1-possessions",
+      "sessionId": "day1",
+      "title": "Working possessions",
+      "document": {
+        "kind": "adnd-encumbrance-dm",
+        "version": 10,
+        "activeCharacterId": "reatha-inventory",
+        "characters": [
+          {
+            "id": "reatha-inventory",
+            "name": "Reatha",
+            "strength": {
+              "score": 18,
+              "exceptional": "none"
+            },
+            "inventory": [
+              {
+                "id": "pouch-a",
+                "catalogId": "synthetic-large-container",
+                "quantity": 1,
+                "containerId": null,
+                "day": 0,
+                "playerNotes": "",
+                "playerMagicKnowledge": "known-mundane",
+                "playerKnowsValue": true,
+                "name": "Pouch A",
+                "customItem": {
+                  "id": "synthetic-large-container",
+                  "name": "Synthetic container",
+                  "category": "containers",
+                  "encumbranceGp": 10,
+                  "valueGp": 1,
+                  "isContainer": true,
+                  "capacityGp": 2000
+                }
+              },
+              {
+                "id": "pouch-b",
+                "catalogId": "synthetic-large-container",
+                "quantity": 1,
+                "containerId": null,
+                "day": 0,
+                "playerNotes": "",
+                "playerMagicKnowledge": "known-mundane",
+                "playerKnowsValue": true,
+                "name": "Pouch B",
+                "customItem": {
+                  "id": "synthetic-large-container",
+                  "name": "Synthetic container",
+                  "category": "containers",
+                  "encumbranceGp": 10,
+                  "valueGp": 1,
+                  "isContainer": true,
+                  "capacityGp": 2000
+                }
+              },
+              {
+                "id": "chest",
+                "catalogId": "synthetic-large-container",
+                "quantity": 1,
+                "containerId": null,
+                "day": 0,
+                "playerNotes": "",
+                "playerMagicKnowledge": "known-mundane",
+                "playerKnowsValue": true,
+                "name": "Invisible chest",
+                "customItem": {
+                  "id": "synthetic-large-container",
+                  "name": "Synthetic container",
+                  "category": "containers",
+                  "encumbranceGp": 10,
+                  "valueGp": 1,
+                  "isContainer": true,
+                  "capacityGp": 2000
+                }
+              },
+              {
+                "id": "electrum-300",
+                "catalogId": "coin-electrum",
+                "quantity": 300,
+                "containerId": "pouch-a",
+                "day": 0,
+                "playerNotes": "",
+                "playerMagicKnowledge": "known-mundane",
+                "playerKnowsValue": true,
+                "name": "$ - Electrum piece"
+              },
+              {
+                "id": "electrum-400",
+                "catalogId": "coin-electrum",
+                "quantity": 400,
+                "containerId": "pouch-b",
+                "day": 0,
+                "playerNotes": "",
+                "playerMagicKnowledge": "known-mundane",
+                "playerKnowsValue": true,
+                "name": "$ - Electrum piece"
+              },
+              {
+                "id": "silver-1000",
+                "catalogId": "coin-silver",
+                "quantity": 1000,
+                "containerId": "chest",
+                "day": 0,
+                "playerNotes": "",
+                "playerMagicKnowledge": "known-mundane",
+                "playerKnowsValue": true,
+                "name": "$ - Silver piece"
+              },
+              {
+                "id": "gold-250",
+                "catalogId": "coin-gold",
+                "quantity": 250,
+                "containerId": "chest",
+                "day": 0,
+                "playerNotes": "",
+                "playerMagicKnowledge": "known-mundane",
+                "playerKnowsValue": true,
+                "name": "$ - Gold piece"
+              }
+            ],
+            "dmNotes": ""
+          },
+          {
+            "id": "vitameno-inventory",
+            "name": "Vitameno",
+            "strength": {
+              "score": 10,
+              "exceptional": "none"
+            },
+            "inventory": [
+              {
+                "id": "electrum-50",
+                "catalogId": "coin-electrum",
+                "quantity": 50,
+                "containerId": null,
+                "day": 0,
+                "playerNotes": "",
+                "playerMagicKnowledge": "known-mundane",
+                "playerKnowsValue": true,
+                "name": "$ - Electrum piece"
+              }
+            ],
+            "dmNotes": ""
+          }
+        ],
+        "storageLocations": [
+          {
+            "id": "castle-storage",
+            "name": "Castle Kifu",
+            "notes": "",
+            "inventory": []
+          }
+        ]
+      },
+      "origin": {
+        "kind": "empty"
+      }
+    }
+  ],
+  "inventoryCheckpoints": [],
+  "workspace": {
+    "sessionId": null,
+    "view": "possessions",
+    "combatSelections": {}
+  },
+  "xp": {
+    "version": 2,
+    "timeline": {},
+    "sessionOrder": [],
+    "openings": [],
+    "rewards": [],
+    "points": [],
+    "events": []
+  },
+  "banking": {
+    "version": 1,
+    "openings": [
+      {
+        "id": "opening-reatha-inventory",
+        "holderId": "reatha-inventory",
+        "sessionId": "day1",
+        "phase": "before",
+        "amounts": {
+          "cp": 0,
+          "sp": 0,
+          "ep": 0,
+          "gp": 0,
+          "pp": 0,
+          "diamond": 0,
+          "emerald": 0
+        },
+        "note": "Known zero before Day1"
+      },
+      {
+        "id": "opening-vitameno-inventory",
+        "holderId": "vitameno-inventory",
+        "sessionId": "day1",
+        "phase": "before",
+        "amounts": {
+          "cp": 0,
+          "sp": 0,
+          "ep": 0,
+          "gp": 0,
+          "pp": 0,
+          "diamond": 0,
+          "emerald": 0
+        },
+        "note": "Known zero before Day1"
+      },
+      {
+        "id": "opening-castle-storage",
+        "holderId": "castle-storage",
+        "sessionId": "day1",
+        "phase": "before",
+        "amounts": {
+          "cp": 0,
+          "sp": 0,
+          "ep": 0,
+          "gp": 0,
+          "pp": 0,
+          "diamond": 0,
+          "emerald": 0
+        },
+        "note": "Known zero before Day1"
+      }
+    ],
+    "entries": [
+      {
+        "id": "native-existing-receipt",
+        "transactionId": "bureau-receipt",
+        "replaces": null,
+        "sessionId": "day1",
+        "order": 0,
+        "description": "Bureau treasure — 750 electrum",
+        "kind": "income",
+        "status": "posted",
+        "effect": "ledger",
+        "receiptMode": "existing",
+        "changes": [
+          {
+            "holderId": "reatha-inventory",
+            "denomination": "ep",
+            "item": {
+              "id": "electrum-300",
+              "catalogId": "coin-electrum",
+              "quantity": 300,
+              "containerId": "pouch-a",
+              "day": 0,
+              "playerNotes": "",
+              "playerMagicKnowledge": "known-mundane",
+              "playerKnowsValue": true,
+              "name": "$ - Electrum piece"
+            },
+            "quantity": 300
+          },
+          {
+            "holderId": "reatha-inventory",
+            "denomination": "ep",
+            "item": {
+              "id": "electrum-400",
+              "catalogId": "coin-electrum",
+              "quantity": 400,
+              "containerId": "pouch-b",
+              "day": 0,
+              "playerNotes": "",
+              "playerMagicKnowledge": "known-mundane",
+              "playerKnowsValue": true,
+              "name": "$ - Electrum piece"
+            },
+            "quantity": 400
+          },
+          {
+            "holderId": "vitameno-inventory",
+            "denomination": "ep",
+            "item": {
+              "id": "electrum-50",
+              "catalogId": "coin-electrum",
+              "quantity": 50,
+              "containerId": null,
+              "day": 0,
+              "playerNotes": "",
+              "playerMagicKnowledge": "known-mundane",
+              "playerKnowsValue": true,
+              "name": "$ - Electrum piece"
+            },
+            "quantity": 50
+          }
+        ],
+        "at": "2026-11-10T12:00:00.000Z"
+      }
+    ],
+    "extensions": []
+  }
+}
