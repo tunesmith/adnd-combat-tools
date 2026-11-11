@@ -15,7 +15,7 @@ describe('campaign document envelope', () => {
     expect(parseCampaign(serializeCampaign(validateCampaign(example)))).toEqual(
       {
         ...example,
-        schemaVersion: 16,
+        schemaVersion: 17,
         workingCombats: [],
         combatCheckpoints: [],
         workingInventories: [],
@@ -34,7 +34,7 @@ describe('campaign document envelope', () => {
     ['malformed JSON', '{broken', 'Invalid JSON'],
     [
       'future schema',
-      JSON.stringify({ ...example, schemaVersion: 17 }),
+      JSON.stringify({ ...example, schemaVersion: 18 }),
       'schema version',
     ],
     [

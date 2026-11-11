@@ -21,7 +21,7 @@ import {
 } from '../helpers/campaignXpTimeline';
 test('old XP ordering migrates into a shared list without rewriting accepted data or balances', () => {
   const doc = parseCampaign(JSON.stringify(replay.confirmed));
-  expect(doc.schemaVersion).toBe(16);
+  expect(doc.schemaVersion).toBe(17);
   expect(doc.xp?.version).toBe(2);
   expect(xpTimelineEntries(doc, 'session-1').map((e) => e.id)).toEqual([
     'raiders',

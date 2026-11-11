@@ -309,7 +309,7 @@ test('receipts retain inspectable evidence after spending or moving stacks; forg
   ).toThrow('keeps its possessions mode');
   expect(() =>
     previewBankTransaction(doc, { ...request, kind: 'transfer' })
-  ).toThrow('income or refunds');
+  ).toThrow('receipt or transfer type');
   const source = existingBankFixture(),
     fresh = previewBankTransaction(source, bureauReceipt(source));
   const increased = accept(source, {
@@ -385,7 +385,7 @@ test('V15 ordinary and reconciliation records migrate without being reinterprete
   );
   const legacy = { ...balanced, schemaVersion: 15 };
   const loaded = parseCampaign(JSON.stringify(legacy));
-  expect(loaded.schemaVersion).toBe(16);
+  expect(loaded.schemaVersion).toBe(17);
   expect(loaded.banking).toEqual(balanced.banking);
   expect(loaded.banking?.entries[0]?.receiptMode).toBeUndefined();
   expect(bankBoundaryDifference(loaded, 'day1')).toEqual([]);

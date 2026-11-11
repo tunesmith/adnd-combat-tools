@@ -328,7 +328,7 @@ test('V1–V4 migrate without changing evidence/IDs/checkpoints and never infer 
   for (const old of variants) {
     const bytes = JSON.stringify(old),
       migrated = parseCampaign(bytes);
-    expect(migrated.schemaVersion).toBe(16);
+    expect(migrated.schemaVersion).toBe(17);
     expect(migrated.id).toBe(source.id);
     expect(migrated.sessions.every((s) => s.notes === '')).toBe(true);
     expect(

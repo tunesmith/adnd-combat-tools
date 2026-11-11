@@ -350,28 +350,33 @@ function validateChanges(entry: BankEntry) {
     throw Error('Enter a transaction description.');
   const total = bankChangesAmounts(entry.changes);
   if (entry.receiptMode === 'existing') {
+    const transfer = entry.kind === 'transfer';
     if (
       entry.effect !== 'ledger' ||
-      !['income', 'refund'].includes(entry.kind) ||
+      (!transfer && !['income', 'refund'].includes(entry.kind)) ||
       entry.changes.some(
-        (c) => !Number.isSafeInteger(c.quantity) || c.quantity <= 0 || c.fee
+        (c) =>
+          !Number.isSafeInteger(c.quantity) ||
+          c.quantity === 0 ||
+          c.fee ||
+          (!transfer && c.quantity < 0)
       )
     )
       throw Error(
-        'Already recorded in possessions is for positive income or refunds with a ledger-only effect.'
+        'Already recorded in possessions supports income, refunds and balanced transfers.'
       );
+    if (transfer) validateExistingTransferPairs(entry.changes);
     const keys = Array.from(new Set(entry.changes.map(receiptStackKey)));
     for (const key of keys) {
-      const parts = entry.changes.filter((c) => receiptStackKey(c) === key);
-      const snapshot = parts[0]?.item;
+      const parts = entry.changes.filter((c) => receiptStackKey(c) === key),
+        snapshot = parts[0]?.item;
       if (
         !snapshot ||
         parts.some((c) => canonical(c.item) !== canonical(snapshot)) ||
-        parts.reduce((sum, c) => safe(sum + c.quantity), 0) > snapshot.quantity
+        parts.reduce((sum, c) => safe(sum + Math.abs(c.quantity)), 0) >
+          snapshot.quantity
       )
-        throw Error(
-          'Receipt allocations exceed their recorded stack evidence.'
-        );
+        throw Error('Allocations exceed their recorded quantity evidence.');
     }
   }
   if (
@@ -464,7 +469,7 @@ export function existingMoneyAvailability(
   const actual = moneyStacks(reference);
   const prior =
     previous?.receiptMode === 'existing' && previous.status !== 'void'
-      ? previous.changes
+      ? previous.changes.filter((change) => change.quantity > 0)
       : [];
   const holders = Array.from(
     new Set([...actual.map((s) => s.holderId), ...prior.map((c) => c.holderId)])
@@ -578,6 +583,169 @@ export function existingMoneyAvailability(
   return { stacks: result, limits };
 }
 
+function validateExistingTransferPairs(changes: BankChange[]) {
+  if (
+    changes.length % 2 !== 0 ||
+    changes.some((change, index) => {
+      if (index % 2 !== 0) return false;
+      const incoming = changes[index + 1];
+      return (
+        !incoming ||
+        change.quantity >= 0 ||
+        incoming.quantity <= 0 ||
+        change.quantity !== -incoming.quantity ||
+        change.denomination !== incoming.denomination ||
+        change.holderId === incoming.holderId
+      );
+    })
+  )
+    throw Error(
+      'Pair each outgoing holder with an equal incoming quantity of the same denomination.'
+    );
+}
+
+export function bankBalanceSourceItem(
+  holderId: string,
+  code: BankDenomination,
+  quantity: number
+) {
+  return {
+    ...newBankMoneyItem(code, 'ledger-balance:' + holderId + ':' + code),
+    name: 'Recorded ledger balance',
+    quantity: Math.max(1, quantity),
+  };
+}
+
+export function existingTransferSources(
+  doc: CampaignDocument,
+  sessionId: string,
+  transactionId?: string
+) {
+  const ledger = bankLedger(doc),
+    previous = transactionId
+      ? currentTransaction(doc, transactionId)
+      : undefined;
+  const working = doc.workingInventories.find((w) => w.sessionId === sessionId);
+  if (!working)
+    throw Error('Create or import this session’s possessions first.');
+  const prior =
+    previous?.receiptMode === 'existing' &&
+    previous.kind === 'transfer' &&
+    previous.status !== 'void'
+      ? previous.changes.filter((c) => c.quantity < 0)
+      : [];
+  const holders = Array.from(
+    new Set([
+      ...ledger.openings.map((o) => o.holderId),
+      ...bankHolders(working.document).map((h) => h.id),
+      ...prior.map((c) => c.holderId),
+    ])
+  );
+  const basis = previous
+    ? {
+        ...doc,
+        banking: {
+          ...ledger,
+          entries: ledger.entries.filter(
+            (e) => e.transactionId !== previous.transactionId
+          ),
+        },
+      }
+    : doc;
+  return holders.map((holderId) => {
+    const recorded = bankBalance(doc, holderId, sessionId),
+      physical = holderMoney(working.document, holderId);
+    const old = bankChangesAmounts(prior, holderId),
+      before = bankBalance(basis, holderId, sessionId);
+    const amounts = zeroBankAmounts();
+    for (const code of bankDenominations)
+      amounts[code] =
+        recorded[code] === null
+          ? null
+          : safe(
+              Math.max(0, (recorded[code] ?? 0) - (physical[code] ?? 0)) -
+                (old[code] ?? 0)
+            );
+    return { holderId, amounts, recorded: before };
+  });
+}
+
+function reviewedExistingTransferChanges(
+  doc: CampaignDocument,
+  request: BankTransactionRequest,
+  previous: BankEntry | undefined
+) {
+  validateExistingTransferPairs(request.changes);
+  const sources = existingTransferSources(
+    doc,
+    request.sessionId,
+    previous?.transactionId
+  );
+  const outgoing = request.changes.filter((c) => c.quantity < 0);
+  for (const source of sources) {
+    const proposed = bankChangesAmounts(outgoing, source.holderId);
+    for (const code of bankDenominations)
+      if (
+        (proposed[code] ?? 0) < 0 &&
+        (source.amounts[code] === null ||
+          -(proposed[code] ?? 0) > (source.amounts[code] ?? 0))
+      )
+        throw Error(
+          `The ${code} transfer exceeds this holder’s remaining outgoing difference.`
+        );
+  }
+  if (
+    outgoing.some(
+      (c) => !sources.some((source) => source.holderId === c.holderId)
+    )
+  )
+    throw Error('Choose a holder with recorded money to transfer.');
+  const incoming = reviewedReceiptChanges(
+    doc,
+    { ...request, changes: request.changes.filter((c) => c.quantity > 0) },
+    previous
+  );
+  let incomingIndex = 0;
+  return request.changes.map((change) => {
+    if (change.quantity > 0) {
+      const reviewed = incoming[incomingIndex++];
+      if (!reviewed) throw Error('Incoming allocation changed.');
+      return reviewed;
+    }
+    const source = sources.find((s) => s.holderId === change.holderId);
+    const quantity = source?.recorded[change.denomination];
+    if (quantity === undefined || quantity === null || quantity < 0)
+      throw Error('Establish known balances before recording this transfer.');
+    const oldParts =
+      previous?.changes.filter(
+        (c) =>
+          c.quantity < 0 &&
+          c.holderId === change.holderId &&
+          c.denomination === change.denomination
+      ) ?? [];
+    const oldQuantity = oldParts.reduce((sum, c) => safe(sum - c.quantity), 0);
+    const requested = outgoing
+      .filter(
+        (c) =>
+          c.holderId === change.holderId &&
+          c.denomination === change.denomination
+      )
+      .reduce((sum, c) => safe(sum - c.quantity), 0);
+    const evidence = oldParts[0]?.item;
+    return {
+      ...change,
+      item:
+        evidence && requested <= oldQuantity
+          ? { ...evidence }
+          : bankBalanceSourceItem(
+              change.holderId,
+              change.denomination,
+              quantity
+            ),
+    };
+  });
+}
+
 function reviewedReceiptChanges(
   doc: CampaignDocument,
   request: BankTransactionRequest,
@@ -666,6 +834,13 @@ export function previewBankTransaction(
     throw Error(
       'A saved transaction keeps its possessions mode. Delete it before recording it in a different mode.'
     );
+  if (
+    previous?.receiptMode === 'existing' &&
+    (previous.kind === 'transfer') !== (request.kind === 'transfer')
+  )
+    throw Error(
+      'A saved existing-money transaction keeps its receipt or transfer type.'
+    );
   const status = request.remove
     ? 'void'
     : historicalBankTransaction(doc, request)
@@ -677,7 +852,9 @@ export function previewBankTransaction(
     request.remove && previous
       ? previous.changes
       : request.receiptMode === 'existing'
-      ? reviewedReceiptChanges(doc, request, previous)
+      ? request.kind === 'transfer'
+        ? reviewedExistingTransferChanges(doc, request, previous)
+        : reviewedReceiptChanges(doc, request, previous)
       : request.changes;
   const candidate: BankEntry = {
     id: 'preview',
