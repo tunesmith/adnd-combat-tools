@@ -796,19 +796,9 @@ export default function DesktopWorkspace() {
                           )
                         )
                           return false;
-                        const moneyMutation = {
-                          id: uid(),
-                          at: new Date().toISOString(),
-                        };
                         return mutate(
                           (d) =>
-                            changeWorkingInventory(
-                              d,
-                              workId,
-                              sessionId,
-                              next,
-                              moneyMutation
-                            ),
+                            changeWorkingInventory(d, workId, sessionId, next),
                           owner
                         );
                       },
@@ -861,6 +851,7 @@ export default function DesktopWorkspace() {
                     document && (
                       <BankBalances
                         label="Inventory money replacement"
+                        caption="Possessions comparison · Banking ledger stays unchanged"
                         rows={bankingReplacementReview(
                           document,
                           sessionId,

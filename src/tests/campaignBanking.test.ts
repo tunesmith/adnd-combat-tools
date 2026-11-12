@@ -111,24 +111,21 @@ test('Castle Kifu Day3 reconstructs 329.4 gp with explicit synthetic tender and 
   expect(getTotalEncumbranceGp(reatha, encumbranceCatalogById)).toBe(40);
   expect(parseCampaign(serializeCampaign(doc))).toEqual(doc);
 });
-test('manual quantities, character/storage transfers, revision and deletion stay atomic and retry-safe', () => {
+test('explicit transactions, manual transfers, revision and deletion stay atomic and retry-safe', () => {
   let doc = kifuStoreVisit();
-  let nextMoney = clone(inventory(doc));
-  const r = required(
-    nextMoney.characters.find((h) => h.id === 'inventory-reatha')
-  );
-  required(r.inventory.find((i) => i.id === 'reatha-gp')).quantity = 30;
-  const changed = changeWorkingInventory(doc, 'day3-stock', 'day3', nextMoney, {
-    id: 'manual-gp',
-    at: bankingAt,
+  const changed = bankPost(doc, {
+    transactionId: 'manual-gp',
+    sessionId: 'day3',
+    description: 'Explicit income',
+    kind: 'income',
+    changes: [bankLeg(doc, 'day3', 'inventory-reatha', 'gp', 1, 'reatha-gp')],
   });
-  validateHistoryTransition(doc, changed, '');
   expect(bankBalance(changed, 'inventory-reatha', 'day3').gp).toBe(30);
   const revision = previewBankTransaction(changed, {
     transactionId: 'manual-gp',
     sessionId: 'day3',
     description: 'Corrected quantity note',
-    kind: 'adjustment',
+    kind: 'income',
     changes: [
       bankLeg(changed, 'day3', 'inventory-reatha', 'gp', 2, 'reatha-gp'),
     ],
@@ -139,7 +136,7 @@ test('manual quantities, character/storage transfers, revision and deletion stay
       transactionId: 'manual-gp',
       sessionId: 'day3',
       description: 'Corrected quantity note',
-      kind: 'adjustment',
+      kind: 'income',
       changes: [
         bankLeg(changed, 'day3', 'inventory-reatha', 'gp', 2, 'reatha-gp'),
       ],
@@ -154,7 +151,7 @@ test('manual quantities, character/storage transfers, revision and deletion stay
     transactionId: 'manual-gp',
     sessionId: 'day3',
     description: 'Corrected quantity note',
-    kind: 'adjustment' as const,
+    kind: 'income' as const,
     changes: revision.candidate.changes,
     remove: true,
   };
@@ -178,18 +175,26 @@ test('manual quantities, character/storage transfers, revision and deletion stay
     )
   ).toBe(removed);
   doc = removed;
-  nextMoney = transferInventorySubtree(
+  let nextMoney = transferInventorySubtree(
     inventory(doc),
     'reatha-gp',
     'inventory-reatha',
     'inventory-vitameno'
   );
-  let moved = changeWorkingInventory(doc, 'day3-stock', 'day3', nextMoney, {
-    id: 'manual-transfer',
-    at: bankingAt,
-  });
+  let moved = changeWorkingInventory(doc, 'day3-stock', 'day3', nextMoney);
   validateHistoryTransition(doc, moved, '');
-  expect(bankLedger(moved).entries.at(-1)?.kind).toBe('transfer');
+  expect(moved.banking).toBe(doc.banking);
+  moved = bankPost(moved, {
+    transactionId: 'named-transfer',
+    sessionId: 'day3',
+    description: 'Move recorded gold to another holder',
+    kind: 'transfer',
+    receiptMode: 'existing',
+    changes: [
+      bankLeg(moved, 'day3', 'inventory-reatha', 'gp', -29, 'reatha-gp'),
+      bankLeg(moved, 'day3', 'inventory-vitameno', 'gp', 29, 'reatha-gp'),
+    ],
+  });
   const currentInventory = inventory(moved);
   if (currentInventory.version !== 10) throw Error('Fixture');
   nextMoney = transferInventorySubtree(
@@ -200,11 +205,28 @@ test('manual quantities, character/storage transfers, revision and deletion stay
     'castle-chest'
   );
   doc = moved;
-  moved = changeWorkingInventory(doc, 'day3-stock', 'day3', nextMoney, {
-    id: 'storage-transfer',
-    at: bankingAt,
-  });
+  moved = changeWorkingInventory(doc, 'day3-stock', 'day3', nextMoney);
   validateHistoryTransition(doc, moved, '');
+  expect(moved.banking).toBe(doc.banking);
+  moved = bankPost(moved, {
+    transactionId: 'named-storage-transfer',
+    sessionId: 'day3',
+    description: 'Store recorded gold',
+    kind: 'transfer',
+    receiptMode: 'existing',
+    changes: [
+      bankLeg(moved, 'day3', 'inventory-vitameno', 'gp', -29, 'reatha-gp'),
+      bankLeg(
+        moved,
+        'day3',
+        'castle-kifu-storage',
+        'gp',
+        29,
+        'reatha-gp',
+        'castle-chest'
+      ),
+    ],
+  });
   expect(bankBalance(moved, 'castle-kifu-storage', 'day3').gp).toBe(29);
   expect(bankBoundaryDifference(moved, 'day3')).toEqual([]);
   const stale = previewBankTransaction(moved, {
@@ -315,7 +337,8 @@ test('carry forward copies closing quantities once; earlier changes show a later
     review.fingerprint
   );
   validateHistoryTransition(carried, replaced, 'restore');
-  expect(bankBoundaryDifference(replaced, 'day4')).toEqual([]);
+  expect(replaced.banking).toBe(carried.banking);
+  expect(bankBoundaryDifference(replaced, 'day4')[0]?.difference.gp).toBe(-1);
 });
 test('an earlier opening plus historical drafts matches a later baseline exactly, and mismatches never publish', () => {
   const original = kifuStoreVisit();
@@ -515,7 +538,7 @@ test('reviewed imports may relocate equal money without inventing income or losi
     bankingAt
   );
   validateHistoryTransition(doc, replaced, 'import');
-  expect(bankLedger(replaced).entries.at(-1)?.kind).toBe('transfer');
+  expect(replaced.banking).toBe(doc.banking);
   expect(bankBoundaryDifference(replaced, 'day3')).toEqual([]);
   expect(holderMoney(inventory(replaced), 'inventory-reatha')).toEqual(
     holderMoney(inventory(doc), 'inventory-reatha')

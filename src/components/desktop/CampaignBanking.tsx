@@ -1,10 +1,14 @@
+import BankPossessionsReconciliationHistory from './BankPossessionsReconciliationHistory';
 import { useState } from 'react';
 import type { CampaignDocument } from '../../helpers/campaignDocument';
 import {
   bankKindLabel,
   bankDenominations,
 } from '../../helpers/campaignBankingModel';
-import type { BankEntry } from '../../helpers/campaignBankingModel';
+import type {
+  BankEntry,
+  BankPossessionsReconciliation,
+} from '../../helpers/campaignBankingModel';
 import {
   bankLedger,
   bankHolderName,
@@ -34,6 +38,8 @@ export default function CampaignBanking({
   const [openings, setOpenings] = useState(false);
   const [editing, setEditing] = useState<{ entry?: BankEntry }>();
   const [error, setError] = useState('');
+  const [inspectedReconciliation, setInspectedReconciliation] =
+    useState<BankPossessionsReconciliation>();
   const ledger = bankLedger(document);
   const working = document.workingInventories.find(
     (w) => w.sessionId === sessionId
@@ -168,6 +174,38 @@ export default function CampaignBanking({
         </tbody>
       </table>
       {!entries.length && <p>No transactions in this session.</p>}
+      {!!ledger.possessionsReconciliations?.filter(
+        (r) => r.sessionId === sessionId
+      ).length && (
+        <details>
+          <summary>Possessions reconciliations</summary>
+          <ul>
+            {ledger.possessionsReconciliations
+              .filter((r) => r.sessionId === sessionId)
+              .map((record) => (
+                <li key={record.id}>
+                  <button
+                    className={styles['textButton']}
+                    onClick={() => setInspectedReconciliation(record)}
+                  >
+                    {new Date(record.at).toLocaleString()} ·{' '}
+                    {
+                      ledger.entries.find((e) => e.id === record.sourceEntryId)
+                        ?.description
+                    }
+                  </button>
+                </li>
+              ))}
+          </ul>
+        </details>
+      )}
+      {inspectedReconciliation && (
+        <BankPossessionsReconciliationHistory
+          document={document}
+          record={inspectedReconciliation}
+          onClose={() => setInspectedReconciliation(undefined)}
+        />
+      )}
       {error && <p role="alert">{error}</p>}
       {openings && (
         <BankOpeningDialog

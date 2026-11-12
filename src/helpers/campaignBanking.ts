@@ -19,6 +19,7 @@ import type {
   BankOpening,
   BankExtension,
   CampaignBanking,
+  BankPossessionsReconciliation,
 } from './campaignBankingModel';
 import { encumbranceCatalogById } from '../tables/encumbranceCatalog';
 import { getInventoryItemInfo } from './encumbranceRules';
@@ -121,6 +122,13 @@ export function moneyStacks(document: EncumbranceDmDocument) {
       return [{ holderId: holder.id, denomination, item }];
     })
   );
+}
+export function validatePhysicalMoney(document: EncumbranceDmDocument) {
+  const totals = new Map<string, number>();
+  for (const stack of moneyStacks(document)) {
+    const key = canonical([stack.holderId, stack.denomination]);
+    totals.set(key, safe((totals.get(key) ?? 0) + stack.item.quantity));
+  }
 }
 export function holderMoney(document: EncumbranceDmDocument, holderId: string) {
   const amounts = zeroBankAmounts();
@@ -351,19 +359,22 @@ function validateChanges(entry: BankEntry, progressOnly = false) {
   const total = bankChangesAmounts(entry.changes);
   if (entry.receiptMode === 'existing') {
     const transfer = entry.kind === 'transfer';
+    const settlement = ['purchase', 'fee', 'exchange'].includes(entry.kind);
     if (
       entry.effect !== 'ledger' ||
-      (!transfer && !['income', 'refund'].includes(entry.kind)) ||
+      (!transfer &&
+        !settlement &&
+        !['income', 'refund'].includes(entry.kind)) ||
       entry.changes.some(
         (c) =>
           !Number.isSafeInteger(c.quantity) ||
           c.quantity === 0 ||
-          c.fee ||
-          (!transfer && c.quantity < 0)
+          (c.fee && entry.kind !== 'exchange') ||
+          (!transfer && !settlement && c.quantity < 0)
       )
     )
       throw Error(
-        'Already recorded in possessions supports income, refunds and balanced transfers.'
+        'Already recorded in possessions supports income, payments, transfers and exchanges.'
       );
     if (transfer) validateExistingTransferPairs(entry.changes);
     const keys = Array.from(new Set(entry.changes.map(receiptStackKey)));
@@ -748,6 +759,189 @@ function reviewedExistingTransferChanges(
   });
 }
 
+export function existingSettlementAvailability(
+  doc: CampaignDocument,
+  sessionId: string,
+  transactionId?: string
+) {
+  const ledger = bankLedger(doc),
+    previous = transactionId
+      ? currentTransaction(doc, transactionId)
+      : undefined;
+  const working = doc.workingInventories.find((w) => w.sessionId === sessionId);
+  if (!working)
+    throw Error('Create or import this session’s possessions first.');
+  const basis = previous
+    ? {
+        ...doc,
+        banking: {
+          ...ledger,
+          entries: ledger.entries.filter(
+            (e) => e.transactionId !== transactionId
+          ),
+        },
+      }
+    : doc;
+  const prior =
+    previous?.receiptMode === 'existing' && previous.status !== 'void'
+      ? previous.changes
+      : [];
+  const actual = moneyStacks(working.document);
+  const holders = Array.from(
+    new Set([
+      ...bankHolders(working.document).map((h) => h.id),
+      ...ledger.openings.map((o) => o.holderId),
+      ...prior.map((c) => c.holderId),
+    ])
+  );
+  const limits = holders.map((holderId) => {
+    const recorded = bankBalance(basis, holderId, sessionId),
+      physical = holderMoney(working.document, holderId),
+      old = bankChangesAmounts(prior, holderId);
+    const incoming = zeroBankAmounts(),
+      outgoing = zeroBankAmounts();
+    for (const code of bankDenominations) {
+      const before = recorded[code];
+      incoming[code] =
+        before === null
+          ? null
+          : Math.max(0, (physical[code] ?? 0) - before, old[code] ?? 0);
+      outgoing[code] =
+        before === null
+          ? null
+          : Math.max(0, before - (physical[code] ?? 0), -(old[code] ?? 0));
+    }
+    return { holderId, recorded, physical, incoming, outgoing };
+  });
+  const outgoing = limits.flatMap((limit) =>
+    bankDenominations.map((denomination) => ({
+      holderId: limit.holderId,
+      denomination,
+      item: bankBalanceSourceItem(
+        limit.holderId,
+        denomination,
+        limit.recorded[denomination] ?? 0
+      ),
+      currentQuantity: 0,
+      previousAllocation: 0,
+      available: limit.outgoing[denomination],
+      direction: 'outgoing' as const,
+    }))
+  );
+  const incoming = [
+    ...actual,
+    ...prior.filter(
+      (c) =>
+        c.quantity > 0 &&
+        !actual.some((a) => receiptStackKey(a) === receiptStackKey(c))
+    ),
+  ].map((stack) => {
+    const old = prior.filter(
+        (c) => c.quantity > 0 && receiptStackKey(c) === receiptStackKey(stack)
+      ),
+      previousAllocation = old.reduce((n, c) => safe(n + c.quantity), 0);
+    const current = actual.find(
+      (a) => receiptStackKey(a) === receiptStackKey(stack)
+    );
+    return {
+      ...stack,
+      item: current?.item ?? stack.item,
+      currentQuantity: current?.item.quantity ?? 0,
+      previousAllocation,
+      available: Math.max(current?.item.quantity ?? 0, previousAllocation),
+      direction: 'incoming' as const,
+    };
+  });
+  return { limits, outgoing, incoming };
+}
+function reviewedExistingSettlementChanges(
+  doc: CampaignDocument,
+  request: BankTransactionRequest,
+  previous: BankEntry | undefined
+) {
+  const availability = existingSettlementAvailability(
+    doc,
+    request.sessionId,
+    previous?.transactionId
+  );
+  for (const holderId of Array.from(
+    new Set(request.changes.map((c) => c.holderId))
+  )) {
+    const limit = availability.limits.find((s) => s.holderId === holderId);
+    if (!limit) throw Error('Choose a holder with recorded or existing money.');
+    const proposed = bankChangesAmounts(request.changes, holderId);
+    for (const code of bankDenominations) {
+      const value = proposed[code] ?? 0;
+      if (!value) continue;
+      const allowed = value < 0 ? limit.outgoing[code] : limit.incoming[code];
+      if (allowed === null || Math.abs(value) > (allowed ?? 0))
+        throw Error(
+          `The ${code} transaction exceeds this holder’s remaining ${
+            value < 0 ? 'outgoing' : 'incoming'
+          } reconciliation difference.`
+        );
+    }
+  }
+  const positive = request.changes.filter((c) => c.quantity > 0),
+    negative = request.changes.filter((c) => c.quantity < 0);
+  return request.changes.map((change) => {
+    if (!Number.isSafeInteger(change.quantity) || !change.quantity)
+      throw Error('Use nonzero whole signed quantities.');
+    if (change.quantity < 0) {
+      const source = availability.outgoing.find(
+        (c) =>
+          c.holderId === change.holderId &&
+          c.denomination === change.denomination
+      );
+      const old =
+        previous?.changes.filter(
+          (c) =>
+            c.quantity < 0 &&
+            c.holderId === change.holderId &&
+            c.denomination === change.denomination
+        ) ?? [];
+      const amount = negative
+        .filter(
+          (c) =>
+            c.holderId === change.holderId &&
+            c.denomination === change.denomination
+        )
+        .reduce((sum, c) => safe(sum - c.quantity), 0);
+      const priorAmount = old.reduce((sum, c) => safe(sum - c.quantity), 0),
+        evidence = old[0]?.item;
+      if (!source || source.available === null)
+        throw Error(
+          'Establish known balances before recording an outgoing transaction.'
+        );
+      const item = evidence && amount <= priorAmount ? evidence : source.item;
+      if (amount > item.quantity)
+        throw Error(
+          'Outgoing quantities exceed the recorded balance evidence. Record the net currency change.'
+        );
+      return { ...change, item: { ...item } };
+    }
+    const source = availability.incoming.find(
+      (c) => receiptStackKey(c) === receiptStackKey(change)
+    );
+    const amount = positive
+      .filter((c) => receiptStackKey(c) === receiptStackKey(change))
+      .reduce((sum, c) => safe(sum + c.quantity), 0);
+    if (!source || amount > source.available)
+      throw Error('Incoming allocations exceed the existing stack evidence.');
+    const old = previous?.changes.find(
+      (c) => c.quantity > 0 && receiptStackKey(c) === receiptStackKey(change)
+    );
+    return {
+      ...change,
+      item: {
+        ...(old && amount <= source.previousAllocation
+          ? old.item
+          : source.item),
+      },
+    };
+  });
+}
+
 function reviewedReceiptChanges(
   doc: CampaignDocument,
   request: BankTransactionRequest,
@@ -872,6 +1066,8 @@ function projectBankTransaction(
       : request.receiptMode === 'existing'
       ? request.kind === 'transfer'
         ? reviewedExistingTransferChanges(doc, request, previous)
+        : ['purchase', 'fee', 'exchange'].includes(request.kind)
+        ? reviewedExistingSettlementChanges(doc, request, previous)
         : reviewedReceiptChanges(doc, request, previous)
       : request.changes;
   const candidate: BankEntry = {
@@ -901,7 +1097,6 @@ function projectBankTransaction(
   const physicalProgress =
     progress &&
     (candidate.kind === 'transfer' || candidate.kind === 'exchange') &&
-    !candidate.receiptMode &&
     !request.remove;
   validateChanges(candidate, physicalProgress);
   let inventory = working.document;
@@ -983,68 +1178,6 @@ export function commitBankTransaction(
   };
   assertBankCutoffs(next);
   return next;
-}
-
-export interface BankMutation {
-  id: string;
-  at: string;
-}
-export function recordInventoryMoneyEdit(
-  doc: CampaignDocument,
-  workingId: string,
-  before: EncumbranceDmDocument,
-  after: EncumbranceDmDocument,
-  mutation?: BankMutation,
-  description = 'Possessions adjustment'
-): CampaignDocument {
-  const changes = inventoryMoneyChanges(before, after);
-  if (!changes.length) return doc;
-  const working = doc.workingInventories.find((w) => w.id === workingId);
-  if (!working)
-    throw Error('Possessions were replaced before this money edit.');
-  const ledger = bankLedger(doc);
-  const id =
-    mutation?.id ??
-    'money-edit-' +
-      fingerprint({
-        workingId,
-        before: moneySignature(before),
-        after: moneySignature(after),
-        count: ledger.entries.length,
-      });
-  if (ledger.entries.some((e) => e.id === id)) return doc;
-  const totals = bankChangesAmounts(changes);
-  const kind = bankDenominations.every((c) => totals[c] === 0)
-    ? 'transfer'
-    : 'adjustment';
-  const entry: BankEntry = {
-    id,
-    transactionId: id,
-    replaces: null,
-    sessionId: working.sessionId,
-    order:
-      Math.max(
-        -1,
-        ...activeBankEntries(ledger.entries)
-          .filter((e) => e.sessionId === working.sessionId)
-          .map((e) => e.order)
-      ) + 1,
-    description,
-    kind,
-    status: historicalBankTransaction(doc, {
-      sessionId: working.sessionId,
-      changes,
-    })
-      ? 'draft'
-      : 'posted',
-    effect: 'inventory',
-    changes,
-    at: mutation?.at ?? '2000-01-01T00:00:00.000Z',
-  };
-  return {
-    ...doc,
-    banking: { ...ledger, entries: [...ledger.entries, entry] },
-  };
 }
 
 function completesUnknownOpening(previous: BankOpening, next: BankOpening) {
@@ -1205,6 +1338,121 @@ export const bankReconciliationFingerprint = (
     sessionId,
   });
 
+function reconciliationAllowance(
+  doc: CampaignDocument,
+  sessionId: string,
+  source: BankEntry,
+  holderId: string,
+  denomination: BankDenomination,
+  records = bankLedger(doc).possessionsReconciliations ?? []
+) {
+  const outgoing = source.changes
+    .filter(
+      (c) =>
+        c.holderId === holderId &&
+        c.denomination === denomination &&
+        c.quantity < 0
+    )
+    .reduce((sum, c) => safe(sum - c.quantity), 0);
+  const used = records
+    .filter((r) => r.sessionId === sessionId && r.sourceEntryId === source.id)
+    .flatMap((r) => r.changes)
+    .filter((c) => c.holderId === holderId && c.denomination === denomination)
+    .reduce((sum, c) => safe(sum - c.quantity), 0);
+  return outgoing - used;
+}
+function validatePossessionsReconciliations(
+  doc: CampaignDocument,
+  unique: (id: string) => void
+) {
+  const ledger = bankLedger(doc),
+    prefix: BankPossessionsReconciliation[] = [];
+  let entryCount = 0;
+  for (const record of ledger.possessionsReconciliations ?? []) {
+    unique(record.id);
+    sessionIndex(doc, record.sessionId);
+    if (
+      !doc.workingInventories.some(
+        (w) => w.id === record.workingId && w.sessionId === record.sessionId
+      ) &&
+      !doc.inventoryCheckpoints.some(
+        (c) =>
+          c.workingId === record.workingId && c.sessionId === record.sessionId
+      )
+    )
+      throw Error('Missing reconciled possessions history.');
+    if (
+      record.entryCount < entryCount ||
+      record.entryCount > ledger.entries.length
+    )
+      throw Error('Invalid possessions reconciliation ledger position.');
+    entryCount = record.entryCount;
+    const source = activeBankEntries(
+      ledger.entries.slice(0, record.entryCount)
+    ).find(
+      (e) =>
+        e.id === record.sourceEntryId &&
+        e.status === 'posted' &&
+        sessionIndex(doc, e.sessionId) < sessionIndex(doc, record.sessionId)
+    );
+    if (!source)
+      throw Error(
+        'Possessions reconciliation needs its earlier recorded outgoing transaction.'
+      );
+    const keys = new Set<string>();
+    for (const change of record.changes) {
+      const key = canonical([change.holderId, change.item.id]);
+      if (
+        keys.has(key) ||
+        change.quantity >= 0 ||
+        change.fee ||
+        moneyDenomination(change.item) !== change.denomination ||
+        -change.quantity > change.item.quantity
+      )
+        throw Error('Invalid reconciled money stack evidence.');
+      keys.add(key);
+    }
+    const holders = Array.from(new Set(record.changes.map((c) => c.holderId)));
+    if (
+      new Set(record.balances.map((b) => b.holderId)).size !== holders.length ||
+      record.balances.length !== holders.length ||
+      record.balances.some((b) => !holders.includes(b.holderId))
+    )
+      throw Error('Reconciliation balances must match their holders.');
+    for (const balance of record.balances) {
+      const delta = bankChangesAmounts(record.changes, balance.holderId);
+      if (
+        canonical(addBankAmounts(balance.before, delta)) !==
+        canonical(balance.after)
+      )
+        throw Error('Reconciled possessions quantities disagree.');
+      for (const code of bankDenominations) {
+        const removed = -(delta[code] ?? 0);
+        if (!removed) continue;
+        if (
+          balance.ledger[code] === null ||
+          balance.before[code] === null ||
+          balance.after[code] === null ||
+          (balance.after[code] ?? -1) < (balance.ledger[code] ?? 0) ||
+          removed >
+            reconciliationAllowance(
+              doc,
+              record.sessionId,
+              source,
+              balance.holderId,
+              code,
+              prefix
+            )
+        )
+          throw Error(
+            'Reconciliation exceeds the earlier loss or the recorded possessions difference.'
+          );
+      }
+    }
+    prefix.push(record);
+  }
+}
+
 export function bankingReplacementReview(
   doc: CampaignDocument,
   sessionId: string,
@@ -1244,94 +1492,17 @@ export function bankingReplacementReview(
     }),
   };
 }
-export function recordBankingReplacement(
+export function assertBankingReplacementReviewed(
   doc: CampaignDocument,
   sessionId: string,
   incoming: EncumbranceDmDocument,
-  reviewed: string | undefined,
-  mutation: BankMutation
-): CampaignDocument {
+  reviewed?: string
+) {
   const review = bankingReplacementReview(doc, sessionId, incoming);
   if (review.required && reviewed !== review.fingerprint)
     throw Error(
-      'Review the Banking balance comparison before replacing this inventory.'
+      'Review the Banking balance comparison before replacing this inventory. The ledger will stay unchanged.'
     );
-  const previous = doc.workingInventories.find(
-    (w) => w.sessionId === sessionId
-  );
-  if (!doc.banking || !previous) return doc;
-  if (!review.comparison.length)
-    return recordInventoryMoneyEdit(
-      doc,
-      previous.id,
-      previous.document,
-      incoming,
-      mutation,
-      'Reviewed inventory relocation'
-    );
-  const holders = review.comparison.map((r) => r.holderId);
-  const changes = holders.flatMap((holderId) => {
-    const financial = bankBalance(doc, holderId, sessionId);
-    const physical = holderMoney(incoming, holderId);
-    const original = holderMoney(previous.document, holderId);
-    return bankDenominations.flatMap((denomination) => {
-      const quantity = safe(
-        (physical[denomination] ?? 0) -
-          (financial[denomination] ?? original[denomination] ?? 0)
-      );
-      return quantity
-        ? [
-            {
-              holderId,
-              denomination,
-              quantity,
-              item: newBankMoneyItem(
-                denomination,
-                'replacement-' + holderId + '-' + denomination
-              ),
-            },
-          ]
-        : [];
-    });
-  });
-  // A reviewed snapshot can restore physical money to an already correct ledger.
-  // Retain that reconciliation even when its financial difference is zero.
-  if (!changes.length) {
-    const first = review.comparison[0];
-    if (!first) return doc;
-    changes.push({
-      holderId: first.holderId,
-      denomination: 'gp',
-      quantity: 0,
-      item: newBankMoneyItem('gp', 'replacement-' + first.holderId + '-gp'),
-    });
-  }
-  const ledger = bankLedger(doc);
-  const entry: BankEntry = {
-    id: mutation.id,
-    transactionId: mutation.id,
-    replaces: null,
-    sessionId,
-    order:
-      Math.max(
-        -1,
-        ...activeBankEntries(ledger.entries)
-          .filter((e) => e.sessionId === sessionId)
-          .map((e) => e.order)
-      ) + 1,
-    description: 'Reviewed inventory replacement',
-    kind: 'reconciliation',
-    effect: 'inventory',
-    status: historicalBankTransaction(doc, { sessionId, changes })
-      ? 'draft'
-      : 'posted',
-    changes,
-    at: mutation.at,
-  };
-  return {
-    ...doc,
-    banking: { ...ledger, entries: [...ledger.entries, entry] },
-  };
 }
 
 interface BankExtensionRequest {
@@ -1534,8 +1705,10 @@ export function validateCampaignBanking(
   doc: CampaignDocument,
   unique: (id: string) => void
 ) {
+  doc.workingInventories.forEach((w) => validatePhysicalMoney(w.document));
   if (!doc.banking) return;
   const ledger = doc.banking;
+  validatePossessionsReconciliations(doc, unique);
   const holderIds = new Set([
     ...[...doc.workingInventories, ...doc.inventoryCheckpoints].flatMap((w) =>
       bankHolders(w.document).map((h) => h.id)
@@ -1668,6 +1841,14 @@ export function validateBankingTransition(
     throw Error(
       'Recorded banking history is immutable. Edit through a new transaction revision.'
     );
+  const oldReconciliations = previous.possessionsReconciliations ?? [],
+    newReconciliations = current.possessionsReconciliations ?? [];
+  if (
+    canonical(newReconciliations.slice(0, oldReconciliations.length)) !==
+      canonical(oldReconciliations) ||
+    newReconciliations.length !== oldReconciliations.length
+  )
+    throw Error('Recorded possessions reconciliations are immutable.');
   const additions = current.entries.slice(previous.entries.length);
   const extensions = current.extensions.slice(previous.extensions.length);
   if (extensions.length) {
@@ -1732,25 +1913,7 @@ export function validateBankingTransition(
       entry.id === entry.transactionId &&
       entry.effect === 'inventory' &&
       ['adjustment', 'transfer'].includes(entry.kind);
-    if (
-      entry.kind === 'reconciliation' &&
-      entry.effect === 'inventory' &&
-      entry.replaces === null &&
-      entry.description === 'Reviewed inventory replacement'
-    ) {
-      const expected = recordBankingReplacement(
-        old,
-        entry.sessionId,
-        newWork.document,
-        bankingReplacementReview(old, entry.sessionId, newWork.document)
-          .fingerprint,
-        { id: entry.id, at: entry.at }
-      );
-      if (canonical(expected.banking) !== canonical(next.banking))
-        throw Error(
-          'Inventory replacement must reconcile its reviewed banking difference.'
-        );
-    } else if (isDirectEdit) {
+    if (isDirectEdit) {
       const changes = inventoryMoneyChanges(oldWork.document, newWork.document);
       if (
         canonical(changes) !== canonical(entry.changes) ||
@@ -1817,9 +1980,12 @@ export function validateBankingTransition(
     if (
       changed &&
       inventoryMoneyChanges(working.document, changed.document).length &&
-      (!entry || entry.sessionId !== working.sessionId)
+      entry &&
+      entry.sessionId !== working.sessionId
     )
-      throw Error('Campaign money edits must be recorded in Banking.');
+      throw Error(
+        'A banking transaction may only change its own session’s possessions.'
+      );
   }
   // Banking history uses the same explicit session ordering as XP.
   const priorOrder = old.sessions.map((s) => s.id);

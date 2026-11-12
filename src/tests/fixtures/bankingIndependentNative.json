@@ -1,0 +1,2235 @@
+{
+  "start": {
+    "kind": "adnd-campaign",
+    "id": "synthetic-banking",
+    "title": "Synthetic Castle Kifu banking",
+    "notes": "",
+    "schemaVersion": 20,
+    "workingCombats": [],
+    "combatCheckpoints": [],
+    "sessions": [
+      {
+        "id": "day2",
+        "label": "Day 2",
+        "notes": ""
+      },
+      {
+        "id": "day3",
+        "label": "Day 3",
+        "notes": "",
+        "continuation": {
+          "sourceSessionId": "day2",
+          "sourceFingerprint": "b44976b3cff5812e5d446f34421fab0d741a08bb3b44f496771e6219d9dfbe28",
+          "combatInstanceIds": [],
+          "inventoryId": "day2-stock",
+          "copyNotes": false,
+          "requestFingerprint": "3f8e59cfdc2e887c2b78baa2daeaea395527e9a1d1c90d9072145f372fe76514"
+        }
+      }
+    ],
+    "records": [],
+    "workingInventories": [
+      {
+        "id": "day2-stock",
+        "sessionId": "day2",
+        "title": "Working possessions",
+        "document": {
+          "kind": "adnd-encumbrance-dm",
+          "version": 10,
+          "activeCharacterId": "inventory-reatha",
+          "characters": [
+            {
+              "id": "inventory-reatha",
+              "name": "Reatha",
+              "strength": {
+                "score": 18,
+                "exceptional": "none"
+              },
+              "inventory": [],
+              "dmNotes": "Synthetic fixture"
+            },
+            {
+              "id": "inventory-vitameno",
+              "name": "Vitameno",
+              "strength": {
+                "score": 10,
+                "exceptional": "none"
+              },
+              "inventory": [
+                {
+                  "id": "vitameno-ep",
+                  "catalogId": "coin-electrum",
+                  "quantity": 50,
+                  "containerId": null,
+                  "day": 0,
+                  "playerNotes": "",
+                  "playerMagicKnowledge": "known-mundane",
+                  "playerKnowsValue": true,
+                  "name": "$ - Electrum piece"
+                }
+              ],
+              "dmNotes": ""
+            }
+          ],
+          "storageLocations": [
+            {
+              "id": "castle-kifu-storage",
+              "name": "Castle Kifu",
+              "notes": "Synthetic storage",
+              "inventory": [
+                {
+                  "id": "castle-chest",
+                  "catalogId": "chest-wooden-large",
+                  "quantity": 1,
+                  "containerId": null,
+                  "day": 1,
+                  "playerNotes": "",
+                  "playerMagicKnowledge": "known-mundane",
+                  "playerKnowsValue": true,
+                  "name": "Synthetic chest",
+                  "customItem": {
+                    "id": "chest-wooden-large",
+                    "name": "Synthetic chest",
+                    "category": "containers",
+                    "encumbranceGp": 100,
+                    "valueGp": 1,
+                    "isContainer": true,
+                    "capacityGp": 10000
+                  }
+                },
+                {
+                  "id": "castle-ep",
+                  "catalogId": "coin-electrum",
+                  "quantity": 700,
+                  "containerId": "castle-chest",
+                  "day": 0,
+                  "playerNotes": "",
+                  "playerMagicKnowledge": "known-mundane",
+                  "playerKnowsValue": true,
+                  "name": "$ - Electrum piece"
+                },
+                {
+                  "id": "castle-sp",
+                  "catalogId": "coin-silver",
+                  "quantity": 1000,
+                  "containerId": "castle-chest",
+                  "day": 0,
+                  "playerNotes": "",
+                  "playerMagicKnowledge": "known-mundane",
+                  "playerKnowsValue": true,
+                  "name": "$ - Silver piece"
+                },
+                {
+                  "id": "castle-gp",
+                  "catalogId": "coin-gold",
+                  "quantity": 250,
+                  "containerId": "castle-chest",
+                  "day": 0,
+                  "playerNotes": "",
+                  "playerMagicKnowledge": "known-mundane",
+                  "playerKnowsValue": true,
+                  "name": "$ - Gold piece"
+                }
+              ]
+            }
+          ]
+        },
+        "origin": {
+          "kind": "empty"
+        }
+      },
+      {
+        "id": "day3-stock",
+        "sessionId": "day3",
+        "title": "Working possessions",
+        "document": {
+          "kind": "adnd-encumbrance-dm",
+          "version": 10,
+          "activeCharacterId": "inventory-reatha",
+          "characters": [
+            {
+              "id": "inventory-reatha",
+              "name": "Reatha",
+              "strength": {
+                "score": 18,
+                "exceptional": "none"
+              },
+              "inventory": [],
+              "dmNotes": "Synthetic fixture"
+            },
+            {
+              "id": "inventory-vitameno",
+              "name": "Vitameno",
+              "strength": {
+                "score": 10,
+                "exceptional": "none"
+              },
+              "inventory": [
+                {
+                  "id": "vitameno-ep",
+                  "catalogId": "coin-electrum",
+                  "quantity": 50,
+                  "containerId": null,
+                  "day": 0,
+                  "playerNotes": "",
+                  "playerMagicKnowledge": "known-mundane",
+                  "playerKnowsValue": true,
+                  "name": "$ - Electrum piece"
+                }
+              ],
+              "dmNotes": ""
+            }
+          ],
+          "storageLocations": [
+            {
+              "id": "castle-kifu-storage",
+              "name": "Castle Kifu",
+              "notes": "Synthetic storage",
+              "inventory": [
+                {
+                  "id": "castle-chest",
+                  "catalogId": "chest-wooden-large",
+                  "quantity": 1,
+                  "containerId": null,
+                  "day": 1,
+                  "playerNotes": "",
+                  "playerMagicKnowledge": "known-mundane",
+                  "playerKnowsValue": true,
+                  "name": "Synthetic chest",
+                  "customItem": {
+                    "id": "chest-wooden-large",
+                    "name": "Synthetic chest",
+                    "category": "containers",
+                    "encumbranceGp": 100,
+                    "valueGp": 1,
+                    "isContainer": true,
+                    "capacityGp": 10000
+                  }
+                },
+                {
+                  "id": "castle-ep",
+                  "catalogId": "coin-electrum",
+                  "quantity": 700,
+                  "containerId": "castle-chest",
+                  "day": 0,
+                  "playerNotes": "",
+                  "playerMagicKnowledge": "known-mundane",
+                  "playerKnowsValue": true,
+                  "name": "$ - Electrum piece"
+                },
+                {
+                  "id": "castle-sp",
+                  "catalogId": "coin-silver",
+                  "quantity": 1000,
+                  "containerId": "castle-chest",
+                  "day": 0,
+                  "playerNotes": "",
+                  "playerMagicKnowledge": "known-mundane",
+                  "playerKnowsValue": true,
+                  "name": "$ - Silver piece"
+                },
+                {
+                  "id": "castle-gp",
+                  "catalogId": "coin-gold",
+                  "quantity": 250,
+                  "containerId": "castle-chest",
+                  "day": 0,
+                  "playerNotes": "",
+                  "playerMagicKnowledge": "known-mundane",
+                  "playerKnowsValue": true,
+                  "name": "$ - Gold piece"
+                }
+              ]
+            }
+          ]
+        },
+        "origin": {
+          "kind": "checkpoint",
+          "checkpointId": "carry-checkpoint"
+        },
+        "continuedFrom": {
+          "sessionId": "day2",
+          "instanceId": "day2-stock",
+          "checkpointId": "carry-checkpoint"
+        }
+      }
+    ],
+    "inventoryCheckpoints": [
+      {
+        "id": "carry-checkpoint",
+        "workingId": "day2-stock",
+        "sessionId": "day2",
+        "label": "Before continuing to Day 3",
+        "capturedAt": "2026-11-10T12:00:00.000Z",
+        "origin": {
+          "kind": "empty"
+        },
+        "document": {
+          "kind": "adnd-encumbrance-dm",
+          "version": 10,
+          "activeCharacterId": "inventory-reatha",
+          "characters": [
+            {
+              "id": "inventory-reatha",
+              "name": "Reatha",
+              "strength": {
+                "score": 18,
+                "exceptional": "none"
+              },
+              "inventory": [],
+              "dmNotes": "Synthetic fixture"
+            },
+            {
+              "id": "inventory-vitameno",
+              "name": "Vitameno",
+              "strength": {
+                "score": 10,
+                "exceptional": "none"
+              },
+              "inventory": [
+                {
+                  "id": "vitameno-ep",
+                  "catalogId": "coin-electrum",
+                  "quantity": 50,
+                  "containerId": null,
+                  "day": 0,
+                  "playerNotes": "",
+                  "playerMagicKnowledge": "known-mundane",
+                  "playerKnowsValue": true,
+                  "name": "$ - Electrum piece"
+                }
+              ],
+              "dmNotes": ""
+            }
+          ],
+          "storageLocations": [
+            {
+              "id": "castle-kifu-storage",
+              "name": "Castle Kifu",
+              "notes": "Synthetic storage",
+              "inventory": [
+                {
+                  "id": "castle-chest",
+                  "catalogId": "chest-wooden-large",
+                  "quantity": 1,
+                  "containerId": null,
+                  "day": 1,
+                  "playerNotes": "",
+                  "playerMagicKnowledge": "known-mundane",
+                  "playerKnowsValue": true,
+                  "name": "Synthetic chest",
+                  "customItem": {
+                    "id": "chest-wooden-large",
+                    "name": "Synthetic chest",
+                    "category": "containers",
+                    "encumbranceGp": 100,
+                    "valueGp": 1,
+                    "isContainer": true,
+                    "capacityGp": 10000
+                  }
+                },
+                {
+                  "id": "castle-ep",
+                  "catalogId": "coin-electrum",
+                  "quantity": 700,
+                  "containerId": "castle-chest",
+                  "day": 0,
+                  "playerNotes": "",
+                  "playerMagicKnowledge": "known-mundane",
+                  "playerKnowsValue": true,
+                  "name": "$ - Electrum piece"
+                },
+                {
+                  "id": "castle-sp",
+                  "catalogId": "coin-silver",
+                  "quantity": 1000,
+                  "containerId": "castle-chest",
+                  "day": 0,
+                  "playerNotes": "",
+                  "playerMagicKnowledge": "known-mundane",
+                  "playerKnowsValue": true,
+                  "name": "$ - Silver piece"
+                },
+                {
+                  "id": "castle-gp",
+                  "catalogId": "coin-gold",
+                  "quantity": 250,
+                  "containerId": "castle-chest",
+                  "day": 0,
+                  "playerNotes": "",
+                  "playerMagicKnowledge": "known-mundane",
+                  "playerKnowsValue": true,
+                  "name": "$ - Gold piece"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ],
+    "workspace": {
+      "sessionId": "day3",
+      "view": "session",
+      "combatSelections": {}
+    },
+    "banking": {
+      "version": 1,
+      "openings": [
+        {
+          "id": "opening-inventory-reatha",
+          "holderId": "inventory-reatha",
+          "sessionId": "day2",
+          "phase": "after",
+          "amounts": {
+            "cp": 0,
+            "sp": 0,
+            "ep": 0,
+            "gp": 0,
+            "pp": 0,
+            "diamond": 0,
+            "emerald": 0
+          },
+          "note": "Reviewed Day 2 closing quantities"
+        },
+        {
+          "id": "opening-inventory-vitameno",
+          "holderId": "inventory-vitameno",
+          "sessionId": "day2",
+          "phase": "after",
+          "amounts": {
+            "cp": 0,
+            "sp": 0,
+            "ep": 50,
+            "gp": 0,
+            "pp": 0,
+            "diamond": 0,
+            "emerald": 0
+          },
+          "note": "Reviewed Day 2 closing quantities"
+        },
+        {
+          "id": "opening-castle-kifu-storage",
+          "holderId": "castle-kifu-storage",
+          "sessionId": "day2",
+          "phase": "after",
+          "amounts": {
+            "cp": 0,
+            "sp": 1000,
+            "ep": 700,
+            "gp": 250,
+            "pp": 0,
+            "diamond": 0,
+            "emerald": 0
+          },
+          "note": "Reviewed Day 2 closing quantities"
+        }
+      ],
+      "entries": [],
+      "extensions": []
+    }
+  },
+  "scenarios": [
+    {
+      "name": "payment",
+      "physical": {
+        "kind": "adnd-campaign",
+        "id": "synthetic-banking",
+        "title": "Synthetic Castle Kifu banking",
+        "notes": "",
+        "schemaVersion": 20,
+        "workingCombats": [],
+        "combatCheckpoints": [],
+        "sessions": [
+          {
+            "id": "day2",
+            "label": "Day 2",
+            "notes": ""
+          },
+          {
+            "id": "day3",
+            "label": "Day 3",
+            "notes": "",
+            "continuation": {
+              "sourceSessionId": "day2",
+              "sourceFingerprint": "b44976b3cff5812e5d446f34421fab0d741a08bb3b44f496771e6219d9dfbe28",
+              "combatInstanceIds": [],
+              "inventoryId": "day2-stock",
+              "copyNotes": false,
+              "requestFingerprint": "3f8e59cfdc2e887c2b78baa2daeaea395527e9a1d1c90d9072145f372fe76514"
+            }
+          }
+        ],
+        "records": [],
+        "workingInventories": [
+          {
+            "id": "day2-stock",
+            "sessionId": "day2",
+            "title": "Working possessions",
+            "document": {
+              "kind": "adnd-encumbrance-dm",
+              "version": 10,
+              "activeCharacterId": "inventory-reatha",
+              "characters": [
+                {
+                  "id": "inventory-reatha",
+                  "name": "Reatha",
+                  "strength": {
+                    "score": 18,
+                    "exceptional": "none"
+                  },
+                  "inventory": [],
+                  "dmNotes": "Synthetic fixture"
+                },
+                {
+                  "id": "inventory-vitameno",
+                  "name": "Vitameno",
+                  "strength": {
+                    "score": 10,
+                    "exceptional": "none"
+                  },
+                  "inventory": [
+                    {
+                      "id": "vitameno-ep",
+                      "catalogId": "coin-electrum",
+                      "quantity": 50,
+                      "containerId": null,
+                      "day": 0,
+                      "playerNotes": "",
+                      "playerMagicKnowledge": "known-mundane",
+                      "playerKnowsValue": true,
+                      "name": "$ - Electrum piece"
+                    }
+                  ],
+                  "dmNotes": ""
+                }
+              ],
+              "storageLocations": [
+                {
+                  "id": "castle-kifu-storage",
+                  "name": "Castle Kifu",
+                  "notes": "Synthetic storage",
+                  "inventory": [
+                    {
+                      "id": "castle-chest",
+                      "catalogId": "chest-wooden-large",
+                      "quantity": 1,
+                      "containerId": null,
+                      "day": 1,
+                      "playerNotes": "",
+                      "playerMagicKnowledge": "known-mundane",
+                      "playerKnowsValue": true,
+                      "name": "Synthetic chest",
+                      "customItem": {
+                        "id": "chest-wooden-large",
+                        "name": "Synthetic chest",
+                        "category": "containers",
+                        "encumbranceGp": 100,
+                        "valueGp": 1,
+                        "isContainer": true,
+                        "capacityGp": 10000
+                      }
+                    },
+                    {
+                      "id": "castle-ep",
+                      "catalogId": "coin-electrum",
+                      "quantity": 700,
+                      "containerId": "castle-chest",
+                      "day": 0,
+                      "playerNotes": "",
+                      "playerMagicKnowledge": "known-mundane",
+                      "playerKnowsValue": true,
+                      "name": "$ - Electrum piece"
+                    },
+                    {
+                      "id": "castle-sp",
+                      "catalogId": "coin-silver",
+                      "quantity": 1000,
+                      "containerId": "castle-chest",
+                      "day": 0,
+                      "playerNotes": "",
+                      "playerMagicKnowledge": "known-mundane",
+                      "playerKnowsValue": true,
+                      "name": "$ - Silver piece"
+                    },
+                    {
+                      "id": "castle-gp",
+                      "catalogId": "coin-gold",
+                      "quantity": 250,
+                      "containerId": "castle-chest",
+                      "day": 0,
+                      "playerNotes": "",
+                      "playerMagicKnowledge": "known-mundane",
+                      "playerKnowsValue": true,
+                      "name": "$ - Gold piece"
+                    }
+                  ]
+                }
+              ]
+            },
+            "origin": {
+              "kind": "empty"
+            }
+          },
+          {
+            "id": "day3-stock",
+            "sessionId": "day3",
+            "title": "Working possessions",
+            "document": {
+              "kind": "adnd-encumbrance-dm",
+              "version": 10,
+              "activeCharacterId": "inventory-reatha",
+              "characters": [
+                {
+                  "id": "inventory-reatha",
+                  "name": "Reatha",
+                  "strength": {
+                    "score": 18,
+                    "exceptional": "none"
+                  },
+                  "inventory": [],
+                  "dmNotes": "Synthetic fixture"
+                },
+                {
+                  "id": "inventory-vitameno",
+                  "name": "Vitameno",
+                  "strength": {
+                    "score": 10,
+                    "exceptional": "none"
+                  },
+                  "inventory": [
+                    {
+                      "id": "vitameno-ep",
+                      "catalogId": "coin-electrum",
+                      "quantity": 30,
+                      "containerId": null,
+                      "day": 0,
+                      "playerNotes": "",
+                      "playerMagicKnowledge": "known-mundane",
+                      "playerKnowsValue": true,
+                      "name": "$ - Electrum piece"
+                    }
+                  ],
+                  "dmNotes": ""
+                }
+              ],
+              "storageLocations": [
+                {
+                  "id": "castle-kifu-storage",
+                  "name": "Castle Kifu",
+                  "notes": "Synthetic storage",
+                  "inventory": [
+                    {
+                      "id": "castle-chest",
+                      "catalogId": "chest-wooden-large",
+                      "quantity": 1,
+                      "containerId": null,
+                      "day": 1,
+                      "playerNotes": "",
+                      "playerMagicKnowledge": "known-mundane",
+                      "playerKnowsValue": true,
+                      "name": "Synthetic chest",
+                      "customItem": {
+                        "id": "chest-wooden-large",
+                        "name": "Synthetic chest",
+                        "category": "containers",
+                        "encumbranceGp": 100,
+                        "valueGp": 1,
+                        "isContainer": true,
+                        "capacityGp": 10000
+                      }
+                    },
+                    {
+                      "id": "castle-ep",
+                      "catalogId": "coin-electrum",
+                      "quantity": 700,
+                      "containerId": "castle-chest",
+                      "day": 0,
+                      "playerNotes": "",
+                      "playerMagicKnowledge": "known-mundane",
+                      "playerKnowsValue": true,
+                      "name": "$ - Electrum piece"
+                    },
+                    {
+                      "id": "castle-sp",
+                      "catalogId": "coin-silver",
+                      "quantity": 1000,
+                      "containerId": "castle-chest",
+                      "day": 0,
+                      "playerNotes": "",
+                      "playerMagicKnowledge": "known-mundane",
+                      "playerKnowsValue": true,
+                      "name": "$ - Silver piece"
+                    },
+                    {
+                      "id": "castle-gp",
+                      "catalogId": "coin-gold",
+                      "quantity": 250,
+                      "containerId": "castle-chest",
+                      "day": 0,
+                      "playerNotes": "",
+                      "playerMagicKnowledge": "known-mundane",
+                      "playerKnowsValue": true,
+                      "name": "$ - Gold piece"
+                    }
+                  ]
+                }
+              ]
+            },
+            "origin": {
+              "kind": "checkpoint",
+              "checkpointId": "carry-checkpoint"
+            },
+            "continuedFrom": {
+              "sessionId": "day2",
+              "instanceId": "day2-stock",
+              "checkpointId": "carry-checkpoint"
+            }
+          }
+        ],
+        "inventoryCheckpoints": [
+          {
+            "id": "carry-checkpoint",
+            "workingId": "day2-stock",
+            "sessionId": "day2",
+            "label": "Before continuing to Day 3",
+            "capturedAt": "2026-11-10T12:00:00.000Z",
+            "origin": {
+              "kind": "empty"
+            },
+            "document": {
+              "kind": "adnd-encumbrance-dm",
+              "version": 10,
+              "activeCharacterId": "inventory-reatha",
+              "characters": [
+                {
+                  "id": "inventory-reatha",
+                  "name": "Reatha",
+                  "strength": {
+                    "score": 18,
+                    "exceptional": "none"
+                  },
+                  "inventory": [],
+                  "dmNotes": "Synthetic fixture"
+                },
+                {
+                  "id": "inventory-vitameno",
+                  "name": "Vitameno",
+                  "strength": {
+                    "score": 10,
+                    "exceptional": "none"
+                  },
+                  "inventory": [
+                    {
+                      "id": "vitameno-ep",
+                      "catalogId": "coin-electrum",
+                      "quantity": 50,
+                      "containerId": null,
+                      "day": 0,
+                      "playerNotes": "",
+                      "playerMagicKnowledge": "known-mundane",
+                      "playerKnowsValue": true,
+                      "name": "$ - Electrum piece"
+                    }
+                  ],
+                  "dmNotes": ""
+                }
+              ],
+              "storageLocations": [
+                {
+                  "id": "castle-kifu-storage",
+                  "name": "Castle Kifu",
+                  "notes": "Synthetic storage",
+                  "inventory": [
+                    {
+                      "id": "castle-chest",
+                      "catalogId": "chest-wooden-large",
+                      "quantity": 1,
+                      "containerId": null,
+                      "day": 1,
+                      "playerNotes": "",
+                      "playerMagicKnowledge": "known-mundane",
+                      "playerKnowsValue": true,
+                      "name": "Synthetic chest",
+                      "customItem": {
+                        "id": "chest-wooden-large",
+                        "name": "Synthetic chest",
+                        "category": "containers",
+                        "encumbranceGp": 100,
+                        "valueGp": 1,
+                        "isContainer": true,
+                        "capacityGp": 10000
+                      }
+                    },
+                    {
+                      "id": "castle-ep",
+                      "catalogId": "coin-electrum",
+                      "quantity": 700,
+                      "containerId": "castle-chest",
+                      "day": 0,
+                      "playerNotes": "",
+                      "playerMagicKnowledge": "known-mundane",
+                      "playerKnowsValue": true,
+                      "name": "$ - Electrum piece"
+                    },
+                    {
+                      "id": "castle-sp",
+                      "catalogId": "coin-silver",
+                      "quantity": 1000,
+                      "containerId": "castle-chest",
+                      "day": 0,
+                      "playerNotes": "",
+                      "playerMagicKnowledge": "known-mundane",
+                      "playerKnowsValue": true,
+                      "name": "$ - Silver piece"
+                    },
+                    {
+                      "id": "castle-gp",
+                      "catalogId": "coin-gold",
+                      "quantity": 250,
+                      "containerId": "castle-chest",
+                      "day": 0,
+                      "playerNotes": "",
+                      "playerMagicKnowledge": "known-mundane",
+                      "playerKnowsValue": true,
+                      "name": "$ - Gold piece"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ],
+        "workspace": {
+          "sessionId": "day3",
+          "view": "session",
+          "combatSelections": {}
+        },
+        "banking": {
+          "version": 1,
+          "openings": [
+            {
+              "id": "opening-inventory-reatha",
+              "holderId": "inventory-reatha",
+              "sessionId": "day2",
+              "phase": "after",
+              "amounts": {
+                "cp": 0,
+                "sp": 0,
+                "ep": 0,
+                "gp": 0,
+                "pp": 0,
+                "diamond": 0,
+                "emerald": 0
+              },
+              "note": "Reviewed Day 2 closing quantities"
+            },
+            {
+              "id": "opening-inventory-vitameno",
+              "holderId": "inventory-vitameno",
+              "sessionId": "day2",
+              "phase": "after",
+              "amounts": {
+                "cp": 0,
+                "sp": 0,
+                "ep": 50,
+                "gp": 0,
+                "pp": 0,
+                "diamond": 0,
+                "emerald": 0
+              },
+              "note": "Reviewed Day 2 closing quantities"
+            },
+            {
+              "id": "opening-castle-kifu-storage",
+              "holderId": "castle-kifu-storage",
+              "sessionId": "day2",
+              "phase": "after",
+              "amounts": {
+                "cp": 0,
+                "sp": 1000,
+                "ep": 700,
+                "gp": 250,
+                "pp": 0,
+                "diamond": 0,
+                "emerald": 0
+              },
+              "note": "Reviewed Day 2 closing quantities"
+            }
+          ],
+          "entries": [],
+          "extensions": []
+        }
+      },
+      "posted": {
+        "kind": "adnd-campaign",
+        "id": "synthetic-banking",
+        "title": "Synthetic Castle Kifu banking",
+        "notes": "",
+        "schemaVersion": 20,
+        "workingCombats": [],
+        "combatCheckpoints": [],
+        "sessions": [
+          {
+            "id": "day2",
+            "label": "Day 2",
+            "notes": ""
+          },
+          {
+            "id": "day3",
+            "label": "Day 3",
+            "notes": "",
+            "continuation": {
+              "sourceSessionId": "day2",
+              "sourceFingerprint": "b44976b3cff5812e5d446f34421fab0d741a08bb3b44f496771e6219d9dfbe28",
+              "combatInstanceIds": [],
+              "inventoryId": "day2-stock",
+              "copyNotes": false,
+              "requestFingerprint": "3f8e59cfdc2e887c2b78baa2daeaea395527e9a1d1c90d9072145f372fe76514"
+            }
+          }
+        ],
+        "records": [],
+        "workingInventories": [
+          {
+            "id": "day2-stock",
+            "sessionId": "day2",
+            "title": "Working possessions",
+            "document": {
+              "kind": "adnd-encumbrance-dm",
+              "version": 10,
+              "activeCharacterId": "inventory-reatha",
+              "characters": [
+                {
+                  "id": "inventory-reatha",
+                  "name": "Reatha",
+                  "strength": {
+                    "score": 18,
+                    "exceptional": "none"
+                  },
+                  "inventory": [],
+                  "dmNotes": "Synthetic fixture"
+                },
+                {
+                  "id": "inventory-vitameno",
+                  "name": "Vitameno",
+                  "strength": {
+                    "score": 10,
+                    "exceptional": "none"
+                  },
+                  "inventory": [
+                    {
+                      "id": "vitameno-ep",
+                      "catalogId": "coin-electrum",
+                      "quantity": 50,
+                      "containerId": null,
+                      "day": 0,
+                      "playerNotes": "",
+                      "playerMagicKnowledge": "known-mundane",
+                      "playerKnowsValue": true,
+                      "name": "$ - Electrum piece"
+                    }
+                  ],
+                  "dmNotes": ""
+                }
+              ],
+              "storageLocations": [
+                {
+                  "id": "castle-kifu-storage",
+                  "name": "Castle Kifu",
+                  "notes": "Synthetic storage",
+                  "inventory": [
+                    {
+                      "id": "castle-chest",
+                      "catalogId": "chest-wooden-large",
+                      "quantity": 1,
+                      "containerId": null,
+                      "day": 1,
+                      "playerNotes": "",
+                      "playerMagicKnowledge": "known-mundane",
+                      "playerKnowsValue": true,
+                      "name": "Synthetic chest",
+                      "customItem": {
+                        "id": "chest-wooden-large",
+                        "name": "Synthetic chest",
+                        "category": "containers",
+                        "encumbranceGp": 100,
+                        "valueGp": 1,
+                        "isContainer": true,
+                        "capacityGp": 10000
+                      }
+                    },
+                    {
+                      "id": "castle-ep",
+                      "catalogId": "coin-electrum",
+                      "quantity": 700,
+                      "containerId": "castle-chest",
+                      "day": 0,
+                      "playerNotes": "",
+                      "playerMagicKnowledge": "known-mundane",
+                      "playerKnowsValue": true,
+                      "name": "$ - Electrum piece"
+                    },
+                    {
+                      "id": "castle-sp",
+                      "catalogId": "coin-silver",
+                      "quantity": 1000,
+                      "containerId": "castle-chest",
+                      "day": 0,
+                      "playerNotes": "",
+                      "playerMagicKnowledge": "known-mundane",
+                      "playerKnowsValue": true,
+                      "name": "$ - Silver piece"
+                    },
+                    {
+                      "id": "castle-gp",
+                      "catalogId": "coin-gold",
+                      "quantity": 250,
+                      "containerId": "castle-chest",
+                      "day": 0,
+                      "playerNotes": "",
+                      "playerMagicKnowledge": "known-mundane",
+                      "playerKnowsValue": true,
+                      "name": "$ - Gold piece"
+                    }
+                  ]
+                }
+              ]
+            },
+            "origin": {
+              "kind": "empty"
+            }
+          },
+          {
+            "id": "day3-stock",
+            "sessionId": "day3",
+            "title": "Working possessions",
+            "document": {
+              "kind": "adnd-encumbrance-dm",
+              "version": 10,
+              "activeCharacterId": "inventory-reatha",
+              "characters": [
+                {
+                  "id": "inventory-reatha",
+                  "name": "Reatha",
+                  "strength": {
+                    "score": 18,
+                    "exceptional": "none"
+                  },
+                  "inventory": [],
+                  "dmNotes": "Synthetic fixture"
+                },
+                {
+                  "id": "inventory-vitameno",
+                  "name": "Vitameno",
+                  "strength": {
+                    "score": 10,
+                    "exceptional": "none"
+                  },
+                  "inventory": [
+                    {
+                      "id": "vitameno-ep",
+                      "catalogId": "coin-electrum",
+                      "quantity": 30,
+                      "containerId": null,
+                      "day": 0,
+                      "playerNotes": "",
+                      "playerMagicKnowledge": "known-mundane",
+                      "playerKnowsValue": true,
+                      "name": "$ - Electrum piece"
+                    }
+                  ],
+                  "dmNotes": ""
+                }
+              ],
+              "storageLocations": [
+                {
+                  "id": "castle-kifu-storage",
+                  "name": "Castle Kifu",
+                  "notes": "Synthetic storage",
+                  "inventory": [
+                    {
+                      "id": "castle-chest",
+                      "catalogId": "chest-wooden-large",
+                      "quantity": 1,
+                      "containerId": null,
+                      "day": 1,
+                      "playerNotes": "",
+                      "playerMagicKnowledge": "known-mundane",
+                      "playerKnowsValue": true,
+                      "name": "Synthetic chest",
+                      "customItem": {
+                        "id": "chest-wooden-large",
+                        "name": "Synthetic chest",
+                        "category": "containers",
+                        "encumbranceGp": 100,
+                        "valueGp": 1,
+                        "isContainer": true,
+                        "capacityGp": 10000
+                      }
+                    },
+                    {
+                      "id": "castle-ep",
+                      "catalogId": "coin-electrum",
+                      "quantity": 700,
+                      "containerId": "castle-chest",
+                      "day": 0,
+                      "playerNotes": "",
+                      "playerMagicKnowledge": "known-mundane",
+                      "playerKnowsValue": true,
+                      "name": "$ - Electrum piece"
+                    },
+                    {
+                      "id": "castle-sp",
+                      "catalogId": "coin-silver",
+                      "quantity": 1000,
+                      "containerId": "castle-chest",
+                      "day": 0,
+                      "playerNotes": "",
+                      "playerMagicKnowledge": "known-mundane",
+                      "playerKnowsValue": true,
+                      "name": "$ - Silver piece"
+                    },
+                    {
+                      "id": "castle-gp",
+                      "catalogId": "coin-gold",
+                      "quantity": 250,
+                      "containerId": "castle-chest",
+                      "day": 0,
+                      "playerNotes": "",
+                      "playerMagicKnowledge": "known-mundane",
+                      "playerKnowsValue": true,
+                      "name": "$ - Gold piece"
+                    }
+                  ]
+                }
+              ]
+            },
+            "origin": {
+              "kind": "checkpoint",
+              "checkpointId": "carry-checkpoint"
+            },
+            "continuedFrom": {
+              "sessionId": "day2",
+              "instanceId": "day2-stock",
+              "checkpointId": "carry-checkpoint"
+            }
+          }
+        ],
+        "inventoryCheckpoints": [
+          {
+            "id": "carry-checkpoint",
+            "workingId": "day2-stock",
+            "sessionId": "day2",
+            "label": "Before continuing to Day 3",
+            "capturedAt": "2026-11-10T12:00:00.000Z",
+            "origin": {
+              "kind": "empty"
+            },
+            "document": {
+              "kind": "adnd-encumbrance-dm",
+              "version": 10,
+              "activeCharacterId": "inventory-reatha",
+              "characters": [
+                {
+                  "id": "inventory-reatha",
+                  "name": "Reatha",
+                  "strength": {
+                    "score": 18,
+                    "exceptional": "none"
+                  },
+                  "inventory": [],
+                  "dmNotes": "Synthetic fixture"
+                },
+                {
+                  "id": "inventory-vitameno",
+                  "name": "Vitameno",
+                  "strength": {
+                    "score": 10,
+                    "exceptional": "none"
+                  },
+                  "inventory": [
+                    {
+                      "id": "vitameno-ep",
+                      "catalogId": "coin-electrum",
+                      "quantity": 50,
+                      "containerId": null,
+                      "day": 0,
+                      "playerNotes": "",
+                      "playerMagicKnowledge": "known-mundane",
+                      "playerKnowsValue": true,
+                      "name": "$ - Electrum piece"
+                    }
+                  ],
+                  "dmNotes": ""
+                }
+              ],
+              "storageLocations": [
+                {
+                  "id": "castle-kifu-storage",
+                  "name": "Castle Kifu",
+                  "notes": "Synthetic storage",
+                  "inventory": [
+                    {
+                      "id": "castle-chest",
+                      "catalogId": "chest-wooden-large",
+                      "quantity": 1,
+                      "containerId": null,
+                      "day": 1,
+                      "playerNotes": "",
+                      "playerMagicKnowledge": "known-mundane",
+                      "playerKnowsValue": true,
+                      "name": "Synthetic chest",
+                      "customItem": {
+                        "id": "chest-wooden-large",
+                        "name": "Synthetic chest",
+                        "category": "containers",
+                        "encumbranceGp": 100,
+                        "valueGp": 1,
+                        "isContainer": true,
+                        "capacityGp": 10000
+                      }
+                    },
+                    {
+                      "id": "castle-ep",
+                      "catalogId": "coin-electrum",
+                      "quantity": 700,
+                      "containerId": "castle-chest",
+                      "day": 0,
+                      "playerNotes": "",
+                      "playerMagicKnowledge": "known-mundane",
+                      "playerKnowsValue": true,
+                      "name": "$ - Electrum piece"
+                    },
+                    {
+                      "id": "castle-sp",
+                      "catalogId": "coin-silver",
+                      "quantity": 1000,
+                      "containerId": "castle-chest",
+                      "day": 0,
+                      "playerNotes": "",
+                      "playerMagicKnowledge": "known-mundane",
+                      "playerKnowsValue": true,
+                      "name": "$ - Silver piece"
+                    },
+                    {
+                      "id": "castle-gp",
+                      "catalogId": "coin-gold",
+                      "quantity": 250,
+                      "containerId": "castle-chest",
+                      "day": 0,
+                      "playerNotes": "",
+                      "playerMagicKnowledge": "known-mundane",
+                      "playerKnowsValue": true,
+                      "name": "$ - Gold piece"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ],
+        "workspace": {
+          "sessionId": "day3",
+          "view": "session",
+          "combatSelections": {}
+        },
+        "banking": {
+          "version": 1,
+          "openings": [
+            {
+              "id": "opening-inventory-reatha",
+              "holderId": "inventory-reatha",
+              "sessionId": "day2",
+              "phase": "after",
+              "amounts": {
+                "cp": 0,
+                "sp": 0,
+                "ep": 0,
+                "gp": 0,
+                "pp": 0,
+                "diamond": 0,
+                "emerald": 0
+              },
+              "note": "Reviewed Day 2 closing quantities"
+            },
+            {
+              "id": "opening-inventory-vitameno",
+              "holderId": "inventory-vitameno",
+              "sessionId": "day2",
+              "phase": "after",
+              "amounts": {
+                "cp": 0,
+                "sp": 0,
+                "ep": 50,
+                "gp": 0,
+                "pp": 0,
+                "diamond": 0,
+                "emerald": 0
+              },
+              "note": "Reviewed Day 2 closing quantities"
+            },
+            {
+              "id": "opening-castle-kifu-storage",
+              "holderId": "castle-kifu-storage",
+              "sessionId": "day2",
+              "phase": "after",
+              "amounts": {
+                "cp": 0,
+                "sp": 1000,
+                "ep": 700,
+                "gp": 250,
+                "pp": 0,
+                "diamond": 0,
+                "emerald": 0
+              },
+              "note": "Reviewed Day 2 closing quantities"
+            }
+          ],
+          "entries": [
+            {
+              "id": "native-payment",
+              "transactionId": "payment",
+              "replaces": null,
+              "sessionId": "day3",
+              "order": 0,
+              "description": "payment",
+              "kind": "purchase",
+              "status": "posted",
+              "effect": "ledger",
+              "receiptMode": "existing",
+              "changes": [
+                {
+                  "holderId": "inventory-vitameno",
+                  "denomination": "ep",
+                  "item": {
+                    "id": "ledger-balance:inventory-vitameno:ep",
+                    "catalogId": "coin-electrum",
+                    "quantity": 50,
+                    "containerId": null,
+                    "day": 0,
+                    "name": "Recorded ledger balance",
+                    "playerNotes": "",
+                    "playerKnowsValue": true,
+                    "playerMagicKnowledge": "known-mundane"
+                  },
+                  "quantity": -20
+                }
+              ],
+              "at": "2026-11-10T12:00:00.000Z"
+            }
+          ],
+          "extensions": []
+        }
+      }
+    },
+    {
+      "name": "exchange",
+      "physical": {
+        "kind": "adnd-campaign",
+        "id": "synthetic-banking",
+        "title": "Synthetic Castle Kifu banking",
+        "notes": "",
+        "schemaVersion": 20,
+        "workingCombats": [],
+        "combatCheckpoints": [],
+        "sessions": [
+          {
+            "id": "day2",
+            "label": "Day 2",
+            "notes": ""
+          },
+          {
+            "id": "day3",
+            "label": "Day 3",
+            "notes": "",
+            "continuation": {
+              "sourceSessionId": "day2",
+              "sourceFingerprint": "b44976b3cff5812e5d446f34421fab0d741a08bb3b44f496771e6219d9dfbe28",
+              "combatInstanceIds": [],
+              "inventoryId": "day2-stock",
+              "copyNotes": false,
+              "requestFingerprint": "3f8e59cfdc2e887c2b78baa2daeaea395527e9a1d1c90d9072145f372fe76514"
+            }
+          }
+        ],
+        "records": [],
+        "workingInventories": [
+          {
+            "id": "day2-stock",
+            "sessionId": "day2",
+            "title": "Working possessions",
+            "document": {
+              "kind": "adnd-encumbrance-dm",
+              "version": 10,
+              "activeCharacterId": "inventory-reatha",
+              "characters": [
+                {
+                  "id": "inventory-reatha",
+                  "name": "Reatha",
+                  "strength": {
+                    "score": 18,
+                    "exceptional": "none"
+                  },
+                  "inventory": [],
+                  "dmNotes": "Synthetic fixture"
+                },
+                {
+                  "id": "inventory-vitameno",
+                  "name": "Vitameno",
+                  "strength": {
+                    "score": 10,
+                    "exceptional": "none"
+                  },
+                  "inventory": [
+                    {
+                      "id": "vitameno-ep",
+                      "catalogId": "coin-electrum",
+                      "quantity": 50,
+                      "containerId": null,
+                      "day": 0,
+                      "playerNotes": "",
+                      "playerMagicKnowledge": "known-mundane",
+                      "playerKnowsValue": true,
+                      "name": "$ - Electrum piece"
+                    }
+                  ],
+                  "dmNotes": ""
+                }
+              ],
+              "storageLocations": [
+                {
+                  "id": "castle-kifu-storage",
+                  "name": "Castle Kifu",
+                  "notes": "Synthetic storage",
+                  "inventory": [
+                    {
+                      "id": "castle-chest",
+                      "catalogId": "chest-wooden-large",
+                      "quantity": 1,
+                      "containerId": null,
+                      "day": 1,
+                      "playerNotes": "",
+                      "playerMagicKnowledge": "known-mundane",
+                      "playerKnowsValue": true,
+                      "name": "Synthetic chest",
+                      "customItem": {
+                        "id": "chest-wooden-large",
+                        "name": "Synthetic chest",
+                        "category": "containers",
+                        "encumbranceGp": 100,
+                        "valueGp": 1,
+                        "isContainer": true,
+                        "capacityGp": 10000
+                      }
+                    },
+                    {
+                      "id": "castle-ep",
+                      "catalogId": "coin-electrum",
+                      "quantity": 700,
+                      "containerId": "castle-chest",
+                      "day": 0,
+                      "playerNotes": "",
+                      "playerMagicKnowledge": "known-mundane",
+                      "playerKnowsValue": true,
+                      "name": "$ - Electrum piece"
+                    },
+                    {
+                      "id": "castle-sp",
+                      "catalogId": "coin-silver",
+                      "quantity": 1000,
+                      "containerId": "castle-chest",
+                      "day": 0,
+                      "playerNotes": "",
+                      "playerMagicKnowledge": "known-mundane",
+                      "playerKnowsValue": true,
+                      "name": "$ - Silver piece"
+                    },
+                    {
+                      "id": "castle-gp",
+                      "catalogId": "coin-gold",
+                      "quantity": 250,
+                      "containerId": "castle-chest",
+                      "day": 0,
+                      "playerNotes": "",
+                      "playerMagicKnowledge": "known-mundane",
+                      "playerKnowsValue": true,
+                      "name": "$ - Gold piece"
+                    }
+                  ]
+                }
+              ]
+            },
+            "origin": {
+              "kind": "empty"
+            }
+          },
+          {
+            "id": "day3-stock",
+            "sessionId": "day3",
+            "title": "Working possessions",
+            "document": {
+              "kind": "adnd-encumbrance-dm",
+              "version": 10,
+              "activeCharacterId": "inventory-reatha",
+              "characters": [
+                {
+                  "id": "inventory-reatha",
+                  "name": "Reatha",
+                  "strength": {
+                    "score": 18,
+                    "exceptional": "none"
+                  },
+                  "inventory": [],
+                  "dmNotes": "Synthetic fixture"
+                },
+                {
+                  "id": "inventory-vitameno",
+                  "name": "Vitameno",
+                  "strength": {
+                    "score": 10,
+                    "exceptional": "none"
+                  },
+                  "inventory": [
+                    {
+                      "id": "converted-gold",
+                      "catalogId": "coin-gold",
+                      "quantity": 25,
+                      "containerId": null,
+                      "day": 0,
+                      "playerNotes": "",
+                      "playerMagicKnowledge": "known-mundane",
+                      "playerKnowsValue": true,
+                      "name": "$ - Gold piece"
+                    }
+                  ],
+                  "dmNotes": ""
+                }
+              ],
+              "storageLocations": [
+                {
+                  "id": "castle-kifu-storage",
+                  "name": "Castle Kifu",
+                  "notes": "Synthetic storage",
+                  "inventory": [
+                    {
+                      "id": "castle-chest",
+                      "catalogId": "chest-wooden-large",
+                      "quantity": 1,
+                      "containerId": null,
+                      "day": 1,
+                      "playerNotes": "",
+                      "playerMagicKnowledge": "known-mundane",
+                      "playerKnowsValue": true,
+                      "name": "Synthetic chest",
+                      "customItem": {
+                        "id": "chest-wooden-large",
+                        "name": "Synthetic chest",
+                        "category": "containers",
+                        "encumbranceGp": 100,
+                        "valueGp": 1,
+                        "isContainer": true,
+                        "capacityGp": 10000
+                      }
+                    },
+                    {
+                      "id": "castle-ep",
+                      "catalogId": "coin-electrum",
+                      "quantity": 700,
+                      "containerId": "castle-chest",
+                      "day": 0,
+                      "playerNotes": "",
+                      "playerMagicKnowledge": "known-mundane",
+                      "playerKnowsValue": true,
+                      "name": "$ - Electrum piece"
+                    },
+                    {
+                      "id": "castle-sp",
+                      "catalogId": "coin-silver",
+                      "quantity": 1000,
+                      "containerId": "castle-chest",
+                      "day": 0,
+                      "playerNotes": "",
+                      "playerMagicKnowledge": "known-mundane",
+                      "playerKnowsValue": true,
+                      "name": "$ - Silver piece"
+                    },
+                    {
+                      "id": "castle-gp",
+                      "catalogId": "coin-gold",
+                      "quantity": 250,
+                      "containerId": "castle-chest",
+                      "day": 0,
+                      "playerNotes": "",
+                      "playerMagicKnowledge": "known-mundane",
+                      "playerKnowsValue": true,
+                      "name": "$ - Gold piece"
+                    }
+                  ]
+                }
+              ]
+            },
+            "origin": {
+              "kind": "checkpoint",
+              "checkpointId": "carry-checkpoint"
+            },
+            "continuedFrom": {
+              "sessionId": "day2",
+              "instanceId": "day2-stock",
+              "checkpointId": "carry-checkpoint"
+            }
+          }
+        ],
+        "inventoryCheckpoints": [
+          {
+            "id": "carry-checkpoint",
+            "workingId": "day2-stock",
+            "sessionId": "day2",
+            "label": "Before continuing to Day 3",
+            "capturedAt": "2026-11-10T12:00:00.000Z",
+            "origin": {
+              "kind": "empty"
+            },
+            "document": {
+              "kind": "adnd-encumbrance-dm",
+              "version": 10,
+              "activeCharacterId": "inventory-reatha",
+              "characters": [
+                {
+                  "id": "inventory-reatha",
+                  "name": "Reatha",
+                  "strength": {
+                    "score": 18,
+                    "exceptional": "none"
+                  },
+                  "inventory": [],
+                  "dmNotes": "Synthetic fixture"
+                },
+                {
+                  "id": "inventory-vitameno",
+                  "name": "Vitameno",
+                  "strength": {
+                    "score": 10,
+                    "exceptional": "none"
+                  },
+                  "inventory": [
+                    {
+                      "id": "vitameno-ep",
+                      "catalogId": "coin-electrum",
+                      "quantity": 50,
+                      "containerId": null,
+                      "day": 0,
+                      "playerNotes": "",
+                      "playerMagicKnowledge": "known-mundane",
+                      "playerKnowsValue": true,
+                      "name": "$ - Electrum piece"
+                    }
+                  ],
+                  "dmNotes": ""
+                }
+              ],
+              "storageLocations": [
+                {
+                  "id": "castle-kifu-storage",
+                  "name": "Castle Kifu",
+                  "notes": "Synthetic storage",
+                  "inventory": [
+                    {
+                      "id": "castle-chest",
+                      "catalogId": "chest-wooden-large",
+                      "quantity": 1,
+                      "containerId": null,
+                      "day": 1,
+                      "playerNotes": "",
+                      "playerMagicKnowledge": "known-mundane",
+                      "playerKnowsValue": true,
+                      "name": "Synthetic chest",
+                      "customItem": {
+                        "id": "chest-wooden-large",
+                        "name": "Synthetic chest",
+                        "category": "containers",
+                        "encumbranceGp": 100,
+                        "valueGp": 1,
+                        "isContainer": true,
+                        "capacityGp": 10000
+                      }
+                    },
+                    {
+                      "id": "castle-ep",
+                      "catalogId": "coin-electrum",
+                      "quantity": 700,
+                      "containerId": "castle-chest",
+                      "day": 0,
+                      "playerNotes": "",
+                      "playerMagicKnowledge": "known-mundane",
+                      "playerKnowsValue": true,
+                      "name": "$ - Electrum piece"
+                    },
+                    {
+                      "id": "castle-sp",
+                      "catalogId": "coin-silver",
+                      "quantity": 1000,
+                      "containerId": "castle-chest",
+                      "day": 0,
+                      "playerNotes": "",
+                      "playerMagicKnowledge": "known-mundane",
+                      "playerKnowsValue": true,
+                      "name": "$ - Silver piece"
+                    },
+                    {
+                      "id": "castle-gp",
+                      "catalogId": "coin-gold",
+                      "quantity": 250,
+                      "containerId": "castle-chest",
+                      "day": 0,
+                      "playerNotes": "",
+                      "playerMagicKnowledge": "known-mundane",
+                      "playerKnowsValue": true,
+                      "name": "$ - Gold piece"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ],
+        "workspace": {
+          "sessionId": "day3",
+          "view": "session",
+          "combatSelections": {}
+        },
+        "banking": {
+          "version": 1,
+          "openings": [
+            {
+              "id": "opening-inventory-reatha",
+              "holderId": "inventory-reatha",
+              "sessionId": "day2",
+              "phase": "after",
+              "amounts": {
+                "cp": 0,
+                "sp": 0,
+                "ep": 0,
+                "gp": 0,
+                "pp": 0,
+                "diamond": 0,
+                "emerald": 0
+              },
+              "note": "Reviewed Day 2 closing quantities"
+            },
+            {
+              "id": "opening-inventory-vitameno",
+              "holderId": "inventory-vitameno",
+              "sessionId": "day2",
+              "phase": "after",
+              "amounts": {
+                "cp": 0,
+                "sp": 0,
+                "ep": 50,
+                "gp": 0,
+                "pp": 0,
+                "diamond": 0,
+                "emerald": 0
+              },
+              "note": "Reviewed Day 2 closing quantities"
+            },
+            {
+              "id": "opening-castle-kifu-storage",
+              "holderId": "castle-kifu-storage",
+              "sessionId": "day2",
+              "phase": "after",
+              "amounts": {
+                "cp": 0,
+                "sp": 1000,
+                "ep": 700,
+                "gp": 250,
+                "pp": 0,
+                "diamond": 0,
+                "emerald": 0
+              },
+              "note": "Reviewed Day 2 closing quantities"
+            }
+          ],
+          "entries": [],
+          "extensions": []
+        }
+      },
+      "posted": {
+        "kind": "adnd-campaign",
+        "id": "synthetic-banking",
+        "title": "Synthetic Castle Kifu banking",
+        "notes": "",
+        "schemaVersion": 20,
+        "workingCombats": [],
+        "combatCheckpoints": [],
+        "sessions": [
+          {
+            "id": "day2",
+            "label": "Day 2",
+            "notes": ""
+          },
+          {
+            "id": "day3",
+            "label": "Day 3",
+            "notes": "",
+            "continuation": {
+              "sourceSessionId": "day2",
+              "sourceFingerprint": "b44976b3cff5812e5d446f34421fab0d741a08bb3b44f496771e6219d9dfbe28",
+              "combatInstanceIds": [],
+              "inventoryId": "day2-stock",
+              "copyNotes": false,
+              "requestFingerprint": "3f8e59cfdc2e887c2b78baa2daeaea395527e9a1d1c90d9072145f372fe76514"
+            }
+          }
+        ],
+        "records": [],
+        "workingInventories": [
+          {
+            "id": "day2-stock",
+            "sessionId": "day2",
+            "title": "Working possessions",
+            "document": {
+              "kind": "adnd-encumbrance-dm",
+              "version": 10,
+              "activeCharacterId": "inventory-reatha",
+              "characters": [
+                {
+                  "id": "inventory-reatha",
+                  "name": "Reatha",
+                  "strength": {
+                    "score": 18,
+                    "exceptional": "none"
+                  },
+                  "inventory": [],
+                  "dmNotes": "Synthetic fixture"
+                },
+                {
+                  "id": "inventory-vitameno",
+                  "name": "Vitameno",
+                  "strength": {
+                    "score": 10,
+                    "exceptional": "none"
+                  },
+                  "inventory": [
+                    {
+                      "id": "vitameno-ep",
+                      "catalogId": "coin-electrum",
+                      "quantity": 50,
+                      "containerId": null,
+                      "day": 0,
+                      "playerNotes": "",
+                      "playerMagicKnowledge": "known-mundane",
+                      "playerKnowsValue": true,
+                      "name": "$ - Electrum piece"
+                    }
+                  ],
+                  "dmNotes": ""
+                }
+              ],
+              "storageLocations": [
+                {
+                  "id": "castle-kifu-storage",
+                  "name": "Castle Kifu",
+                  "notes": "Synthetic storage",
+                  "inventory": [
+                    {
+                      "id": "castle-chest",
+                      "catalogId": "chest-wooden-large",
+                      "quantity": 1,
+                      "containerId": null,
+                      "day": 1,
+                      "playerNotes": "",
+                      "playerMagicKnowledge": "known-mundane",
+                      "playerKnowsValue": true,
+                      "name": "Synthetic chest",
+                      "customItem": {
+                        "id": "chest-wooden-large",
+                        "name": "Synthetic chest",
+                        "category": "containers",
+                        "encumbranceGp": 100,
+                        "valueGp": 1,
+                        "isContainer": true,
+                        "capacityGp": 10000
+                      }
+                    },
+                    {
+                      "id": "castle-ep",
+                      "catalogId": "coin-electrum",
+                      "quantity": 700,
+                      "containerId": "castle-chest",
+                      "day": 0,
+                      "playerNotes": "",
+                      "playerMagicKnowledge": "known-mundane",
+                      "playerKnowsValue": true,
+                      "name": "$ - Electrum piece"
+                    },
+                    {
+                      "id": "castle-sp",
+                      "catalogId": "coin-silver",
+                      "quantity": 1000,
+                      "containerId": "castle-chest",
+                      "day": 0,
+                      "playerNotes": "",
+                      "playerMagicKnowledge": "known-mundane",
+                      "playerKnowsValue": true,
+                      "name": "$ - Silver piece"
+                    },
+                    {
+                      "id": "castle-gp",
+                      "catalogId": "coin-gold",
+                      "quantity": 250,
+                      "containerId": "castle-chest",
+                      "day": 0,
+                      "playerNotes": "",
+                      "playerMagicKnowledge": "known-mundane",
+                      "playerKnowsValue": true,
+                      "name": "$ - Gold piece"
+                    }
+                  ]
+                }
+              ]
+            },
+            "origin": {
+              "kind": "empty"
+            }
+          },
+          {
+            "id": "day3-stock",
+            "sessionId": "day3",
+            "title": "Working possessions",
+            "document": {
+              "kind": "adnd-encumbrance-dm",
+              "version": 10,
+              "activeCharacterId": "inventory-reatha",
+              "characters": [
+                {
+                  "id": "inventory-reatha",
+                  "name": "Reatha",
+                  "strength": {
+                    "score": 18,
+                    "exceptional": "none"
+                  },
+                  "inventory": [],
+                  "dmNotes": "Synthetic fixture"
+                },
+                {
+                  "id": "inventory-vitameno",
+                  "name": "Vitameno",
+                  "strength": {
+                    "score": 10,
+                    "exceptional": "none"
+                  },
+                  "inventory": [
+                    {
+                      "id": "converted-gold",
+                      "catalogId": "coin-gold",
+                      "quantity": 25,
+                      "containerId": null,
+                      "day": 0,
+                      "playerNotes": "",
+                      "playerMagicKnowledge": "known-mundane",
+                      "playerKnowsValue": true,
+                      "name": "$ - Gold piece"
+                    }
+                  ],
+                  "dmNotes": ""
+                }
+              ],
+              "storageLocations": [
+                {
+                  "id": "castle-kifu-storage",
+                  "name": "Castle Kifu",
+                  "notes": "Synthetic storage",
+                  "inventory": [
+                    {
+                      "id": "castle-chest",
+                      "catalogId": "chest-wooden-large",
+                      "quantity": 1,
+                      "containerId": null,
+                      "day": 1,
+                      "playerNotes": "",
+                      "playerMagicKnowledge": "known-mundane",
+                      "playerKnowsValue": true,
+                      "name": "Synthetic chest",
+                      "customItem": {
+                        "id": "chest-wooden-large",
+                        "name": "Synthetic chest",
+                        "category": "containers",
+                        "encumbranceGp": 100,
+                        "valueGp": 1,
+                        "isContainer": true,
+                        "capacityGp": 10000
+                      }
+                    },
+                    {
+                      "id": "castle-ep",
+                      "catalogId": "coin-electrum",
+                      "quantity": 700,
+                      "containerId": "castle-chest",
+                      "day": 0,
+                      "playerNotes": "",
+                      "playerMagicKnowledge": "known-mundane",
+                      "playerKnowsValue": true,
+                      "name": "$ - Electrum piece"
+                    },
+                    {
+                      "id": "castle-sp",
+                      "catalogId": "coin-silver",
+                      "quantity": 1000,
+                      "containerId": "castle-chest",
+                      "day": 0,
+                      "playerNotes": "",
+                      "playerMagicKnowledge": "known-mundane",
+                      "playerKnowsValue": true,
+                      "name": "$ - Silver piece"
+                    },
+                    {
+                      "id": "castle-gp",
+                      "catalogId": "coin-gold",
+                      "quantity": 250,
+                      "containerId": "castle-chest",
+                      "day": 0,
+                      "playerNotes": "",
+                      "playerMagicKnowledge": "known-mundane",
+                      "playerKnowsValue": true,
+                      "name": "$ - Gold piece"
+                    }
+                  ]
+                }
+              ]
+            },
+            "origin": {
+              "kind": "checkpoint",
+              "checkpointId": "carry-checkpoint"
+            },
+            "continuedFrom": {
+              "sessionId": "day2",
+              "instanceId": "day2-stock",
+              "checkpointId": "carry-checkpoint"
+            }
+          }
+        ],
+        "inventoryCheckpoints": [
+          {
+            "id": "carry-checkpoint",
+            "workingId": "day2-stock",
+            "sessionId": "day2",
+            "label": "Before continuing to Day 3",
+            "capturedAt": "2026-11-10T12:00:00.000Z",
+            "origin": {
+              "kind": "empty"
+            },
+            "document": {
+              "kind": "adnd-encumbrance-dm",
+              "version": 10,
+              "activeCharacterId": "inventory-reatha",
+              "characters": [
+                {
+                  "id": "inventory-reatha",
+                  "name": "Reatha",
+                  "strength": {
+                    "score": 18,
+                    "exceptional": "none"
+                  },
+                  "inventory": [],
+                  "dmNotes": "Synthetic fixture"
+                },
+                {
+                  "id": "inventory-vitameno",
+                  "name": "Vitameno",
+                  "strength": {
+                    "score": 10,
+                    "exceptional": "none"
+                  },
+                  "inventory": [
+                    {
+                      "id": "vitameno-ep",
+                      "catalogId": "coin-electrum",
+                      "quantity": 50,
+                      "containerId": null,
+                      "day": 0,
+                      "playerNotes": "",
+                      "playerMagicKnowledge": "known-mundane",
+                      "playerKnowsValue": true,
+                      "name": "$ - Electrum piece"
+                    }
+                  ],
+                  "dmNotes": ""
+                }
+              ],
+              "storageLocations": [
+                {
+                  "id": "castle-kifu-storage",
+                  "name": "Castle Kifu",
+                  "notes": "Synthetic storage",
+                  "inventory": [
+                    {
+                      "id": "castle-chest",
+                      "catalogId": "chest-wooden-large",
+                      "quantity": 1,
+                      "containerId": null,
+                      "day": 1,
+                      "playerNotes": "",
+                      "playerMagicKnowledge": "known-mundane",
+                      "playerKnowsValue": true,
+                      "name": "Synthetic chest",
+                      "customItem": {
+                        "id": "chest-wooden-large",
+                        "name": "Synthetic chest",
+                        "category": "containers",
+                        "encumbranceGp": 100,
+                        "valueGp": 1,
+                        "isContainer": true,
+                        "capacityGp": 10000
+                      }
+                    },
+                    {
+                      "id": "castle-ep",
+                      "catalogId": "coin-electrum",
+                      "quantity": 700,
+                      "containerId": "castle-chest",
+                      "day": 0,
+                      "playerNotes": "",
+                      "playerMagicKnowledge": "known-mundane",
+                      "playerKnowsValue": true,
+                      "name": "$ - Electrum piece"
+                    },
+                    {
+                      "id": "castle-sp",
+                      "catalogId": "coin-silver",
+                      "quantity": 1000,
+                      "containerId": "castle-chest",
+                      "day": 0,
+                      "playerNotes": "",
+                      "playerMagicKnowledge": "known-mundane",
+                      "playerKnowsValue": true,
+                      "name": "$ - Silver piece"
+                    },
+                    {
+                      "id": "castle-gp",
+                      "catalogId": "coin-gold",
+                      "quantity": 250,
+                      "containerId": "castle-chest",
+                      "day": 0,
+                      "playerNotes": "",
+                      "playerMagicKnowledge": "known-mundane",
+                      "playerKnowsValue": true,
+                      "name": "$ - Gold piece"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ],
+        "workspace": {
+          "sessionId": "day3",
+          "view": "session",
+          "combatSelections": {}
+        },
+        "banking": {
+          "version": 1,
+          "openings": [
+            {
+              "id": "opening-inventory-reatha",
+              "holderId": "inventory-reatha",
+              "sessionId": "day2",
+              "phase": "after",
+              "amounts": {
+                "cp": 0,
+                "sp": 0,
+                "ep": 0,
+                "gp": 0,
+                "pp": 0,
+                "diamond": 0,
+                "emerald": 0
+              },
+              "note": "Reviewed Day 2 closing quantities"
+            },
+            {
+              "id": "opening-inventory-vitameno",
+              "holderId": "inventory-vitameno",
+              "sessionId": "day2",
+              "phase": "after",
+              "amounts": {
+                "cp": 0,
+                "sp": 0,
+                "ep": 50,
+                "gp": 0,
+                "pp": 0,
+                "diamond": 0,
+                "emerald": 0
+              },
+              "note": "Reviewed Day 2 closing quantities"
+            },
+            {
+              "id": "opening-castle-kifu-storage",
+              "holderId": "castle-kifu-storage",
+              "sessionId": "day2",
+              "phase": "after",
+              "amounts": {
+                "cp": 0,
+                "sp": 1000,
+                "ep": 700,
+                "gp": 250,
+                "pp": 0,
+                "diamond": 0,
+                "emerald": 0
+              },
+              "note": "Reviewed Day 2 closing quantities"
+            }
+          ],
+          "entries": [
+            {
+              "id": "native-exchange",
+              "transactionId": "exchange",
+              "replaces": null,
+              "sessionId": "day3",
+              "order": 0,
+              "description": "exchange",
+              "kind": "exchange",
+              "status": "posted",
+              "effect": "ledger",
+              "receiptMode": "existing",
+              "changes": [
+                {
+                  "holderId": "inventory-vitameno",
+                  "denomination": "ep",
+                  "item": {
+                    "id": "ledger-balance:inventory-vitameno:ep",
+                    "catalogId": "coin-electrum",
+                    "quantity": 50,
+                    "containerId": null,
+                    "day": 0,
+                    "name": "Recorded ledger balance",
+                    "playerNotes": "",
+                    "playerKnowsValue": true,
+                    "playerMagicKnowledge": "known-mundane"
+                  },
+                  "quantity": -50
+                },
+                {
+                  "holderId": "inventory-vitameno",
+                  "denomination": "gp",
+                  "item": {
+                    "id": "converted-gold",
+                    "catalogId": "coin-gold",
+                    "quantity": 25,
+                    "containerId": null,
+                    "day": 0,
+                    "playerNotes": "",
+                    "playerMagicKnowledge": "known-mundane",
+                    "playerKnowsValue": true,
+                    "name": "$ - Gold piece"
+                  },
+                  "quantity": 25
+                }
+              ],
+              "at": "2026-11-10T12:00:00.000Z"
+            }
+          ],
+          "extensions": []
+        }
+      }
+    }
+  ]
+}

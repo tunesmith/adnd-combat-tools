@@ -1,8 +1,7 @@
 import {
-  recordInventoryMoneyEdit,
-  recordBankingReplacement,
+  assertBankingReplacementReviewed,
+  validatePhysicalMoney,
 } from './campaignBanking';
-import type { BankMutation } from './campaignBanking';
 import { continuedFromSchema } from './campaignContinuityModel';
 import type { ContinuedFrom } from './campaignContinuityModel';
 import { z } from 'zod';
@@ -144,22 +143,21 @@ export function startWorkingInventory(
   const previous = campaign.workingInventories.find(
     (w) => w.sessionId === sessionId
   );
-  const reviewed = recordBankingReplacement(
+  assertBankingReplacementReviewed(
     campaign,
     sessionId,
     normalizeWorkingInventory(document),
-    bankingReview,
-    { id: checkpointId + '-bank', at }
+    bankingReview
   );
   const preserved = previous
     ? captureInventoryCheckpoint(
-        reviewed,
+        campaign,
         previous.id,
         'Before replacing working inventory',
         checkpointId,
         at
       )
-    : reviewed;
+    : campaign;
   const working: WorkingInventory = {
     id,
     sessionId,
@@ -179,8 +177,7 @@ export function changeWorkingInventory(
   campaign: CampaignDocument,
   workingId: string,
   sessionId: string,
-  document: EncumbranceDmDocument,
-  mutation?: BankMutation
+  document: EncumbranceDmDocument
 ): CampaignDocument {
   if (
     !campaign.workingInventories.some(
@@ -191,18 +188,10 @@ export function changeWorkingInventory(
       'Working inventory was replaced; this delayed edit was cancelled.'
     );
   const normalized = normalizeWorkingInventory(document);
-  const previous = campaign.workingInventories.find((w) => w.id === workingId);
-  if (!previous) throw new Error('Working inventory missing.');
-  const recorded = recordInventoryMoneyEdit(
-    campaign,
-    workingId,
-    previous.document,
-    normalized,
-    mutation
-  );
+  validatePhysicalMoney(normalized);
   return {
-    ...recorded,
-    workingInventories: recorded.workingInventories.map((w) =>
+    ...campaign,
+    workingInventories: campaign.workingInventories.map((w) =>
       w.id === workingId ? { ...w, document: normalized } : w
     ),
   };

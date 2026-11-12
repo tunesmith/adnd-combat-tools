@@ -220,7 +220,7 @@ test('aggregate openings and ordinary receipts reserve coverage once across the 
     )?.quantity
   ).toBe(400);
 });
-test('general reconciliation only adds the remaining difference; Day2 relocation creates a transfer', () => {
+test('general reconciliation only adds the remaining difference; manual Day2 relocation leaves a difference', () => {
   const original = existingBankFixture();
   let doc = accept(original, bureauReceipt(original));
   doc = commitBankReconciliation(
@@ -267,19 +267,18 @@ test('general reconciliation only adds the remaining difference; Day2 relocation
     doc,
     'day2-possessions',
     'day2',
-    moved,
-    { id: 'relocate-chest', at: receiptAt }
+    moved
   );
   validateHistoryTransition(doc, changed, '');
-  expect(bankLedger(changed).entries.at(-1)?.kind).toBe('transfer');
-  expect(bankGp(bankBalance(changed, 'castle-storage', 'day2'))).toBe('300');
-  expect(bankGp(bankBalance(changed, 'reatha-inventory', 'day2'))).toBe('350');
-  expect(bankBoundaryDifference(changed, 'day2')).toEqual([]);
+  expect(changed.banking).toBe(doc.banking);
+  expect(bankGp(bankBalance(changed, 'castle-storage', 'day2'))).toBe('0');
+  expect(bankGp(bankBalance(changed, 'reatha-inventory', 'day2'))).toBe('650');
+  expect(bankBoundaryDifference(changed, 'day2')).toHaveLength(2);
   expect(inventory(changed)).toEqual(inventory(original));
   expect(changed.xp).toEqual(original.xp);
   expect(
-    existingMoneyAvailability(changed, 'day2').stacks.every(
-      (s) => s.available === 0
+    existingMoneyAvailability(changed, 'day2').stacks.some(
+      (s) => s.holderId === 'castle-storage' && (s.available ?? 0) > 0
     )
   ).toBe(true);
 });
@@ -295,10 +294,7 @@ test('receipts retain inspectable evidence after spending or moving stacks; forg
     'castle-storage'
   );
   const before = doc;
-  doc = changeWorkingInventory(doc, 'day1-possessions', 'day1', moved, {
-    id: 'move-explained-coins',
-    at: receiptAt,
-  });
+  doc = changeWorkingInventory(doc, 'day1-possessions', 'day1', moved);
   validateHistoryTransition(before, doc, '');
   const current = doc;
   doc = accept(doc, { ...request, description: 'Clarify bureau receipt' });
@@ -385,13 +381,13 @@ test('V15 ordinary and reconciliation records migrate without being reinterprete
   );
   const legacy = { ...balanced, schemaVersion: 15 };
   const loaded = parseCampaign(JSON.stringify(legacy));
-  expect(loaded.schemaVersion).toBe(18);
+  expect(loaded.schemaVersion).toBe(20);
   expect(loaded.banking).toEqual(balanced.banking);
   expect(loaded.banking?.entries[0]?.receiptMode).toBeUndefined();
   expect(bankBoundaryDifference(loaded, 'day1')).toEqual([]);
 });
 
-test('merging explained stacks remains a location transfer and the original allocation can still be inspected and edited', () => {
+test('merging explained stacks leaves the ledger unchanged and the original allocation can still be inspected and edited', () => {
   let doc = existingBankFixture();
   const request = bureauReceipt(doc);
   doc = accept(doc, request);
@@ -413,12 +409,9 @@ test('merging explained stacks remains a location transfer and the original allo
     ),
   };
   const before = doc;
-  doc = changeWorkingInventory(doc, 'day1-possessions', 'day1', merged, {
-    id: 'merge-ep',
-    at: receiptAt,
-  });
+  doc = changeWorkingInventory(doc, 'day1-possessions', 'day1', merged);
   validateHistoryTransition(before, doc, '');
-  expect(doc.banking?.entries.at(-1)?.kind).toBe('transfer');
+  expect(doc.banking).toBe(before.banking);
   expect(available(doc, 'electrum-300')).toBe(0);
   const physical = inventory(doc);
   doc = accept(doc, {

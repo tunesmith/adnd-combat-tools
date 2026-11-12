@@ -517,6 +517,7 @@ export default function CampaignSnapshots({
           {preview && type === 'inventory' && (
             <BankBalances
               label="Import money comparison"
+              caption="Possessions comparison · Banking ledger stays unchanged"
               rows={bankingReplacementReview(
                 document,
                 sessionId,
@@ -704,6 +705,7 @@ export default function CampaignSnapshots({
               {record.type === 'inventory' && (
                 <BankBalances
                   label="Stored inventory money comparison"
+                  caption="Possessions comparison · Banking ledger stays unchanged"
                   rows={bankingReplacementReview(
                     document,
                     sessionId,

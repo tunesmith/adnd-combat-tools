@@ -6,6 +6,7 @@ import {
   bankBoundaryDifference,
   existingMoneyAvailability,
   existingTransferSources,
+  existingSettlementAvailability,
   bankBalanceSourceItem,
   bankHolderName,
   moneyStacks,
@@ -34,6 +35,15 @@ import { encumbranceCatalogById } from '../../tables/encumbranceCatalog';
 import BankBalances from './BankBalances';
 import styles from './xpWorkspace.module.css';
 const uid = () => crypto.randomUUID();
+type BankStackOption = {
+  holderId: string;
+  denomination: BankDenomination;
+  item: BankChange['item'];
+  currentQuantity: number;
+  previousAllocation: number;
+  available: number | null;
+  direction?: 'incoming' | 'outgoing';
+};
 export default function BankTransactionDialog({
   document,
   sessionId,
@@ -95,6 +105,43 @@ export default function BankTransactionDialog({
       denomination,
       quantity: 0,
       item: source?.item ?? newBankMoneyItem(denomination, uid()),
+    };
+  };
+  const makeSettlementChange = (
+    holderId?: string,
+    code: BankDenomination = 'gp',
+    otherChanges: BankChange[] = [],
+    preferOutgoing = true
+  ): BankChange => {
+    const choices = existingSettlementAvailability(
+      document,
+      sessionId,
+      entry?.transactionId
+    );
+    const options: BankStackOption[] = preferOutgoing
+      ? choices.outgoing
+      : choices.incoming;
+    const selected =
+      options.find(
+        (c) =>
+          c.holderId === holderId &&
+          c.denomination === code &&
+          (c.available ?? 0) > 0
+      ) ??
+      (!holderId
+        ? options.find((c) => c.denomination === code && (c.available ?? 0) > 0)
+        : undefined) ??
+      options.find((c) => c.holderId === holderId && c.denomination === code);
+    const id = selected?.holderId ?? holderId ?? holders[0]?.id ?? '';
+    return {
+      holderId: id,
+      denomination: code,
+      quantity: 0,
+      item:
+        selected?.item ??
+        (preferOutgoing
+          ? bankBalanceSourceItem(id, code, 0)
+          : makeChange(id, code, 'existing', otherChanges).item),
     };
   };
   const makeTransferPair = (
@@ -200,25 +247,72 @@ export default function BankTransactionDialog({
   }));
   const existingMode = request.receiptMode === 'existing';
   const existingTransfer = existingMode && request.kind === 'transfer';
+  const existingSettlement =
+    existingMode && ['purchase', 'fee', 'exchange'].includes(request.kind);
+  const settlement = existingSettlement
+    ? existingSettlementAvailability(document, sessionId, entry?.transactionId)
+    : undefined;
   const rows = existingTransfer
     ? request.changes.filter((_, index) => index % 2 === 1)
     : request.changes;
   const sourceBalances = existingTransfer
     ? existingTransferSources(document, sessionId, entry?.transactionId)
     : [];
-  const availability = existingMode
-    ? existingMoneyAvailability(document, sessionId, entry?.transactionId)
-    : undefined;
+  const availability =
+    existingMode && !existingSettlement
+      ? existingMoneyAvailability(document, sessionId, entry?.transactionId)
+      : undefined;
   const availableForRow = (
     stack: {
       holderId: string;
       denomination: BankDenomination;
       item: { id: string };
       available: number | null;
+      direction?: 'incoming' | 'outgoing';
     },
     index: number
   ) => {
     if (stack.available === null) return null;
+    if (existingSettlement && stack.direction && settlement) {
+      const other = request.changes.filter(
+        (c, i) =>
+          i !== index &&
+          c.holderId === stack.holderId &&
+          c.denomination === stack.denomination &&
+          Number.isSafeInteger(c.quantity)
+      );
+      const incoming = other
+          .filter((c) => c.quantity > 0)
+          .reduce((n, c) => n + c.quantity, 0),
+        outgoing = other
+          .filter((c) => c.quantity < 0)
+          .reduce((n, c) => n - c.quantity, 0);
+      const limit = settlement.limits.find(
+        (c) => c.holderId === stack.holderId
+      );
+      const net =
+        stack.direction === 'outgoing'
+          ? limit?.outgoing[stack.denomination]
+          : limit?.incoming[stack.denomination];
+      if (net == null) return null;
+      const max =
+        stack.direction === 'outgoing'
+          ? net + incoming - outgoing
+          : net + outgoing - incoming;
+      const sameStack = other
+        .filter((c) => c.quantity > 0 && c.item.id === stack.item.id)
+        .reduce((n, c) => n + c.quantity, 0);
+      return Math.max(
+        0,
+        Math.min(
+          max,
+          stack.direction === 'incoming'
+            ? stack.available - sameStack
+            : stack.available + incoming - outgoing
+        )
+      );
+    }
+
     const others = request.changes.reduce(
       (sum, c, i) =>
         i !== (existingTransfer ? index * 2 + 1 : index) &&
@@ -240,7 +334,10 @@ export default function BankTransactionDialog({
       Number.isSafeInteger(change.quantity) &&
       change.quantity !== 0 &&
       (!existingMode ||
-        availability?.stacks.some(
+        (existingSettlement
+          ? [...(settlement?.outgoing ?? []), ...(settlement?.incoming ?? [])]
+          : availability?.stacks
+        )?.some(
           (stack) =>
             stack.holderId === change.holderId &&
             stack.denomination === change.denomination &&
@@ -257,31 +354,32 @@ export default function BankTransactionDialog({
   const ordinaryTransfer = request.kind === 'transfer' && !existingMode;
   const ordinaryExchange = request.kind === 'exchange' && !existingMode;
   const physicalProgress = ordinaryTransfer || ordinaryExchange;
-  const net = physicalProgress
+  const balanceProgress = ordinaryTransfer || request.kind === 'exchange';
+  const net = balanceProgress
     ? bankChangesAmounts(
-        completed.filter((change) => !ordinaryExchange || !change.fee)
+        completed.filter((change) => request.kind !== 'exchange' || !change.fee)
       )
     : zeroBankAmounts();
   const exchangeValue = bankGp(net);
-  const unallocated = ordinaryExchange
-    ? exchangeValue === '0'
-      ? []
-      : [
-          `${exchangeValue.startsWith('-') ? '+' : '-'}${exchangeValue.replace(
-            /^-/,
-            ''
-          )} gp of value`,
-        ]
-    : bankDenominations.flatMap((code) => {
-        const quantity = net[code] ?? 0;
-        return quantity
-          ? [
-              `${
-                quantity < 0 ? '+' : ''
-              }${(-quantity).toLocaleString()} ${code}`,
-            ]
-          : [];
-      });
+  const unallocated =
+    request.kind === 'exchange'
+      ? exchangeValue === '0'
+        ? []
+        : [
+            `${
+              exchangeValue.startsWith('-') ? '+' : '-'
+            }${exchangeValue.replace(/^-/, '')} gp of value`,
+          ]
+      : bankDenominations.flatMap((code) => {
+          const quantity = net[code] ?? 0;
+          return quantity
+            ? [
+                `${
+                  quantity < 0 ? '+' : ''
+                }${(-quantity).toLocaleString()} ${code}`,
+              ]
+            : [];
+        });
   let summaryPreview: ReturnType<typeof previewBankTransaction> | undefined;
   let preview: ReturnType<typeof previewBankTransaction> | undefined;
   let invalid = '';
@@ -293,7 +391,7 @@ export default function BankTransactionDialog({
         description: request.description.trim() || 'Transaction preview',
         changes: completed,
       };
-      summaryPreview = physicalProgress
+      summaryPreview = balanceProgress
         ? previewBankProgress(document, candidate)
         : previewBankTransaction(document, candidate);
     } catch (e) {
@@ -307,7 +405,7 @@ export default function BankTransactionDialog({
     !unallocated.length
   ) {
     try {
-      preview = physicalProgress
+      preview = balanceProgress
         ? previewBankTransaction(document, request)
         : summaryPreview;
     } catch (e) {
@@ -329,6 +427,40 @@ export default function BankTransactionDialog({
   const update = (index: number, change: Partial<BankChange>) => {
     setError('');
     if (!existingTransfer) {
+      if (existingSettlement) {
+        const previous = request.changes[index];
+        const current = previous ? { ...previous, ...change } : undefined;
+        if (current) {
+          if (current.quantity < 0)
+            change = {
+              ...change,
+              item: bankBalanceSourceItem(
+                current.holderId,
+                current.denomination,
+                settlement?.limits.find((s) => s.holderId === current.holderId)
+                  ?.recorded[current.denomination] ?? 0
+              ),
+            };
+          else if (
+            current.quantity > 0 &&
+            !settlement?.incoming.some(
+              (s) =>
+                s.holderId === current.holderId &&
+                s.denomination === current.denomination &&
+                s.item.id === current.item.id
+            )
+          )
+            change = {
+              ...change,
+              item: makeSettlementChange(
+                current.holderId,
+                current.denomination,
+                request.changes.filter((_, i) => i !== index),
+                false
+              ).item,
+            };
+        }
+      }
       setRequest({
         ...request,
         changes: request.changes.map((c, i) =>
@@ -459,12 +591,12 @@ export default function BankTransactionDialog({
                     setRequest({
                       ...request,
                       kind: type.value,
-                      receiptMode:
-                        type.value === 'income' || type.value === 'transfer'
-                          ? request.receiptMode
-                          : undefined,
+                      receiptMode: request.receiptMode,
                       changes:
-                        type.value === 'transfer' && existingMode
+                        existingMode &&
+                        ['purchase', 'exchange'].includes(type.value)
+                          ? [makeSettlementChange()]
+                          : type.value === 'transfer' && existingMode
                           ? makeTransferPair()
                           : type.value === 'exchange'
                           ? existingTransfer
@@ -485,7 +617,14 @@ export default function BankTransactionDialog({
             </label>
           )}
         </div>
-        {['income', 'refund', 'transfer'].includes(request.kind) && (
+        {[
+          'income',
+          'refund',
+          'transfer',
+          'purchase',
+          'fee',
+          'exchange',
+        ].includes(request.kind) && (
           <label>
             Money in possessions
             <select
@@ -499,7 +638,19 @@ export default function BankTransactionDialog({
                   ...request,
                   receiptMode: mode,
                   changes:
-                    request.kind === 'transfer' && mode === 'existing'
+                    mode === 'existing' &&
+                    ['purchase', 'fee', 'exchange'].includes(request.kind)
+                      ? request.changes.map((c) => ({
+                          ...makeSettlementChange(
+                            c.holderId,
+                            c.denomination,
+                            [],
+                            c.quantity <= 0
+                          ),
+                          quantity: c.quantity,
+                          fee: c.fee,
+                        }))
+                      : request.kind === 'transfer' && mode === 'existing'
                       ? makeTransferPair()
                       : (existingTransfer
                           ? [makeChange()]
@@ -526,6 +677,8 @@ export default function BankTransactionDialog({
               <option value="add">
                 {request.kind === 'transfer'
                   ? 'Move in possessions'
+                  : ['purchase', 'fee', 'exchange'].includes(request.kind)
+                  ? 'Update possessions'
                   : 'Add to possessions'}
               </option>
               <option value="existing">Already recorded in possessions</option>
@@ -545,7 +698,9 @@ export default function BankTransactionDialog({
                     : 'Stack / change destination'}
                 </th>
                 <th>
-                  {existingMode ? 'Allocated quantity' : 'Quantity change'}
+                  {existingMode && !existingSettlement
+                    ? 'Allocated quantity'
+                    : 'Quantity change'}
                 </th>
                 {request.kind === 'exchange' && <th>Fee</th>}
                 <th />
@@ -554,8 +709,10 @@ export default function BankTransactionDialog({
             <tbody>
               {rows.map((change, index) => {
                 const holder = holders.find((h) => h.id === change.holderId);
-                const options = (
-                  availability?.stacks ??
+                const options: BankStackOption[] = (
+                  (settlement
+                    ? [...settlement.outgoing, ...settlement.incoming]
+                    : availability?.stacks) ??
                   stacks.map((stack) => ({
                     ...stack,
                     currentQuantity: stack.item.quantity,
@@ -627,16 +784,23 @@ export default function BankTransactionDialog({
                         aria-label={`Change ${index + 1} holder`}
                         value={change.holderId}
                         onChange={(e) => {
-                          const fresh = makeChange(
-                            e.target.value,
-                            change.denomination,
-                            request.receiptMode,
-                            request.changes.filter((_, i) =>
-                              existingTransfer
-                                ? i !== index * 2 && i !== index * 2 + 1
-                                : i !== index
-                            )
-                          );
+                          const fresh = existingSettlement
+                            ? makeSettlementChange(
+                                e.target.value,
+                                change.denomination,
+                                request.changes.filter((_, i) => i !== index),
+                                change.quantity <= 0
+                              )
+                            : makeChange(
+                                e.target.value,
+                                change.denomination,
+                                request.receiptMode,
+                                request.changes.filter((_, i) =>
+                                  existingTransfer
+                                    ? i !== index * 2 && i !== index * 2 + 1
+                                    : i !== index
+                                )
+                              );
                           update(index, {
                             ...fresh,
                             quantity: change.quantity,
@@ -662,16 +826,25 @@ export default function BankTransactionDialog({
                           );
                           if (code)
                             update(index, {
-                              ...makeChange(
-                                change.holderId,
-                                code,
-                                request.receiptMode,
-                                request.changes.filter((_, i) =>
-                                  existingTransfer
-                                    ? i !== index * 2 && i !== index * 2 + 1
-                                    : i !== index
-                                )
-                              ),
+                              ...(existingSettlement
+                                ? makeSettlementChange(
+                                    change.holderId,
+                                    code,
+                                    request.changes.filter(
+                                      (_, i) => i !== index
+                                    ),
+                                    change.quantity <= 0
+                                  )
+                                : makeChange(
+                                    change.holderId,
+                                    code,
+                                    request.receiptMode,
+                                    request.changes.filter((_, i) =>
+                                      existingTransfer
+                                        ? i !== index * 2 && i !== index * 2 + 1
+                                        : i !== index
+                                    )
+                                  )),
                               quantity: change.quantity,
                               fee: change.fee,
                             });
@@ -711,7 +884,11 @@ export default function BankTransactionDialog({
                         }}
                       >
                         {existingMode && (
-                          <option value="">Choose existing stack</option>
+                          <option value="">
+                            {existingSettlement
+                              ? 'Choose recorded balance or incoming stack'
+                              : 'Choose existing stack'}
+                          </option>
                         )}
                         {options.map((s) => (
                           <option
@@ -723,6 +900,13 @@ export default function BankTransactionDialog({
                               availableForRow(s, index) === 0
                             }
                           >
+                            {settlement && 'direction' in s
+                              ? `${
+                                  s.direction === 'outgoing'
+                                    ? 'Outgoing · '
+                                    : 'Incoming · '
+                                }`
+                              : ''}
                             {s.item.name ||
                               getInventoryItemInfo(
                                 s.item,
@@ -730,7 +914,7 @@ export default function BankTransactionDialog({
                               )?.name}{' '}
                             · {existingMode ? 'current ' : ''}
                             {s.currentQuantity}
-                            {availability
+                            {availability || settlement
                               ? ' · available ' +
                                 (availableForRow(s, index)?.toLocaleString() ??
                                   'Unknown')
@@ -773,7 +957,9 @@ export default function BankTransactionDialog({
                         aria-label={`Change ${index + 1} quantity`}
                         type="number"
                         step={1}
-                        min={existingMode ? 1 : undefined}
+                        min={
+                          existingMode && !existingSettlement ? 1 : undefined
+                        }
                         value={
                           Number.isNaN(change.quantity) ? '' : change.quantity
                         }
@@ -819,8 +1005,10 @@ export default function BankTransactionDialog({
                         onClick={() =>
                           setRequest({
                             ...request,
-                            changes: request.changes.filter(
-                              (_, i) => i !== index
+                            changes: request.changes.filter((_, i) =>
+                              existingTransfer
+                                ? i !== index * 2 && i !== index * 2 + 1
+                                : i !== index
                             ),
                           })
                         }
@@ -843,7 +1031,16 @@ export default function BankTransactionDialog({
               ...request,
               changes: [
                 ...request.changes,
-                ...(existingTransfer
+                ...(existingSettlement
+                  ? [
+                      makeSettlementChange(
+                        last?.holderId,
+                        last?.denomination,
+                        request.changes,
+                        !request.changes.some((c) => c.quantity < 0)
+                      ),
+                    ]
+                  : existingTransfer
                   ? makeTransferPair(
                       request.changes,
                       request.changes[request.changes.length - 2]?.holderId,
@@ -863,7 +1060,7 @@ export default function BankTransactionDialog({
             });
           }}
         >
-          {existingMode ? '+ Stack' : '+ Money change'}
+          {existingMode && !existingSettlement ? '+ Stack' : '+ Money change'}
         </button>
         {existingMode ? (
           <>
@@ -886,7 +1083,9 @@ export default function BankTransactionDialog({
                 showTotals
                 label="Remaining differences"
                 caption={
-                  existingTransfer ? 'Still to reconcile' : 'Still to record'
+                  existingTransfer || existingSettlement
+                    ? 'Still to reconcile'
+                    : 'Still to record'
                 }
                 signed
                 rows={(invalid
@@ -940,12 +1139,16 @@ export default function BankTransactionDialog({
             <summary>
               {existingTransfer
                 ? 'Recorded transfer allocations'
+                : existingSettlement
+                ? 'Recorded money changes'
                 : 'Recorded receipt allocations'}
             </summary>
             <table
               aria-label={
                 existingTransfer
                   ? 'Recorded transfer allocations'
+                  : existingSettlement
+                  ? 'Recorded money changes'
                   : 'Recorded receipt allocations'
               }
             >
@@ -986,7 +1189,7 @@ export default function BankTransactionDialog({
             </table>
           </details>
         )}
-        {physicalProgress && unallocated.length > 0 && !invalid && (
+        {balanceProgress && unallocated.length > 0 && !invalid && (
           <p role="status">Still to enter: {unallocated.join(', ')}.</p>
         )}
         {(error || invalid || saveError) && (
