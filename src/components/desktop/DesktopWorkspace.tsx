@@ -1,3 +1,4 @@
+import AddInventoryCharacterDialog from './AddInventoryCharacterDialog';
 import CampaignBanking from './CampaignBanking';
 import {
   bankingReplacementReview,
@@ -48,6 +49,11 @@ export default function DesktopWorkspace() {
     sessionId: string;
     owner: DocumentState;
   } | null>(null);
+  const [addingInventory, setAddingInventory] = useState<{
+    owner: DocumentState;
+    workingId: string;
+    sessionId: string;
+  } | null>(null);
   const [state, setState] = useState<DocumentState | null>(null);
   const current = useRef<DocumentState | null>(null);
   const draggedSession = useRef<string | null>(null);
@@ -88,6 +94,7 @@ export default function DesktopWorkspace() {
   const receive = useCallback(
     (next: DocumentState) => {
       if (current.current?.epoch !== next.epoch) {
+        setAddingInventory(null);
         if (current.current) {
           returnToWorkspace();
         }
@@ -781,6 +788,14 @@ export default function DesktopWorkspace() {
                     mode="dm"
                     campaign={{
                       document: working.document,
+                      onAddCharacter: () => {
+                        if (!scope) return;
+                        setAddingInventory({
+                          owner: scope,
+                          workingId: working.id,
+                          sessionId,
+                        });
+                      },
                       active: view === 'possessions' && !activeTool,
                       onDocumentChange: (next) => {
                         if (
@@ -796,9 +811,20 @@ export default function DesktopWorkspace() {
                           )
                         )
                           return false;
+                        const removal = working.document.characters.some(
+                          (c) => !next.characters.some((n) => n.id === c.id)
+                        )
+                          ? { id: uid(), at: new Date().toISOString() }
+                          : undefined;
                         return mutate(
                           (d) =>
-                            changeWorkingInventory(d, workId, sessionId, next),
+                            changeWorkingInventory(
+                              d,
+                              workId,
+                              sessionId,
+                              next,
+                              removal
+                            ),
                           owner
                         );
                       },
@@ -995,6 +1021,17 @@ export default function DesktopWorkspace() {
                 </label>
               </section>
             </main>
+            {addingInventory && addingInventory.owner.epoch === state.epoch && (
+              <AddInventoryCharacterDialog
+                key={`${state.epoch}:${addingInventory.workingId}`}
+                document={document}
+                workingId={addingInventory.workingId}
+                sessionId={addingInventory.sessionId}
+                onChange={(change) => mutate(change, addingInventory.owner)}
+                onAdded={resetEditor}
+                onClose={() => setAddingInventory(null)}
+              />
+            )}
           </>
         )}
       </div>

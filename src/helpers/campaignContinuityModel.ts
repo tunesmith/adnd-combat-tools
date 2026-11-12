@@ -21,6 +21,7 @@ export const sessionContinuationSchema = z
     requestFingerprint: z.string().min(1),
     combatInstanceIds: z.array(z.string().min(1)),
     inventoryId: z.string().min(1).nullable(),
+    inventoryCharacterIds: z.array(z.string().min(1)).max(500).optional(),
     copyNotes: z.boolean(),
     partyCharacterIds: z.array(z.string().min(1)).optional(),
   })

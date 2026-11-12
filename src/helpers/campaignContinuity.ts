@@ -1,3 +1,8 @@
+import {
+  filteredInventory,
+  inventoryIdsForParty,
+  currentInventoryDocument,
+} from './campaignInventoryMembership';
 import { carriedPartyProfiles, profilesInSession } from './campaignParty';
 import { sha256 } from 'js-sha256';
 import { canonical } from './campaignSnapshots';
@@ -17,6 +22,7 @@ export interface NextSessionRequest {
     sourceId: string;
     instanceId: string;
     checkpointId: string;
+    characterIds?: string[];
   } | null;
   copyNotes: boolean;
   partyCharacterIds?: string[];
@@ -55,11 +61,23 @@ export function startNextSession(
   const label = request.label.trim();
   if (!label || label.length > 1000)
     throw new Error('Enter a session label (up to 1000 characters).');
+  const inventoryIds =
+    request.inventory &&
+    (request.inventory.characterIds !== undefined ||
+      request.partyCharacterIds !== undefined)
+      ? request.inventory.characterIds ??
+        inventoryIdsForParty(
+          doc,
+          request.sourceSessionId,
+          request.partyCharacterIds ?? []
+        )
+      : undefined;
   const origin = {
     sourceSessionId: request.sourceSessionId,
     sourceFingerprint: request.sourceFingerprint,
     combatInstanceIds: request.combats.map((c) => c.sourceId),
     inventoryId: request.inventory?.sourceId || null,
+    ...(inventoryIds ? { inventoryCharacterIds: inventoryIds } : {}),
     copyNotes: request.copyNotes,
     ...(request.partyCharacterIds?.length
       ? { partyCharacterIds: request.partyCharacterIds }
@@ -148,6 +166,14 @@ export function startNextSession(
         ...next.workingInventories,
         {
           ...clone(inventory),
+          document: inventoryIds
+            ? filteredInventory(
+                doc,
+                source.id,
+                request.partyCharacterIds ?? [],
+                inventoryIds
+              )
+            : clone(inventory.document),
           id: choice.instanceId,
           sessionId: request.destinationId,
           origin: { kind: 'checkpoint', checkpointId: choice.checkpointId },
@@ -236,6 +262,25 @@ export function validateContinuationReferences(doc: CampaignDocument) {
       ancestor = found;
     }
   }
+  for (const c of doc.inventoryCheckpoints.filter((c) => c.characterCopy)) {
+    const copy = c.characterCopy;
+    if (
+      !copy ||
+      c.sessionId === copy.targetSessionId ||
+      !doc.sessions.some((s) => s.id === copy.targetSessionId) ||
+      !c.document.characters.some((h) => h.id === copy.characterId) ||
+      (!doc.workingInventories.some(
+        (w) =>
+          w.id === copy.targetWorkingId && w.sessionId === copy.targetSessionId
+      ) &&
+        !doc.inventoryCheckpoints.some(
+          (p) =>
+            p.workingId === copy.targetWorkingId &&
+            p.sessionId === copy.targetSessionId
+        ))
+    )
+      throw Error('Invalid returning inventory copy provenance.');
+  }
   for (const w of doc.workingInventories) {
     if (!w.continuedFrom) continue;
     const from = w.continuedFrom;
@@ -261,6 +306,21 @@ export function validateContinuationReferences(doc: CampaignDocument) {
     }
     const from = s.continuation;
     if (!from) continue;
+    if (
+      from.inventoryCharacterIds &&
+      (!from.inventoryId ||
+        new Set(from.inventoryCharacterIds).size !==
+          from.inventoryCharacterIds.length ||
+        !doc.inventoryCheckpoints.some(
+          (c) =>
+            c.workingId === from.inventoryId &&
+            c.sessionId === from.sourceSessionId &&
+            from.inventoryCharacterIds?.every((id) =>
+              c.document.characters.some((h) => h.id === id)
+            )
+        ))
+    )
+      throw Error('Invalid carried inventory holder choices.');
     if (
       s.id === from.sourceSessionId ||
       !doc.sessions.some((p) => p.id === from.sourceSessionId) ||
@@ -315,6 +375,62 @@ export function validateContinuityTransition(
         canonical(current.continuedFrom) !== canonical(c.continuedFrom))
     )
       throw new Error('Encounter instance association is immutable.');
+  }
+  for (const source of old.workingInventories) {
+    const target = next.workingInventories.find((w) => w.id === source.id);
+    if (
+      target &&
+      source.document.characters.some(
+        (c) => !target.document.characters.some((n) => n.id === c.id)
+      ) &&
+      !next.inventoryCheckpoints.some(
+        (c) =>
+          c.workingId === source.id &&
+          c.sessionId === source.sessionId &&
+          canonical(c.document) === canonical(source.document)
+      )
+    )
+      throw Error(
+        'Preserve an inventory checkpoint before removing a character.'
+      );
+  }
+  for (const checkpoint of next.inventoryCheckpoints.filter(
+    (c) =>
+      c.characterCopy && !old.inventoryCheckpoints.some((p) => p.id === c.id)
+  )) {
+    const choice = checkpoint.characterCopy;
+    const source = old.workingInventories.find(
+      (w) =>
+        w.id === checkpoint.workingId && w.sessionId === checkpoint.sessionId
+    );
+    const target = old.workingInventories.find(
+      (w) =>
+        w.id === choice?.targetWorkingId &&
+        w.sessionId === choice?.targetSessionId
+    );
+    const changed = next.workingInventories.find((w) => w.id === target?.id);
+    const character = source?.document.characters.find(
+      (c) => c.id === choice?.characterId
+    );
+    if (
+      !source ||
+      !target ||
+      !changed ||
+      !character ||
+      old.sessions.findIndex((s) => s.id === source.sessionId) >=
+        old.sessions.findIndex((s) => s.id === target.sessionId) ||
+      canonical(checkpoint.document) !== canonical(source.document) ||
+      canonical(next.workingInventories.find((w) => w.id === source.id)) !==
+        canonical(source)
+    )
+      throw Error('Earlier inventory changed during the character copy.');
+    const expected = {
+      ...currentInventoryDocument(target.document),
+      activeCharacterId: character.id,
+      characters: [...target.document.characters, character],
+    };
+    if (canonical(changed.document) !== canonical(expected))
+      throw Error('Copy exactly the selected earlier inventory character.');
   }
   const createdSessions = next.sessions.filter(
     (s) => !old.sessions.some((p) => p.id === s.id)
@@ -392,7 +508,17 @@ export function validateContinuityTransition(
         !source ||
         !copy ||
         copy.continuedFrom?.instanceId !== source.id ||
-        canonical(copy.document) !== canonical(source.document)
+        canonical(copy.document) !==
+          canonical(
+            origin.inventoryCharacterIds
+              ? filteredInventory(
+                  old,
+                  origin.sourceSessionId,
+                  origin.partyCharacterIds ?? [],
+                  origin.inventoryCharacterIds
+                )
+              : source.document
+          )
       )
         throw new Error('Carried inventory must retain complete source state.');
       const checkpoint = next.inventoryCheckpoints.find(

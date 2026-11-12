@@ -251,7 +251,7 @@ test('V11 accepted awards migrate exactly without fabricated cap history, even a
   legacy.xp.events[0].rows[0].before = 34000;
   legacy.xp.events[0].rows[0].after = 34507;
   const doc = parseCampaign(JSON.stringify(legacy));
-  expect(doc.schemaVersion).toBe(20);
+  expect(doc.schemaVersion).toBe(21);
   expect(doc.xp?.events).toEqual(legacy.xp.events);
   expect(doc.xp?.events[0]?.rows[0]?.cap).toBeUndefined();
   expect(sessionXpBalances(doc, capCharacter, 'session-2').closing).toBe(34507);

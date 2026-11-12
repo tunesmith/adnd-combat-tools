@@ -12,7 +12,7 @@ import type {
 import {
   bankLedger,
   bankHolderName,
-  bankHolders,
+  bankBalanceHolders,
   bankBalance,
   activeBankEntries,
   bankBoundaryDifference,
@@ -44,7 +44,7 @@ export default function CampaignBanking({
   const working = document.workingInventories.find(
     (w) => w.sessionId === sessionId
   );
-  const holders = working ? bankHolders(working.document) : [];
+  const holders = working ? bankBalanceHolders(document, sessionId) : [];
   const label = (id: string) => bankHolderName(document, id);
   const entries = activeBankEntries(ledger.entries)
     .filter((e) => e.sessionId === sessionId && e.status !== 'void')

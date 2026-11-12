@@ -3,6 +3,7 @@ import {
   updateHolderInventory,
   transferInventorySubtree,
   removeStorageLocation,
+  removeInventoryCharacter,
 } from '../../helpers/encumbranceStorage';
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react';
 import { createPortal } from 'react-dom';
@@ -71,6 +72,7 @@ interface EncumbranceAppProps {
     readOnly?: boolean;
     onDocumentChange: (document: EncumbranceDocument) => boolean | void;
     onExport: () => void;
+    onAddCharacter?: () => void;
   };
 }
 
@@ -779,6 +781,10 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
   );
   const [characterEditDraft, setCharacterEditDraft] =
     useState<CharacterEditDraft | null>(null);
+  const [removeCharacterId, setRemoveCharacterId] = useState<string | null>(
+    null
+  );
+  const [characterRemovalError, setCharacterRemovalError] = useState('');
   const [showAllCharacters, setShowAllCharacters] = useState<boolean>(false);
   const [inventorySorts, setInventorySorts] = useState<InventorySortKey[]>([]);
   const [showAddModal, setShowAddModal] = useState<boolean>(false);
@@ -813,7 +819,8 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
         (location) => location.id === activeCharacter.id
       )
     : undefined;
-  const isAllCharactersView = mode === 'dm' && showAllCharacters;
+  const isAllCharactersView =
+    mode === 'dm' && (showAllCharacters || dmCharacters.length === 0);
   const visibleCharacters = isAllCharactersView
     ? dmCharacters
     : [activeCharacter];
@@ -847,6 +854,10 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (campaign?.active === false) return;
       if (event.key === 'Escape') {
+        if (removeCharacterId) {
+          setRemoveCharacterId(null);
+          return;
+        }
         if (storageDraft) {
           setStorageDraft(null);
           return;
@@ -882,6 +893,7 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
   }, [
     campaign?.active,
     storageDraft,
+    removeCharacterId,
     characterEditDraft,
     editingItemDraft,
     pendingMergeReview,
@@ -1261,6 +1273,8 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
     : 0;
 
   const openCharacterModal = () => {
+    setRemoveCharacterId(null);
+    setCharacterRemovalError('');
     if (readOnly) return;
     if (activeStorage) {
       setStorageError('');
@@ -1277,6 +1291,7 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
   };
 
   const closeCharacterModal = () => {
+    setRemoveCharacterId(null);
     setCharacterEditDraft(null);
   };
 
@@ -1867,6 +1882,10 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
   };
 
   const addCharacter = () => {
+    if (campaign?.onAddCharacter) {
+      campaign.onAddCharacter();
+      return;
+    }
     if (!isDmDocument(document)) {
       return;
     }
@@ -4084,6 +4103,72 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
                       )}
                     </div>
                   </div>
+                  {mode === 'dm' && !readOnly && (
+                    <div className={styles['modalActions']}>
+                      {removeCharacterId ? (
+                        <>
+                          <p className={styles['modalText']}>
+                            Remove “
+                            {characterEditDraft.name || 'Unnamed adventurer'}”
+                            and all their items, containers, nested contents and
+                            money from this inventory?
+                          </p>
+                          <button
+                            className={styles['button']}
+                            onClick={() => setRemoveCharacterId(null)}
+                          >
+                            Cancel removal
+                          </button>
+                          <button
+                            className={styles['button']}
+                            onClick={() => {
+                              try {
+                                if (
+                                  setDocument((current) =>
+                                    isDmDocument(current)
+                                      ? removeInventoryCharacter(
+                                          current,
+                                          removeCharacterId
+                                        )
+                                      : current
+                                  )
+                                ) {
+                                  characterDraftRef.current = null;
+                                  setCharacterEditDraft(null);
+                                  setRemoveCharacterId(null);
+                                  setEditingItemDraft(null);
+                                  setPendingRemovalState(null);
+                                  setSelectedContainerId('');
+                                  setShowAddModal(false);
+                                  setShowAllCharacters(false);
+                                }
+                              } catch (error) {
+                                setCharacterRemovalError(
+                                  error instanceof Error
+                                    ? error.message
+                                    : String(error)
+                                );
+                              }
+                            }}
+                          >
+                            Confirm removal
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          className={styles['button']}
+                          onClick={() =>
+                            setRemoveCharacterId(characterEditDraft.characterId)
+                          }
+                        >
+                          Remove character
+                        </button>
+                      )}
+                      {characterRemovalError && (
+                        <p role="alert">{characterRemovalError}</p>
+                      )}
+                    </div>
+                  )}
                 </div>
               </>
             )}

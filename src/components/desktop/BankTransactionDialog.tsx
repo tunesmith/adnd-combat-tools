@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import type { CampaignDocument } from '../../helpers/campaignDocument';
 import {
   bankHolders,
+  bankBalanceHolders,
   bankBalance,
   bankBoundaryDifference,
   existingMoneyAvailability,
@@ -60,7 +61,24 @@ export default function BankTransactionDialog({
   const working = document.workingInventories.find(
     (w) => w.sessionId === sessionId
   );
-  const holders = working ? bankHolders(working.document) : [];
+  const currentHolders = working ? bankHolders(working.document) : [];
+  const historicalIds = Array.from(
+    new Set([
+      ...bankBalanceHolders(document, sessionId).map((h) => h.id),
+      ...(entry?.changes.map((c) => c.holderId) ?? []),
+    ])
+  );
+  const holders = [
+    ...currentHolders.map((h) => ({ ...h, removed: false })),
+    ...historicalIds
+      .filter((id) => !currentHolders.some((h) => h.id === id))
+      .map((id) => ({
+        id,
+        name: bankHolderName(document, id),
+        inventory: [] as BankChange['item'][],
+        removed: true,
+      })),
+  ];
   const stacks = working ? moneyStacks(working.document) : [];
   const makeChange = (
     holderId = holders[0]?.id ?? '',
@@ -809,9 +827,17 @@ export default function BankTransactionDialog({
                         }}
                       >
                         {holders.map((h) => (
-                          <option key={h.id} value={h.id}>
+                          <option
+                            key={h.id}
+                            value={h.id}
+                            disabled={h.removed && !existingMode}
+                          >
                             {h.name}
-                            {'strength' in h ? '' : ' · storage'}
+                            {h.removed
+                              ? ' · recorded holder'
+                              : 'strength' in h
+                              ? ''
+                              : ' · storage'}
                           </option>
                         ))}
                       </select>

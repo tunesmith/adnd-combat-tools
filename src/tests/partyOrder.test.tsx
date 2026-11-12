@@ -78,7 +78,7 @@ test('party order round trips across sessions without modifying profile values, 
   expect(next.records).toEqual(before.records);
   validateHistoryTransition(before, next, '');
   const reopened = parseCampaign(serializeCampaign(next));
-  expect(reopened.schemaVersion).toBe(20);
+  expect(reopened.schemaVersion).toBe(21);
   expect(ids.map((id) => sessionXpBalances(reopened, id, 'session-2'))).toEqual(
     balances
   );

@@ -332,7 +332,7 @@ test('historical additions identify the latest earlier profile and restore legac
   doc = withProfile(doc, 'pc', 'Earlier PC', 'd93', 40);
   doc = withProfile(doc, 'legacy', 'Legacy PC', 'd91', 18, false);
   const old = parseCampaign(JSON.stringify({ ...doc, schemaVersion: 13 }));
-  expect(old.schemaVersion).toBe(20);
+  expect(old.schemaVersion).toBe(21);
   expect(priorProfileChoices(old, 'd93', 'pc')[0]?.sessionId).toBe('d92');
   const current = harness(old, 'd91');
   let dialog = addExisting('pc');

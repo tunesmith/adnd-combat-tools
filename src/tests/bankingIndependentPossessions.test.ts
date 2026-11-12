@@ -320,7 +320,7 @@ test('existing reconciled history, automatic adjustments and old physical-only a
     legacyMoney,
   ]) {
     const next = parseCampaign(JSON.stringify(fixture));
-    expect(next.schemaVersion).toBe(20);
+    expect(next.schemaVersion).toBe(21);
     expect(next.banking).toEqual(fixture.banking);
     expect(next.workingInventories).toEqual(fixture.workingInventories);
     expect(parseCampaign(serializeCampaign(next))).toEqual(next);

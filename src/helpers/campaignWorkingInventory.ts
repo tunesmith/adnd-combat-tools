@@ -34,6 +34,11 @@ export interface WorkingInventory {
     | { kind: 'checkpoint'; checkpointId: string };
 }
 export interface InventoryCheckpoint {
+  characterCopy?: {
+    characterId: string;
+    targetWorkingId: string;
+    targetSessionId: string;
+  };
   id: string;
   workingId: string;
   sessionId: string;
@@ -78,6 +83,10 @@ export const workingInventorySchema = z
   .strict();
 export const inventoryCheckpointSchema = z
   .object({
+    characterCopy: z
+      .object({ characterId: id, targetWorkingId: id, targetSessionId: id })
+      .strict()
+      .optional(),
     id,
     workingId: id,
     sessionId: id,
@@ -177,7 +186,8 @@ export function changeWorkingInventory(
   campaign: CampaignDocument,
   workingId: string,
   sessionId: string,
-  document: EncumbranceDmDocument
+  document: EncumbranceDmDocument,
+  removalCheckpoint?: { id: string; at: string }
 ): CampaignDocument {
   if (
     !campaign.workingInventories.some(
@@ -189,9 +199,30 @@ export function changeWorkingInventory(
     );
   const normalized = normalizeWorkingInventory(document);
   validatePhysicalMoney(normalized);
+  const previous = campaign.workingInventories.find((w) => w.id === workingId);
+  const removed =
+    previous?.document.characters.filter(
+      (c) => !normalized.characters.some((n) => n.id === c.id)
+    ) ?? [];
+  let preserved = campaign;
+  if (removed.length) {
+    if (!removalCheckpoint)
+      throw Error(
+        'Preserve a checkpoint before removing an inventory character.'
+      );
+    preserved = captureInventoryCheckpoint(
+      campaign,
+      workingId,
+      `Before removing ${removed
+        .map((c) => c.name || 'Unnamed character')
+        .join(', ')}`,
+      removalCheckpoint.id,
+      removalCheckpoint.at
+    );
+  }
   return {
-    ...campaign,
-    workingInventories: campaign.workingInventories.map((w) =>
+    ...preserved,
+    workingInventories: preserved.workingInventories.map((w) =>
       w.id === workingId ? { ...w, document: normalized } : w
     ),
   };

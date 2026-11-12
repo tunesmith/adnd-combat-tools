@@ -794,7 +794,9 @@ const sanitizeDocument = (
       ...(candidate.version === 10 ? candidate.storageLocations : []),
     ].some((holder) => holder.id === candidate.activeCharacterId)
       ? candidate.activeCharacterId
-      : sanitizedCharacters[0]?.id || createCharacterId();
+      : sanitizedCharacters[0]?.id ||
+        (candidate.version === 10 ? candidate.storageLocations[0]?.id : '') ||
+        '';
 
     return inlineLegacyCustomItems(
       {
@@ -924,13 +926,10 @@ export const redactEncumbranceDocument = (
     ) ||
     document.characters[0];
 
-  if (!selectedCharacter) {
-    return {
-      kind: 'adnd-encumbrance-player',
-      version: 9,
-      character: createEmptyEncumbrancePlayerCharacter(),
-    };
-  }
+  if (!selectedCharacter)
+    throw Error(
+      'Select an inventory character before exporting a player file.'
+    );
 
   const sanitizedCharacter = {
     id: selectedCharacter.id,
@@ -2004,17 +2003,25 @@ export const parseEncumbranceDocument = (
 
     if (
       !Array.isArray(dmValue.characters) ||
-      dmValue.characters.length === 0 ||
+      (dmValue.version !== 10 && dmValue.characters.length === 0) ||
       !dmValue.characters.every((character: unknown) =>
         isDmCharacter(character)
       ) ||
-      !isCharacterId(dmValue.activeCharacterId) ||
-      ![
+      !([
         ...dmValue.characters,
         ...(dmValue.version === 10 && Array.isArray(dmValue.storageLocations)
           ? dmValue.storageLocations
           : []),
-      ].some((holder) => holder.id === dmValue.activeCharacterId)
+      ].length === 0
+        ? dmValue.activeCharacterId === ''
+        : isCharacterId(dmValue.activeCharacterId) &&
+          [
+            ...dmValue.characters,
+            ...(dmValue.version === 10 &&
+            Array.isArray(dmValue.storageLocations)
+              ? dmValue.storageLocations
+              : []),
+          ].some((h) => h.id === dmValue.activeCharacterId))
     ) {
       throw new Error('File is not a supported encumbrance document.');
     }

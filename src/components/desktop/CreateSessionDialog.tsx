@@ -1,4 +1,8 @@
 import {
+  inventoryMembership,
+  inventoryIdsForParty,
+} from '../../helpers/campaignInventoryMembership';
+import {
   historicalSessionTargets,
   placeHistoricalSession,
 } from '../../helpers/campaignSessionOrder';
@@ -46,6 +50,16 @@ export default function CreateSessionDialog({
     carryablePartyProfiles(document, sessionId)
   );
   const [partyIds, setPartyIds] = useState<string[]>([]);
+  const [membership] = useState(() => inventoryMembership(document, sessionId));
+  const [extraInventoryIds, setExtraInventoryIds] = useState(() =>
+    membership.unmatched.map((c) => c.id)
+  );
+  const inventoryIds = inventoryIdsForParty(
+    document,
+    sessionId,
+    partyIds,
+    extraInventoryIds
+  );
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const destinationId = useRef<string>();
@@ -112,6 +126,7 @@ export default function CreateSessionDialog({
             carryInventory && inventory
               ? {
                   sourceId: inventory.id,
+                  characterIds: inventoryIds,
                   instanceId: crypto.randomUUID(),
                   checkpointId: crypto.randomUUID(),
                 }
@@ -222,6 +237,42 @@ export default function CreateSessionDialog({
                     />
                     Current inventory
                   </label>
+                )}
+                {carryInventory && inventory && (
+                  <small>
+                    {inventoryIds.length} characters ·{' '}
+                    {inventory.document.version === 10
+                      ? inventory.document.storageLocations.length
+                      : 0}{' '}
+                    storage locations
+                  </small>
+                )}
+                {carryInventory && membership.unmatched.length > 0 && (
+                  <details>
+                    <summary>
+                      Other inventory holders ({membership.unmatched.length})
+                    </summary>
+                    {membership.unmatched.map((c) => (
+                      <label
+                        className={styles['continuationChoice']}
+                        key={c.id}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={extraInventoryIds.includes(c.id)}
+                          onChange={(e) => {
+                            const checked = e.target.checked;
+                            setExtraInventoryIds((ids) =>
+                              checked
+                                ? [...ids, c.id]
+                                : ids.filter((id) => id !== c.id)
+                            );
+                          }}
+                        />
+                        {c.name || 'Unnamed inventory character'}
+                      </label>
+                    ))}
+                  </details>
                 )}
                 {combats.map((c) => (
                   <label className={styles['continuationChoice']} key={c.id}>

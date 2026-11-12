@@ -74,3 +74,42 @@ export function removeStorageLocation(
         : document.activeCharacterId,
   };
 }
+
+export function removeInventoryCharacter(
+  document: EncumbranceDmDocumentV10,
+  id: string
+): EncumbranceDmDocumentV10 {
+  if (!document.characters.some((c) => c.id === id))
+    throw Error('Inventory character changed.');
+  const characters = document.characters.filter((c) => c.id !== id);
+  const next = {
+    ...document,
+    characters,
+    activeCharacterId:
+      document.activeCharacterId === id
+        ? characters[0]?.id ?? document.storageLocations[0]?.id ?? ''
+        : document.activeCharacterId,
+  };
+  validateInventoryHolders(inventoryHolders(next));
+  return next;
+}
+export function selectInventoryCharacters(
+  document: EncumbranceDmDocumentV10,
+  ids: readonly string[]
+): EncumbranceDmDocumentV10 {
+  if (
+    new Set(ids).size !== ids.length ||
+    ids.some((id) => !document.characters.some((c) => c.id === id))
+  )
+    throw Error('Inventory character choices changed.');
+  const characters = document.characters.filter((c) => ids.includes(c.id));
+  return {
+    ...document,
+    characters,
+    activeCharacterId: [...characters, ...document.storageLocations].some(
+      (h) => h.id === document.activeCharacterId
+    )
+      ? document.activeCharacterId
+      : characters[0]?.id ?? document.storageLocations[0]?.id ?? '',
+  };
+}

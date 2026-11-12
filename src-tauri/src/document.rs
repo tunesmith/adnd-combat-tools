@@ -30,7 +30,7 @@ impl Document {
     pub fn new() -> Self {
         Self {
             kind: "adnd-campaign".into(),
-            schema_version: 20,
+            schema_version: 21,
             id: uuid::Uuid::new_v4().to_string(),
             title: "Untitled campaign".into(),
             notes: String::new(),
@@ -219,7 +219,7 @@ mod tests {
     fn rejects_unknown_malformed_future() {
         assert!(parse(b"{bad").is_err());
         let mut v = serde_json::to_value(Document::new()).unwrap();
-        v["schemaVersion"] = 21.into();
+        v["schemaVersion"] = 22.into();
         assert!(parse(&serde_json::to_vec(&v).unwrap())
             .unwrap_err()
             .contains("schema version"));
@@ -370,7 +370,7 @@ mod b1_tests {
         let bytes=br#"{"kind":"adnd-campaign","schemaVersion":1,"id":"kept","title":"Old","notes":"Keep"}"#;
         fs::write(&path, bytes).unwrap();
         let doc = parse(bytes).unwrap();
-        assert_eq!(doc.schema_version, 20);
+        assert_eq!(doc.schema_version, 21);
         assert_eq!(fs::read(&path).unwrap(), bytes);
         save(&path, &doc, Some(&hash(bytes))).unwrap();
         assert_eq!(fs::read(format!("{}.bak", path.display())).unwrap(), bytes);
@@ -432,7 +432,7 @@ mod v2_migration_tests {
         let path = dir.path().join("v2.adnd");
         fs::write(&path, bytes).unwrap();
         let doc = parse(&fs::read(&path).unwrap()).unwrap();
-        assert_eq!(doc.schema_version, 20);
+        assert_eq!(doc.schema_version, 21);
         assert_eq!(fs::read(&path).unwrap(), bytes);
         save(&path, &doc, Some(&hash(bytes))).unwrap();
         assert_eq!(fs::read(format!("{}.bak", path.display())).unwrap(), bytes);
@@ -560,7 +560,7 @@ mod continuity_tests {
         }
         let bytes = serde_json::to_vec_pretty(&legacy).unwrap();
         let migrated = parse(&bytes).unwrap();
-        assert_eq!(migrated.schema_version, 20);
+        assert_eq!(migrated.schema_version, 21);
         assert!(migrated.party.as_ref().unwrap()["profiles"][0]["reference"].is_null());
         validate_replacement(&migrated, &expanded).unwrap();
         let dir = tempfile::tempdir().unwrap();
@@ -797,7 +797,7 @@ mod xp_tests {
         legacy.as_object_mut().unwrap().remove("xp");
         let original = serde_json::to_vec_pretty(&legacy).unwrap();
         let migrated = parse(&original).unwrap();
-        assert_eq!(migrated.schema_version, 20);
+        assert_eq!(migrated.schema_version, 21);
         assert!(migrated.xp.is_none());
         validate_replacement(&migrated, &accepted).unwrap();
         let dir = tempfile::tempdir().unwrap();
@@ -870,7 +870,7 @@ mod xp_cap_tests {
         assert_eq!(fs::read(&path).unwrap(),b"external synthetic change");
         let legacy=dir.path().join("legacy.adnd");let original=serde_json::to_vec_pretty(&fixture["legacy"]).unwrap();
         fs::write(&legacy,&original).unwrap();fs::write(dir.path().join("legacy.adnd.bak"),b"existing backup").unwrap();
-        let migrated=parse(&original).unwrap();assert_eq!(migrated.schema_version,20);
+        let migrated=parse(&original).unwrap();assert_eq!(migrated.schema_version,21);
         assert_eq!(migrated.xp.as_ref().unwrap()["events"],fixture["legacy"]["xp"]["events"]);
         save(&legacy,&migrated,Some(&hash(&original))).unwrap();
         assert_eq!(fs::read(dir.path().join("legacy.adnd.bak")).unwrap(),b"existing backup");
@@ -983,7 +983,7 @@ mod banking_tests {
         let original = serde_json::to_vec(&old).unwrap();
         fs::write(&path, &original).unwrap();
         let migrated = parse(&original).unwrap();
-        assert_eq!(migrated.schema_version, 20);
+        assert_eq!(migrated.schema_version, 21);
         let revision = save(&path, &before, Some(&hash(&original))).unwrap();
         assert_eq!(fs::read(dir.path().join("synthetic-bank.adnd.bak")).unwrap(), original);
         let saved = fs::read(&path).unwrap();
@@ -1256,5 +1256,56 @@ mod independent_banking_tests {
             fs::write(&path,b"external edit").unwrap();
             assert_eq!(save(&path,&posted,Some(&revision)).unwrap_err(),CONFLICT);
         }
+    }
+}
+
+#[cfg(test)]
+mod inventory_membership_tests {
+    use super::*;
+    #[test]
+    fn removal_filtered_carry_and_return_preserve_history_through_atomic_save_and_reopen() {
+        let replay: serde_json::Value = serde_json::from_slice(include_bytes!("../../src/tests/fixtures/inventoryMembershipNative.json")).unwrap();
+        let start = parse(&serde_json::to_vec(&replay["start"]).unwrap()).unwrap();
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("membership.adnd");
+        let mut legacy = serde_json::to_value(&start).unwrap();
+        legacy["schemaVersion"] = 20.into();
+        let original = serde_json::to_vec(&legacy).unwrap();
+        fs::write(&path, &original).unwrap();
+        let migrated = parse(&original).unwrap();
+        assert_eq!(migrated, start);
+        assert_eq!(migrated.schema_version, 21);
+        let mut revision = save(&path, &migrated, Some(&hash(&original))).unwrap();
+        let backup = dir.path().join("membership.adnd.bak");
+        assert_eq!(fs::read(&backup).unwrap(), original);
+        let mut previous = migrated;
+        for state in replay["states"].as_array().unwrap() {
+            let next = parse(&serde_json::to_vec(state).unwrap()).unwrap();
+            validate_replacement(&previous, &next).unwrap();
+            assert_eq!(next.banking, start.banking);
+            assert_eq!(next.xp, start.xp);
+            assert_eq!(next.records, start.records);
+            assert_eq!(next.working_combats, start.working_combats);
+            assert_eq!(next.working_inventories[0], start.working_inventories[0]);
+            let bytes = fs::read(&path).unwrap();
+            assert!(save_with_hook(&path, &next, Some(&revision), || Err("Injected membership save failure".into())).is_err());
+            assert_eq!(fs::read(&path).unwrap(), bytes);
+            revision = save(&path, &next, Some(&revision)).unwrap();
+            assert_eq!(parse(&fs::read(&path).unwrap()).unwrap(), next);
+            previous = next;
+        }
+        let removed = parse(&serde_json::to_vec(&replay["states"][0]).unwrap()).unwrap();
+        let mut unsafe_removal = removed.clone();
+        unsafe_removal.inventory_checkpoints = start.inventory_checkpoints.clone();
+        assert!(validate_replacement(&start, &unsafe_removal).is_err());
+        let mut changed_source = previous.clone();
+        changed_source.inventory_checkpoints.last_mut().unwrap()["document"]["characters"][0]["name"] = "Changed evidence".into();
+        assert!(validate_replacement(&previous, &changed_source).is_err());
+        save(&path, &previous, Some(&revision)).unwrap();
+        assert_eq!(fs::read(&backup).unwrap(), original);
+        assert_eq!(fs::read_dir(dir.path()).unwrap().count(), 2);
+        fs::write(&path, b"external synthetic edit").unwrap();
+        assert_eq!(save(&path, &previous, Some(&revision)).unwrap_err(), CONFLICT);
+        assert_eq!(fs::read(&path).unwrap(), b"external synthetic edit");
     }
 }

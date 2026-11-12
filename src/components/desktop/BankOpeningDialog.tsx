@@ -34,7 +34,7 @@ export default function BankOpeningDialog({
   );
   const holders = Array.from(
     new Map(
-      document.workingInventories
+      [...document.workingInventories, ...document.inventoryCheckpoints]
         .flatMap((w) => bankHolders(w.document))
         .map((h) => [h.id, h])
     ).values()
