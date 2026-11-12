@@ -113,7 +113,8 @@ export const getEffectiveLoadGp = (
   totalEncumbranceGp: number,
   strength: StrengthScore
 ): number =>
-  Math.max(0, totalEncumbranceGp - getStrengthCarryingCapacityGp(strength));
+  // The base 350 gp belongs to the band thresholds, not this adjustment.
+  Math.max(0, totalEncumbranceGp - getStrengthWeightAllowanceGp(strength));
 
 export const getLoadBand = (effectiveLoadGp: number): LoadBand => {
   if (effectiveLoadGp <= 350) {

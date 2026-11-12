@@ -1,3 +1,4 @@
+import type { StrengthScore } from '../types/encumbrance';
 import { createEmptyEncumbranceDocument } from '../helpers/encumbranceDocument';
 import {
   getContainerLoadSummary,
@@ -210,17 +211,20 @@ describe('encumbrance rules', () => {
     });
   });
 
-  test('derives an encumbrance band from effective load', () => {
+  test('STR 15 carrying 900 gp uses its 200 gp allowance once', () => {
     const effectiveLoad = getEffectiveLoadGp(900, {
       score: 15,
       exceptional: 'none',
     });
 
-    expect(effectiveLoad).toBe(350);
+    expect(effectiveLoad).toBe(700);
+    expect(
+      getStrengthCarryingCapacityGp({ score: 15, exceptional: 'none' })
+    ).toBe(550);
     expect(getLoadBand(effectiveLoad)).toEqual({
-      id: 'normal',
-      label: 'Unencumbered',
-      movement: '12"',
+      id: 'heavy',
+      label: 'Heavy gear',
+      movement: '9"',
     });
   });
 
@@ -317,5 +321,53 @@ describe('encumbrance rules', () => {
     ).toBe(25000);
     expect(getTotalValueGp(character, encumbranceCatalogById)).toBe(25000);
     expect(getTotalKnownValueGp(character, encumbranceCatalogById)).toBe(25000);
+  });
+});
+
+// PHB pp. 101–102: inclusive 350/700/1050 bands, shifted only by strength allowance.
+test.each<[number, StrengthScore['exceptional'], number, number]>([
+  [3, 'none', 0, 350],
+  [4, 'none', 100, 250],
+  [6, 'none', 200, 150],
+  [8, 'none', 350, 0],
+  [15, 'none', 550, 0],
+  [18, 'none', 1100, 0],
+  [18, '01-50', 1350, 0],
+  [18, '51-75', 1600, 0],
+  [18, '76-90', 1850, 0],
+  [18, '91-99', 2350, 0],
+  [18, '00', 3350, 0],
+])(
+  'STR %s/%s applies the shifted inclusive boundaries once',
+  (score, exceptional, capacity, emptyEffective) => {
+    const strength = { score, exceptional };
+    expect(getStrengthCarryingCapacityGp(strength)).toBe(capacity);
+    expect(getEffectiveLoadGp(0, strength)).toBe(emptyEffective);
+    expect(getLoadBand(getEffectiveLoadGp(0, strength)).id).toBe('normal');
+    for (const [offset, band] of [
+      [0, 'normal'],
+      [0.01, 'heavy'],
+      [1, 'heavy'],
+      [350, 'heavy'],
+      [350.01, 'very-heavy'],
+      [351, 'very-heavy'],
+      [700, 'very-heavy'],
+      [700.01, 'encumbered'],
+      [701, 'encumbered'],
+    ] as const) {
+      const effective = getEffectiveLoadGp(capacity + offset, strength);
+      expect(effective).toBeCloseTo(350 + offset);
+      expect(getLoadBand(effective).id).toBe(band);
+    }
+  }
+);
+test('STR 8 carrying 436 gp is Heavy gear at 9 inches, not an extra base allowance', () => {
+  const strength: StrengthScore = { score: 8, exceptional: 'none' };
+  expect(getEffectiveLoadGp(436, strength)).toBe(436);
+  expect(getStrengthCarryingCapacityGp(strength)).toBe(350);
+  expect(getLoadBand(getEffectiveLoadGp(436, strength))).toEqual({
+    id: 'heavy',
+    label: 'Heavy gear',
+    movement: '9"',
   });
 });
