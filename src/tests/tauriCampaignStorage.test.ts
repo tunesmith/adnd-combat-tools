@@ -354,3 +354,344 @@ test.each(['save', 'quit', 'openPending'])(
     expect(xpLedger(doc).events).toHaveLength(1);
   }
 );
+
+function queueHarness() {
+  const document = {
+    kind: 'adnd-campaign' as const,
+    schemaVersion: 21 as const,
+    id: 'c',
+    title: '',
+    notes: '',
+    sessions: [],
+    records: [],
+    workingCombats: [],
+    combatCheckpoints: [],
+    workingInventories: [],
+    inventoryCheckpoints: [],
+    workspace: { sessionId: null, view: 'combats' as const },
+  };
+  let current = {
+    document,
+    epoch: 1,
+    token: 0,
+    dirty: false,
+    busy: false,
+    path: null,
+    recentPath: null,
+    status: '',
+    error: null,
+  };
+  const writes: string[] = [],
+    saved: string[] = [];
+  const events = new Map<string, (event: { payload: unknown }) => void>();
+  let block: Promise<void> | undefined,
+    blockCommand: Promise<void> | undefined,
+    rejection: Error | undefined;
+  window.__TAURI__ = {
+    core: {
+      invoke: async <T>(
+        name: string,
+        args?: Record<string, unknown>
+      ): Promise<T> => {
+        if (name === 'campaign_state') return current as unknown as T;
+        if (name === 'campaign_replace') {
+          if (block) await block;
+          if (rejection) throw rejection;
+          current = {
+            ...current,
+            document: JSON.parse(String(args?.['text'])),
+            token: current.token + 1,
+            dirty: true,
+          };
+          writes.push(current.document.notes);
+          return current as unknown as T;
+        }
+        if (name === 'campaign_command') {
+          saved.push(current.document.notes);
+          if (blockCommand) await blockCommand;
+          current = { ...current, dirty: false };
+        }
+        return undefined as unknown as T;
+      },
+    },
+    event: {
+      listen: async <T>(
+        name: string,
+        handler: (event: { payload: T }) => void
+      ) => {
+        events.set(name, handler as (event: { payload: unknown }) => void);
+        return () => undefined;
+      },
+    },
+  };
+  return {
+    writes,
+    saved,
+    events,
+    current: () => current,
+    block: (promise?: Promise<void>) => {
+      block = promise;
+    },
+    blockCommand: (promise?: Promise<void>) => {
+      blockCommand = promise;
+    },
+    reject: (error?: Error) => {
+      rejection = error;
+    },
+    epoch: () => {
+      current = { ...current, epoch: current.epoch + 1 };
+    },
+  };
+}
+const combatKey = {
+  combatId: 'encounter',
+  sessionId: 'session',
+  generation: 0,
+};
+function deferred() {
+  let resolve: () => void = () => undefined;
+  const promise = new Promise<void>((done) => {
+    resolve = done;
+  });
+  return { promise, resolve };
+}
+test('typing coalesces but discrete operations and command barriers preserve accepted order', async () => {
+  const h = queueHarness(),
+    storage = await createTauriStorage();
+  const first = storage?.mutate(
+    'c',
+    1,
+    (d) => ({ ...d, notes: 'a' }),
+    combatKey
+  );
+  const last = storage?.mutate(
+    'c',
+    1,
+    (d) => ({ ...d, notes: 'abc' }),
+    combatKey
+  );
+  expect(first).toBe(last);
+  const discrete = storage?.mutate('c', 1, (d) => ({
+    ...d,
+    title: d.notes + ' banking',
+  }));
+  const after = storage?.mutate(
+    'c',
+    1,
+    (d) => ({ ...d, notes: d.title + ' final' }),
+    combatKey
+  );
+  await storage?.command('save');
+  await Promise.all([first, last, discrete, after]);
+  expect(h.writes).toEqual(['abc', 'abc', 'abc banking final']);
+  expect(h.saved).toEqual(['abc banking final']);
+});
+test('delayed acceptance coalesces trailing input, repeated Save is single, and edits during save stay dirty', async () => {
+  const h = queueHarness(),
+    storage = await createTauriStorage();
+  const delay = deferred(),
+    saving = deferred();
+  h.block(delay.promise);
+  h.blockCommand(saving.promise);
+  const edit = storage?.mutate(
+    'c',
+    1,
+    (d) => ({ ...d, notes: 'before save' }),
+    combatKey
+  );
+  const save = storage?.command('save');
+  expect(storage?.command('save')).toBe(save);
+  const later = storage?.mutate(
+    'c',
+    1,
+    (d) => ({ ...d, notes: 'during' }),
+    combatKey
+  );
+  const latest = storage?.mutate(
+    'c',
+    1,
+    (d) => ({ ...d, notes: 'during save final' }),
+    combatKey
+  );
+  expect(later).toBe(latest);
+  delay.resolve();
+  await edit;
+  // The post-command edit cannot cross the save snapshot barrier.
+  saving.resolve();
+  await save;
+  await latest;
+  expect(h.saved).toEqual(['before save']);
+  expect(h.writes).toEqual(['before save', 'during save final']);
+  expect(h.current().dirty).toBe(true);
+  await storage?.command('save');
+  expect(h.saved).toEqual(['before save', 'during save final']);
+});
+test('menu failures are visible; rejected input is retained for retry in order, or deliberately discarded', async () => {
+  const h = queueHarness(),
+    storage = await createTauriStorage();
+  const phases: string[] = [];
+  storage?.subscribeStatus?.((s) => phases.push(s.error || s.phase));
+  h.reject(new Error('Validation timed out'));
+  const bad = storage?.mutate(
+    'c',
+    1,
+    (d) => ({ ...d, notes: 'keep me' }),
+    combatKey
+  );
+  h.events.get('campaign-action')?.({ payload: 'save' });
+  await expect(bad).rejects.toThrow('Validation timed out');
+  await expect(storage?.command('save')).rejects.toThrow(
+    'Validation timed out'
+  );
+  expect(phases.some((s) => s.includes('Validation timed out'))).toBe(true);
+  expect(h.saved).toEqual([]);
+  h.reject();
+  await storage?.retryRejectedEdits?.();
+  expect(h.current().document.notes).toBe('keep me');
+  expect(phases[phases.length - 1]).toBe('idle');
+  await storage?.command('save');
+  expect(h.saved).toEqual(['keep me']);
+  h.reject(new Error('Rejected'));
+  await expect(
+    storage?.mutate('c', 1, (d) => ({ ...d, notes: 'discard me' }))
+  ).rejects.toThrow('Rejected');
+  await storage?.discardRejectedEdits();
+  h.reject();
+  await storage?.command('save');
+  expect(h.saved).toEqual(['keep me', 'keep me']);
+});
+test('composition flush includes the final input, and stale epochs never receive a draft', async () => {
+  const h = queueHarness(),
+    storage = await createTauriStorage();
+  document.dispatchEvent(new Event('compositionstart', { bubbles: true }));
+  const partial = storage?.mutate(
+    'c',
+    1,
+    (d) => ({ ...d, notes: 'partial' }),
+    combatKey
+  );
+  const save = storage?.command('save');
+  const final = storage?.mutate(
+    'c',
+    1,
+    (d) => ({ ...d, notes: '確定' }),
+    combatKey
+  );
+  document.dispatchEvent(new Event('compositionend', { bubbles: true }));
+  await save;
+  await Promise.all([partial, final]);
+  expect(h.saved).toEqual(['確定']);
+  const stale = storage?.mutate(
+    'c',
+    1,
+    (d) => ({ ...d, notes: 'wrong document' }),
+    combatKey
+  );
+  h.epoch();
+  await storage?.command('save');
+  expect(await stale).toBeNull();
+  expect(h.saved).toEqual(['確定', '確定']);
+});
+
+test.each(['banking', 'xp'] as const)(
+  'combat edits on both sides of an accepted %s operation preserve its ledger',
+  async (kind) => {
+    const { bankFixture, bankLeg, bankPost } = await import(
+      './fixtures/bankingKifu'
+    );
+    const { xpCastleDraft } = await import('./fixtures/xpCampaign');
+    const { confirmXpAward, previewXpAward, xpLedger } = await import(
+      '../helpers/campaignXp'
+    );
+    const { bankLedger } = await import('../helpers/campaignBanking');
+    const { createWorkingCombat, changeWorkingCombat } = await import(
+      '../helpers/campaignWorkingCombat'
+    );
+    const { parseCampaign, validateHistoryTransition } = await import(
+      '../helpers/campaignDocument'
+    );
+    const { syntheticCombat } = await import('./fixtures/campaignB1');
+    let doc = kind === 'banking' ? bankFixture() : xpCastleDraft();
+    const sessionId = doc.sessions[0]?.id;
+    if (!sessionId) throw Error('Missing session');
+    doc = createWorkingCombat(
+      doc,
+      sessionId,
+      'Test',
+      syntheticCombat(),
+      { kind: 'empty' },
+      'editor'
+    );
+    let token = 0;
+    window.__TAURI__ = {
+      core: {
+        invoke: async <T>(
+          name: string,
+          args?: Record<string, unknown>
+        ): Promise<T> => {
+          if (name === 'campaign_replace') {
+            const next = parseCampaign(String(args?.['text']));
+            validateHistoryTransition(doc, next, '');
+            doc = next;
+            token++;
+          }
+          return { document: doc, epoch: 1, token } as unknown as T;
+        },
+      },
+      event: { listen: async () => () => undefined },
+    };
+    const storage = await createTauriStorage();
+    const edit = (value: string) => {
+      const state = syntheticCombat(),
+        round = state.rounds[1];
+      if (!round) throw Error('Missing round');
+      round.summary = value;
+      return storage?.mutate(
+        doc.id,
+        1,
+        (d) => changeWorkingCombat(d, 'editor', sessionId, 0, state),
+        { combatId: 'editor', sessionId, generation: 0 }
+      );
+    };
+    const early = edit('intermediate'),
+      before = edit('before transaction');
+    const transaction = storage?.mutate(doc.id, 1, (d) =>
+      kind === 'xp'
+        ? confirmXpAward(
+            d,
+            'refuge-point',
+            previewXpAward(d, 'refuge-point').fingerprint,
+            'queued-award',
+            '2026-11-07T12:00:00.000Z'
+          )
+        : bankPost(d, {
+            transactionId: 'queued-transfer',
+            sessionId: 'day3',
+            description: 'Ordered transfer',
+            kind: 'transfer',
+            changes: [
+              bankLeg(d, 'day3', 'castle-kifu-storage', 'ep', -1, 'castle-ep'),
+              bankLeg(d, 'day3', 'inventory-reatha', 'ep', 1, 'queued-ep'),
+            ],
+          })
+    );
+    const after = edit('after transaction');
+    await storage?.command('save');
+    await Promise.all([early, before, transaction, after]);
+    expect(token).toBe(3);
+    expect(
+      doc.workingCombats.find((c) => c.id === 'editor')?.state.rounds[1]
+        ?.summary
+    ).toBe('after transaction');
+    if (kind === 'xp')
+      expect(xpLedger(doc).events.some((e) => e.id === 'queued-award')).toBe(
+        true
+      );
+    else
+      expect(
+        bankLedger(doc).entries.some(
+          (e) => e.transactionId === 'queued-transfer'
+        )
+      ).toBe(true);
+  }
+);

@@ -44,6 +44,8 @@ import type {
 import type { EncumbranceDmDocument } from '../../types/encumbrance';
 import type {
   DocumentState,
+  CombatEditKey,
+  EditQueueStatus,
   DocumentCommand,
 } from '../../types/campaignStorage';
 import styles from './campaignWorkspace.module.css';
@@ -91,6 +93,11 @@ export default function DesktopWorkspace() {
     editorVersionRef.current += 1;
     setEditorVersion(editorVersionRef.current);
   }, []);
+  const [queueStatus, setQueueStatus] = useState<EditQueueStatus>({
+    phase: 'idle',
+    queued: 0,
+    error: null,
+  });
   const [error, setError] = useState<string | null>(null);
   const [inventoryHistorySelections, setInventoryHistorySelections] = useState<
     Record<string, string>
@@ -109,25 +116,36 @@ export default function DesktopWorkspace() {
         setState(next);
         return;
       }
+      if (pending.current > 0 || needsEditorReset.current) {
+        // Native status must remain visible without rolling back newer or rejected input.
+        const merged = {
+          ...next,
+          document: current.current?.document || next.document,
+          dirty: true,
+        };
+        current.current = merged;
+        setState(merged);
+        return;
+      }
       if (pending.current === 0) {
-        if (needsEditorReset.current) {
-          needsEditorReset.current = false;
-          resetEditor();
-        }
         current.current = next;
         setState(next);
       }
     },
-    [resetEditor, returnToWorkspace]
+    [returnToWorkspace]
   );
   useEffect(() => {
     let disposed = false;
     let unsubscribe: (() => void) | undefined;
+    let unsubscribeStatus: (() => void) | undefined;
     void import('../../helpers/tauriCampaignStorage')
       .then(async ({ createTauriStorage }) => {
         const storage = window.campaignStorage || (await createTauriStorage());
         if (!storage || disposed) return;
         window.campaignStorage = storage;
+        unsubscribeStatus = storage.subscribeStatus?.((status) => {
+          if (!disposed) setQueueStatus(status);
+        });
         unsubscribe = storage.subscribe((next) => {
           if (!disposed) receive(next);
         });
@@ -138,12 +156,14 @@ export default function DesktopWorkspace() {
     return () => {
       disposed = true;
       unsubscribe?.();
+      unsubscribeStatus?.();
     };
   }, [receive]);
   const mutate = useCallback(
     function mutate(
       change: (document: CampaignDocument) => CampaignDocument,
-      owner: DocumentState | null = current.current
+      owner: DocumentState | null = current.current,
+      combat?: CombatEditKey
     ) {
       if (!owner?.document || !window.campaignStorage) return false;
       const id = owner.document.id,
@@ -163,7 +183,7 @@ export default function DesktopWorkspace() {
         current.current = optimistic;
         setState(optimistic);
         void window.campaignStorage
-          .mutate(id, epoch, change)
+          .mutate(id, epoch, change, combat)
           .then((accepted) => {
             if (
               current.current?.epoch !== epoch ||
@@ -438,7 +458,8 @@ export default function DesktopWorkspace() {
             <CampaignSaveStatus
               state={state}
               pending={pending.current > 0}
-              hasError={Boolean(error)}
+              hasError={Boolean(error || queueStatus.error)}
+              queuePhase={queueStatus.phase}
             />
           )}
         </div>
@@ -454,19 +475,38 @@ export default function DesktopWorkspace() {
           Couldn’t remember this file. Use Open next time.
         </p>
       )}
-      {(error || state?.error) && (
+      {(error || state?.error || queueStatus.error) && (
         <div role="alert" className={styles['error']}>
-          {error || state?.error}
-          {error && needsEditorReset.current && (
+          {error || state?.error || queueStatus.error}
+          {(needsEditorReset.current || queueStatus.rejected) &&
+            window.campaignStorage?.retryRejectedEdits && (
+              <button
+                onClick={() => {
+                  void window.campaignStorage
+                    ?.retryRejectedEdits?.()
+                    .then((accepted) => {
+                      needsEditorReset.current = false;
+                      setError(null);
+                      receive(accepted);
+                    })
+                    .catch((e) => setError(String(e)));
+                }}
+              >
+                Retry pending edits
+              </button>
+            )}
+          {(needsEditorReset.current || queueStatus.rejected) && (
             <button
               onClick={() => {
                 void window.campaignStorage
                   ?.discardRejectedEdits()
                   .then((accepted) => {
-                    pending.current = 0;
+                    needsEditorReset.current = false;
+                    resetEditor();
                     setError(null);
                     receive(accepted);
-                  });
+                  })
+                  .catch((e) => setError(String(e)));
               }}
             >
               Discard rejected edits
@@ -978,7 +1018,8 @@ export default function DesktopWorkspace() {
                           generation,
                           next
                         ),
-                      scope
+                      scope,
+                      { combatId: id, sessionId: ownedSession, generation }
                     );
                   }}
                 />

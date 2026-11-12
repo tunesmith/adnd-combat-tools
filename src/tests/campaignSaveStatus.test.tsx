@@ -63,3 +63,28 @@ test('cancelled or failed saves do not show success', () => {
   expect(screen.getByRole('status')).toHaveTextContent('Edited');
   expect(screen.getByRole('status')).not.toHaveTextContent('Saved');
 });
+test('queued editing, command flush, and recoverable failures are distinguishable', () => {
+  const { rerender } = render(
+    <CampaignSaveStatus state={clean} pending queuePhase="editing" />
+  );
+  expect(screen.getByRole('status')).toHaveTextContent('Editing…');
+  rerender(<CampaignSaveStatus state={clean} pending queuePhase="waiting" />);
+  expect(screen.getByRole('status')).toHaveTextContent('Waiting for edits…');
+  rerender(
+    <CampaignSaveStatus
+      state={clean}
+      pending={false}
+      queuePhase="failed"
+      hasError
+    />
+  );
+  expect(screen.getByRole('status')).toHaveTextContent('needs attention');
+  rerender(
+    <CampaignSaveStatus
+      state={{ ...clean, saveCount: 1, dirty: true }}
+      pending={false}
+    />
+  );
+  expect(screen.getByRole('status')).toHaveTextContent('Edited');
+  expect(screen.getByRole('status')).not.toHaveTextContent('Saved');
+});

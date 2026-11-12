@@ -1,7 +1,8 @@
 mod boundary;
+mod diagnostics;
 mod document;
 mod macos;
-use document::{hash, parse, read, save, Document, CONFLICT};
+use document::{hash, parse, read, save_accepted, Document, CONFLICT};
 use serde::Serialize;
 use std::{
     fs,
@@ -86,6 +87,11 @@ impl Session {
         }
     }
     fn remember(&mut self, app: &tauri::AppHandle, path: &PathBuf) {
+        #[cfg(feature = "diagnostic-harness")]
+        if std::env::var_os("ADND_DIAGNOSTIC_CAMPAIGN").is_some() {
+            self.view.recent_path = Some(path.clone());
+            return;
+        }
         self.view.recent_path = Some(path.clone());
         let result = (|| -> Result<(), String> {
             let dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
@@ -123,6 +129,8 @@ impl Session {
         Ok(())
     }
     fn prompt(app: &tauri::AppHandle, text: &str, first: &str, second: &str) -> String {
+        #[cfg(feature = "diagnostic-harness")]
+        if let Some(choice) = diagnostics::prompt() { return choice; }
         let mut d = app.dialog().message(text).title("AD&D Campaign").buttons(
             MessageDialogButtons::YesNoCancelCustom(first.into(), second.into(), "Cancel".into()),
         );
@@ -162,10 +170,14 @@ impl Session {
                     .to_owned();
                 picker = picker.set_file_name(format!("{stem}.adnd"));
             }
-            let Some(selected) = picker.blocking_save_file() else {
-                return Ok(false);
+            #[cfg(feature = "diagnostic-harness")]
+            let injected = diagnostics::save_as();
+            #[cfg(not(feature = "diagnostic-harness"))]
+            let injected: Option<PathBuf> = None;
+            path = if let Some(selected) = injected { Some(selected) } else {
+                let Some(selected) = picker.blocking_save_file() else { return Ok(false); };
+                Some(selected.into_path().map_err(|e| e.to_string())?)
             };
-            path = Some(selected.into_path().map_err(|e| e.to_string())?);
             let same_destination = path == self.view.path
                 || match (
                     path.as_ref().and_then(|p| fs::canonicalize(p).ok()),
@@ -184,7 +196,7 @@ impl Session {
         let path = path.unwrap();
         self.view.activity = Some("save".into());
         self.publish(app);
-        match save(&path, &doc, revision.as_deref()) {
+        match save_accepted(&path, &doc, revision.as_deref()) {
             Ok(rev) => {
                 self.revision = Some(rev);
                 self.saved = Some(doc);
@@ -292,29 +304,31 @@ impl Session {
         Ok(false)
     }
 }
+fn run_command(app: tauri::AppHandle, command: String, opened: Option<PathBuf>) -> Result<(), String> {
+    let state = app.state::<State>();
+    let _command = diagnostics::span("command_total", 0);
+    let lock = diagnostics::span("command_lock_wait", 0);
+    let mut session = state.session.lock().map_err(|e| e.to_string())?;
+    drop(lock);
+    session.view.busy = true;
+    session.view.activity = Some(command.clone());
+    session.publish(&app);
+    let result = session.command(&app, &command, opened);
+    if let Err(error) = &result {
+        session.view.error = Some(error.clone());
+        session.view.status = "Operation failed — your active document is intact".into();
+    }
+    session.view.busy = false;
+    session.view.activity = None;
+    session.publish(&app);
+    if matches!(result, Ok(true)) {
+        state.exiting.store(true, Ordering::SeqCst);
+        app.exit(0);
+    }
+    result.map(|_| ())
+}
 fn run(app: tauri::AppHandle, command: String, opened: Option<PathBuf>) {
-    std::thread::spawn(move || {
-        let state = app.state::<State>();
-        let mut session = state.session.lock().unwrap();
-        session.view.busy = true;
-        session.view.activity = Some(command.clone());
-        session.publish(&app);
-        let quit = match session.command(&app, &command, opened) {
-            Ok(q) => q,
-            Err(e) => {
-                session.view.error = Some(e);
-                session.view.status = "Operation failed — your active document is intact".into();
-                false
-            }
-        };
-        session.view.busy = false;
-        session.view.activity = None;
-        session.publish(&app);
-        if quit {
-            state.exiting.store(true, Ordering::SeqCst);
-            app.exit(0);
-        }
-    });
+    std::thread::spawn(move || { let _ = run_command(app, command, opened); });
 }
 #[tauri::command]
 async fn campaign_state(app: tauri::AppHandle) -> View {
@@ -370,24 +384,18 @@ async fn campaign_edit(app: tauri::AppHandle, title: String, notes: String) -> R
     .map_err(|e| e.to_string())?
 }
 #[tauri::command]
-fn campaign_command(app: tauri::AppHandle, command: String) -> Result<(), String> {
-    if command == "openPending" {
-        let path = app
-            .state::<State>()
-            .pending_open
-            .lock()
-            .unwrap()
-            .pop_front();
-        if let Some(path) = path {
-            run(app, "open".into(), Some(path));
+async fn campaign_command(app: tauri::AppHandle, command: String) -> Result<(), String> {
+    tauri::async_runtime::spawn_blocking(move || {
+        if command == "openPending" {
+            let path = app.state::<State>().pending_open.lock().unwrap().pop_front();
+            if let Some(path) = path { return run_command(app, "open".into(), Some(path)); }
+            return Ok(());
         }
-        return Ok(());
-    }
-    if !["new", "open", "save", "saveAs", "close", "reopen", "quit"].contains(&command.as_str()) {
-        return Err("Unknown command".into());
-    }
-    run(app, command, None);
-    Ok(())
+        if !["new", "open", "save", "saveAs", "close", "reopen", "quit"].contains(&command.as_str()) {
+            return Err("Unknown command".into());
+        }
+        run_command(app, command, None)
+    }).await.map_err(|e| e.to_string())?
 }
 #[derive(serde::Deserialize)]
 struct StandaloneTool { id: String, label: String, path: String }
@@ -406,6 +414,8 @@ fn main() {
         })
         .plugin(tauri_plugin_dialog::init())
         .invoke_handler(tauri::generate_handler![
+            campaign_diagnostic,
+            campaign_diagnostic_fault,
             campaign_state,
             campaign_edit,
             campaign_command,
@@ -428,7 +438,16 @@ fn main() {
                     session.view.recent_path = recent;
                 }
             }
-            tauri::WebviewWindowBuilder::from_config(app, &app.config().app.windows[0])?
+            #[cfg(feature = "diagnostic-harness")]
+            if let Ok(path) = std::env::var("ADND_DIAGNOSTIC_CAMPAIGN") {
+                app.state::<State>().session.lock().unwrap().load(app.handle(), path.into())?;
+            }
+            let builder = tauri::WebviewWindowBuilder::from_config(app, &app.config().app.windows[0])?;
+            #[cfg(feature = "diagnostic-harness")]
+            let builder = if let Ok(path) = std::env::var("ADND_DIAGNOSTIC_SCRIPT") {
+                builder.initialization_script(fs::read_to_string(path)?)
+            } else { builder };
+            builder
                 .on_navigation(|url| {
                     url.scheme() == "tauri"
                         || (url.scheme() == "http" && url.host_str() == Some("tauri.localhost"))
@@ -536,18 +555,19 @@ async fn campaign_replace(
     text: String,
 ) -> Result<View, String> {
     tauri::async_runtime::spawn_blocking(move || {
-        let document = document::parse(text.as_bytes())?;
+        let _total = diagnostics::span("replace_total", text.len());
+        #[cfg(feature = "diagnostic-harness")]
+        diagnostics::before_replace()?;
         let state = app.state::<State>();
+        let lock = diagnostics::span("replace_lock_wait", 0);
         let mut s = state.session.lock().unwrap();
+        drop(lock);
         s.check_target(&id, token)?;
-        if document.id != id {
-            return Err("Campaign identity cannot be replaced".into());
-        }
-        document::validate_replacement_with_purpose(
-            s.view.document.as_ref().unwrap(),
-            &document,
-            purpose.as_deref().unwrap_or(""),
-        )?;
+        let history = diagnostics::span("replace_history", 0);
+        let document = document::parse_replacement(text.as_bytes(),
+            s.view.document.as_ref().unwrap(), purpose.as_deref().unwrap_or(""))?;
+        if document.id != id { return Err("Campaign identity cannot be replaced".into()); }
+        drop(history);
         s.view.document = Some(document);
         s.view.token += 1;
         s.view.dirty = s.view.document != s.saved;
@@ -713,4 +733,20 @@ mod standalone_tool_tests {
         assert_eq!(ids.len(),6);assert_eq!(paths.len(),6);
         for tool in tools {assert!(tool.id.starts_with("tool-"));assert!(tool.path.starts_with('/'));assert!(!tool.path.contains("://"));assert!(!tool.label.is_empty());}
     }
+}
+
+#[tauri::command]
+fn campaign_diagnostic(name: String, ms: f64, count: usize) {
+    diagnostics::renderer(&name, ms, count);
+}
+
+#[tauri::command]
+fn campaign_diagnostic_fault(app: tauri::AppHandle, kind: String, value: usize) -> Result<(), String> {
+    #[cfg(feature = "diagnostic-harness")]
+    {
+        if kind == "menu-save" { return app.emit("campaign-action", "save").map_err(|e| e.to_string()); }
+        diagnostics::configure(&kind, value)
+    }
+    #[cfg(not(feature = "diagnostic-harness"))]
+    { let _ = (app, kind, value); Err("Diagnostics are not enabled in this build".into()) }
 }

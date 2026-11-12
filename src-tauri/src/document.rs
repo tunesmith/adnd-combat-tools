@@ -46,6 +46,7 @@ impl Document {
             workspace: serde_json::json!({"sessionId":null,"view":"possessions","combatSelections":{}}),
         }
     }
+    #[cfg(test)]
     pub fn validate(&self) -> Result<(), String> {
         let text = serde_json::to_string_pretty(self).map_err(|e| e.to_string())?;
         if text.len() > 8_000_000 {
@@ -87,20 +88,33 @@ pub fn read(path: &Path) -> Result<Option<Vec<u8>>, String> {
     fs::read(path).map(Some).map_err(|e| e.to_string())
 }
 pub const CONFLICT: &str = "The file changed or moved outside this app.";
+#[cfg(test)]
 pub fn save(path: &Path, doc: &Document, expected: Option<&str>) -> Result<String, String> {
     save_with_hook(path, doc, expected, || Ok(()))
 }
+#[cfg(test)]
 fn save_with_hook(
     path: &Path,
     doc: &Document,
     expected: Option<&str>,
     hook: impl FnOnce() -> Result<(), String>,
 ) -> Result<String, String> {
-    doc.validate()?;
+    { let _validate = crate::diagnostics::span("save_validate", 0); doc.validate()?; }
+    save_accepted_with_hook(path, doc, expected, hook)
+}
+/// Only Session's already validated document may use this path.
+pub fn save_accepted(path: &Path, doc: &Document, expected: Option<&str>) -> Result<String, String> {
+    save_accepted_with_hook(path, doc, expected, || Ok(()))
+}
+fn save_accepted_with_hook(path: &Path, doc: &Document, expected: Option<&str>, hook: impl FnOnce() -> Result<(), String>) -> Result<String, String> {
+    let _total = crate::diagnostics::span("save_total", 0);
+    let serialization = crate::diagnostics::span("save_serialize", 0);
     let bytes = (serde_json::to_string_pretty(doc).map_err(|e| e.to_string())? + "\n").into_bytes();
     if bytes.len() > 8_000_000 {
         return Err("Campaign exceeds 8 MB".into());
     }
+    drop(serialization);
+    let _disk = crate::diagnostics::span("save_disk", bytes.len());
     let old = read(path)?;
     if old.as_ref().map(|b| hash(b)).as_deref() != expected {
         return Err(CONFLICT.into());
@@ -120,6 +134,8 @@ fn save_with_hook(
             .and_then(|_| backup.as_file().sync_all()).map_err(|e| e.to_string())?;
         Some(backup)
     } else { None };
+    #[cfg(feature = "diagnostic-harness")]
+    crate::diagnostics::before_persist()?;
     hook()?;
     if read(path)?.as_ref().map(|b| hash(b)).as_deref() != expected {
         return Err(CONFLICT.into());
@@ -246,10 +262,25 @@ mod legacy_tests {
     }
 }
 
+/// Validate the untrusted replacement once against the already accepted native document.
+pub fn parse_replacement(bytes: &[u8], old: &Document, purpose: &str) -> Result<Document, String> {
+    if bytes.len() > 8_000_000 { return Err("Campaign exceeds 8 MB".into()); }
+    let text = std::str::from_utf8(bytes).map_err(|e| e.to_string())?;
+    let previous = serde_json::to_string(old).map_err(|e| e.to_string())?;
+    let validated = crate::boundary::validate_transition(text, Some(&previous), purpose)?;
+    let new: Document = serde_json::from_str(&validated).map_err(|e| e.to_string())?;
+    if serde_json::to_vec_pretty(&new).map_err(|e| e.to_string())?.len() + 1 > 8_000_000 {
+        return Err("Campaign exceeds 8 MB when saved".into());
+    }
+    validate_immutable_history(old, &new)?;
+    Ok(new)
+}
+
 #[cfg(test)]
 pub fn validate_replacement(old: &Document, new: &Document) -> Result<(), String> {
     validate_replacement_with_purpose(old, new, "")
 }
+#[cfg(test)]
 pub fn validate_replacement_with_purpose(
     old: &Document,
     new: &Document,
@@ -260,6 +291,9 @@ pub fn validate_replacement_with_purpose(
         Some(&serde_json::to_string(old).map_err(|e| e.to_string())?),
         purpose,
     )?;
+    validate_immutable_history(old, new)
+}
+fn validate_immutable_history(old: &Document, new: &Document) -> Result<(), String> {
     for checkpoint in &old.combat_checkpoints {
         if !new.combat_checkpoints.contains(checkpoint) {
             return Err("Combat checkpoints are immutable.".into());
@@ -1313,5 +1347,27 @@ mod inventory_membership_tests {
         fs::write(&path, b"external synthetic edit").unwrap();
         assert_eq!(save(&path, &previous, Some(&revision)).unwrap_err(), CONFLICT);
         assert_eq!(fs::read(&path).unwrap(), b"external synthetic edit");
+    }
+}
+
+#[cfg(test)]
+mod accepted_boundary_tests {
+    use super::*;
+    #[test]
+    fn replacement_validates_once_and_trusted_save_preserves_conflict_checks() {
+        let before = parse(include_bytes!("../../src/tests/fixtures/campaignB1V2.json")).unwrap();
+        let mut next = before.clone();
+        next.notes = "Last unblurred native input".into();
+        let accepted = parse_replacement(&serde_json::to_vec(&next).unwrap(), &before, "").unwrap();
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("accepted.adnd");
+        let rev = save_accepted(&path, &accepted, None).unwrap();
+        assert_eq!(parse(&fs::read(&path).unwrap()).unwrap(), accepted);
+        let mut tampered = accepted.clone();
+        tampered.records.clear();
+        assert!(parse_replacement(&serde_json::to_vec(&tampered).unwrap(), &accepted, "").is_err());
+        fs::write(&path, b"external edit").unwrap();
+        assert_eq!(save_accepted(&path, &accepted, Some(&rev)).unwrap_err(), CONFLICT);
+        assert_eq!(fs::read(&path).unwrap(), b"external edit");
     }
 }

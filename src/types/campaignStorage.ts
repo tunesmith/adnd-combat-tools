@@ -21,14 +21,28 @@ export interface DocumentState {
   status: string;
   error: string | null;
 }
+export interface CombatEditKey {
+  combatId: string;
+  sessionId: string;
+  generation: number;
+}
+export interface EditQueueStatus {
+  phase: 'idle' | 'editing' | 'waiting' | 'command' | 'failed';
+  queued: number;
+  rejected?: boolean;
+  error: string | null;
+}
 /** No paths or filesystem primitives are accepted from the renderer. */
 export interface CampaignStorage {
   getState(): Promise<DocumentState>;
+  retryRejectedEdits?(): Promise<DocumentState>;
+  subscribeStatus?(listener: (status: EditQueueStatus) => void): () => void;
   discardRejectedEdits(): Promise<DocumentState>;
   mutate(
     id: string,
     epoch: number,
-    change: (document: CampaignDocument) => CampaignDocument
+    change: (document: CampaignDocument) => CampaignDocument,
+    combat?: CombatEditKey
   ): Promise<DocumentState | null>;
   exportWorking(id: string, epoch: number, workingId: string): Promise<boolean>;
   replace(

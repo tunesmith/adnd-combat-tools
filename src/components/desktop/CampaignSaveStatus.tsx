@@ -1,13 +1,18 @@
 import { useEffect, useRef, useState } from 'react';
-import type { DocumentState } from '../../types/campaignStorage';
+import type {
+  DocumentState,
+  EditQueueStatus,
+} from '../../types/campaignStorage';
 export default function CampaignSaveStatus({
   state,
   pending,
   hasError = false,
+  queuePhase,
 }: {
   state: DocumentState | null;
   pending: boolean;
   hasError?: boolean;
+  queuePhase?: EditQueueStatus['phase'];
 }) {
   const [showSaved, setShowSaved] = useState(false);
   const previousSave = useRef(0);
@@ -26,14 +31,16 @@ export default function CampaignSaveStatus({
     state?.busy && (state.activity === 'open' || state.activity === 'reopen');
   const blocked = Boolean(state?.error || hasError);
   const text = blocked
-    ? state?.dirty || pending
-      ? 'Edited'
-      : ''
+    ? 'Edited — needs attention'
     : saving
     ? 'Saving…'
     : opening
     ? 'Opening…'
-    : state?.dirty || pending
+    : queuePhase === 'waiting'
+    ? 'Waiting for edits…'
+    : pending || queuePhase === 'editing'
+    ? 'Editing…'
+    : state?.dirty
     ? 'Edited'
     : showSaved && !state?.error && !hasError
     ? 'Saved'
