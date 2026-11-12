@@ -368,3 +368,20 @@ test('a later capped balance-review version can itself be revised using its reco
   expect(next.xp?.events.slice(0, 4)).toEqual(old);
   expect(parseCampaign(serializeCampaign(next))).toEqual(next);
 });
+
+test('discarded cap excess closes the whole recipient share after training', () => {
+  const first = accept(
+    capMoneyAward(capCampaign(), 'settled-cap', '500'),
+    'settled-cap'
+  );
+  let later = train(first, 'session-2', 6);
+  const original = first.xp?.points[0];
+  if (!original) throw Error('Fixture');
+  later = saveXpPoint(later, {
+    ...original,
+    id: 'retry-cap',
+    position: { sessionId: 'session-2', phase: 'end', order: 1 },
+    confirmedEventId: null,
+  });
+  expect(() => previewXpAward(later, 'retry-cap')).toThrow('already awarded');
+});

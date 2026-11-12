@@ -30,6 +30,7 @@ import {
   pointRewards,
   previewXpAward,
   rewardSettlement,
+  hasPendingXpShares,
   saveXpOpening,
   saveXpPoint,
   saveXpReward,
@@ -81,6 +82,7 @@ function AwardDetails({
       <XpAwardTable
         document={document}
         point={event.point}
+        confirmedEventId={event.id}
         rewards={event.rewards}
         rows={event.rows}
         readOnly
@@ -511,6 +513,7 @@ export default function CampaignXp({
   const pending = xp.rewards.filter(
     (r) =>
       !rewardSettlement(document, r.id) &&
+      hasPendingXpShares(document, r, point?.position.sessionId ?? sessionId) &&
       (!point || xpRewardFitsAward(document, point, r))
   );
   const rewards = Array.from(
@@ -518,6 +521,9 @@ export default function CampaignXp({
       [
         ...pending,
         ...xp.rewards.filter((r) => point?.rewardIds.includes(r.id)),
+        ...activeXpEvents(xp.events)
+          .flatMap((e) => e.rewards)
+          .filter((r) => pending.some((p) => p.id === r.id)),
         ...(point?.rewardOverrides.filter((r) =>
           point.rewardIds.includes(r.id)
         ) ?? []),
@@ -654,7 +660,7 @@ export default function CampaignXp({
       />
       {awardOpen && (
         <XpAwardDialog
-          title={visibleEvent?.point.label || point?.label || 'XP award'}
+          title={visibleEvent?.point.label ?? point?.label ?? 'XP award'}
           editable={!visibleEvent && !!point && !point.confirmedEventId}
           onRename={(label) => {
             changePoint({ label });
@@ -714,6 +720,18 @@ export default function CampaignXp({
                 )}
                 rows={preview?.rows}
                 onSelect={changeSelection}
+                onSettlement={(rewardId, characterId, decision, reason) =>
+                  changePoint({
+                    settlements: [
+                      ...(point.settlements ?? []).filter(
+                        (s) =>
+                          s.rewardId !== rewardId ||
+                          s.characterId !== characterId
+                      ),
+                      { rewardId, characterId, decision, reason },
+                    ],
+                  })
+                }
                 onDisposition={(id, disposition) => {
                   setDispositions({ ...dispositions, [id]: disposition });
                   changeSelection(id, disposition !== 'defer');

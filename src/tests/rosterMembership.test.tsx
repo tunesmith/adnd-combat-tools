@@ -242,7 +242,7 @@ test('Day93 removal, restoration and roster XP settings preserve combat and conf
   expect(
     screen.queryByRole('button', { name: 'Squeeleo', exact: true })
   ).not.toBeInTheDocument();
-  expect(pendingFlags(current(), 'opals', 'familiar')).toEqual([false, false]);
+  expect(pendingFlags(current(), 'opals', 'familiar')).toEqual([true, true]);
   expect(pendingFlags(current(), 'fight', 'familiar')).toEqual([true, true]);
 
   fireEvent.click(
@@ -251,9 +251,7 @@ test('Day93 removal, restoration and roster XP settings preserve combat and conf
   let xpEditor = within(
     screen.getByRole('dialog', { name: 'XP event review' })
   );
-  expect(
-    xpEditor.queryByLabelText('Squeeleo eligible')
-  ).not.toBeInTheDocument();
+  expect(xpEditor.getByLabelText('Squeeleo eligible')).toBeChecked();
   expect(xpEditor.getByLabelText('Sot participated')).not.toBeChecked();
   expect(xpEditor.getByLabelText('Sot eligible')).toBeChecked();
   fireEvent.click(xpEditor.getByRole('button', { name: 'Cancel' }));
@@ -264,11 +262,15 @@ test('Day93 removal, restoration and roster XP settings preserve combat and conf
   );
   fireEvent.click(removalPreview.getByLabelText('Include Hell hound opals'));
   expect(
-    removalPreview.queryByRole('columnheader', { name: 'Squeeleo' })
-  ).not.toBeInTheDocument();
+    removalPreview.getByRole('columnheader', { name: 'Squeeleo' })
+  ).toBeInTheDocument();
+  fireEvent.change(
+    removalPreview.getByLabelText('Hell hound opals: settlement for Squeeleo'),
+    { target: { value: 'later' } }
+  );
   expect(
     removalPreview.getByRole('row', { name: /^XP added/ })
-  ).toHaveTextContent('120');
+  ).toHaveTextContent('60');
   fireEvent.click(removalPreview.getByRole('button', { name: 'Cancel' }));
 
   dialog = addExisting('familiar');
@@ -280,21 +282,21 @@ test('Day93 removal, restoration and roster XP settings preserve combat and conf
   expect(
     current().party?.roster.filter((c) => c.id === 'familiar')
   ).toHaveLength(1);
-  expect(pendingFlags(current(), 'opals', 'familiar')).toEqual([false, false]);
+  expect(pendingFlags(current(), 'opals', 'familiar')).toEqual([true, true]);
 
   fireEvent.click(
     screen.getByRole('button', { name: /^Hell hound opals Pending/ })
   );
   xpEditor = within(screen.getByRole('dialog', { name: 'XP event review' }));
-  fireEvent.click(xpEditor.getByLabelText('Squeeleo eligible'));
-  fireEvent.click(xpEditor.getByLabelText('Squeeleo participated'));
+  expect(xpEditor.getByLabelText('Squeeleo eligible')).toBeChecked();
+  expect(xpEditor.getByLabelText('Squeeleo participated')).toBeChecked();
   fireEvent.click(xpEditor.getByRole('button', { name: 'Save XP event' }));
   dialog = editCharacter('Squeeleo');
   fireEvent.click(dialog.getByText('Roster settings'));
   fireEvent.click(dialog.getByLabelText('Earns XP'));
   expect(dialog.getByRole('status')).toHaveTextContent('1 pending XP event');
   fireEvent.click(dialog.getByRole('button', { name: 'Save profile' }));
-  expect(pendingFlags(current(), 'opals', 'familiar')).toEqual([false, false]);
+  expect(pendingFlags(current(), 'opals', 'familiar')).toEqual([true, true]);
   expect(current().workingCombats).toEqual(combat.workingCombats);
   expect(xpLedger(current()).events[0]).toEqual(confirmed);
   expect(
@@ -314,14 +316,16 @@ test('Day93 removal, restoration and roster XP settings preserve combat and conf
   fireEvent.click(award.getByLabelText('Include Hell hound opals'));
   const table = within(award.getByRole('table', { name: 'XP award' }));
   expect(
-    table.queryByRole('columnheader', { name: 'Squeeleo' })
-  ).not.toBeInTheDocument();
-  expect(table.getByRole('row', { name: /^XP added/ })).toHaveTextContent(
-    '120'
+    table.getByRole('columnheader', { name: 'Squeeleo' })
+  ).toBeInTheDocument();
+  fireEvent.change(
+    award.getByLabelText('Hell hound opals: settlement for Squeeleo'),
+    { target: { value: 'forfeit' } }
   );
+  expect(table.getByRole('row', { name: /^XP added/ })).toHaveTextContent('60');
   fireEvent.click(award.getByRole('button', { name: 'Confirm award' }));
   expect(xpLedger(current()).events.at(-1)?.rows).toMatchObject([
-    { characterId: 'sot', award: 120 },
+    { characterId: 'sot', award: 60 },
   ]);
   expect(xpLedger(current()).events[0]).toEqual(confirmed);
 });

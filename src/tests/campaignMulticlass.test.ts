@@ -537,3 +537,55 @@ test('mixed parties divide once per character and independently cap single-class
   validateHistoryTransition(doc, after, '');
   expect(reopen(after)).toEqual(after);
 });
+
+test('a delayed multiclass share stays whole and splits into classes only at payment', () => {
+  let doc = multiMoneyAward(multiclassCampaign(), 'deferred-multi', '100');
+  const reward = xpLedger(doc).rewards.find(
+    (r) => r.id === 'deferred-multi-money'
+  );
+  const point = xpLedger(doc).points.find((p) => p.id === 'deferred-multi');
+  const other = doc.party?.roster.find((c) => c.id !== multiCharacter);
+  if (!reward || !point || !other || !reward.recipients[0])
+    throw Error('Fixture');
+  doc = saveXpReward(doc, {
+    ...reward,
+    version: reward.version + 1,
+    recipients: [
+      ...reward.recipients,
+      { ...reward.recipients[0], characterId: other.id, name: other.name },
+    ],
+  });
+  doc = saveXpPoint(doc, {
+    ...point,
+    settlements: [
+      {
+        rewardId: reward.id,
+        characterId: multiCharacter,
+        decision: 'later',
+        reason: '',
+      },
+      {
+        rewardId: reward.id,
+        characterId: other.id,
+        decision: 'forfeit',
+        reason: '',
+      },
+    ],
+  });
+  doc = acceptMulti(doc, point.id);
+  doc = saveXpPoint(doc, {
+    ...newXpPoint(doc, 'session-2', 'later-multi'),
+    rewardIds: [reward.id],
+  });
+  doc = selectXpRewards(doc, 'later-multi', [reward.id]);
+  const preview = previewXpAward(doc, 'later-multi');
+  expect(preview.rows).toHaveLength(1);
+  expect(preview.rows[0]?.base).toBe('50');
+  expect(preview.rows[0]?.classes?.map((c) => [c.base, c.award])).toEqual([
+    ['25', 28],
+    ['25', 28],
+  ]);
+  expect(
+    reopen(acceptMulti(doc, 'later-multi')).xp?.events.at(-1)?.rows[0]?.award
+  ).toBe(56);
+});

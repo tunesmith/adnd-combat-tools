@@ -174,6 +174,19 @@ export const xpPointSchema = z
     rewardOverrides: z.array(xpRewardSchema).max(1000),
     confirmedEventId: id.nullable(),
     caps: z.array(capReviewSchema).max(500).optional(),
+    settlements: z
+      .array(
+        z
+          .object({
+            rewardId: id,
+            characterId: id,
+            decision: z.enum(['award', 'later', 'forfeit']),
+            reason: note,
+          })
+          .strict()
+      )
+      .max(50000)
+      .optional(),
   })
   .strict();
 export type XpPoint = z.infer<typeof xpPointSchema>;
@@ -225,7 +238,7 @@ const xpEventSchema = z
     calculatorVersion: z.union([z.literal(1), z.literal(2), z.literal(3)]),
     rounding: z.literal('nearest-whole-half-up-after-bonus'),
     rewards: z.array(xpRewardSchema).min(1),
-    rows: z.array(awardRowSchema).min(1),
+    rows: z.array(awardRowSchema),
     resolutions: z.array(z.unknown()),
   })
   .strict();

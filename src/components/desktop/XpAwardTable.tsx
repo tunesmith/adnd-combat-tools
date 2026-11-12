@@ -1,10 +1,13 @@
 import {
   inPartyOrder,
   profileClassLabel,
-  xpRecipientAvailable,
+  xpRecipientRetired,
 } from '../../helpers/campaignParty';
-import { classReviewCap } from '../../helpers/campaignXpClasses';
-import { awardCapBasis } from '../../helpers/campaignXpCap';
+import {
+  classReviewCap,
+  profileClassReviews,
+} from '../../helpers/campaignXpClasses';
+import { awardCapBasis, latestXpProfile } from '../../helpers/campaignXpCap';
 import type { CampaignDocument } from '../../helpers/campaignDocument';
 import type {
   XpAwardRow,
@@ -16,8 +19,11 @@ import type {
 import type { XpTreasureDisposition } from '../../helpers/campaignXp';
 import {
   resolveXpReward,
-  rewardSettlement,
+  activeXpEvents,
+  recipientSettlement,
+  xpSettlementDecision,
   xpBalance,
+  xpClassBalances,
 } from '../../helpers/campaignXp';
 import {
   compareXpTimeline,
@@ -35,10 +41,12 @@ import styles from './xpWorkspace.module.css';
 export default function XpAwardTable({
   document,
   point,
-  rewards,
+  rewards: availableRewards,
   rows,
   readOnly = false,
+  confirmedEventId,
   onSelect,
+  onSettlement,
   onDisposition,
   onOpen,
   onBonus,
@@ -51,7 +59,14 @@ export default function XpAwardTable({
   rewards: XpReward[];
   rows?: XpAwardRow[];
   readOnly?: boolean;
+  confirmedEventId?: string;
   onSelect?: (id: string, selected: boolean) => void;
+  onSettlement?: (
+    rewardId: string,
+    characterId: string,
+    decision: 'award' | 'later' | 'forfeit',
+    reason: string
+  ) => void;
   onDisposition?: (id: string, disposition: XpTreasureDisposition) => void;
   onOpen: (reward: XpReward) => void;
   onBonus?: (review: XpBonusReview) => void;
@@ -64,37 +79,79 @@ export default function XpAwardTable({
     reason: string
   ) => void;
 }) {
+  // Non-awarded characters have no posting row. Reconstruct their unchanged
+  // balances at this award from the history available when it was confirmed.
+  const historyIndex = readOnly
+    ? document.xp?.events.findIndex((e) =>
+        confirmedEventId
+          ? e.id === confirmedEventId
+          : e.point.id === point.id && e.rows === rows
+      ) ?? -1
+    : -1;
+  const balanceEvents =
+    historyIndex >= 0 ? document.xp?.events.slice(0, historyIndex) : undefined;
+  let balanceDocument = document;
+  if (historyIndex >= 0 && document.xp) {
+    let openings = document.xp.openings;
+    // A later backward-history extension changed opening balances as well as
+    // appending awards. Restore both sides of that reconciliation for this view.
+    for (const extension of [...(document.xp.extensions ?? [])].reverse()) {
+      if (
+        document.xp.events.findIndex((e) => e.id === extension.eventIds[0]) >
+        historyIndex
+      )
+        openings = openings.map(
+          (opening) =>
+            extension.openings.find(
+              (change) => change.previous.id === opening.id
+            )?.previous ?? opening
+        );
+    }
+    balanceDocument = { ...document, xp: { ...document.xp, openings } };
+  }
+  const rewards = availableRewards.filter(
+    (reward) =>
+      readOnly ||
+      compareXpTimeline(
+        document,
+        reward.origin,
+        point.position,
+        reward.id,
+        xpAwardRoot(document, point)
+      ) <= 0
+  );
   const characters = inPartyOrder(
     document,
-    readOnly && rows
-      ? rows.map((r) => ({ id: r.characterId, name: r.name }))
-      : Array.from(
-          new Map(
-            rewards.flatMap((r) =>
-              r.recipients
-                .filter((c) =>
-                  xpRecipientAvailable(
-                    document,
-                    r.origin.sessionId,
-                    c.characterId
-                  )
-                )
-                .map(
-                  (c) =>
-                    [
-                      c.characterId,
-                      {
-                        id: c.characterId,
-                        name:
-                          point.bonuses.find(
-                            (b) => b.characterId === c.characterId
-                          )?.name || c.name,
-                      },
-                    ] as const
+    Array.from(
+      new Map(
+        rewards.flatMap((r) =>
+          r.recipients
+            .filter(
+              (c) =>
+                (!readOnly && !!point.correctionOf) ||
+                (readOnly &&
+                  rows?.some((row) => row.characterId === c.characterId)) ||
+                !xpRecipientRetired(
+                  document,
+                  c.characterId,
+                  point.position.sessionId
                 )
             )
-          ).values()
-        ),
+            .map(
+              (c) =>
+                [
+                  c.characterId,
+                  {
+                    id: c.characterId,
+                    name:
+                      point.bonuses.find((b) => b.characterId === c.characterId)
+                        ?.name || c.name,
+                  },
+                ] as const
+            )
+        )
+      ).values()
+    ),
     (c) => c.id,
     point.position.sessionId
   );
@@ -114,24 +171,40 @@ export default function XpAwardTable({
         reward.id,
         xpAwardRoot(document, point)
       ) > 0;
-    const settled = !readOnly && rewardSettlement(document, reward.id);
+    const settled =
+      !readOnly &&
+      reward.recipients
+        .filter((c) => c.eligible)
+        .every((c) =>
+          recipientSettlement(
+            document,
+            reward.id,
+            c.characterId,
+            point.correctionOf ?? undefined
+          )
+        );
+    const frozen =
+      !point.correctionOf &&
+      activeXpEvents(document.xp?.events ?? []).some((e) =>
+        e.rewards.some((r) => r.id === reward.id)
+      );
     const blocked = future
       ? 'After this award point'
-      : settled && settled.id !== point.correctionOf
+      : settled
       ? 'Already awarded'
       : deferred
       ? 'Deferred'
       : '';
     let calculation: ReturnType<typeof resolveXpReward> | undefined,
       error = '';
-    if (!readOnly && !blocked) {
+    if (readOnly || !blocked) {
       try {
         calculation = resolveXpReward(reward);
       } catch (e) {
         error = e instanceof Error ? e.message : String(e);
       }
     }
-    return { reward, blocked, calculation, error };
+    return { reward, blocked, calculation, error, frozen };
   });
   const base = (id: string) => {
     const selected = resolved.filter((r) =>
@@ -144,8 +217,10 @@ export default function XpAwardTable({
           xpAdd(
             sum,
             xpNumber(
-              r.calculation?.allocations.find((a) => a.characterId === id)
-                ?.accepted || '0'
+              xpSettlementDecision(document, point, r.reward.id, id) === 'award'
+                ? r.calculation?.allocations.find((a) => a.characterId === id)
+                    ?.accepted || '0'
+                : '0'
             )
           ),
         xpZero()
@@ -155,30 +230,39 @@ export default function XpAwardTable({
   const totals = new Map(
     characters.map(({ id }) => {
       const row = rows?.find((r) => r.characterId === id);
-      const affected = resolved.some(
-        ({ reward, blocked }) =>
-          blocked !== 'Deferred' &&
-          point.rewardIds.includes(reward.id) &&
-          reward.recipients.some((r) => r.eligible && r.characterId === id)
-      );
+      const affected =
+        !readOnly &&
+        resolved.some(
+          ({ reward, blocked }) =>
+            blocked !== 'Deferred' &&
+            point.rewardIds.includes(reward.id) &&
+            reward.recipients.some(
+              (r) =>
+                r.eligible &&
+                r.characterId === id &&
+                xpSettlementDecision(document, point, reward.id, id) === 'award'
+            )
+        );
       const before =
         row?.before ??
-        (readOnly
-          ? null
-          : xpBalance(
-              document,
-              id,
-              point.position,
-              false,
-              undefined,
-              xpAwardRoot(document, point)
-            ));
+        xpBalance(
+          balanceDocument,
+          id,
+          point.position,
+          false,
+          balanceEvents,
+          xpAwardRoot(document, point)
+        );
       const after = row?.after ?? (affected ? null : before);
       let cap = row?.cap;
       let capError = '';
-      if (!readOnly && !cap) {
+      if (!cap && (!readOnly || !row)) {
         try {
-          cap = awardCapBasis(document, point, id);
+          cap = awardCapBasis(
+            document,
+            readOnly ? { ...point, correctionOf: null } : point,
+            id
+          );
         } catch (e) {
           capError = e instanceof Error ? e.message : String(e);
         }
@@ -188,15 +272,12 @@ export default function XpAwardTable({
         {
           before,
           after,
+          affected,
           cap,
           capError,
-          full: row
-            ? row.fullAward ?? row.award
-            : affected || readOnly
-            ? null
-            : 0,
-          added: row?.award ?? (affected || readOnly ? null : 0),
-          discarded: row?.discarded ?? (affected || readOnly ? null : 0),
+          full: row ? row.fullAward ?? row.award : affected ? null : 0,
+          added: row?.award ?? (affected ? null : 0),
+          discarded: row?.discarded ?? (affected ? null : 0),
           toCap:
             after !== null && cap?.limit != null
               ? Math.max(0, cap.limit - after)
@@ -208,13 +289,34 @@ export default function XpAwardTable({
   const classCell = (id: string, field: string) => {
     const review = point.bonuses.find((b) => b.characterId === id),
       row = rows?.find((r) => r.characterId === id);
-    const classes = row?.classes ?? review?.classes;
+    const classReviews =
+      review?.classes ??
+      (readOnly && !row
+        ? profileClassReviews(
+            latestXpProfile(document, id, point.position.sessionId)
+          )
+        : undefined);
+    const classes = row?.classes ?? classReviews;
+    const unchangedBalances =
+      readOnly && !row
+        ? xpClassBalances(
+            balanceDocument,
+            id,
+            point.position,
+            false,
+            balanceEvents,
+            xpAwardRoot(document, point)
+          )
+        : {};
     if (!classes) return null;
     return (
       <div className={styles['classValues']}>
         {classes.map((c) => {
           const snapshot = row?.classes?.find((v) => v.classId === c.classId);
-          const draft = review?.classes?.find((v) => v.classId === c.classId);
+          const draft = classReviews?.find((v) => v.classId === c.classId);
+          const unchanged = readOnly && !row;
+          const before = snapshot?.before ?? unchangedBalances[c.classId];
+          const after = snapshot?.after ?? unchangedBalances[c.classId];
           let cap = snapshot?.cap;
           try {
             cap = cap ?? (draft ? classReviewCap(draft) : undefined);
@@ -223,21 +325,23 @@ export default function XpAwardTable({
           }
           const numeric =
             field === 'added'
-              ? snapshot?.award
+              ? snapshot?.award ?? (unchanged ? 0 : undefined)
               : field === 'discarded'
-              ? snapshot?.discarded
+              ? snapshot?.discarded ?? (unchanged ? 0 : undefined)
               : field === 'before'
-              ? snapshot?.before
+              ? before
               : field === 'after'
-              ? snapshot?.after
+              ? after
               : field === 'full'
-              ? snapshot?.fullAward
-              : field === 'toCap' && snapshot && cap?.limit != null
-              ? Math.max(0, cap.limit - snapshot.after)
+              ? snapshot?.fullAward ?? (unchanged ? 0 : undefined)
+              : field === 'toCap' && after != null && cap?.limit != null
+              ? Math.max(0, cap.limit - after)
               : undefined;
           const text =
-            field === 'base' && snapshot
-              ? xpDisplay(snapshot.base)
+            field === 'base' && (snapshot || unchanged)
+              ? snapshot
+                ? xpDisplay(snapshot.base)
+                : '0'
               : field === 'level'
               ? String(c.baseLevel)
               : field === 'bonus'
@@ -247,6 +351,8 @@ export default function XpAwardTable({
                   )}%)`
                 : draft?.percent == null
                 ? 'Unknown'
+                : unchanged
+                ? `+0 (${draft.percent}%)`
                 : `${draft.percent}%`
               : field === 'cap'
               ? cap?.mode === 'uncapped'
@@ -293,7 +399,7 @@ export default function XpAwardTable({
           </tr>
         </thead>
         <tbody>
-          {resolved.map(({ reward, blocked, calculation, error }) => {
+          {resolved.map(({ reward, blocked, calculation, error, frozen }) => {
             const included =
               readOnly ||
               (blocked !== 'Deferred' && point.rewardIds.includes(reward.id));
@@ -337,7 +443,9 @@ export default function XpAwardTable({
                         <select
                           aria-label={`Disposition for ${reward.title}`}
                           value={treasure.disposition}
-                          disabled={!!blocked && blocked !== 'Deferred'}
+                          disabled={
+                            (!!blocked && blocked !== 'Deferred') || frozen
+                          }
                           onChange={(e) => {
                             const choice = e.target.value;
                             if (
@@ -354,6 +462,11 @@ export default function XpAwardTable({
                         </select>
                       )}
                       {blocked && <small>{blocked}</small>}
+                      {!blocked && frozen && (
+                        <small>
+                          Some shares settled; remaining shares pending
+                        </small>
+                      )}
                       {error && (
                         <small className={styles['cellError']}>{error}</small>
                       )}
@@ -404,6 +517,89 @@ export default function XpAwardTable({
                       ) : (
                         '—'
                       )}
+                      {allocation &&
+                        (readOnly ? (
+                          <small>
+                            {point.settlements?.find(
+                              (s) =>
+                                s.rewardId === reward.id &&
+                                s.characterId === c.id
+                            )?.decision === 'forfeit'
+                              ? 'Forfeit'
+                              : point.settlements?.find(
+                                  (s) =>
+                                    s.rewardId === reward.id &&
+                                    s.characterId === c.id
+                                )?.decision === 'later'
+                              ? 'Later'
+                              : 'Awarded'}{' '}
+                            {
+                              point.settlements?.find(
+                                (s) =>
+                                  s.rewardId === reward.id &&
+                                  s.characterId === c.id
+                              )?.reason
+                            }
+                          </small>
+                        ) : recipientSettlement(
+                            document,
+                            reward.id,
+                            c.id,
+                            point.correctionOf ?? undefined
+                          ) ? (
+                          <small>Settled</small>
+                        ) : included && !blocked ? (
+                          <div>
+                            <select
+                              aria-label={`${reward.title}: settlement for ${c.name}`}
+                              value={xpSettlementDecision(
+                                document,
+                                point,
+                                reward.id,
+                                c.id
+                              )}
+                              onChange={(e) => {
+                                const decision = e.target.value;
+                                if (
+                                  decision === 'award' ||
+                                  decision === 'later' ||
+                                  decision === 'forfeit'
+                                )
+                                  onSettlement?.(reward.id, c.id, decision, '');
+                              }}
+                            >
+                              <option value="award">Award now</option>
+                              <option value="later">Later</option>
+                              <option value="forfeit">Forfeit</option>
+                            </select>
+                            {xpSettlementDecision(
+                              document,
+                              point,
+                              reward.id,
+                              c.id
+                            ) === 'forfeit' && (
+                              <input
+                                aria-label={`Forfeit reason for ${c.name}`}
+                                placeholder="Reason (optional)"
+                                value={
+                                  point.settlements?.find(
+                                    (s) =>
+                                      s.rewardId === reward.id &&
+                                      s.characterId === c.id
+                                  )?.reason ?? ''
+                                }
+                                onChange={(e) =>
+                                  onSettlement?.(
+                                    reward.id,
+                                    c.id,
+                                    'forfeit',
+                                    e.target.value
+                                  )
+                                }
+                              />
+                            )}
+                          </div>
+                        ) : null)}
                     </td>
                   );
                 })}
@@ -429,7 +625,7 @@ export default function XpAwardTable({
             {characters.map((c) => {
               const value =
                 rows?.find((r) => r.characterId === c.id)?.base ??
-                (!readOnly ? base(c.id) : null);
+                (!readOnly ? base(c.id) : '0');
               return (
                 <td key={c.id}>
                   {classCell(c.id, 'base') ??
@@ -443,11 +639,19 @@ export default function XpAwardTable({
             {characters.map((c) => {
               const row = rows?.find((r) => r.characterId === c.id),
                 review = point.bonuses.find((b) => b.characterId === c.id);
+              const percent =
+                review?.percent ??
+                (readOnly
+                  ? latestXpProfile(document, c.id, point.position.sessionId)
+                      ?.reference?.bonuses.xpPercent
+                  : null);
               const value = row
                 ? `+${xpDisplay(row.bonus)} (${xpDisplay(row.bonusPercent)}%)`
-                : review?.percent == null
+                : percent == null
                 ? 'Unknown'
-                : `${review.percent}%`;
+                : readOnly
+                ? `+0 (${percent}%)`
+                : `${percent}%`;
               return (
                 <td key={c.id}>
                   {classCell(c.id, 'bonus') ??
@@ -460,7 +664,7 @@ export default function XpAwardTable({
                       >
                         {value}
                       </button>
-                    ) : row ? (
+                    ) : row || readOnly ? (
                       value
                     ) : (
                       '—'
@@ -477,7 +681,11 @@ export default function XpAwardTable({
               return (
                 <td key={c.id}>
                   {classCell(c.id, 'cap') ??
-                    (readOnly && !cap ? (
+                    (!readOnly && !cap && !totals.get(c.id)?.affected ? (
+                      <span title="A cap is only needed when awarding XP now.">
+                        Not needed
+                      </span>
+                    ) : readOnly && !cap ? (
                       <span title="Legacy award: no cap was recorded">
                         Not recorded
                       </span>
@@ -502,7 +710,7 @@ export default function XpAwardTable({
                           ? cap.mode === 'uncapped'
                             ? 'Uncapped'
                             : cap.limit?.toLocaleString()
-                          : 'Review…'}
+                          : 'Review trained level…'}
                       </button>
                     ))}
                 </td>
@@ -544,7 +752,7 @@ export default function XpAwardTable({
                           {row.overrideReason ? ' *' : ''}
                         </span>
                       )
-                    ) : review?.finalOverride != null ? (
+                    ) : !readOnly && review?.finalOverride != null ? (
                       <button
                         className={styles['textButton']}
                         aria-label={`Adjust ${c.name} full award`}

@@ -1,6 +1,4 @@
 import type { ReactNode } from 'react';
-import { useEffect, useRef } from 'react';
-import RenamableTab from './RenamableTab';
 import styles from './xpWorkspace.module.css';
 
 export default function XpAwardDialog({
@@ -16,11 +14,6 @@ export default function XpAwardDialog({
   onRename: (label: string) => void;
   onClose: () => void;
 }) {
-  const dialog = useRef<HTMLElement>(null);
-  useEffect(() => {
-    if (editable) dialog.current?.focus({ preventScroll: true });
-  }, [editable]);
-
   return (
     <div
       className={styles['backdrop']}
@@ -29,7 +22,6 @@ export default function XpAwardDialog({
       }}
     >
       <section
-        ref={dialog}
         tabIndex={-1}
         className={`${styles['modal']} ${styles['awardModal']}`}
         role="dialog"
@@ -44,19 +36,30 @@ export default function XpAwardDialog({
         }}
       >
         <div className={styles['heading']}>
-          <h2 className={styles['awardDialogTitle']}>
-            {editable ? (
-              <RenamableTab
-                label={title}
-                kind="award"
-                selected={false}
-                onSelect={() => undefined}
-                onRename={onRename}
-              />
-            ) : (
-              title
-            )}
-          </h2>
+          {editable ? (
+            <input
+              className={styles['awardDialogName']}
+              aria-label="Award name"
+              placeholder="Award name"
+              autoFocus
+              maxLength={1000}
+              value={title}
+              onFocus={(e) => e.currentTarget.select()}
+              onChange={(e) => onRename(e.target.value)}
+              onBlur={(e) => {
+                const name = e.target.value.trim() || 'New award';
+                if (name !== title) onRename(name);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
+                  e.preventDefault();
+                  e.currentTarget.blur();
+                }
+              }}
+            />
+          ) : (
+            <h2 className={styles['awardDialogTitle']}>{title}</h2>
+          )}
           {!editable && (
             <button autoFocus onClick={onClose}>
               Close award

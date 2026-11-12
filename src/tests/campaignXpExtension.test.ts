@@ -270,3 +270,38 @@ test('per-character cutoffs and safe moves preserve unrelated sessions and balan
     backfillSession(extensionBaseline(), 72, 85).sessions.map((s) => s.id)
   ).toEqual(['s72', 's85', 's90']);
 });
+
+test('backward extension settles two recipients of one event at separate historical awards', () => {
+  let doc = extensionDrafts();
+  const first = required(
+    xpLedger(doc).points.find((p) => p.id === 'First backfill award')
+  );
+  const rewardId = required(first.rewardIds[0]);
+  doc = saveXpPoint(doc, {
+    ...first,
+    settlements: [
+      { rewardId, characterId: 'birch', decision: 'later', reason: '' },
+    ],
+  });
+  const second = required(
+    xpLedger(doc).points.find((p) => p.id === 'Second backfill award')
+  );
+  doc = selectXpRewards(doc, second.id, [...second.rewardIds, rewardId]);
+  const preview = previewXpExtension(doc, firstRequest);
+  expect(preview.awards[0]?.rows.map((r) => r.characterId)).toEqual(['amber']);
+  expect(
+    preview.awards[1]?.rows.find((r) => r.characterId === 'birch')?.award
+  ).toBe(3000);
+  const accepted = confirmXpExtension(
+    doc,
+    firstRequest,
+    preview.fingerprint,
+    'split-extension',
+    xpAt
+  );
+  validateHistoryTransition(doc, accepted, '');
+  expect(balances(reopen(accepted), 's90', 'closing')).toEqual([
+    10500, 8200, 77,
+  ]);
+  expect(rewardSettlement(accepted, rewardId)).toBeDefined();
+});

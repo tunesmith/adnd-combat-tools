@@ -424,8 +424,9 @@ export default function ProfileDialog({
             </label>
             {identity.earnsXp === false && xpPending > 0 && (
               <p role="status">
-                Saving will clear Participated and Receives XP on {xpPending}{' '}
-                pending XP {xpPending === 1 ? 'event' : 'events'}.
+                Existing shares remain available on {xpPending} pending XP{' '}
+                {xpPending === 1 ? 'event' : 'events'}. Settle them in an award
+                draft.
               </p>
             )}
             {(saved || existing.some((c) => c.id === identity.id)) &&
@@ -450,7 +451,9 @@ export default function ProfileDialog({
                     </select>
                   </label>
                   <small>
-                    This session is included. Existing profiles are retained.
+                    This session is included. Later awards automatically forfeit
+                    outstanding shares. Confirmed XP and existing profiles are
+                    retained.
                   </small>
                 </>
               ) : (
@@ -483,7 +486,7 @@ export default function ProfileDialog({
                 type="button"
                 title={
                   sessionXpPending
-                    ? 'Also clears participation and eligibility on pending XP events for this session.'
+                    ? 'Earned XP shares remain pending; settle them in an award draft.'
                     : undefined
                 }
                 onClick={() => {

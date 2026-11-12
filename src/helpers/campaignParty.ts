@@ -248,6 +248,17 @@ export function rosterEligibleForSession(
   );
 }
 
+// Retirement closes outstanding shares after the last eligible session. Absence
+// alone does not: a temporarily missing character can still receive earned XP.
+export function xpRecipientRetired(
+  doc: CampaignDocument,
+  characterId: string,
+  sessionId: string
+) {
+  const character = doc.party?.roster.find((c) => c.id === characterId);
+  return !!character && !rosterEligibleForSession(doc, character, sessionId);
+}
+
 export function priorProfileChoices(
   doc: CampaignDocument,
   sessionId: string,
@@ -285,15 +296,6 @@ export function xpRecipientAvailable(
   );
 }
 
-function settledXpRewardIds(xp: NonNullable<CampaignDocument['xp']>) {
-  const replaced = new Set(xp.events.map((e) => e.replaces));
-  return new Set(
-    xp.events
-      .filter((e) => !replaced.has(e.id))
-      .flatMap((e) => e.rewards.map((r) => r.id))
-  );
-}
-
 function recipientResets(xp: CampaignDocument['xp'], rewardId: string) {
   const resets = xp?.pendingRecipientResets;
   return resets && Object.prototype.hasOwnProperty.call(resets, rewardId)
@@ -308,12 +310,28 @@ function pendingXpRewards(
 ) {
   const xp = doc.xp;
   if (!xp) return [];
-  const settled = settledXpRewardIds(xp);
+  const replaced = new Set(xp.events.map((e) => e.replaces));
   return xp.rewards.filter(
     (r) =>
-      !settled.has(r.id) &&
+      !xp.events.some(
+        (e) =>
+          !replaced.has(e.id) &&
+          e.rewards.some((reward) => reward.id === r.id) &&
+          (!e.point.settlements ||
+            e.point.settlements.some(
+              (s) =>
+                s.rewardId === r.id &&
+                s.characterId === characterId &&
+                s.decision !== 'later'
+            ))
+      ) &&
       (sessionId === undefined || r.origin.sessionId === sessionId) &&
       !recipientResets(xp, r.id)?.includes(characterId) &&
+      !xpRecipientRetired(
+        doc,
+        characterId,
+        sessionId ?? doc.workspace.sessionId ?? r.origin.sessionId
+      ) &&
       r.recipients.some(
         (c) => c.characterId === characterId && (c.eligible || c.participated)
       )
@@ -348,58 +366,7 @@ export function pendingXpReward(
   const resets = explicitOverride
     ? undefined
     : recipientResets(doc.xp, reward.id);
-  return clearRecipientFlags(
-    reward,
-    (id) =>
-      !!resets?.includes(id) ||
-      !xpRecipientAvailable(doc, reward.origin.sessionId, id)
-  );
-}
-
-function clearPendingXpRecipient(
-  doc: CampaignDocument,
-  characterId: string,
-  sessionId?: string
-): CampaignDocument {
-  const xp = doc.xp;
-  if (!xp) return doc;
-  const pending = new Set(
-    pendingXpRewards(doc, characterId, sessionId).map((r) => r.id)
-  );
-  const frozen = new Set(xp.events.flatMap((e) => e.rewards.map((r) => r.id)));
-  const resets = new Map(Object.entries(xp.pendingRecipientResets ?? {}));
-  const settled = settledXpRewardIds(xp);
-  const clear = (r: XpReward) =>
-    clearRecipientFlags(r, (id) => id === characterId);
-  const rewards = xp.rewards.map((r) => {
-    if (!pending.has(r.id)) return r;
-    if (!frozen.has(r.id)) return { ...clear(r), version: r.version + 1 };
-    resets.set(r.id, [...(resets.get(r.id) ?? []), characterId]);
-    return r;
-  });
-  const points = xp.points.map((p) => {
-    if (p.confirmedEventId) return p;
-    const rewardOverrides = p.rewardOverrides.map((r) =>
-      !settled.has(r.id) &&
-      (sessionId === undefined || r.origin.sessionId === sessionId)
-        ? clear(r)
-        : r
-    );
-    return rewardOverrides.some((r, i) => r !== p.rewardOverrides[i])
-      ? { ...p, rewardOverrides }
-      : p;
-  });
-  return {
-    ...doc,
-    xp: {
-      ...xp,
-      rewards,
-      points,
-      ...(resets.size
-        ? { pendingRecipientResets: Object.fromEntries(resets) }
-        : {}),
-    },
-  };
+  return clearRecipientFlags(reward, (id) => !!resets?.includes(id));
 }
 
 export function removePartyProfile(
@@ -476,14 +443,7 @@ export function updatePartyProfile(
           }
     ),
   };
-  if (known && character?.earnsXp === false && known.earnsXp !== false)
-    return clearPendingXpRecipient(next, character.id);
-  if (previous && previous.participating !== profile.participating)
-    return clearPendingXpRecipient(
-      next,
-      profile.characterId,
-      profile.sessionId
-    );
+  // Roster/profile changes preserve earned XP participation and shares.
   return next;
 }
 export function carriedPartyProfiles(

@@ -3,7 +3,11 @@ import type { CampaignDocument } from '../../helpers/campaignDocument';
 import type { XpCapBasis, XpPoint } from '../../helpers/campaignXpModel';
 import { partyClasses } from '../../helpers/campaignPartyModel';
 import { profileClassLabel } from '../../helpers/campaignParty';
-import { profileXpCap, validateXpCap } from '../../helpers/campaignXpCap';
+import {
+  profileXpCap,
+  validateXpCap,
+  latestXpProfile,
+} from '../../helpers/campaignXpCap';
 import { nextLevelXp } from '../../tables/classExperience';
 import { canonical } from '../../helpers/campaignSnapshots';
 import styles from './xpWorkspace.module.css';
@@ -25,9 +29,10 @@ export default function XpCapDialog({
   onSave: (basis: XpCapBasis | null) => boolean;
   onClose: () => void;
 }) {
-  const profile = document.party?.profiles.find(
-    (p) =>
-      p.characterId === characterId && p.sessionId === point.position.sessionId
+  const profile = latestXpProfile(
+    document,
+    characterId,
+    point.position.sessionId
   );
   const recorded = point.correctionOf
     ? document.xp?.events
@@ -50,9 +55,10 @@ export default function XpCapDialog({
   const name =
     document.party?.roster.find((c) => c.id === characterId)?.name ||
     characterId;
-  const standard = point.correctionOf
-    ? nextLevelXp(draft.characterClass || 'manual', draft.baseLevel ?? 0)
-    : profileXpCap(profile)?.limit ?? null;
+  const standard =
+    point.correctionOf || !profile
+      ? nextLevelXp(draft.characterClass || 'manual', draft.baseLevel ?? 0)
+      : profileXpCap(profile)?.limit ?? null;
   return (
     <div
       className={styles['backdrop']}
@@ -103,7 +109,7 @@ export default function XpCapDialog({
                 <option value="uncapped">Uncapped exception</option>
               </select>
             </label>
-            {point.correctionOf ? (
+            {point.correctionOf || !profile ? (
               <div className={styles['fields']}>
                 <label>
                   Historical trained class
@@ -184,7 +190,11 @@ export default function XpCapDialog({
               className={styles['primary']}
               onClick={() => {
                 try {
-                  if (draft.mode === 'standard' && !point.correctionOf) {
+                  if (
+                    draft.mode === 'standard' &&
+                    !point.correctionOf &&
+                    profile
+                  ) {
                     if (standard === null)
                       throw Error(
                         'The trained profile has no known PHB threshold. Choose an explicit cap or uncapped exception.'
@@ -208,7 +218,7 @@ export default function XpCapDialog({
                   const accepted = { ...draft, limit };
                   validateXpCap(accepted);
                   if (
-                    point.correctionOf &&
+                    (point.correctionOf || !profile) &&
                     canonical(accepted) !== canonical(recorded) &&
                     !accepted.reason.trim()
                   )

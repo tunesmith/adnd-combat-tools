@@ -66,6 +66,10 @@ export default function XpTimeline({
             const status = reward
               ? settlement
                 ? 'Awarded'
+                : activeXpEvents(xp?.events || []).some((e) =>
+                    e.rewards.some((r) => r.id === reward.id)
+                  )
+                ? 'Partly settled · pending shares'
                 : historicalXpReward(document, reward)
                 ? 'Historical draft'
                 : reward.input.category === 'treasure' &&

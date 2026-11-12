@@ -11,7 +11,7 @@ XP is the fifth session tab, after Combats. A reward records where it was earned
 3. Use **+ XP Event** for monsters, money, or treasure. The selected session is the earned session, shown beside the event heading; the event is added to its ordered XP timeline. Manual entries are first-class. The secondary evidence chooser can copy selected encounter monsters or a specific possession/lot, including items in storage.
 4. Enter actual HD/levels, total starting HP and ability counts. Use the two column-header checkboxes to select all participants and all XP recipients, or change individual boxes independently. Level-at-event and calculated XP are in this same table. The single ratio line shows adjusted HD / participating levels = the uncapped quotient, followed by (1) when capped; **Override…**, directly beside the ratio, edits it, with **Use calculated ratio** restoring the monster calculation. **Adjust XP…** deliberately changes all recipient allocations, one character’s allocation/shares, or the raw total; ordinary entry needs no adjustment. Recording an event establishes that it was obtained; there is no recovery status or recovery gate. Money and Treasure default to ratio 1, with Override available for a deliberate reduction. Delete an unawarded mistaken event from its editor. Source maximum HP is offered for explicit review; remaining HP and tracker attack categories are not substitutes for starting HP or literal HD. Campaign character mapping is explicit. Saving the XP event creates or updates a pending draft; it awards no XP.
 5. For treasure, enter Retained-item XP and/or Sale value (GP), then choose Keep, Sell or Defer. The DM can enter the listed sale value before any sale decision. Keep uses only retained XP; Sell uses only the sale value; Defer leaves the event pending. XP decisions do not move money, sell inventory, remove items or change ownership.
-6. In the session where settlement occurs, use **+ Award point**. Name it in the modal heading (double-click or press F2 to rename) and use the timeline arrows to place it at the settlement point, after the relevant events and before later events. In the award matrix, check only the intended event rows. Character columns show each accepted share; adjusted cells have a clickable marker for their original value and reason. Later rewards and deferred entries cannot be included. Bonus percentages are copied once from that session's profiles. Click a Bonus cell to edit its percentage/note; unknown bonuses require explicit entry, including zero.
+6. In the session where settlement occurs, use **+ Award point**. Name it in the visible text field at the top of the modal and use the timeline arrows to place it at the settlement point, after the relevant events and before later events. In the award matrix, check only the intended event rows. Character columns show each accepted share; adjusted cells have a clickable marker for their original value and reason. Later rewards and deferred entries cannot be included. Bonus percentages are copied once from that session's profiles. Click a Bonus cell to edit its percentage/note; unknown bonuses require explicit entry, including zero.
 7. **Preview award** fills the footer of the same matrix with bonuses, rounded awards and previous/new balances. Exact pre-rounding totals are available on award amounts. Click an award amount for a deliberate final adjustment; applying a bonus/final adjustment clears the preview and requires a fresh one. **Confirm award** is the sole confirmation action. Ordinary Campaign Save persists drafts and accepted events without confirming anything implicitly.
 8. Campaign Save, fully Quit, reopen, then inspect XP, Session balances and Award history. A confirmed reward ID cannot be awarded twice. Repeated confirmation retries are idempotent.
 
@@ -77,8 +77,43 @@ Award matrix event rows follow their original session/timeline order in both dra
 
 The packaged matrix check used five synthetic events (monsters, three money finds and a kept scroll) and one later pending event. Inline award rename worked; Preview populated the same matrix with base 460.8, bonus 46.08 for four recipients and final awards 507/507/507/461/507. The later event was disabled. Editing a bonus and cancelling preserved the existing preview. Confirmation, immediate Campaign Save, full process quit and Reopen last retained the five source rows, exact allocations, frozen totals and pending later event. The original-schema file acquired no routine backup. The isolated test app was quit, unregistered and archived. Automated UI tests cover bonus Apply/Cancel, preview invalidation, allocation-marker inspection, final overrides, correction naming and exact preservation of the original accepted event. All 879 Jest tests and 19 native tests passed, as did type checking, formatting, lint (one existing warning) and both desktop/public static builds. No live/private campaign data was used or modified.
 
-All XP timeline rows now open details in a modal; entering a session never selects or displays an award automatically. Award drafts and confirmed/history versions use the same single-table award modal. Closing it returns to the timeline, and clicking the row opens it again. A new award opens with inline name editing in its modal heading. Edit award opens a linked draft of the same logical award, with Reason for changes, Confirm changes and Discard changes controls. Original accepted events, duplicate protection, explicit confirmation and later-balance review remain unchanged. Closing a draft does not confirm it.
+All XP timeline rows now open details in a modal; entering a session never selects or displays an award automatically. Award drafts and confirmed/history versions use the same single-table award modal. Closing it returns to the timeline, and clicking the row opens it again. Draft awards show a visible name field in the title position, with the existing name selected on opening. Confirmed awards show a plain heading. Edit award opens a linked draft of the same logical award, with Reason for changes, Confirm changes and Discard changes controls. Original accepted events, duplicate protection, explicit confirmation and later-balance review remain unchanged. Closing a draft does not confirm it.
 
 Session includes a compact read-only XP reference below the character table, with characters as columns and Base level, XP cap, XP added this session and XP balance as rows. The old XP-balance column is removed from the wider character table to avoid duplication. Session totals use only active accepted award versions, so replacements are not counted twice; event-origin sessions do not acquire XP awarded later. Temporary effective-level effects do not change the recorded base-level row. Unknown balances remain unknown rather than zero. The trained-level XP cap is now shown and enforced for new awards as described in the cap document; training remains a manual profile update.
 
 The packaged modal walkthrough opened a disposable confirmed campaign with no selected award/table, opened and closed the award modal, opened and cancelled the later event modal, then reopened the award. Edit award opened draft changes; Preview exposed Confirm changes; Discard changes returned to the timeline without changing the accepted award. Session showed base levels and 507/507/507/461/507 awarded/balances for the second session, with zero awarded/balances in the first. Save, full quit and Reopen last preserved the compact reference and timeline-only XP landing view. File comparison verified identical XP ledger, profiles, original evidence, checkpoints and working documents; no routine backup was created. The isolated app was quit, unregistered and archived. All 882 Jest tests, 19 native tests, type/format/lint checks and desktop/static builds passed; the sole lint warning predates this change.
+
+### Recipient settlement
+
+Select an event in the live award dialog, then choose **Award now**, **Later**,
+or **Forfeit** beneath each unresolved recipient's original base share. Award
+now is the default. Only those shares enter bonus, rounding, multiclass, and
+cap calculations. Forfeit optionally records a reason; Later stays pending.
+Cancel discards the provisional choices; Save draft retains them without
+posting XP. Confirm records payments and forfeitures together. Repeating the
+same confirmation cannot pay a share twice.
+
+Retirement automatically forfeits unresolved shares after the last eligible
+session and hides that character from new award choices. Confirmed XP remains
+unchanged, and original encounter allocations stay intact without redistribution.
+Temporary absence or removing a session profile does not forfeit earned XP.
+An absent recipient's cap and bonus use the latest known profile at or before
+the award session, never a future profile. The cap stays visible even when the
+share is left for Later. Review or override that basis in the award dialog when
+needed. Capped excess is discarded, not deferred.
+
+The first confirmation freezes the event's participation, ratio, allocations,
+and treasure disposition. Later settlements retain that basis. Use Edit award
+for corrections. Allocation changes are blocked while another active settlement
+uses that event: correct those settlements first, so another recipient's
+accepted allocation cannot silently change. Earlier awards can settle different
+shares through the existing backward-history reconciliation.
+
+For the isolated shrieker walkthrough, select the event on Day3: Reatha and
+Chocolato **Award now**, Vitameno **Later**. Retired Stan is omitted and his share is automatically forfeited. The four original
+23-base-XP shares remain intact. With starting balances 507/461 and reviewed
+bonuses 10%/0%, Reatha reaches 532 and Chocolato 484. On Day5, add Vitameno's
+existing roster identity with Fighter 1 and 10% XP bonus, then select the event:
+only his share remains available. Award it to add 25 XP and reach 532. Stan's
+507 and the original castle award remain unchanged. Automated synthetic tests
+exercise this sequence without reading or writing the live SOCK campaign.

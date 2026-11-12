@@ -33,7 +33,7 @@ export default function XpRecipients({
     xpRecipientAvailable(document, reward.origin.sessionId, id);
   const visibleRecipients = inPartyOrder(
     document,
-    reward.recipients.filter((r) => available(r.characterId)),
+    reward.recipients,
     (r) => r.characterId
   );
   const candidates =

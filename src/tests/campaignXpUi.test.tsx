@@ -14,6 +14,11 @@ import {
 import { xpCastleDraft, pendingFungus, xpTestIds } from './fixtures/xpCampaign';
 import {
   saveXpReward,
+  confirmXpAward,
+  previewXpAward,
+  newXpPoint,
+  saveXpPoint,
+  selectXpRewards,
   sessionXpBalances,
   xpLedger,
 } from '../helpers/campaignXp';
@@ -31,15 +36,10 @@ function openFixtureAward() {
 }
 function renameNewAward(label: string) {
   const dialog = within(screen.getByRole('dialog', { name: 'XP award' }));
-  if (!dialog.queryByLabelText('Rename award'))
-    fireEvent.keyDown(
-      dialog.getByRole('button', { name: 'New award', exact: true }),
-      { key: 'F2' }
-    );
-  fireEvent.change(dialog.getByLabelText('Rename award'), {
+  fireEvent.change(dialog.getByLabelText('Award name'), {
     target: { value: label },
   });
-  fireEvent.keyDown(dialog.getByLabelText('Rename award'), { key: 'Enter' });
+  fireEvent.keyDown(dialog.getByLabelText('Award name'), { key: 'Enter' });
 }
 function awardValues(container: ReturnType<typeof within>) {
   const row = container.getByRole('row', { name: /^Full award/ });
@@ -121,7 +121,9 @@ test('usable review flow establishes opening XP, keeps a scroll, creates an open
   fireEvent.change(disposition(), { target: { value: 'keep' } });
   for (const title of ['Seventeen tunnel raiders', 'Recovered coin lots'])
     fireEvent.click(screen.getByLabelText(`Include ${title}`));
-  expect(screen.getByLabelText('Include Later alarm fungus')).toBeDisabled();
+  expect(
+    screen.queryByLabelText('Include Later alarm fungus')
+  ).not.toBeInTheDocument();
   expect(
     screen.getByRole('button', { name: 'Edit Mira XP bonus' })
   ).toHaveTextContent('10%');
@@ -860,6 +862,15 @@ test('one award matrix handles inspection, bonus cancellation, final adjustments
   ).toBe('400 *');
   fireEvent.click(screen.getByRole('button', { name: 'Confirm award' }));
   expect(screen.getAllByRole('table', { name: 'XP award' })).toHaveLength(1);
+  expect(
+    within(screen.getByRole('dialog', { name: 'XP award' })).getByRole(
+      'heading',
+      { name: 'At the synthetic refuge' }
+    )
+  ).toBeInTheDocument();
+  expect(
+    screen.queryByRole('textbox', { name: 'Award name' })
+  ).not.toBeInTheDocument();
   const original = JSON.parse(JSON.stringify(current.xp?.events[0]));
   expect(
     screen.queryByRole('button', { name: 'Edit Mira XP bonus' })
@@ -868,17 +879,10 @@ test('one award matrix handles inspection, bonus cancellation, final adjustments
   fireEvent.change(screen.getByLabelText('Reason for changes'), {
     target: { value: 'Remove the historical cap and restore bonus' },
   });
-  fireEvent.keyDown(
-    within(screen.getByRole('dialog', { name: 'XP award' })).getByRole(
-      'button',
-      { name: 'At the synthetic refuge', exact: true }
-    ),
-    { key: 'F2' }
-  );
-  fireEvent.change(screen.getByLabelText('Rename award'), {
+  fireEvent.change(screen.getByLabelText('Award name'), {
     target: { value: 'Corrected synthetic award' },
   });
-  fireEvent.keyDown(screen.getByLabelText('Rename award'), { key: 'Enter' });
+  fireEvent.keyDown(screen.getByLabelText('Award name'), { key: 'Enter' });
   fireEvent.click(screen.getByRole('button', { name: 'Edit Mira XP bonus' }));
   edit = within(screen.getByRole('dialog', { name: 'XP bonus' }));
   fireEvent.change(edit.getByLabelText('XP bonus %'), {
@@ -964,4 +968,74 @@ test('timeline events and awards open modals without automatically showing an aw
     screen.queryByRole('dialog', { name: 'XP award' })
   ).not.toBeInTheDocument();
   expect(current.xp?.events).toEqual(JSON.parse(before).xp.events);
+});
+
+test('live recipient decisions preview, cancel, and confirm without changing the source', () => {
+  let current = xpCastleDraft();
+  current = confirmXpAward(
+    current,
+    'refuge-point',
+    previewXpAward(current, 'refuge-point').fingerprint,
+    'castle-confirmed',
+    '2026-11-07T12:00:00.000Z'
+  );
+  const source = pendingFungus(current);
+  current = saveXpReward(current, source);
+  current = saveXpPoint(current, {
+    ...newXpPoint(current, 'session-2', 'split'),
+    label: 'Split shrieker',
+  });
+  current = selectXpRewards(current, 'split', [source.id]);
+  function Harness() {
+    const [doc, setDoc] = useState(current);
+    return (
+      <CampaignXp
+        document={doc}
+        sessionId="session-2"
+        onConfirmExtension={async () => undefined}
+        onChange={(change) => {
+          const next = parseCampaign(serializeCampaign(change(doc)));
+          validateHistoryTransition(doc, next, '');
+          current = next;
+          setDoc(next);
+          return true;
+        }}
+      />
+    );
+  }
+  render(<Harness />);
+  const open = () => {
+    fireEvent.click(screen.getByRole('button', { name: /^Split shrieker/ }));
+    return within(screen.getByRole('dialog', { name: 'XP award' }));
+  };
+  let dialog = open();
+  const choose = () => {
+    fireEvent.change(
+      dialog.getByLabelText('Later alarm fungus: settlement for Tal'),
+      { target: { value: 'forfeit' } }
+    );
+    fireEvent.change(
+      dialog.getByLabelText('Later alarm fungus: settlement for Oren'),
+      { target: { value: 'later' } }
+    );
+  };
+  choose();
+  expect(dialog.getByRole('row', { name: /^XP added/ })).toHaveTextContent(
+    '250023'
+  );
+  fireEvent.click(dialog.getByRole('button', { name: 'Cancel' }));
+  expect(xpLedger(current).events).toHaveLength(1);
+  dialog = open();
+  expect(
+    dialog.getByLabelText('Later alarm fungus: settlement for Oren')
+  ).toHaveValue('award');
+  choose();
+  fireEvent.click(dialog.getByRole('button', { name: 'Confirm award' }));
+  expect(xpLedger(current).events).toHaveLength(2);
+  expect(xpLedger(current).events[1]?.rows.map((r) => r.after)).toEqual([
+    532, 484,
+  ]);
+  expect(xpLedger(current).rewards.find((r) => r.id === source.id)).toEqual(
+    source
+  );
 });

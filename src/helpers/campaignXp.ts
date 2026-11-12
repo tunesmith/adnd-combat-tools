@@ -4,10 +4,11 @@ import {
   rebaseClassAwards,
   validateClassOpening,
 } from './campaignXpClasses';
-import { pendingXpReward } from './campaignParty';
+import { pendingXpReward, xpRecipientRetired } from './campaignParty';
 import { validHistoricalSessionMove } from './campaignSessionOrder';
 import {
   awardCapBasis,
+  latestXpProfile,
   cappedXp,
   rebaseXpRow,
   validateXpCap,
@@ -190,10 +191,105 @@ export function rewardSettlement(
   doc: CampaignDocument,
   rewardId: string
 ): XpEvent | undefined {
-  return activeXpEvents(xpLedger(doc).events).find((event) =>
-    event.rewards.some((r) => r.id === rewardId)
+  const events = activeXpEvents(xpLedger(doc).events);
+  const first = events.find((e) => e.rewards.some((r) => r.id === rewardId));
+  const reward = first?.rewards.find((r) => r.id === rewardId);
+  return reward &&
+    reward.recipients
+      .filter((r) => r.eligible)
+      .every((r) => recipientSettlement(doc, rewardId, r.characterId))
+    ? first
+    : undefined;
+}
+export function hasPendingXpShares(
+  doc: CampaignDocument,
+  reward: XpReward,
+  sessionId: string
+) {
+  return reward.recipients.some(
+    (c) =>
+      c.eligible &&
+      !xpRecipientRetired(doc, c.characterId, sessionId) &&
+      !recipientSettlement(doc, reward.id, c.characterId)
   );
 }
+export function recipientSettlement(
+  doc: CampaignDocument,
+  rewardId: string,
+  characterId: string,
+  except?: string
+) {
+  return activeXpEvents(xpLedger(doc).events).find(
+    (e) =>
+      e.id !== except &&
+      e.rewards.some(
+        (r) =>
+          r.id === rewardId &&
+          r.recipients.some((c) => c.eligible && c.characterId === characterId)
+      ) &&
+      (!e.point.settlements ||
+        e.point.settlements.some(
+          (s) =>
+            s.rewardId === rewardId &&
+            s.characterId === characterId &&
+            s.decision !== 'later'
+        ))
+  );
+}
+export function xpSettlementDecision(
+  doc: CampaignDocument,
+  point: XpPoint,
+  rewardId: string,
+  characterId: string
+) {
+  if (
+    !point.correctionOf &&
+    xpRecipientRetired(doc, characterId, point.position.sessionId)
+  )
+    return recipientSettlement(doc, rewardId, characterId)
+      ? 'later'
+      : 'forfeit';
+  return (
+    point.settlements?.find(
+      (s) => s.rewardId === rewardId && s.characterId === characterId
+    )?.decision ??
+    (recipientSettlement(
+      doc,
+      rewardId,
+      characterId,
+      point.correctionOf ?? undefined
+    )
+      ? 'later'
+      : 'award')
+  );
+}
+function payingCharacters(doc: CampaignDocument, point: XpPoint) {
+  return Array.from(
+    new Set(
+      draftPointRewards(doc, point).flatMap((r) =>
+        r.recipients
+          .filter(
+            (c) =>
+              c.eligible &&
+              xpSettlementDecision(doc, point, r.id, c.characterId) === 'award'
+          )
+          .map((c) => c.characterId)
+      )
+    )
+  );
+}
+function paying(point: XpPoint, rewardId: string, characterId: string) {
+  return (
+    !point.settlements ||
+    point.settlements.some(
+      (s) =>
+        s.rewardId === rewardId &&
+        s.characterId === characterId &&
+        s.decision === 'award'
+    )
+  );
+}
+
 export function xpRewardBase(reward: XpReward) {
   let raw = xpZero(),
     difficulty = xpZero();
@@ -375,9 +471,15 @@ function calculateXpRows(
   bonuses: XpBonusReview[],
   before: Record<string, number>,
   caps?: Map<string, XpCapBasis>,
-  classBalances: Map<string, Record<string, number | null>> = new Map()
+  classBalances: Map<string, Record<string, number | null>> = new Map(),
+  point?: XpPoint
 ): XpAwardRow[] {
-  const resolutions = rewards.map(resolveXpReward);
+  const resolutions = rewards.map(resolveXpReward).map((r) => ({
+    ...r,
+    allocations: r.allocations.filter(
+      (a) => !point || paying(point, r.rewardId, a.characterId)
+    ),
+  }));
   const ids = Array.from(
     new Set(resolutions.flatMap((r) => r.allocations.map((a) => a.characterId)))
   );
@@ -589,6 +691,9 @@ export function pointRewards(
   return point.rewardIds.map(
     (id) =>
       point.rewardOverrides.find((r) => r.id === id) ||
+      activeXpEvents(xpLedger(doc).events)
+        .flatMap((e) => e.rewards)
+        .find((r) => r.id === id) ||
       xpLedger(doc).rewards.find((r) => r.id === id) ||
       fail('Selected reward is missing.')
   );
@@ -639,22 +744,16 @@ export function withXpRewardSelection(
           doc.party?.roster.find((c) => c.id === characterId)?.name ||
           characterId,
         percent:
-          doc.party?.profiles
-            .find(
-              (p) =>
-                p.characterId === characterId &&
-                p.sessionId === point.position.sessionId
-            )
-            ?.reference?.bonuses.xpPercent?.toString() ?? null,
+          latestXpProfile(
+            doc,
+            characterId,
+            point.position.sessionId
+          )?.reference?.bonuses.xpPercent?.toString() ?? null,
         reason: '',
         finalOverride: null,
         finalReason: '',
         classes: profileClassReviews(
-          doc.party?.profiles.find(
-            (p) =>
-              p.characterId === characterId &&
-              p.sessionId === point.position.sessionId
-          )
+          latestXpProfile(doc, characterId, point.position.sessionId)
         ),
       }
   );
@@ -689,6 +788,14 @@ export function stageXpAward(
   const overrides = [...draft.rewardOverrides];
   const selected = draftPointRewards(doc, draft).flatMap((reward) => {
     const choice = withXpDisposition(reward, dispositions[reward.id]);
+    if (
+      choice !== reward &&
+      !draft.correctionOf &&
+      xpLedger(doc).events.some((e) =>
+        e.rewards.some((r) => r.id === reward.id)
+      )
+    )
+      fail('Accepted treasure disposition is frozen. Use Edit award.');
     if (
       choice.input.category === 'treasure' &&
       choice.input.disposition === 'defer'
@@ -898,6 +1005,12 @@ export function xpRewardFitsAward(
   reward: XpReward
 ) {
   if (point.correctionOf) return !reservedHistoricalReward(doc, point, reward);
+  if (
+    activeXpEvents(xpLedger(doc).events).some((e) =>
+      e.rewards.some((r) => r.id === reward.id)
+    )
+  )
+    return true;
   const reserved = historicalXpReward(doc, reward);
   if (point.rewardIds.length && reserved !== historicalXpPoint(doc, point))
     return false;
@@ -915,7 +1028,13 @@ function reservedHistoricalReward(
   point: XpPoint,
   reward: XpReward
 ) {
-  if (!historicalXpReward(doc, reward)) return false;
+  if (
+    !historicalXpReward(doc, reward) ||
+    activeXpEvents(xpLedger(doc).events).some((e) =>
+      e.rewards.some((r) => r.id === reward.id)
+    )
+  )
+    return false;
   const target = xpLedger(doc).events.find((e) => e.id === point.correctionOf);
   return !target?.rewards.some((r) => r.id === reward.id);
 }
@@ -962,7 +1081,7 @@ function reviewXpAward(
   const overrides = rewards.filter(
     (reward, i) => reward !== originalRewards[i]
   );
-  const reviewedPoint = overrides.length
+  let reviewedPoint = overrides.length
     ? {
         ...point,
         rewardOverrides: [
@@ -973,6 +1092,54 @@ function reviewXpAward(
         ],
       }
     : point;
+  const settlements = rewards.flatMap((r) =>
+    r.recipients
+      .filter((c) => c.eligible)
+      .map((c) => ({
+        rewardId: r.id,
+        characterId: c.characterId,
+        decision: xpSettlementDecision(doc, point, r.id, c.characterId),
+        reason:
+          !point.correctionOf &&
+          xpRecipientRetired(doc, c.characterId, point.position.sessionId)
+            ? 'Automatically forfeited on retirement'
+            : point.settlements?.find(
+                (s) => s.rewardId === r.id && s.characterId === c.characterId
+              )?.reason ?? '',
+      }))
+  );
+  // Preserve the legacy whole-event snapshot shape when no recipient decisions
+  // are needed, including native replay of previously accepted extensions.
+  if (point.settlements || settlements.some((s) => s.decision !== 'award'))
+    reviewedPoint = { ...reviewedPoint, settlements };
+  if (!settlements.some((s) => s.decision !== 'later'))
+    fail(
+      'Shares are already awarded or deferred. Choose at least one share to award or forfeit.'
+    );
+  for (const choice of settlements) {
+    if (
+      choice.decision !== 'later' &&
+      recipientSettlement(
+        doc,
+        choice.rewardId,
+        choice.characterId,
+        point.correctionOf ?? undefined
+      )
+    )
+      fail('Recipient share is already settled.');
+  }
+  // Other settlements retain their accepted allocation and treasure basis.
+  for (const reward of rewards) {
+    const other = activeXpEvents(xp.events).find(
+      (e) =>
+        e.id !== point.correctionOf && e.rewards.some((r) => r.id === reward.id)
+    );
+    const frozen = other?.rewards.find((r) => r.id === reward.id);
+    if (frozen && canonical(frozen) !== canonical(reward))
+      fail(
+        'Partially settled allocations are frozen; correct the existing settlements before changing allocations.'
+      );
+  }
   if (
     !reconstructing &&
     (historicalXpPoint(doc, point) ||
@@ -992,9 +1159,6 @@ function reviewXpAward(
       ) > 0
     )
       fail(`${reward.title} was earned after this award point.`);
-    const settled = rewardSettlement(doc, reward.id);
-    if (settled && settled.id !== point.correctionOf)
-      fail(`${reward.title} is already awarded.`);
     if (
       xpEvidenceDuplicates(doc, reward).some(
         (other) => !other.distinctReason.trim()
@@ -1014,7 +1178,9 @@ function reviewXpAward(
     );
   const before: Record<string, number> = {};
   for (const r of rewards.flatMap((r) =>
-    r.recipients.filter((r) => r.eligible)
+    r.recipients.filter(
+      (c) => c.eligible && paying(reviewedPoint, r.id, c.characterId)
+    )
   )) {
     const balance = xpBalance(
       doc,
@@ -1027,11 +1193,13 @@ function reviewXpAward(
     if (balance !== null) before[r.characterId] = balance;
   }
   if (!point.correctionOf)
-    for (const bonus of point.bonuses) {
-      const profile = doc.party?.profiles.find(
-        (p) =>
-          p.characterId === bonus.characterId &&
-          p.sessionId === point.position.sessionId
+    for (const bonus of point.bonuses.filter((b) =>
+      Object.keys(before).includes(b.characterId)
+    )) {
+      const profile = latestXpProfile(
+        doc,
+        bonus.characterId,
+        point.position.sessionId
       );
       if (
         profile?.classes &&
@@ -1049,7 +1217,7 @@ function reviewXpAward(
         fail(
           'Class levels changed: reopen this draft to review its current trained levels.'
         );
-      if (!profile?.classes && bonus.classes)
+      if (profile && !profile.classes && bonus.classes)
         fail(
           'Retain the multiclass profile for this award or review its class identities.'
         );
@@ -1072,7 +1240,14 @@ function reviewXpAward(
       ),
     ])
   );
-  const rows = calculateXpRows(rewards, point.bonuses, before, caps, classes);
+  const rows = calculateXpRows(
+    rewards,
+    point.bonuses,
+    before,
+    caps,
+    classes,
+    reviewedPoint
+  );
   const revised: XpEvent = {
     id: 'preview',
     point: clone(reviewedPoint),
@@ -1080,7 +1255,11 @@ function reviewXpAward(
     replaces: point.correctionOf,
     correctionRoot: null,
     reason: point.correctionReason,
-    calculatorVersion: rows.some((r) => r.classes) ? 3 : 2,
+    calculatorVersion:
+      rows.some((r) => r.classes) ||
+      reviewedPoint.bonuses.some((b) => b.classes)
+        ? 3
+        : 2,
     rounding: 'nearest-whole-half-up-after-bonus',
     rewards,
     rows,
@@ -1200,7 +1379,11 @@ function awardEvent(
     replaces: preview.point.correctionOf,
     correctionRoot: null,
     reason: preview.point.correctionReason,
-    calculatorVersion: preview.rows.some((r) => r.classes) ? 3 : 2,
+    calculatorVersion:
+      preview.rows.some((r) => r.classes) ||
+      preview.point.bonuses.some((b) => b.classes)
+        ? 3
+        : 2,
     rounding: 'nearest-whole-half-up-after-bonus',
     rewards: preview.rewards,
     rows: preview.rows,
@@ -1263,7 +1446,7 @@ export function previewXpExtension(
     .sort((a, b) => compareXpAwards(doc, a, b));
   const affected = Array.from(
     new Set([
-      ...eligibleCharacters(points.flatMap((p) => draftPointRewards(doc, p))),
+      ...points.flatMap((p) => payingCharacters(doc, p)),
       ...request.openings.map((o) => o.characterId),
     ])
   );
@@ -1355,7 +1538,7 @@ export function previewXpExtension(
     },
   };
   for (const point of points) {
-    for (const id of eligibleCharacters(draftPointRewards(doc, point))) {
+    for (const id of payingCharacters(simulated, point)) {
       const change = changes.find((c) => c.previous.characterId === id);
       if (
         !change ||
@@ -1786,6 +1969,32 @@ export function validateCampaignXp(
       canonical(event.rewards.map((r) => r.id))
     )
       fail('Award rewards must match their reviewed selection.');
+    if (event.point.settlements) {
+      const keys = event.point.settlements.map((s) =>
+        canonical([s.rewardId, s.characterId])
+      );
+      const expectedKeys = event.rewards.flatMap((r) =>
+        r.recipients
+          .filter((c) => c.eligible)
+          .map((c) => canonical([r.id, c.characterId]))
+      );
+      if (
+        new Set(keys).size !== keys.length ||
+        canonical([...keys].sort()) !== canonical(expectedKeys.sort()) ||
+        !event.point.settlements.some((s) => s.decision !== 'later')
+      )
+        fail('Invalid recipient settlement snapshot.');
+      for (const reward of event.rewards) {
+        const frozen = activeXpEvents(prefix)
+          .filter((e) => e.id !== event.replaces)
+          .flatMap((e) => e.rewards)
+          .find((r) => r.id === reward.id);
+        if (frozen && canonical(frozen) !== canonical(reward))
+          fail(
+            'Partially settled allocations must retain their accepted basis.'
+          );
+      }
+    }
     if (event.correctionRoot) {
       const previous = prefix.find((e) => e.id === event.replaces);
       if (
@@ -1884,7 +2093,8 @@ export function validateCampaignXp(
             xpAwardRoot(doc, event.point)
           ),
         ])
-      )
+      ),
+      event.point
     );
     if (
       event.calculatorVersion < 3 &&
@@ -1927,7 +2137,21 @@ export function validateCampaignXp(
       }
     prefix.push(event);
     const rewardIds = activeXpEvents(prefix).flatMap((e) =>
-      e.rewards.map((r) => r.id)
+      e.rewards.flatMap((r) =>
+        r.recipients
+          .filter(
+            (c) =>
+              c.eligible &&
+              (!e.point.settlements ||
+                e.point.settlements.some(
+                  (s) =>
+                    s.rewardId === r.id &&
+                    s.characterId === c.characterId &&
+                    s.decision !== 'later'
+                ))
+          )
+          .map((c) => canonical([r.id, c.characterId]))
+      )
     );
     if (new Set(rewardIds).size !== rewardIds.length)
       fail('A reward cannot be awarded twice.');
@@ -2035,19 +2259,24 @@ export function validateXpTransition(
       (e) => e.calculatorVersion === 3 && !e.correctionRoot && !e.replaces
     )) {
     for (const row of event.rows.filter((r) => r.classes)) {
-      const profile = next.party?.profiles.find(
-        (p) =>
-          p.characterId === row.characterId &&
-          p.sessionId === event.point.position.sessionId
+      const profile = latestXpProfile(
+        next,
+        row.characterId,
+        event.point.position.sessionId
       );
       if (
-        !profile?.classes ||
-        canonical(
-          profile.classes.map((c) => [c.id, c.characterClass, c.baseLevel])
-        ) !==
+        profile &&
+        (!profile.classes ||
           canonical(
-            row.classes?.map((c) => [c.classId, c.characterClass, c.baseLevel])
-          )
+            profile.classes.map((c) => [c.id, c.characterClass, c.baseLevel])
+          ) !==
+            canonical(
+              row.classes?.map((c) => [
+                c.classId,
+                c.characterClass,
+                c.baseLevel,
+              ])
+            ))
       )
         fail('Multiclass trained levels changed before confirmation.');
     }

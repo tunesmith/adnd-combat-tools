@@ -4,6 +4,21 @@ import type { PartyProfile } from './campaignPartyModel';
 import { nextLevelXp } from '../tables/classExperience';
 import { canonical } from './campaignSnapshots';
 
+export function latestXpProfile(
+  doc: CampaignDocument,
+  characterId: string,
+  sessionId: string
+): PartyProfile | undefined {
+  const position = doc.sessions.findIndex((s) => s.id === sessionId);
+  for (const session of doc.sessions.slice(0, position + 1).reverse()) {
+    const profile = doc.party?.profiles.find(
+      (p) => p.characterId === characterId && p.sessionId === session.id
+    );
+    if (profile) return profile;
+  }
+  return undefined;
+}
+
 export function profileXpCap(
   profile: Pick<PartyProfile, 'characterClass' | 'baseLevel'> | undefined
 ): XpCapBasis | null {
@@ -48,10 +63,7 @@ export function awardCapBasis(
     ? doc.xp?.events.find((e) => e.id === point.correctionOf)
     : undefined;
   const recorded = target?.rows.find((r) => r.characterId === characterId)?.cap;
-  const profile = doc.party?.profiles.find(
-    (p) =>
-      p.characterId === characterId && p.sessionId === point.position.sessionId
-  );
+  const profile = latestXpProfile(doc, characterId, point.position.sessionId);
   const proposed = profileXpCap(profile);
   if (explicit) {
     validateXpCap(explicit);
@@ -65,15 +77,20 @@ export function awardCapBasis(
       );
     if (
       !target &&
+      profile &&
       explicit.mode === 'standard' &&
-      canonical(explicit) !== canonical(proposed)
+      canonical({ ...explicit, reason: '' }) !== canonical(proposed)
     )
       throw Error(
         'Use the current trained profile or an explicit cap exception.'
       );
+    if (!profile && !target && !explicit.reason.trim())
+      throw Error(
+        'Explain the reviewed trained-level/cap basis for this absent recipient.'
+      );
     // A pending exception controls the limit, not the character's trained identity.
     // Historical corrections instead retain their deliberately reviewed basis.
-    return target || explicit.mode === 'standard'
+    return target || !profile || explicit.mode === 'standard'
       ? explicit
       : {
           ...explicit,

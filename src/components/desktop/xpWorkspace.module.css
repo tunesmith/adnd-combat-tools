@@ -431,13 +431,12 @@
   flex: 1;
   min-width: 0;
 }
-.modal .awardDialogTitle > button {
-  padding: 0;
-  border: 0;
-  color: inherit;
-  background: transparent;
-  font: inherit;
-  text-align: left;
+.modal input.awardDialogName {
+  flex: 1;
+  min-width: 0;
+  font-size: 23px;
+  font-weight: 700;
+  margin-bottom: 0.45rem;
 }
 
 .modal .addBankRow {
