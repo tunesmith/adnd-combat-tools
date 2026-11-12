@@ -948,13 +948,14 @@
 }
 
 .xpClassReference {
-  width: 100%;
+  width: min(100%, 64rem);
   border-collapse: collapse;
-  font-size: 0.85rem;
+  font-size: 1rem;
+  line-height: 1.25;
 }
 .xpClassReference th,
 .xpClassReference td {
-  padding: 0.3rem 0.45rem;
+  padding: 0.25rem 0.65rem;
   border-bottom: 1px solid #d5ccbd;
   text-align: right;
   white-space: nowrap;

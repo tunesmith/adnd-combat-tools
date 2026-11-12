@@ -749,7 +749,7 @@ export const encumbranceCatalog: EncumbranceCatalogItem[] = [
     name: 'Lantern, hooded',
     category: 'adventuring-gear',
     encumbranceGp: 60,
-    valueGp: toGp({ sp: 7 }),
+    valueGp: toGp({ gp: 7 }),
   },
   {
     id: 'lantern-bullseye',

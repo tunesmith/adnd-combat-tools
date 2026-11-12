@@ -205,6 +205,6 @@ test('opening dialog keeps class unknowns, offers explicit zeros, and Session XP
     table.getByRole('cell', { name: 'Thief', exact: true })
   ).toBeInTheDocument();
   expect(
-    table.getByRole('columnheader', { name: 'Opening XP' })
+    table.getByRole('columnheader', { name: 'XP added this session' })
   ).toBeInTheDocument();
 });

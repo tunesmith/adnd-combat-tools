@@ -153,11 +153,10 @@ test('dragging a Session row updates References and both XP views, persists, and
   expect(
     rowNames(screen.getByRole('table', { name: 'Session characters' }))
   ).toEqual(['Bram', 'Mira', 'Tal', 'Oren', 'Nera']);
-  // The compact Session XP reference uses the same column order.
+  // The compact Session XP reference uses the same character order.
   expect(
     within(screen.getByRole('table', { name: 'Session XP reference' }))
-      .getAllByRole('columnheader')
-      .slice(1)
+      .getAllByRole('rowheader')
       .map((c) => c.textContent)
   ).toEqual(['Bram', 'Mira', 'Tal', 'Oren', 'Nera']);
   fireEvent.click(screen.getByRole('button', { name: 'Show references' }));

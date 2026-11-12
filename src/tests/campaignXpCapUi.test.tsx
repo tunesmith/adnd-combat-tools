@@ -165,16 +165,14 @@ test('Session cap is available without an opening balance and directly follows b
   const table = within(
     screen.getByRole('table', { name: 'Session XP reference' })
   );
-  expect(table.getAllByRole('rowheader').map((r) => r.textContent)).toEqual([
+  expect(table.getAllByRole('columnheader').map((r) => r.textContent)).toEqual([
+    'Character',
+    'Class',
     'Base level',
     'XP cap',
     'XP added this session',
     'XP balance',
   ]);
-  expect(table.getByRole('row', { name: /^XP cap/ })).toHaveTextContent(
-    '35,001'
-  );
-  expect(table.getByRole('row', { name: /^XP balance/ })).toHaveTextContent(
-    '—'
-  );
+  expect(table.getByRole('row', { name: /^Mira/ })).toHaveTextContent('35,001');
+  expect(table.getByRole('row', { name: /^Mira/ })).toHaveTextContent('—');
 });
