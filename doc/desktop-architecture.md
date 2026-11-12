@@ -36,7 +36,7 @@ callbacks cannot mutate a replacement target.
 ## Document, identity and history
 
 [CampaignDocument](../src/helpers/campaignDocument.ts) defines campaign schema 21
-and supported older readers. The document contains sessions, roster/profiles,
+and rejects other campaign envelope versions. The document contains sessions, roster/profiles,
 working encounters/inventories, source records, checkpoints, workspace selection,
 and optional XP/Banking data. Titles and names are not persistent identities.
 
@@ -59,11 +59,13 @@ Checkpoint, lineage, financial and XP transition checks protect accepted history
 Relevant code: [snapshots](../src/helpers/campaignSnapshots.ts),
 [history](../src/helpers/campaignHistory.ts), and [continuity](../src/helpers/campaignContinuity.ts).
 
-Older documents migrate in memory; opening does not rewrite disk. Unsupported newer
-formats are rejected. A legacy V6 document with nonempty inventory/combat profile-link
-lists is also unsupported. Current DM inventory is V10; player exports remain V9.
-Compatibility tests and fixtures cover these contracts; adding a format must preserve
-existing identities, original evidence and confirmed calculations.
+Campaign envelopes must be schema 21 and XP timelines must be version 2. Older or
+newer envelopes are rejected with a clear error; use the previous app to upgrade
+older files first. Opening never rewrites the source. This restriction is separate
+from embedded evidence: retained normalizer-1 tracker/imported V9 inventory data and
+XP calculator versions 1/2 remain readable and validated. Current multiclass awards
+use calculator 3. Current DM inventory is V10; player exports remain V9. Shared
+standalone tracker/inventory import readers remain supported.
 
 ## Native validation and saving
 
@@ -85,10 +87,10 @@ exclusive creation. Failed writes preserve the original destination. This does n
 claim cloud-filesystem coordination, crash autosave or complete power-loss durability;
 a narrow external-write race remains between the final check and replacement.
 
-Routine Save and Save As do not refresh backups. A real on-disk schema upgrade
-preserves the original bytes as `<campaign>.bak` or `<campaign>.upgrade-N.bak` without
-overwriting an existing recovery file. Source/inventory exports protect the active
-campaign and its recovery destinations.
+Save and Save As do not generate or refresh backups. Keep deliberate backups
+separately. Source/inventory exports still protect the active campaign and existing
+backup destinations. Automatic campaign upgrading and upgrade-backup creation are
+not part of the current reader/save path.
 
 ## Verification
 

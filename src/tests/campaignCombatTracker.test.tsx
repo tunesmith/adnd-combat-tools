@@ -9,7 +9,7 @@ import {
   createWorkingCombat,
   changeWorkingCombat,
 } from '../helpers/campaignWorkingCombat';
-import baseline from './fixtures/campaignB1V2.json';
+import baseline from './fixtures/campaignSnapshots.json';
 import type { CampaignDocument } from '../helpers/campaignDocument';
 import type { TrackerState } from '../types/tracker';
 import { CLERIC, FIGHTER } from '../tables/attackerClass';

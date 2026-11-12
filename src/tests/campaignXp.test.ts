@@ -44,7 +44,7 @@ import {
   startNextSession,
   sessionFingerprint,
 } from '../helpers/campaignContinuity';
-import baseline from './fixtures/campaignB1V2.json';
+import baseline from './fixtures/campaignSnapshots.json';
 import type { CampaignDocument } from '../helpers/campaignDocument';
 function required<T>(value: T | undefined): T {
   if (value === undefined) throw new Error('Missing fixture');
@@ -394,7 +394,7 @@ test('corrections retain originals, reject stale previews/retries and atomically
     })
   ).toThrow('fixed');
 });
-test('migration creates no rewards or balances, and confirms invalid confirmed calculations cannot reach disk', () => {
+test('current documents without XP invent no rewards or balances, and invalid confirmed calculations cannot reach disk', () => {
   const doc = parseCampaign(JSON.stringify(baseline));
   expect(doc.schemaVersion).toBe(21);
   expect(doc.xp).toBeUndefined();

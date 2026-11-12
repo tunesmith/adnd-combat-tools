@@ -30,8 +30,15 @@ export const bankingAt = '2026-11-10T12:00:00.000Z';
 export function bankFixture() {
   let doc = parseCampaign(
     JSON.stringify({
+      workingCombats: [],
+      combatCheckpoints: [],
+      workingInventories: [],
+      inventoryCheckpoints: [],
+      sessions: [],
+      records: [],
+      workspace: { sessionId: null, view: 'possessions', combatSelections: {} },
       kind: 'adnd-campaign',
-      schemaVersion: 1,
+      schemaVersion: 21,
       id: 'synthetic-banking',
       title: 'Synthetic Castle Kifu banking',
       notes: '',

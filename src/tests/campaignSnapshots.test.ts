@@ -131,8 +131,15 @@ test('DM inventory parser is reused and player documents rejected', () => {
 test('both snapshot types and deliberate revisions survive reload with exact sources', () => {
   const initial = parseCampaign(
     JSON.stringify({
+      workingCombats: [],
+      combatCheckpoints: [],
+      workingInventories: [],
+      inventoryCheckpoints: [],
+      sessions: [],
+      records: [],
+      workspace: { sessionId: null, view: 'possessions', combatSelections: {} },
       kind: 'adnd-campaign',
-      schemaVersion: 1,
+      schemaVersion: 21,
       id: 'migrated',
       title: 'Preserved',
       notes: 'Original',

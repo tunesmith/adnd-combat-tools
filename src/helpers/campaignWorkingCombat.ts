@@ -38,7 +38,7 @@ export interface CombatCheckpoint {
   state: TrackerState;
 }
 const id = z.string().min(1);
-const tracker = z.unknown().superRefine((value, ctx) => {
+const tracker = z.custom<TrackerState>().superRefine((value, ctx) => {
   try {
     if (canonical(value) !== canonical(normalizeWorkingCombat(value)))
       ctx.addIssue({
@@ -49,10 +49,14 @@ const tracker = z.unknown().superRefine((value, ctx) => {
     ctx.addIssue({ code: 'custom', message: String(error) });
   }
 });
-export const legacyWorkingCombatSchema = z
+export const workingCombatSchema = z
   .object({
     id,
     sessionId: id,
+    encounterId: id,
+    status: encounterStatusSchema,
+    continuedFrom: continuedFromSchema.optional(),
+    removedAt: z.string().datetime().optional(),
     title: z.string().min(1).max(1000),
     generation: z.number().int().nonnegative(),
     state: tracker,
@@ -65,13 +69,6 @@ export const legacyWorkingCombatSchema = z
     ]),
   })
   .strict();
-export const workingCombatSchema = legacyWorkingCombatSchema
-  .extend({
-    encounterId: id,
-    status: encounterStatusSchema,
-    continuedFrom: continuedFromSchema.optional(),
-  })
-  .strict();
 export const combatCheckpointSchema = z
   .object({
     id,
@@ -79,7 +76,7 @@ export const combatCheckpointSchema = z
     sessionId: id,
     label: z.string().min(1).max(1000),
     capturedAt: z.string().datetime(),
-    origin: legacyWorkingCombatSchema.shape.origin.optional(),
+    origin: workingCombatSchema.shape.origin.optional(),
     status: encounterStatusSchema.optional(),
     state: tracker,
   })

@@ -82,18 +82,16 @@ export const emptyProfileReference = (): ProfileReference => ({
   },
 });
 
-const legacyRosterCharacterSchema = z
+export const rosterCharacterSchema = z
   .object({
     id,
     name: z.string().trim().min(1).max(1000),
     player: z.string().max(1000),
     notes: note,
+    earnsXp: z.boolean().optional(),
+    lastEligibleSessionId: id.optional(),
   })
   .strict();
-export const rosterCharacterSchema = legacyRosterCharacterSchema.extend({
-  earnsXp: z.boolean().optional(),
-  lastEligibleSessionId: id.optional(),
-});
 const profileClassSchema = z
   .object({
     id,
@@ -143,9 +141,6 @@ export const campaignPartySchema = z
     profiles: z.array(partyProfileSchema),
   })
   .strict();
-export const legacyCampaignPartySchema = campaignPartySchema.extend({
-  roster: z.array(legacyRosterCharacterSchema).max(500),
-});
 export type CampaignParty = z.infer<typeof campaignPartySchema>;
 export type RosterCharacter = z.infer<typeof rosterCharacterSchema>;
 export type PartyProfile = z.infer<typeof partyProfileSchema>;

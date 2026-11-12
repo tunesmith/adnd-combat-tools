@@ -1,31 +1,45 @@
 {
   "kind": "adnd-campaign",
-  "schemaVersion": 8,
   "id": "synthetic-dense-session",
   "title": "Lantern Company",
   "notes": "Synthetic campaign notes",
+  "schemaVersion": 21,
   "sessions": [
     {
       "id": "one",
       "label": "Session One",
+      "partyOrder": [
+        "synthetic-profile-0",
+        "synthetic-profile-1",
+        "synthetic-profile-2",
+        "synthetic-profile-3",
+        "synthetic-profile-4"
+      ],
       "notes": "Synthetic stopping point.\nCheck the lantern and return to the bridge."
     },
     {
       "id": "two",
       "label": "Session Two",
+      "partyOrder": [
+        "synthetic-profile-0",
+        "synthetic-profile-1",
+        "synthetic-profile-2",
+        "synthetic-profile-3",
+        "synthetic-profile-4"
+      ],
       "notes": ""
     }
   ],
   "records": [],
   "workingInventories": [],
   "inventoryCheckpoints": [],
-  "workingCombats": [],
-  "combatCheckpoints": [],
   "workspace": {
     "sessionId": "one",
     "view": "session",
     "combatSelections": {}
   },
+  "workingCombats": [],
+  "combatCheckpoints": [],
   "party": {
     "roster": [
       {

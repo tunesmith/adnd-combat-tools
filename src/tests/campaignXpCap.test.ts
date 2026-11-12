@@ -244,9 +244,8 @@ test('an earlier correction recalculates later caps from frozen full amounts and
     35001
   );
 });
-test('V11 accepted awards migrate exactly without fabricated cap history, even above today’s cap', () => {
+test('calculator-1 awards retain their uncapped history even above today’s cap', () => {
   const legacy = JSON.parse(JSON.stringify(replay.confirmed));
-  legacy.schemaVersion = 11;
   legacy.xp.openings[0].balance = 34000;
   legacy.xp.events[0].rows[0].before = 34000;
   legacy.xp.events[0].rows[0].after = 34507;

@@ -370,7 +370,7 @@ test('spending remains ordinary and an earlier receipt can be corrected using it
   expect(available(doc, 'electrum-300')).toBe(50);
 });
 
-test('V15 ordinary and reconciliation records migrate without being reinterpreted as existing-money receipts', () => {
+test('recorded ordinary transactions retain their meaning without a receipt-mode field', () => {
   const original = existingBankFixture();
   const balanced = commitBankReconciliation(
     original,
@@ -379,7 +379,7 @@ test('V15 ordinary and reconciliation records migrate without being reinterprete
     'legacy-reconciliation',
     receiptAt
   );
-  const legacy = { ...balanced, schemaVersion: 15 };
+  const legacy = { ...balanced };
   const loaded = parseCampaign(JSON.stringify(legacy));
   expect(loaded.schemaVersion).toBe(21);
   expect(loaded.banking).toEqual(balanced.banking);

@@ -168,49 +168,12 @@ const bankExtensionSchema = z
   })
   .strict();
 export type BankExtension = z.infer<typeof bankExtensionSchema>;
-const bankPossessionsReconciliationSchema = z
-  .object({
-    id,
-    sessionId: id,
-    workingId: id,
-    sourceEntryId: id,
-    entryCount: whole,
-    at: z.string().datetime(),
-    changes: z.array(bankChangeSchema).min(1).max(2000),
-    balances: z
-      .array(
-        z
-          .object({
-            holderId: id,
-            before: bankAmountsSchema,
-            ledger: bankAmountsSchema,
-            after: bankAmountsSchema,
-          })
-          .strict()
-      )
-      .min(1)
-      .max(500),
-  })
-  .strict();
-export type BankPossessionsReconciliation = z.infer<
-  typeof bankPossessionsReconciliationSchema
->;
 export const campaignBankingSchema = z
   .object({
     version: z.literal(1),
-    possessionsReconciliations: z
-      .array(bankPossessionsReconciliationSchema)
-      .max(2000)
-      .optional(),
     openings: z.array(bankOpeningSchema).max(500),
     entries: z.array(bankEntrySchema).max(10000),
     extensions: z.array(bankExtensionSchema).max(500),
   })
   .strict();
 export type CampaignBanking = z.infer<typeof campaignBankingSchema>;
-
-export const legacyCampaignBankingSchema = campaignBankingSchema
-  .omit({ possessionsReconciliations: true })
-  .extend({
-    entries: z.array(bankEntrySchema.omit({ receiptMode: true })).max(10000),
-  });

@@ -17,8 +17,15 @@ const at = '2026-11-04T12:00:00.000Z';
 const empty = () => ({
   ...parseCampaign(
     JSON.stringify({
+      workingCombats: [],
+      combatCheckpoints: [],
+      workingInventories: [],
+      inventoryCheckpoints: [],
+      sessions: [],
+      records: [],
+      workspace: { sessionId: null, view: 'possessions', combatSelections: {} },
       kind: 'adnd-campaign',
-      schemaVersion: 1,
+      schemaVersion: 21,
       id: 'synthetic',
       title: 'Test',
       notes: '',

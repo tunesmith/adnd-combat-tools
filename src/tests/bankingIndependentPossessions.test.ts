@@ -8,7 +8,6 @@ import {
   staleCarriedMoney,
   staleHolder,
 } from './fixtures/bankingStalePossessions';
-import legacyReconciliation from './fixtures/bankPossessionsReconciliationNative.json';
 import legacyMoney from './fixtures/bankingExistingNative.json';
 import {
   changeWorkingInventory,
@@ -313,12 +312,8 @@ test('ordinary banking transactions still update physical coins and reviewed rep
   expect(holderMoney(inventory(after), holder).ep).toBe(0);
 });
 
-test('existing reconciled history, automatic adjustments and old physical-only audits survive upgrade without reinterpretation', () => {
-  for (const fixture of [
-    legacyReconciliation.before,
-    legacyReconciliation.after,
-    legacyMoney,
-  ]) {
+test('existing financial history survives save and reopen without reinterpretation', () => {
+  for (const fixture of [legacyMoney]) {
     const next = parseCampaign(JSON.stringify(fixture));
     expect(next.schemaVersion).toBe(21);
     expect(next.banking).toEqual(fixture.banking);
@@ -372,7 +367,7 @@ test('a previously posted automatic adjustment keeps its original effect while l
   };
   const original = {
     ...changed,
-    schemaVersion: 19,
+    schemaVersion: 21,
     banking: { ...bankLedger(base), entries: [entry] },
   };
   const upgraded = parseCampaign(JSON.stringify(original));
@@ -402,4 +397,16 @@ test('independent physical edits still reject fractional coins and unsafe denomi
     changeWorkingInventory(doc, 'day3-stock', 'day3', invalid)
   ).toThrow();
   expect(bankBalance(doc, holder, 'day3').ep).toBe(50);
+});
+
+test('removed possessions audit format is rejected rather than silently discarded', () => {
+  const doc = bankFixture();
+  expect(() =>
+    parseCampaign(
+      JSON.stringify({
+        ...doc,
+        banking: { ...bankLedger(doc), possessionsReconciliations: [] },
+      })
+    )
+  ).toThrow('Unrecognized');
 });

@@ -278,8 +278,8 @@ export type XpExtension = z.infer<typeof xpExtensionSchema>;
 
 export const campaignXpSchema = z
   .object({
-    version: z.union([z.literal(1), z.literal(2)]),
-    timeline: z.record(z.array(id).max(3000)).optional(),
+    version: z.literal(2),
+    timeline: z.record(z.array(id).max(3000)),
     sessionOrder: z.array(id).max(500),
     openings: z.array(xpOpeningSchema).max(500),
     extensions: z.array(xpExtensionSchema).max(500).optional(),
@@ -300,7 +300,3 @@ export const emptyCampaignXp = (): CampaignXp => ({
   points: [],
   events: [],
 });
-
-export const legacyCampaignXpSchema = campaignXpSchema
-  .omit({ timeline: true, extensions: true, pendingRecipientResets: true })
-  .extend({ version: z.literal(1) });

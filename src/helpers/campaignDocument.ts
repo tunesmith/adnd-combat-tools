@@ -1,19 +1,10 @@
-import { stabilizePartyOrders } from './campaignParty';
-import {
-  campaignBankingSchema,
-  legacyCampaignBankingSchema,
-} from './campaignBankingModel';
+import { campaignBankingSchema } from './campaignBankingModel';
 import type { CampaignBanking } from './campaignBankingModel';
 import { validateCampaignBanking } from './campaignBanking';
-import { migrateXpTimeline } from './campaignXpTimeline';
-import { campaignXpSchema, legacyCampaignXpSchema } from './campaignXpModel';
+import { campaignXpSchema } from './campaignXpModel';
 import type { CampaignXp } from './campaignXpModel';
 import { validateCampaignXp } from './campaignXp';
-import { parseEncumbranceDocument } from './encumbranceDocument';
-import {
-  campaignPartySchema,
-  legacyCampaignPartySchema,
-} from './campaignPartyModel';
+import { campaignPartySchema } from './campaignPartyModel';
 import type { CampaignParty } from './campaignPartyModel';
 import { validatePartyReferences } from './campaignParty';
 import { validateContinuationReferences } from './campaignContinuity';
@@ -21,7 +12,6 @@ import { sessionContinuationSchema } from './campaignContinuityModel';
 import type { SessionContinuation } from './campaignContinuityModel';
 import {
   workingCombatSchema,
-  legacyWorkingCombatSchema,
   combatCheckpointSchema,
 } from './campaignWorkingCombat';
 import type { WorkingCombat, CombatCheckpoint } from './campaignWorkingCombat';
@@ -70,60 +60,19 @@ export interface CampaignDocument {
   })[];
   records: CampaignRecord[];
 }
-const common = {
-  kind: z.literal('adnd-campaign'),
-  id: z
-    .string()
-    .min(1)
-    .refine(
-      (value) => value.trim().length > 0,
-      'Campaign ID must not be blank'
-    ),
-  title: z.string().max(1000),
-  notes: z.string().max(1_000_000),
-};
-const v1 = z.object({ ...common, schemaVersion: z.literal(1) }).strict();
-const v2 = z
+const campaignSchema = z
   .object({
-    ...common,
-    schemaVersion: z.literal(2),
-    sessions: z.array(sessionSchema).max(500),
-    records: z.array(recordSchema).max(500),
-  })
-  .strict();
-const v3 = v2
-  .extend({
-    schemaVersion: z.literal(3),
-    workingInventories: z.array(workingInventorySchema).max(500),
-    inventoryCheckpoints: z.array(inventoryCheckpointSchema).max(1000),
-    workspace: workspaceSchema,
-  })
-  .strict();
-const v4 = v3
-  .extend({
-    schemaVersion: z.literal(4),
-    workingCombats: z.array(legacyWorkingCombatSchema).max(500),
-    combatCheckpoints: z.array(combatCheckpointSchema).max(1000),
-    workspace: workspaceSchema
-      .extend({ combatSelections: z.record(z.string()).default({}) })
-      .strict(),
-  })
-  .strict();
-const v5 = v4
-  .extend({
-    schemaVersion: z.literal(5),
-    workspace: v4.shape.workspace
-      .extend({
-        view: z.enum([
-          'possessions',
-          'combats',
-          'history',
-          'details',
-          'tools',
-          'session',
-        ]),
-      })
-      .strict(),
+    kind: z.literal('adnd-campaign'),
+    schemaVersion: z.literal(21),
+    id: z
+      .string()
+      .min(1)
+      .refine(
+        (value) => value.trim().length > 0,
+        'Campaign ID must not be blank'
+      ),
+    title: z.string().max(1000),
+    notes: z.string().max(1_000_000),
     sessions: z
       .array(
         sessionSchema
@@ -134,25 +83,14 @@ const v5 = v4
           .strict()
       )
       .max(500),
+    records: z.array(recordSchema).max(500),
+    workingInventories: z.array(workingInventorySchema).max(500),
+    inventoryCheckpoints: z.array(inventoryCheckpointSchema).max(1000),
     workingCombats: z.array(workingCombatSchema).max(500),
-  })
-  .strict();
-const v6 = v5
-  .extend({
-    schemaVersion: z.literal(6),
-    party: legacyCampaignPartySchema
-      .extend({ inventoryLinks: z.tuple([]), combatLinks: z.tuple([]) })
-      .transform(({ roster, profiles }) => ({ roster, profiles }))
-      .optional(),
-    workingCombats: z
-      .array(
-        workingCombatSchema
-          .extend({ removedAt: z.string().datetime().optional() })
-          .strict()
-      )
-      .max(500),
-    workspace: v5.shape.workspace
+    combatCheckpoints: z.array(combatCheckpointSchema).max(1000),
+    workspace: workspaceSchema
       .extend({
+        combatSelections: z.record(z.string()).default({}),
         view: z.enum([
           'possessions',
           'combats',
@@ -161,84 +99,16 @@ const v6 = v5
           'tools',
           'session',
           'party',
+          'xp',
+          'banking',
         ]),
       })
       .strict(),
+    party: campaignPartySchema.optional(),
+    xp: campaignXpSchema.optional(),
+    banking: campaignBankingSchema.optional(),
   })
   .strict();
-const v7 = v6.extend({
-  schemaVersion: z.literal(7),
-  party: legacyCampaignPartySchema.optional(),
-});
-const v8 = v7.extend({ schemaVersion: z.literal(8) });
-const v9 = v8.extend({ schemaVersion: z.literal(9) });
-const v10 = v9.extend({
-  schemaVersion: z.literal(10),
-  xp: legacyCampaignXpSchema.optional(),
-  workspace: v9.shape.workspace
-    .extend({
-      view: z.enum([
-        'possessions',
-        'combats',
-        'history',
-        'details',
-        'tools',
-        'session',
-        'party',
-        'xp',
-      ]),
-    })
-    .strict(),
-});
-
-const v11 = v10.extend({
-  schemaVersion: z.literal(11),
-  xp: campaignXpSchema
-    .omit({ extensions: true, pendingRecipientResets: true })
-    .optional(),
-});
-
-const v12 = v11.extend({ schemaVersion: z.literal(12) });
-const v13 = v12.extend({
-  schemaVersion: z.literal(13),
-  xp: campaignXpSchema.omit({ pendingRecipientResets: true }).optional(),
-});
-const v14 = v13.extend({
-  schemaVersion: z.literal(14),
-  party: campaignPartySchema.optional(),
-  xp: campaignXpSchema.optional(),
-});
-
-const v15 = v14.extend({
-  schemaVersion: z.literal(15),
-  banking: legacyCampaignBankingSchema.optional(),
-  workspace: v14.shape.workspace
-    .extend({
-      view: z.enum([
-        'possessions',
-        'combats',
-        'history',
-        'details',
-        'tools',
-        'session',
-        'party',
-        'xp',
-        'banking',
-      ]),
-    })
-    .strict(),
-});
-
-const v16 = v15.extend({
-  schemaVersion: z.literal(16),
-  banking: campaignBankingSchema.optional(),
-});
-
-const v17 = v16.extend({ schemaVersion: z.literal(17) });
-const v18 = v17.extend({ schemaVersion: z.literal(18) });
-const v19 = v18.extend({ schemaVersion: z.literal(19) });
-const v20 = v19.extend({ schemaVersion: z.literal(20) });
-const v21 = v20.extend({ schemaVersion: z.literal(21) });
 
 export function validateCampaign(value: unknown): CampaignDocument {
   if (!value || typeof value !== 'object')
@@ -246,139 +116,11 @@ export function validateCampaign(value: unknown): CampaignDocument {
   const header = value as Record<string, unknown>;
   if (header['kind'] !== 'adnd-campaign')
     throw new Error('Not an AD&D campaign document.');
-  if (
-    header['schemaVersion'] !== 1 &&
-    header['schemaVersion'] !== 2 &&
-    header['schemaVersion'] !== 3 &&
-    header['schemaVersion'] !== 4 &&
-    header['schemaVersion'] !== 5 &&
-    header['schemaVersion'] !== 6 &&
-    header['schemaVersion'] !== 7 &&
-    header['schemaVersion'] !== 8 &&
-    header['schemaVersion'] !== 9 &&
-    header['schemaVersion'] !== 10 &&
-    header['schemaVersion'] !== 11 &&
-    header['schemaVersion'] !== 12 &&
-    header['schemaVersion'] !== 13 &&
-    header['schemaVersion'] !== 14 &&
-    header['schemaVersion'] !== 15 &&
-    header['schemaVersion'] !== 16 &&
-    header['schemaVersion'] !== 17 &&
-    header['schemaVersion'] !== 18 &&
-    header['schemaVersion'] !== 19 &&
-    header['schemaVersion'] !== 20 &&
-    header['schemaVersion'] !== 21
-  )
+  if (header['schemaVersion'] !== 21)
     throw new Error(
-      'Unsupported campaign schema version. This app supports versions 1 through 21.'
+      'Unsupported campaign schema version. This app requires version 21. Upgrade older files with the previous app before opening them here.'
     );
-  if (
-    value &&
-    typeof value === 'object' &&
-    (value as Record<string, unknown>)['schemaVersion'] === 1
-  ) {
-    return {
-      ...v1.parse(value),
-      schemaVersion: 21,
-      workingCombats: [],
-      combatCheckpoints: [],
-      sessions: [],
-      records: [],
-      workingInventories: [],
-      inventoryCheckpoints: [],
-      workspace: { sessionId: null, view: 'possessions', combatSelections: {} },
-    };
-  }
-  const legacy =
-    header['schemaVersion'] === 2
-      ? {
-          ...v2.parse(value),
-          schemaVersion: 3 as const,
-          workingInventories: [],
-          inventoryCheckpoints: [],
-          workspace: { sessionId: null, view: 'possessions' as const },
-        }
-      : header['schemaVersion'] === 3
-      ? v3.parse(value)
-      : header['schemaVersion'] === 4
-      ? v4.parse(value)
-      : header['schemaVersion'] === 5
-      ? v5.parse(value)
-      : header['schemaVersion'] === 6
-      ? v6.parse(value)
-      : header['schemaVersion'] === 7
-      ? v7.parse(value)
-      : header['schemaVersion'] === 8
-      ? v8.parse(value)
-      : header['schemaVersion'] === 9
-      ? v9.parse(value)
-      : header['schemaVersion'] === 10
-      ? v10.parse(value)
-      : header['schemaVersion'] === 11
-      ? v11.parse(value)
-      : header['schemaVersion'] === 12
-      ? v12.parse(value)
-      : header['schemaVersion'] === 13
-      ? v13.parse(value)
-      : header['schemaVersion'] === 14
-      ? v14.parse(value)
-      : header['schemaVersion'] === 15
-      ? v15.parse(value)
-      : header['schemaVersion'] === 16
-      ? v16.parse(value)
-      : header['schemaVersion'] === 17
-      ? v17.parse(value)
-      : header['schemaVersion'] === 18
-      ? v18.parse(value)
-      : header['schemaVersion'] === 19
-      ? v19.parse(value)
-      : header['schemaVersion'] === 20
-      ? v20.parse(value)
-      : v21.parse(value);
-  const migrated =
-    legacy.schemaVersion === 3
-      ? {
-          ...legacy,
-          schemaVersion: 4 as const,
-          workingCombats: [],
-          combatCheckpoints: [],
-          workspace: { ...legacy.workspace, combatSelections: {} },
-        }
-      : legacy;
-  const parsed = (migrated.schemaVersion === 4
-    ? {
-        ...migrated,
-        schemaVersion: 21 as const,
-        sessions: migrated.sessions.map((s) => ({ ...s, notes: '' })),
-        workingCombats: migrated.workingCombats.map((c) => ({
-          ...c,
-          encounterId: c.id,
-          status: 'unspecified' as const,
-        })),
-      }
-    : {
-        ...migrated,
-        schemaVersion: 21 as const,
-      }) as unknown as CampaignDocument;
-  if (Number(header['schemaVersion']) < 9)
-    parsed.workingInventories = parsed.workingInventories.map((w) => {
-      const document = parseEncumbranceDocument(JSON.stringify(w.document));
-      if (document.kind !== 'adnd-encumbrance-dm')
-        throw new Error('DM inventory required.');
-      return { ...w, document };
-    });
-  // Older XP previews had a separate chronology. Align the visible tabs once,
-  // preserving its established as-of balances; subsequent tab moves mirror this field.
-  if (parsed.xp?.sessionOrder.length) {
-    const order = [
-      ...parsed.xp.sessionOrder,
-      ...parsed.sessions
-        .map((s) => s.id)
-        .filter((id) => !parsed.xp?.sessionOrder.includes(id)),
-    ];
-    parsed.sessions.sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
-  }
-  parsed.sessions = stabilizePartyOrders(parsed).sessions;
+  const parsed = campaignSchema.parse(value);
   const ids = new Set<string>();
   const unique = (id: string) => {
     if (ids.has(id)) throw new Error('Duplicate campaign identity.');
@@ -497,7 +239,6 @@ export function validateCampaign(value: unknown): CampaignDocument {
   }
   validatePartyReferences(parsed, unique);
   validateContinuationReferences(parsed);
-  if (parsed.xp) parsed.xp = migrateXpTimeline(parsed.xp);
   validateCampaignBanking(parsed, unique);
   validateCampaignXp(parsed, unique);
   return parsed;

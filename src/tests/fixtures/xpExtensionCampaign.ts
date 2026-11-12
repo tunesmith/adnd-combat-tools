@@ -89,8 +89,15 @@ function backfillAward(
 export function extensionBaseline() {
   let doc = parseCampaign(
     JSON.stringify({
+      workingCombats: [],
+      combatCheckpoints: [],
+      workingInventories: [],
+      inventoryCheckpoints: [],
+      sessions: [],
+      records: [],
+      workspace: { sessionId: null, view: 'possessions', combatSelections: {} },
       kind: 'adnd-campaign',
-      schemaVersion: 1,
+      schemaVersion: 21,
       id: 'synthetic-d49',
       title: 'Synthetic Backward XP',
       notes: 'Synthetic campaign notes',

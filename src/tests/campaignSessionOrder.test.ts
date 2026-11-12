@@ -34,7 +34,7 @@ test('tab moves preserve selected identity and all session contents, and round-t
     reorderCampaignSession(empty, 'session-1', 'session-2').xp
   ).toBeUndefined();
 });
-test('confirmed XP locks tab chronology and legacy chronology is displayed without changing awards', () => {
+test('confirmed XP locks tab chronology and out-of-order history is rejected', () => {
   const draft = xpCastleDraft();
   const doc = confirmXpAward(
     draft,
@@ -53,9 +53,12 @@ test('confirmed XP locks tab chronology and legacy chronology is displayed witho
       ''
     )
   ).toThrow('chronology');
-  const loaded = parseCampaign(
-    JSON.stringify({ ...doc, sessions: [...doc.sessions].reverse() })
-  );
+  expect(() =>
+    parseCampaign(
+      JSON.stringify({ ...doc, sessions: [...doc.sessions].reverse() })
+    )
+  ).toThrow();
+  const loaded = parseCampaign(serializeCampaign(doc));
   expect(loaded.sessions).toEqual(doc.sessions);
   expect(loaded.xp?.events).toEqual(doc.xp?.events);
   expect(sessionXpBalances(loaded, 'xp-mira', 'session-1').closing).toBe(0);

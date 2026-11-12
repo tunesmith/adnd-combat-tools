@@ -9,7 +9,7 @@ import {
   changeWorkingCombat,
 } from '../helpers/campaignWorkingCombat';
 import { syntheticCombat } from './fixtures/campaignB1';
-import baseline from './fixtures/campaignB1V2.json';
+import baseline from './fixtures/campaignSnapshots.json';
 function required<T>(value: T | undefined): T {
   if (value === undefined) throw new Error('Missing test fixture value');
   return value;

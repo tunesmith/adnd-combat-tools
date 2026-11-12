@@ -4,9 +4,7 @@
     "id": "synthetic-banking",
     "title": "Synthetic Castle Kifu banking",
     "notes": "",
-    "schemaVersion": 20,
-    "workingCombats": [],
-    "combatCheckpoints": [],
+    "schemaVersion": 21,
     "sessions": [
       {
         "id": "day2",
@@ -20,10 +18,10 @@
         "continuation": {
           "sourceSessionId": "day2",
           "sourceFingerprint": "b44976b3cff5812e5d446f34421fab0d741a08bb3b44f496771e6219d9dfbe28",
+          "requestFingerprint": "3f8e59cfdc2e887c2b78baa2daeaea395527e9a1d1c90d9072145f372fe76514",
           "combatInstanceIds": [],
           "inventoryId": "day2-stock",
-          "copyNotes": false,
-          "requestFingerprint": "3f8e59cfdc2e887c2b78baa2daeaea395527e9a1d1c90d9072145f372fe76514"
+          "copyNotes": false
         }
       }
     ],
@@ -243,13 +241,13 @@
             }
           ]
         },
-        "origin": {
-          "kind": "checkpoint",
-          "checkpointId": "carry-checkpoint"
-        },
         "continuedFrom": {
           "sessionId": "day2",
           "instanceId": "day2-stock",
+          "checkpointId": "carry-checkpoint"
+        },
+        "origin": {
+          "kind": "checkpoint",
           "checkpointId": "carry-checkpoint"
         }
       }
@@ -372,6 +370,8 @@
       "view": "session",
       "combatSelections": {}
     },
+    "workingCombats": [],
+    "combatCheckpoints": [],
     "banking": {
       "version": 1,
       "openings": [
@@ -436,9 +436,7 @@
         "id": "synthetic-banking",
         "title": "Synthetic Castle Kifu banking",
         "notes": "",
-        "schemaVersion": 20,
-        "workingCombats": [],
-        "combatCheckpoints": [],
+        "schemaVersion": 21,
         "sessions": [
           {
             "id": "day2",
@@ -452,10 +450,10 @@
             "continuation": {
               "sourceSessionId": "day2",
               "sourceFingerprint": "b44976b3cff5812e5d446f34421fab0d741a08bb3b44f496771e6219d9dfbe28",
+              "requestFingerprint": "3f8e59cfdc2e887c2b78baa2daeaea395527e9a1d1c90d9072145f372fe76514",
               "combatInstanceIds": [],
               "inventoryId": "day2-stock",
-              "copyNotes": false,
-              "requestFingerprint": "3f8e59cfdc2e887c2b78baa2daeaea395527e9a1d1c90d9072145f372fe76514"
+              "copyNotes": false
             }
           }
         ],
@@ -675,13 +673,13 @@
                 }
               ]
             },
-            "origin": {
-              "kind": "checkpoint",
-              "checkpointId": "carry-checkpoint"
-            },
             "continuedFrom": {
               "sessionId": "day2",
               "instanceId": "day2-stock",
+              "checkpointId": "carry-checkpoint"
+            },
+            "origin": {
+              "kind": "checkpoint",
               "checkpointId": "carry-checkpoint"
             }
           }
@@ -804,6 +802,8 @@
           "view": "session",
           "combatSelections": {}
         },
+        "workingCombats": [],
+        "combatCheckpoints": [],
         "banking": {
           "version": 1,
           "openings": [
@@ -865,9 +865,7 @@
         "id": "synthetic-banking",
         "title": "Synthetic Castle Kifu banking",
         "notes": "",
-        "schemaVersion": 20,
-        "workingCombats": [],
-        "combatCheckpoints": [],
+        "schemaVersion": 21,
         "sessions": [
           {
             "id": "day2",
@@ -881,10 +879,10 @@
             "continuation": {
               "sourceSessionId": "day2",
               "sourceFingerprint": "b44976b3cff5812e5d446f34421fab0d741a08bb3b44f496771e6219d9dfbe28",
+              "requestFingerprint": "3f8e59cfdc2e887c2b78baa2daeaea395527e9a1d1c90d9072145f372fe76514",
               "combatInstanceIds": [],
               "inventoryId": "day2-stock",
-              "copyNotes": false,
-              "requestFingerprint": "3f8e59cfdc2e887c2b78baa2daeaea395527e9a1d1c90d9072145f372fe76514"
+              "copyNotes": false
             }
           }
         ],
@@ -1104,13 +1102,13 @@
                 }
               ]
             },
-            "origin": {
-              "kind": "checkpoint",
-              "checkpointId": "carry-checkpoint"
-            },
             "continuedFrom": {
               "sessionId": "day2",
               "instanceId": "day2-stock",
+              "checkpointId": "carry-checkpoint"
+            },
+            "origin": {
+              "kind": "checkpoint",
               "checkpointId": "carry-checkpoint"
             }
           }
@@ -1233,6 +1231,8 @@
           "view": "session",
           "combatSelections": {}
         },
+        "workingCombats": [],
+        "combatCheckpoints": [],
         "banking": {
           "version": 1,
           "openings": [
@@ -1329,9 +1329,7 @@
         "id": "synthetic-banking",
         "title": "Synthetic Castle Kifu banking",
         "notes": "",
-        "schemaVersion": 20,
-        "workingCombats": [],
-        "combatCheckpoints": [],
+        "schemaVersion": 21,
         "sessions": [
           {
             "id": "day2",
@@ -1345,10 +1343,10 @@
             "continuation": {
               "sourceSessionId": "day2",
               "sourceFingerprint": "b44976b3cff5812e5d446f34421fab0d741a08bb3b44f496771e6219d9dfbe28",
+              "requestFingerprint": "3f8e59cfdc2e887c2b78baa2daeaea395527e9a1d1c90d9072145f372fe76514",
               "combatInstanceIds": [],
               "inventoryId": "day2-stock",
-              "copyNotes": false,
-              "requestFingerprint": "3f8e59cfdc2e887c2b78baa2daeaea395527e9a1d1c90d9072145f372fe76514"
+              "copyNotes": false
             }
           }
         ],
@@ -1568,13 +1566,13 @@
                 }
               ]
             },
-            "origin": {
-              "kind": "checkpoint",
-              "checkpointId": "carry-checkpoint"
-            },
             "continuedFrom": {
               "sessionId": "day2",
               "instanceId": "day2-stock",
+              "checkpointId": "carry-checkpoint"
+            },
+            "origin": {
+              "kind": "checkpoint",
               "checkpointId": "carry-checkpoint"
             }
           }
@@ -1697,6 +1695,8 @@
           "view": "session",
           "combatSelections": {}
         },
+        "workingCombats": [],
+        "combatCheckpoints": [],
         "banking": {
           "version": 1,
           "openings": [
@@ -1758,9 +1758,7 @@
         "id": "synthetic-banking",
         "title": "Synthetic Castle Kifu banking",
         "notes": "",
-        "schemaVersion": 20,
-        "workingCombats": [],
-        "combatCheckpoints": [],
+        "schemaVersion": 21,
         "sessions": [
           {
             "id": "day2",
@@ -1774,10 +1772,10 @@
             "continuation": {
               "sourceSessionId": "day2",
               "sourceFingerprint": "b44976b3cff5812e5d446f34421fab0d741a08bb3b44f496771e6219d9dfbe28",
+              "requestFingerprint": "3f8e59cfdc2e887c2b78baa2daeaea395527e9a1d1c90d9072145f372fe76514",
               "combatInstanceIds": [],
               "inventoryId": "day2-stock",
-              "copyNotes": false,
-              "requestFingerprint": "3f8e59cfdc2e887c2b78baa2daeaea395527e9a1d1c90d9072145f372fe76514"
+              "copyNotes": false
             }
           }
         ],
@@ -1997,13 +1995,13 @@
                 }
               ]
             },
-            "origin": {
-              "kind": "checkpoint",
-              "checkpointId": "carry-checkpoint"
-            },
             "continuedFrom": {
               "sessionId": "day2",
               "instanceId": "day2-stock",
+              "checkpointId": "carry-checkpoint"
+            },
+            "origin": {
+              "kind": "checkpoint",
               "checkpointId": "carry-checkpoint"
             }
           }
@@ -2126,6 +2124,8 @@
           "view": "session",
           "combatSelections": {}
         },
+        "workingCombats": [],
+        "combatCheckpoints": [],
         "banking": {
           "version": 1,
           "openings": [

@@ -5,7 +5,7 @@ import CreateEncounterDialog from '../components/desktop/CreateEncounterDialog';
 import { parseCampaign } from '../helpers/campaignDocument';
 import { createWorkingCombat } from '../helpers/campaignWorkingCombat';
 import { syntheticCombat } from './fixtures/campaignB1';
-import baseline from './fixtures/campaignB1V2.json';
+import baseline from './fixtures/campaignSnapshots.json';
 const makeDoc = () =>
   createWorkingCombat(
     parseCampaign(JSON.stringify(baseline)),

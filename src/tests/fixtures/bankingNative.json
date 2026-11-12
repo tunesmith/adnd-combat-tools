@@ -3,7 +3,7 @@
   "id": "synthetic-banking",
   "title": "Synthetic Castle Kifu banking",
   "notes": "",
-  "schemaVersion": 15,
+  "schemaVersion": 21,
   "sessions": [
     {
       "id": "day2",

@@ -3,11 +3,12 @@
   "id": "synthetic-b1-native",
   "title": "Synthetic B1 campaign",
   "notes": "Invented campaign for snapshot persistence checks.",
-  "schemaVersion": 2,
+  "schemaVersion": 21,
   "sessions": [
     {
       "id": "session-1",
-      "label": "Lantern Gate"
+      "label": "Lantern Gate",
+      "notes": ""
     }
   ],
   "records": [
@@ -558,5 +559,14 @@
         }
       ]
     }
-  ]
+  ],
+  "workingInventories": [],
+  "inventoryCheckpoints": [],
+  "workspace": {
+    "sessionId": null,
+    "view": "possessions",
+    "combatSelections": {}
+  },
+  "workingCombats": [],
+  "combatCheckpoints": []
 }

@@ -1,4 +1,4 @@
-import baseline from './fixtures/campaignB1V2.json';
+import baseline from './fixtures/campaignSnapshots.json';
 import { parseCampaign, serializeCampaign } from '../helpers/campaignDocument';
 import {
   sessionFingerprint,
@@ -8,7 +8,6 @@ import {
 import type { NextSessionRequest } from '../helpers/campaignContinuity';
 import {
   createWorkingCombat,
-  captureCombatCheckpoint,
   changeWorkingCombat,
 } from '../helpers/campaignWorkingCombat';
 import {
@@ -259,90 +258,5 @@ test('native-shared transition validation rejects advanced rounds, reset HP, cha
   required(moved.workingCombats[0]).sessionId = 'session-2';
   expect(() => validateContinuityTransition(source, moved)).toThrow(
     'immutable'
-  );
-});
-test('V1–V4 migrate without changing evidence/IDs/checkpoints and never infer status from rounds or HP', () => {
-  const source = setup();
-  const checkpointed = captureCombatCheckpoint(
-    source,
-    'ongoing',
-    'Legacy history',
-    'legacy-check',
-    at
-  );
-  const legacySessions = source.sessions.map(({ id, label }) => ({
-    id,
-    label,
-  }));
-  const {
-    workingCombats,
-    combatCheckpoints,
-    workingInventories,
-    inventoryCheckpoints,
-    workspace,
-    ...envelope
-  } = checkpointed;
-  void workingCombats;
-  void combatCheckpoints;
-  void workingInventories;
-  void inventoryCheckpoints;
-  void workspace;
-  const v4 = {
-    ...checkpointed,
-    schemaVersion: 4,
-    sessions: legacySessions,
-    workingCombats: checkpointed.workingCombats.map(
-      ({ encounterId, status, continuedFrom, ...c }) => {
-        void encounterId;
-        void status;
-        void continuedFrom;
-        return c;
-      }
-    ),
-    combatCheckpoints: checkpointed.combatCheckpoints.map(
-      ({ status, ...c }) => {
-        void status;
-        return c;
-      }
-    ),
-  };
-  const variants = [
-    {
-      kind: source.kind,
-      schemaVersion: 1,
-      id: source.id,
-      title: source.title,
-      notes: source.notes,
-    },
-    { ...envelope, schemaVersion: 2, sessions: legacySessions },
-    {
-      ...envelope,
-      schemaVersion: 3,
-      sessions: legacySessions,
-      workingInventories: source.workingInventories,
-      inventoryCheckpoints: [],
-      workspace: { sessionId: 'session-1', view: 'possessions' },
-    },
-    v4,
-  ];
-  for (const old of variants) {
-    const bytes = JSON.stringify(old),
-      migrated = parseCampaign(bytes);
-    expect(migrated.schemaVersion).toBe(21);
-    expect(migrated.id).toBe(source.id);
-    expect(migrated.sessions.every((s) => s.notes === '')).toBe(true);
-    expect(
-      migrated.workingCombats.every(
-        (c) => c.status === 'unspecified' && c.encounterId === c.id
-      )
-    ).toBe(true);
-    expect(JSON.stringify(old)).toBe(bytes);
-    if ('records' in old) expect(migrated.records).toEqual(old.records);
-  }
-  const migrated = parseCampaign(JSON.stringify(v4));
-  expect(migrated.combatCheckpoints).toEqual(v4.combatCheckpoints);
-  expect(migrated.workingInventories).toEqual(v4.workingInventories);
-  expect(migrated.workingCombats.map((c) => c.id)).toEqual(
-    source.workingCombats.map((c) => c.id)
   );
 });

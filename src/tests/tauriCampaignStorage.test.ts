@@ -215,7 +215,8 @@ test.each(['save', 'quit', 'openPending'])(
     const { startWorkingInventory } = await import(
       '../helpers/campaignWorkingInventory'
     );
-    const baseline = (await import('./fixtures/campaignB1V2.json')).default;
+    const baseline = (await import('./fixtures/campaignSnapshots.json'))
+      .default;
     let doc = createWorkingCombat(
       startWorkingInventory(
         parseCampaign(JSON.stringify(baseline)),

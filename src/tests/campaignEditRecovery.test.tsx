@@ -12,7 +12,7 @@ import { createTauriStorage } from '../helpers/tauriCampaignStorage';
 import { parseCampaign } from '../helpers/campaignDocument';
 import { createWorkingCombat } from '../helpers/campaignWorkingCombat';
 import { syntheticCombat } from './fixtures/campaignB1';
-import baseline from './fixtures/campaignB1V2.json';
+import baseline from './fixtures/campaignSnapshots.json';
 import type { DocumentState } from '../types/campaignStorage';
 afterEach(() => {
   delete window.campaignStorage;

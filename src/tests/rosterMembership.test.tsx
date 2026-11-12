@@ -48,8 +48,15 @@ beforeEach(() => {
 function fixture(): CampaignDocument {
   const doc = parseCampaign(
     JSON.stringify({
+      workingCombats: [],
+      combatCheckpoints: [],
+      workingInventories: [],
+      inventoryCheckpoints: [],
+      sessions: [],
+      records: [],
+      workspace: { sessionId: null, view: 'possessions', combatSelections: {} },
       kind: 'adnd-campaign',
-      schemaVersion: 1,
+      schemaVersion: 21,
       id: 'roster-fixture',
       title: 'Disposable roster example',
       notes: '',
@@ -331,12 +338,12 @@ test('Day93 removal, restoration and roster XP settings preserve combat and conf
   expect(xpLedger(current()).events[0]).toEqual(confirmed);
 });
 
-test('historical additions identify the latest earlier profile and restore legacy absent stats', () => {
+test('historical additions identify the latest earlier profile and restore absent stats', () => {
   let doc = withProfile(fixture(), 'pc', 'Earlier PC', 'd90', 25);
   doc = withProfile(doc, 'pc', 'Earlier PC', 'd92', 30, false);
   doc = withProfile(doc, 'pc', 'Earlier PC', 'd93', 40);
   doc = withProfile(doc, 'legacy', 'Legacy PC', 'd91', 18, false);
-  const old = parseCampaign(JSON.stringify({ ...doc, schemaVersion: 13 }));
+  const old = parseCampaign(JSON.stringify(doc));
   expect(old.schemaVersion).toBe(21);
   expect(priorProfileChoices(old, 'd93', 'pc')[0]?.sessionId).toBe('d92');
   const current = harness(old, 'd91');

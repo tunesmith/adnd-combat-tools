@@ -1,4 +1,4 @@
-import baseline from './fixtures/campaignB1V2.json';
+import baseline from './fixtures/campaignSnapshots.json';
 import { captureSnapshot } from '../helpers/campaignCapture';
 import { parseCampaign, serializeCampaign } from '../helpers/campaignDocument';
 import {

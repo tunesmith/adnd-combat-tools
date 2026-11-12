@@ -4,7 +4,7 @@ import { fireEvent, render, screen, within } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import PartyReference from '../components/desktop/PartyReference';
 import { parseCampaign } from '../helpers/campaignDocument';
-import fixture from './fixtures/campaignProfilesV8.json';
+import fixture from './fixtures/campaignProfiles.json';
 
 test('dense profile modal drafts cancel, save shared data, and retain reference and rules fields', () => {
   const initial = parseCampaign(JSON.stringify(fixture));

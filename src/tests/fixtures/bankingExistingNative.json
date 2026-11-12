@@ -3,9 +3,7 @@
   "id": "synthetic-existing-money",
   "title": "Synthetic SOCK Day1 existing money",
   "notes": "",
-  "schemaVersion": 16,
-  "workingCombats": [],
-  "combatCheckpoints": [],
+  "schemaVersion": 21,
   "sessions": [
     {
       "id": "day1",
@@ -181,6 +179,8 @@
     "view": "possessions",
     "combatSelections": {}
   },
+  "workingCombats": [],
+  "combatCheckpoints": [],
   "xp": {
     "version": 2,
     "timeline": {},

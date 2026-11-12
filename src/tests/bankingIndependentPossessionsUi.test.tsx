@@ -1,6 +1,5 @@
 /** @jest-environment jsdom */
 import '@testing-library/jest-dom';
-import legacyReconciliation from './fixtures/bankPossessionsReconciliationNative.json';
 import { useState } from 'react';
 import { transferInventorySubtree } from '../helpers/encumbranceStorage';
 import { fireEvent, render, screen, within } from '@testing-library/react';
@@ -209,28 +208,6 @@ test('deleting stale coins directly resolves the earlier loss with no special ac
   expect(bankLedger(doc).entries).toEqual(bankLedger(before).entries);
   expect(holderMoney(inventory, staleHolder).ep).toBe(0);
   expect(bankBalance(doc, staleHolder, 'day3').ep).toBe(0);
-});
-
-test('saved possessions-reconciliation history stays inspectable with no creation action', () => {
-  const doc = parseCampaign(JSON.stringify(legacyReconciliation.after));
-  render(
-    <CampaignBanking document={doc} sessionId="day3" onChange={() => true} />
-  );
-  expect(
-    screen.queryByRole('button', { name: 'Reconcile possessions to ledger…' })
-  ).not.toBeInTheDocument();
-  fireEvent.click(screen.getByText('Possessions reconciliations'));
-  fireEvent.click(
-    screen.getByRole('button', { name: /Earlier loss of 50 electrum/ })
-  );
-  expect(
-    screen.getByRole('dialog', {
-      name: 'Historical possessions reconciliation',
-    })
-  ).toBeInTheDocument();
-  expect(
-    screen.queryByRole('button', { name: 'Apply reconciliation' })
-  ).not.toBeInTheDocument();
 });
 
 test('changing an incoming exchange holder after entering quantity chooses that holder’s stack', () => {

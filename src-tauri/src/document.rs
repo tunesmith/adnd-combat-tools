@@ -124,40 +124,11 @@ fn save_accepted_with_hook(path: &Path, doc: &Document, expected: Option<&str>, 
     temp.write_all(&bytes)
         .and_then(|_| temp.as_file().sync_all())
         .map_err(|e| e.to_string())?;
-    // Decide from the actual on-disk schema, not the already migrated editor state.
-    let upgrading = old.as_ref().and_then(|b| serde_json::from_slice::<serde_json::Value>(b).ok())
-        .and_then(|v| v.get("schemaVersion").and_then(|v| v.as_u64()))
-        .map(|version| version < u64::from(doc.schema_version)).unwrap_or(false);
-    let backup = if upgrading {
-        let mut backup = tempfile::NamedTempFile::new_in(dir).map_err(|e| e.to_string())?;
-        backup.write_all(old.as_ref().ok_or("Missing original campaign")?)
-            .and_then(|_| backup.as_file().sync_all()).map_err(|e| e.to_string())?;
-        Some(backup)
-    } else { None };
     #[cfg(feature = "diagnostic-harness")]
     crate::diagnostics::before_persist()?;
     hook()?;
     if read(path)?.as_ref().map(|b| hash(b)).as_deref() != expected {
         return Err(CONFLICT.into());
-    }
-    if let Some(mut backup) = backup {
-        let mut suffix = 1_u32;
-        loop {
-            let recovery = if suffix == 1 { format!("{}.bak", path.display()) }
-                else { format!("{}.upgrade-{}.bak", path.display(), suffix) };
-            match backup.persist_noclobber(&recovery) {
-                Ok(_) => break,
-                Err(error) if error.error.kind() == std::io::ErrorKind::AlreadyExists => {
-                    // A prior failed upgrade may already have retained these exact bytes.
-                    if read(Path::new(&recovery)).ok().flatten().as_deref() == old.as_deref() {
-                        break;
-                    }
-                    backup = error.file;
-                    suffix = suffix.checked_add(1).ok_or("Too many recovery backups")?;
-                }
-                Err(error) => return Err(error.to_string()),
-            }
-        }
     }
     if expected.is_none() {
         temp.persist_noclobber(path).map_err(|e| e.to_string())?;
@@ -188,7 +159,7 @@ fn current_test_inventory(doc: &Document) -> serde_json::Value {
 mod tests {
     use super::*;
     #[test]
-    fn round_trip_backup_and_failure() {
+    fn round_trip_save_and_failure() {
         let dir = tempfile::tempdir().unwrap();
         let p = dir.path().join("synthetic.adnd");
         let first = Document::new();
@@ -232,33 +203,17 @@ mod tests {
         assert_eq!(fs::read_to_string(p).unwrap(), "external");
     }
     #[test]
-    fn rejects_unknown_malformed_future() {
+    fn rejects_unknown_fields_malformed_json_and_unsupported_versions() {
         assert!(parse(b"{bad").is_err());
         let mut v = serde_json::to_value(Document::new()).unwrap();
-        v["schemaVersion"] = 22.into();
-        assert!(parse(&serde_json::to_vec(&v).unwrap())
-            .unwrap_err()
-            .contains("schema version"));
-        v["schemaVersion"] = 8.into();
+        for version in [1, 10, 20, 22] {
+            v["schemaVersion"] = version.into();
+            let bytes = serde_json::to_vec(&v).unwrap();
+            assert!(parse(&bytes).unwrap_err().contains("requires version 21"));
+        }
+        v["schemaVersion"] = 21.into();
         v["unknown"] = true.into();
         assert!(parse(&serde_json::to_vec(&v).unwrap()).is_err());
-    }
-}
-
-#[cfg(test)]
-mod legacy_tests {
-    use super::*;
-    #[test]
-    fn legacy_json_can_be_saved_as_adnd_without_changing_identity_or_content() {
-        let dir = tempfile::tempdir().unwrap();
-        let legacy = dir.path().join("synthetic.adnd-campaign.json");
-        let native = dir.path().join("synthetic.adnd");
-        let bytes = br#"{"kind":"adnd-campaign","schemaVersion":1,"id":"legacy-synthetic-id","title":"Invented company","notes":"Only synthetic notes"}"#;
-        fs::write(&legacy, bytes).unwrap();
-        let doc = parse(&read(&legacy).unwrap().unwrap()).unwrap();
-        save(&native, &doc, None).unwrap();
-        assert_eq!(parse(&read(&native).unwrap().unwrap()).unwrap(), doc);
-        assert_eq!(fs::read(&legacy).unwrap(), bytes);
     }
 }
 
@@ -382,7 +337,7 @@ mod b1_tests {
     use super::*;
     #[test]
     fn embedded_sources_survive_metadata_edits_save_and_reopen() {
-        let bytes = include_bytes!("../../src/tests/fixtures/campaignB1V2.json");
+        let bytes = include_bytes!("../../src/tests/fixtures/campaignSnapshots.json");
         let mut doc = parse(bytes).unwrap();
         let records = doc.records.clone();
         let dir = tempfile::tempdir().unwrap();
@@ -397,21 +352,10 @@ mod b1_tests {
         doc.records[0]["revisions"][0]["sourceText"] = "{}".into();
         assert!(doc.validate().is_err());
     }
-    #[test]
-    fn migration_preserves_original_bytes_until_save_then_backs_up_v1() {
-        let dir = tempfile::tempdir().unwrap();
-        let path = dir.path().join("old.adnd");
-        let bytes=br#"{"kind":"adnd-campaign","schemaVersion":1,"id":"kept","title":"Old","notes":"Keep"}"#;
-        fs::write(&path, bytes).unwrap();
-        let doc = parse(bytes).unwrap();
-        assert_eq!(doc.schema_version, 21);
-        assert_eq!(fs::read(&path).unwrap(), bytes);
-        save(&path, &doc, Some(&hash(bytes))).unwrap();
-        assert_eq!(fs::read(format!("{}.bak", path.display())).unwrap(), bytes);
-    }
+
     #[test]
     fn immutable_revision_cannot_be_replaced_by_metadata_update() {
-        let doc = parse(include_bytes!("../../src/tests/fixtures/campaignB1V2.json")).unwrap();
+        let doc = parse(include_bytes!("../../src/tests/fixtures/campaignSnapshots.json")).unwrap();
         let mut next = doc.clone();
         next.records[0]["revisions"][0]["sourceName"] = "Changed".into();
         assert!(validate_replacement(&doc, &next).is_err());
@@ -423,7 +367,7 @@ mod working_tests {
     use super::*;
     #[test]
     fn working_inventory_and_immutable_history_survive_save_and_reopen() {
-        let mut doc = parse(include_bytes!("../../src/tests/fixtures/campaignB1V2.json")).unwrap();
+        let mut doc = parse(include_bytes!("../../src/tests/fixtures/campaignSnapshots.json")).unwrap();
         let original = doc.records.clone();
         let inventory = current_test_inventory(&doc);
         doc.working_inventories.push(serde_json::json!({"id":"working","sessionId":"session-1","title":"Working possessions","document":inventory,"origin":{"kind":"import","recordId":"inventory-1","revisionId":"inventory-r1"}}));
@@ -456,64 +400,14 @@ mod working_tests {
 }
 
 #[cfg(test)]
-mod v2_migration_tests {
-    use super::*;
-    #[test]
-    fn v2_save_preserves_complete_original_backup_and_all_b1_evidence() {
-        let bytes = include_bytes!("../../src/tests/fixtures/campaignB1V2.json");
-        let original: serde_json::Value = serde_json::from_slice(bytes).unwrap();
-        let dir = tempfile::tempdir().unwrap();
-        let path = dir.path().join("v2.adnd");
-        fs::write(&path, bytes).unwrap();
-        let doc = parse(&fs::read(&path).unwrap()).unwrap();
-        assert_eq!(doc.schema_version, 21);
-        assert_eq!(fs::read(&path).unwrap(), bytes);
-        save(&path, &doc, Some(&hash(bytes))).unwrap();
-        assert_eq!(fs::read(format!("{}.bak", path.display())).unwrap(), bytes);
-        let restored = parse(&fs::read(path).unwrap()).unwrap();
-        assert_eq!(
-            serde_json::to_value(restored.records).unwrap(),
-            original["records"]
-        );
-        assert_eq!(
-            serde_json::to_value(restored.sessions).unwrap(),
-            serde_json::Value::Array(
-                original["sessions"]
-                    .as_array()
-                    .unwrap()
-                    .iter()
-                    .map(|s| {
-                        let mut s = s.clone();
-                        s["notes"] = "".into();
-                        s
-                    })
-                    .collect()
-            )
-        );
-    }
-}
-
-#[cfg(test)]
 mod combat_tests {
     use super::*;
     #[test]
-    fn v3_migration_combat_inventory_history_backup_conflict_and_failure() {
-        let mut doc = parse(include_bytes!("../../src/tests/fixtures/campaignB1V2.json")).unwrap();
+    fn combat_inventory_history_conflict_and_failure() {
+        let mut doc = parse(include_bytes!("../../src/tests/fixtures/campaignSnapshots.json")).unwrap();
         let inventory = current_test_inventory(&doc);
         doc.working_inventories.push(serde_json::json!({"id":"inventory","sessionId":"session-1","title":"Possessions","document":inventory,"origin":{"kind":"empty"}}));
-        let mut old = serde_json::to_value(&doc).unwrap();
-        old["schemaVersion"] = 3.into();
-        for session in old["sessions"].as_array_mut().unwrap() {
-            session.as_object_mut().unwrap().remove("notes");
-        }
-        old.as_object_mut().unwrap().remove("workingCombats");
-        old.as_object_mut().unwrap().remove("combatCheckpoints");
-        old["workspace"]
-            .as_object_mut()
-            .unwrap()
-            .remove("combatSelections");
-        let old_bytes = serde_json::to_vec_pretty(&old).unwrap();
-        doc = parse(&old_bytes).unwrap();
+        let old_bytes = serde_json::to_vec_pretty(&doc).unwrap();
         assert_eq!(doc.working_inventories[0]["document"], inventory);
         let state = doc.records[0]["revisions"][0]["payload"].clone();
         for id in ["gate", "bridge"] {
@@ -525,10 +419,6 @@ mod combat_tests {
         let path = dir.path().join("combat.adnd");
         fs::write(&path, &old_bytes).unwrap();
         let revision = save(&path, &doc, Some(&hash(&old_bytes))).unwrap();
-        assert_eq!(
-            fs::read(format!("{}.bak", path.display())).unwrap(),
-            old_bytes
-        );
         assert_eq!(parse(&fs::read(&path).unwrap()).unwrap(), doc);
         let mut next = doc.clone();
         next.working_combats[0]["generation"] = 1.into();
@@ -558,7 +448,7 @@ mod history_ownership_tests {
     use super::*;
     #[test]
     fn native_boundary_rejects_unrelated_restore_even_with_a_preserved_current_checkpoint() {
-        let mut doc = parse(include_bytes!("../../src/tests/fixtures/campaignB1V2.json")).unwrap();
+        let mut doc = parse(include_bytes!("../../src/tests/fixtures/campaignSnapshots.json")).unwrap();
         let mut other = doc.records[0].clone();
         other["id"] = "other-source".into();
         other["revisions"][0]["id"] = "other-revision".into();
@@ -582,13 +472,12 @@ mod history_ownership_tests {
 mod continuity_tests {
     use super::*;
     #[test]
-    fn dense_profiles_upgrade_and_survive_save_failure_conflict_and_reopen() {
+    fn dense_profiles_survive_save_failure_conflict_and_reopen() {
         let expanded = parse(include_bytes!(
-            "../../src/tests/fixtures/campaignProfilesV8.json"
+            "../../src/tests/fixtures/campaignProfiles.json"
         ))
         .unwrap();
         let mut legacy = serde_json::to_value(&expanded).unwrap();
-        legacy["schemaVersion"] = 7.into();
         for profile in legacy["party"]["profiles"].as_array_mut().unwrap() {
             profile.as_object_mut().unwrap().remove("reference");
         }
@@ -601,7 +490,6 @@ mod continuity_tests {
         let path = dir.path().join("dense.adnd");
         fs::write(&path, &bytes).unwrap();
         let revision = save(&path, &expanded, Some(&hash(&bytes))).unwrap();
-        assert_eq!(fs::read(format!("{}.bak", path.display())).unwrap(), bytes);
         assert_eq!(parse(&fs::read(&path).unwrap()).unwrap(), expanded);
         let saved = fs::read(&path).unwrap();
         assert!(save_with_hook(&path, &expanded, Some(&revision), || Err(
@@ -617,67 +505,18 @@ mod continuity_tests {
         assert_eq!(fs::read(&path).unwrap(), b"External change");
     }
 
-    #[test]
-    fn v6_campaign_upgrades_without_changing_evidence_or_backup_bytes() {
-        let mut source =
-            parse(include_bytes!("../../src/tests/fixtures/campaignB1V2.json")).unwrap();
-        let state = source.records[0]["revisions"][0]["payload"].clone();
-        let inventory = current_test_inventory(&source);
-        source.working_combats.push(serde_json::json!({"id":"fight","encounterId":"fight","status":"unspecified","sessionId":"session-1","title":"Invented fight","generation":1,"removedAt":"2026-11-04T12:00:00.000Z","state":state,"origin":{"kind":"import","recordId":"combat-1","revisionId":"combat-r1"}}));
-        source.working_inventories.push(serde_json::json!({"id":"inventory","sessionId":"session-1","title":"Invented possessions","document":inventory,"origin":{"kind":"import","recordId":"inventory-1","revisionId":"inventory-r1"}}));
-        source.combat_checkpoints.push(serde_json::json!({"id":"earlier","combatId":"fight","sessionId":"session-1","label":"Before","capturedAt":"2026-11-04T12:00:00.000Z","state":state}));
-        source.party = Some(serde_json::json!({
-            "roster":[{"id":"pc","name":"Synthetic scout","player":"","notes":"Character notes"}],
-            "profiles":[{"characterId":"pc","sessionId":"session-1","characterClass":"cleric","baseLevel":6,"saveBasis":"printed","combatBasis":"class","retainedFighter":null,"retainedThief":null,"adjustment":{"name":"Lantern","enabled":true},"participating":true,"overrides":[null,null,null,null,null],"saveNotes":["","Save note",""]}]
-        }));
-        let mut legacy = serde_json::to_value(&source).unwrap();
-        legacy["schemaVersion"] = 6.into();
-        legacy["party"]["inventoryLinks"] = serde_json::json!([]);
-        legacy["party"]["combatLinks"] = serde_json::json!([]);
-        let bytes = serde_json::to_vec_pretty(&legacy).unwrap();
-        let dir = tempfile::tempdir().unwrap();
-        let path = dir.path().join("legacy-v6.adnd");
-        fs::write(&path, &bytes).unwrap();
-        let migrated = parse(&fs::read(&path).unwrap()).unwrap();
-        source.sessions[0]["partyOrder"] = serde_json::json!(["pc"]);
-        assert_eq!(migrated, source);
-        assert_eq!(fs::read(&path).unwrap(), bytes);
-        save(&path, &migrated, Some(&hash(&bytes))).unwrap();
-        assert_eq!(fs::read(format!("{}.bak", path.display())).unwrap(), bytes);
-        assert_eq!(parse(&fs::read(&path).unwrap()).unwrap(), migrated);
-        let mut recovered = migrated.clone();
-        recovered.working_combats[0]["generation"] = 2.into();
-        recovered.working_combats[0]
-            .as_object_mut()
-            .unwrap()
-            .remove("removedAt");
-        assert!(validate_replacement(&migrated, &recovered).is_ok());
-        recovered.working_combats[0]["state"]["rounds"][0]["party"][0]["level"] = 17.into();
-        assert!(validate_replacement(&migrated, &recovered).is_err());
-    }
+
 
     #[test]
-    fn v4_upgrade_native_continuation_exact_state_backup_failure_and_reopen() {
+    fn native_continuation_exact_state_failure_and_reopen() {
         let mut source =
-            parse(include_bytes!("../../src/tests/fixtures/campaignB1V2.json")).unwrap();
+            parse(include_bytes!("../../src/tests/fixtures/campaignSnapshots.json")).unwrap();
         let state = source.records[0]["revisions"][0]["payload"].clone();
         let inventory = current_test_inventory(&source);
         source.working_combats.push(serde_json::json!({"id":"ongoing","encounterId":"ongoing","status":"unspecified","sessionId":"session-1","title":"Invented fight","generation":0,"state":state,"origin":{"kind":"import","recordId":"combat-1","revisionId":"combat-r1"}}));
         source.working_inventories.push(serde_json::json!({"id":"inventory","sessionId":"session-1","title":"Invented possessions","document":inventory,"origin":{"kind":"import","recordId":"inventory-1","revisionId":"inventory-r1"}}));
         source.workspace = serde_json::json!({"sessionId":"session-1","view":"combats","combatSelections":{"session-1":"ongoing"}});
-        let mut legacy = serde_json::to_value(&source).unwrap();
-        legacy["schemaVersion"] = 4.into();
-        for session in legacy["sessions"].as_array_mut().unwrap() {
-            session.as_object_mut().unwrap().remove("notes");
-        }
-        for combat in legacy["workingCombats"].as_array_mut().unwrap() {
-            combat.as_object_mut().unwrap().remove("encounterId");
-            combat.as_object_mut().unwrap().remove("status");
-        }
-        let legacy_bytes = serde_json::to_vec_pretty(&legacy).unwrap();
-        let mut source = parse(&legacy_bytes).unwrap();
-        assert_eq!(source.working_combats[0]["status"], "unspecified");
-        assert_eq!(source.sessions[0]["notes"], "");
+        let legacy_bytes = serde_json::to_vec_pretty(&source).unwrap();
         source.working_combats[0]["status"] = "in-progress".into();
         source.sessions[0]["notes"] = "Stopping point\nRemember lantern".into();
         let context = serde_json::json!({"session":source.sessions[0],"records":source.records,"combats":source.working_combats,"inventory":source.working_inventories,"selected":"ongoing"});
@@ -722,10 +561,6 @@ mod continuity_tests {
         let path = dir.path().join("continuation.adnd");
         fs::write(&path, &legacy_bytes).unwrap();
         let revision = save(&path, &next, Some(&hash(&legacy_bytes))).unwrap();
-        assert_eq!(
-            fs::read(format!("{}.bak", path.display())).unwrap(),
-            legacy_bytes
-        );
         let reopened = parse(&fs::read(&path).unwrap()).unwrap();
         assert_eq!(reopened, next);
         let mut later = reopened.clone();
@@ -753,41 +588,28 @@ mod continuity_tests {
 mod storage_save_tests {
     use super::*;
     #[test]
-    fn upgrades_once_without_clobbering_existing_recovery_and_keeps_routine_saves_quiet() {
+    fn saves_preserve_existing_backups_without_generating_more() {
         let dir = tempfile::tempdir().unwrap();
-        let path = dir.path().join("synthetic-storage.adnd");
-        let mut old = serde_json::to_value(Document::new()).unwrap();
-        old["schemaVersion"] = 8.into();
-        let original = serde_json::to_vec_pretty(&old).unwrap();
-        fs::write(&path, &original).unwrap();
-        let previous_backup = dir.path().join("synthetic-storage.adnd.bak");
-        fs::write(&previous_backup, "existing recovery").unwrap();
-        let mut doc = parse(&original).unwrap();
-        let rev = save(&path, &doc, Some(&hash(&original))).unwrap();
-        assert_eq!(fs::read(&previous_backup).unwrap(), b"existing recovery");
-        let upgrade = dir.path().join("synthetic-storage.adnd.upgrade-2.bak");
-        assert_eq!(fs::read(&upgrade).unwrap(), original);
-        doc.notes = "Routine edit".into();
-        let rev = save(&path, &doc, Some(&rev)).unwrap();
+        let path = dir.path().join("current.adnd");
+        let doc = Document::new();
+        let backup = dir.path().join("current.adnd.bak");
+        fs::write(&backup, b"manual backup").unwrap();
+        let rev = save(&path, &doc, None).unwrap();
         save(&path, &doc, Some(&rev)).unwrap();
-        assert_eq!(fs::read_dir(dir.path()).unwrap().count(), 3);
-        assert_eq!(fs::read(&upgrade).unwrap(), original);
-        assert!(is_recovery_path(&upgrade, &path));
-        assert!(is_recovery_path(&previous_backup, &path));
-        // Save As overwrite is the same atomic/current-schema path.
+        assert_eq!(fs::read(&backup).unwrap(), b"manual backup");
+        assert_eq!(fs::read_dir(dir.path()).unwrap().count(), 2);
+        assert!(is_recovery_path(&backup, &path));
+        assert!(is_recovery_path(&dir.path().join("current.adnd.upgrade-2.bak"), &path));
         let other = dir.path().join("save-as.adnd");
-        let old_rev = save(&other, &Document::new(), None).unwrap();
-        save(&other, &doc, Some(&old_rev)).unwrap();
+        let old = save(&other, &Document::new(), None).unwrap();
+        save(&other, &doc, Some(&old)).unwrap();
         assert!(!dir.path().join("save-as.adnd.bak").exists());
-        let bytes = fs::read(&path).unwrap();
-        assert!(save_with_hook(&path, &doc, Some(&hash(&bytes)), || Err("Injected failure".into())).is_err());
-        assert_eq!(fs::read(&path).unwrap(), bytes);
-        assert_eq!(fs::read_dir(dir.path()).unwrap().count(), 4);
+        assert!(save_with_hook(&path, &doc, Some(&rev), || Err("Injected failure".into())).is_err());
+        assert_eq!(parse(&fs::read(&path).unwrap()).unwrap(), doc);
     }
     #[test]
-    fn v8_storage_upgrade_retains_old_checkpoint_and_exact_original_then_reopens_new_storage() {
-        let mut legacy = serde_json::from_str::<serde_json::Value>(include_str!("../../src/tests/fixtures/campaignB1V2.json")).unwrap();
-        legacy["schemaVersion"] = 8.into();
+    fn imported_inventory_evidence_and_storage_survive_reopen() {
+        let mut legacy = serde_json::from_str::<serde_json::Value>(include_str!("../../src/tests/fixtures/campaignSnapshots.json")).unwrap();
         let inventory = legacy["records"][1]["revisions"][0]["payload"].clone();
         legacy["workingInventories"] = serde_json::json!([{"id":"inventory","sessionId":"session-1","title":"Possessions","document":inventory,"origin":{"kind":"empty"}}]);
         legacy["inventoryCheckpoints"] = serde_json::json!([{"id":"checkpoint","workingId":"inventory","sessionId":"session-1","label":"Old stock","capturedAt":"2026-11-07T12:00:00.000Z","document":inventory}]);
@@ -797,7 +619,7 @@ mod storage_save_tests {
         let bytes = serde_json::to_vec_pretty(&legacy).unwrap();
         let mut doc = parse(&bytes).unwrap();
         assert_eq!(doc.inventory_checkpoints[0]["document"], inventory);
-        assert_eq!(doc.working_inventories[0]["document"]["version"], 10);
+        doc.working_inventories[0]["document"] = current_test_inventory(&doc);
         let items = doc.working_inventories[0]["document"]["characters"][0]["inventory"].take();
         doc.working_inventories[0]["document"]["characters"][0]["inventory"] = serde_json::json!([]);
         doc.working_inventories[0]["document"]["storageLocations"] = serde_json::json!([{"id":"castle","name":"Synthetic Castle","notes":"Test only","inventory":items}]);
@@ -807,9 +629,8 @@ mod storage_save_tests {
         let rev = save(&path, &doc, Some(&hash(&bytes))).unwrap();
         let reopened = parse(&fs::read(&path).unwrap()).unwrap();
         assert_eq!(reopened, doc);
-        assert_eq!(fs::read(dir.path().join("legacy.adnd.bak")).unwrap(), bytes);
         save(&path, &reopened, Some(&rev)).unwrap();
-        assert_eq!(fs::read_dir(dir.path()).unwrap().count(), 2);
+        assert_eq!(fs::read_dir(dir.path()).unwrap().count(), 1);
     }
 }
 
@@ -827,7 +648,6 @@ mod xp_tests {
         // This executes the shared BigInt calculator inside the actual QuickJS boundary.
         let (accepted, corrected) = replay();
         let mut legacy = serde_json::to_value(&accepted).unwrap();
-        legacy["schemaVersion"] = 9.into();
         legacy["workspace"]["view"] = "session".into();
         legacy.as_object_mut().unwrap().remove("xp");
         let original = serde_json::to_vec_pretty(&legacy).unwrap();
@@ -839,7 +659,6 @@ mod xp_tests {
         let path = dir.path().join("synthetic-xp.adnd");
         fs::write(&path, &original).unwrap();
         let revision = save(&path, &accepted, Some(&hash(&original))).unwrap();
-        assert_eq!(fs::read(dir.path().join("synthetic-xp.adnd.bak")).unwrap(), original);
         let reopened = parse(&fs::read(&path).unwrap()).unwrap();
         assert_eq!(reopened, accepted);
         let xp = reopened.xp.as_ref().unwrap();
@@ -855,8 +674,7 @@ mod xp_tests {
         assert_eq!(fs::read(&path).unwrap(), bytes);
         save(&path, &corrected, Some(&revision)).unwrap();
         assert_eq!(parse(&fs::read(&path).unwrap()).unwrap(), corrected);
-        assert_eq!(fs::read_dir(dir.path()).unwrap().count(), 2);
-        assert_eq!(fs::read(dir.path().join("synthetic-xp.adnd.bak")).unwrap(), original);
+        assert_eq!(fs::read_dir(dir.path()).unwrap().count(), 1);
         let mut changed = corrected.clone();
         changed.xp.as_mut().unwrap()["events"][0]["rows"][0]["award"] = 999.into();
         assert!(changed.validate().is_err());
@@ -876,7 +694,7 @@ mod xp_tests {
 mod xp_cap_tests {
     use super::*;
     #[test]
-    fn caps_rebase_migration_atomic_failure_conflict_and_reopen() {
+    fn caps_rebase_atomic_failure_conflict_and_reopen() {
         let fixture: serde_json::Value = serde_json::from_str(include_str!("../../src/tests/fixtures/xpCapReplay.json")).unwrap();
         let capped = parse(&serde_json::to_vec(&fixture["capped"]).unwrap()).unwrap();
         let row = &capped.xp.as_ref().unwrap()["events"][0]["rows"][0];
@@ -909,7 +727,7 @@ mod xp_cap_tests {
         assert_eq!(migrated.xp.as_ref().unwrap()["events"],fixture["legacy"]["xp"]["events"]);
         save(&legacy,&migrated,Some(&hash(&original))).unwrap();
         assert_eq!(fs::read(dir.path().join("legacy.adnd.bak")).unwrap(),b"existing backup");
-        assert_eq!(fs::read(dir.path().join("legacy.adnd.upgrade-2.bak")).unwrap(),original);
+        assert!(!dir.path().join("legacy.adnd.upgrade-2.bak").exists());
         assert_eq!(parse(&fs::read(&legacy).unwrap()).unwrap().xp.as_ref().unwrap()["events"],fixture["legacy"]["xp"]["events"]);
     }
 }
@@ -957,8 +775,7 @@ mod xp_extension_tests {
 
         let dir = tempfile::tempdir().unwrap();
         let path = dir.path().join("synthetic-extension.adnd");
-        let mut legacy = serde_json::to_value(&draft).unwrap();
-        legacy["schemaVersion"] = 12.into();
+        let legacy = serde_json::to_value(&draft).unwrap();
         let original = serde_json::to_vec(&legacy).unwrap();
         fs::write(&path, &original).unwrap();
         let migrated = parse(&original).unwrap();
@@ -966,7 +783,7 @@ mod xp_extension_tests {
         let rev = save(&path, &migrated, Some(&hash(&original))).unwrap();
         let draft_bytes = fs::read(&path).unwrap();
         let backup = dir.path().join("synthetic-extension.adnd.bak");
-        assert_eq!(fs::read(&backup).unwrap(), original);
+        assert!(!backup.exists());
         assert!(save_with_hook(&path, &accepted, Some(&rev), || Err("Injected save failure".into())).is_err());
         assert_eq!(fs::read(&path).unwrap(), draft_bytes);
         fs::write(&path, b"external synthetic change").unwrap();
@@ -977,8 +794,8 @@ mod xp_extension_tests {
         let reopened = parse(&fs::read(&path).unwrap()).unwrap();
         assert_eq!(reopened, accepted);
         assert_eq!(reopened.xp.unwrap()["events"][0], draft.xp.unwrap()["events"][0]);
-        assert_eq!(fs::read(&backup).unwrap(), original);
-        assert_eq!(fs::read_dir(dir.path()).unwrap().count(), 2);
+        assert!(!backup.exists());
+        assert_eq!(fs::read_dir(dir.path()).unwrap().count(), 1);
     }
 }
 
@@ -1014,19 +831,17 @@ mod banking_tests {
         let path = dir.path().join("synthetic-bank.adnd");
         let mut old = serde_json::to_value(&before).unwrap();
         old.as_object_mut().unwrap().remove("banking");
-        old["schemaVersion"] = 14.into();
         let original = serde_json::to_vec(&old).unwrap();
         fs::write(&path, &original).unwrap();
         let migrated = parse(&original).unwrap();
         assert_eq!(migrated.schema_version, 21);
         let revision = save(&path, &before, Some(&hash(&original))).unwrap();
-        assert_eq!(fs::read(dir.path().join("synthetic-bank.adnd.bak")).unwrap(), original);
         let saved = fs::read(&path).unwrap();
         assert!(save_with_hook(&path, &after, Some(&revision), || Err("Injected banking failure".into())).is_err());
         assert_eq!(fs::read(&path).unwrap(), saved);
         save(&path, &after, Some(&revision)).unwrap();
         assert_eq!(parse(&fs::read(&path).unwrap()).unwrap(), after);
-        assert_eq!(fs::read_dir(dir.path()).unwrap().count(), 2);
+        assert_eq!(fs::read_dir(dir.path()).unwrap().count(), 1);
         let latest = fs::read(&path).unwrap();
         fs::write(&path, b"external synthetic edit").unwrap();
         assert_eq!(save(&path, &after, Some(&hash(&latest))).unwrap_err(), CONFLICT);
@@ -1061,13 +876,11 @@ mod existing_money_tests {
         assert!(validate_replacement(&before, &changed_money).is_err());
         let dir = tempfile::tempdir().unwrap();
         let path = dir.path().join("synthetic-existing-money.adnd");
-        let mut legacy = serde_json::to_value(&before).unwrap();
-        legacy["schemaVersion"] = 15.into();
+        let legacy = serde_json::to_value(&before).unwrap();
         let original = serde_json::to_vec(&legacy).unwrap();
         fs::write(&path, &original).unwrap();
         assert_eq!(parse(&original).unwrap(), before);
         let rev = save(&path, &before, Some(&hash(&original))).unwrap();
-        assert_eq!(fs::read(dir.path().join("synthetic-existing-money.adnd.bak")).unwrap(), original);
         let saved = fs::read(&path).unwrap();
         assert!(save_with_hook(&path, &after, Some(&rev), || Err("Injected existing money failure".into())).is_err());
         assert_eq!(fs::read(&path).unwrap(), saved);
@@ -1075,7 +888,7 @@ mod existing_money_tests {
         let reopened = parse(&fs::read(&path).unwrap()).unwrap();
         assert_eq!(reopened, after);
         assert_eq!(reopened.working_inventories, before.working_inventories);
-        assert_eq!(fs::read_dir(dir.path()).unwrap().count(), 2);
+        assert_eq!(fs::read_dir(dir.path()).unwrap().count(), 1);
         let current = fs::read(&path).unwrap();
         fs::write(&path, b"external edit").unwrap();
         assert_eq!(save(&path, &after, Some(&hash(&current))).unwrap_err(), CONFLICT);
@@ -1153,8 +966,7 @@ mod existing_transfer_tests {
         assert_eq!(removed.working_inventories, before.working_inventories);
         let dir = tempfile::tempdir().unwrap();
         let path = dir.path().join("synthetic-existing-transfer.adnd");
-        let mut legacy = serde_json::to_value(&before).unwrap();
-        legacy["schemaVersion"] = 16.into();
+        let legacy = serde_json::to_value(&before).unwrap();
         let original = serde_json::to_vec(&legacy).unwrap();
         fs::write(&path, &original).unwrap();
         assert_eq!(parse(&original).unwrap(), before);
@@ -1166,8 +978,7 @@ mod existing_transfer_tests {
         let reopened = parse(&fs::read(&path).unwrap()).unwrap();
         assert_eq!(reopened, after);
         assert_eq!(reopened.working_inventories, before.working_inventories);
-        assert_eq!(fs::read_dir(dir.path()).unwrap().count(), 2);
-        assert_eq!(fs::read(dir.path().join("synthetic-existing-transfer.adnd.bak")).unwrap(), original);
+        assert_eq!(fs::read_dir(dir.path()).unwrap().count(), 1);
     }
 }
 
@@ -1235,43 +1046,6 @@ mod party_order_tests {
 }
 
 #[cfg(test)]
-mod possessions_reconciliation_tests {
-    use super::*;
-    #[test]
-    fn inventory_only_reconciliation_preserves_the_ledger_and_survives_save_failure_and_reopen() {
-        let fixture:serde_json::Value=serde_json::from_slice(include_bytes!("../../src/tests/fixtures/bankPossessionsReconciliationNative.json")).unwrap();
-        let before=parse(&serde_json::to_vec(&fixture["before"]).unwrap()).unwrap();
-        let after=parse(&serde_json::to_vec(&fixture["after"]).unwrap()).unwrap();
-        let recorded=after.clone();
-        assert!(validate_replacement(&before,&recorded).is_err());
-        let mut after=before.clone();after.working_inventories=recorded.working_inventories.clone();
-        validate_replacement(&before,&after).unwrap();
-        assert_eq!(after.banking.as_ref().unwrap()["entries"],before.banking.as_ref().unwrap()["entries"]);
-        assert_eq!(after.banking.as_ref().unwrap()["openings"],before.banking.as_ref().unwrap()["openings"]);
-        assert_eq!(after.inventory_checkpoints,before.inventory_checkpoints);
-        let mut missing_audit=after.clone();missing_audit.banking=before.banking.clone();
-        validate_replacement(&before,&missing_audit).unwrap();
-        let mut invalid=recorded.clone();invalid.banking.as_mut().unwrap()["possessionsReconciliations"][0]["balances"][0]["after"]["ep"]=1.into();
-        assert!(invalid.validate().is_err());
-        let dir=tempfile::tempdir().unwrap();let path=dir.path().join("stale-possession.adnd");
-        let mut legacy=serde_json::to_value(&before).unwrap();legacy["schemaVersion"]=18.into();
-        let original=serde_json::to_vec(&legacy).unwrap();fs::write(&path,&original).unwrap();
-        let revision=save(&path,&before,Some(&hash(&original))).unwrap();
-        let staged=fs::read(&path).unwrap();
-        assert!(save_with_hook(&path,&after,Some(&revision),||Err("Injected reconciliation save failure".into())).is_err());
-        assert_eq!(fs::read(&path).unwrap(),staged);
-        let revision=save(&path,&after,Some(&revision)).unwrap();
-        assert_eq!(parse(&fs::read(&path).unwrap()).unwrap(),after);
-        save(&path,&after,Some(&revision)).unwrap();
-        assert_eq!(fs::read(dir.path().join("stale-possession.adnd.bak")).unwrap(),original);
-        assert_eq!(fs::read_dir(dir.path()).unwrap().count(),2);
-        fs::write(&path,b"external synthetic edit").unwrap();
-        assert_eq!(save(&path,&after,Some(&revision)).unwrap_err(),CONFLICT);
-        assert_eq!(fs::read(&path).unwrap(),b"external synthetic edit");
-    }
-}
-
-#[cfg(test)]
 mod independent_banking_tests {
     use super::*;
     #[test]
@@ -1308,8 +1082,7 @@ mod inventory_membership_tests {
         let start = parse(&serde_json::to_vec(&replay["start"]).unwrap()).unwrap();
         let dir = tempfile::tempdir().unwrap();
         let path = dir.path().join("membership.adnd");
-        let mut legacy = serde_json::to_value(&start).unwrap();
-        legacy["schemaVersion"] = 20.into();
+        let legacy = serde_json::to_value(&start).unwrap();
         let original = serde_json::to_vec(&legacy).unwrap();
         fs::write(&path, &original).unwrap();
         let migrated = parse(&original).unwrap();
@@ -1317,7 +1090,7 @@ mod inventory_membership_tests {
         assert_eq!(migrated.schema_version, 21);
         let mut revision = save(&path, &migrated, Some(&hash(&original))).unwrap();
         let backup = dir.path().join("membership.adnd.bak");
-        assert_eq!(fs::read(&backup).unwrap(), original);
+        assert!(!backup.exists());
         let mut previous = migrated;
         for state in replay["states"].as_array().unwrap() {
             let next = parse(&serde_json::to_vec(state).unwrap()).unwrap();
@@ -1342,8 +1115,8 @@ mod inventory_membership_tests {
         changed_source.inventory_checkpoints.last_mut().unwrap()["document"]["characters"][0]["name"] = "Changed evidence".into();
         assert!(validate_replacement(&previous, &changed_source).is_err());
         save(&path, &previous, Some(&revision)).unwrap();
-        assert_eq!(fs::read(&backup).unwrap(), original);
-        assert_eq!(fs::read_dir(dir.path()).unwrap().count(), 2);
+        assert!(!backup.exists());
+        assert_eq!(fs::read_dir(dir.path()).unwrap().count(), 1);
         fs::write(&path, b"external synthetic edit").unwrap();
         assert_eq!(save(&path, &previous, Some(&revision)).unwrap_err(), CONFLICT);
         assert_eq!(fs::read(&path).unwrap(), b"external synthetic edit");
@@ -1355,7 +1128,7 @@ mod accepted_boundary_tests {
     use super::*;
     #[test]
     fn replacement_validates_once_and_trusted_save_preserves_conflict_checks() {
-        let before = parse(include_bytes!("../../src/tests/fixtures/campaignB1V2.json")).unwrap();
+        let before = parse(include_bytes!("../../src/tests/fixtures/campaignSnapshots.json")).unwrap();
         let mut next = before.clone();
         next.notes = "Last unblurred native input".into();
         let accepted = parse_replacement(&serde_json::to_vec(&next).unwrap(), &before, "").unwrap();

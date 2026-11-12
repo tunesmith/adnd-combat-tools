@@ -4,17 +4,19 @@
     "id": "synthetic-b1-native",
     "title": "Synthetic XP cap expedition",
     "notes": "Invented campaign for snapshot persistence checks.",
-    "schemaVersion": 12,
+    "schemaVersion": 21,
     "sessions": [
       {
         "id": "session-1",
         "label": "First expedition",
-        "notes": ""
+        "notes": "",
+        "partyOrder": ["xp-mira", "xp-tal", "xp-oren", "xp-nera", "xp-bram"]
       },
       {
         "id": "session-2",
         "label": "Return and descent",
-        "notes": ""
+        "notes": "",
+        "partyOrder": ["xp-mira", "xp-tal", "xp-oren", "xp-nera", "xp-bram"]
       }
     ],
     "records": [
@@ -610,8 +612,8 @@
       ],
       "profiles": [
         {
-          "sessionId": "session-1",
           "characterId": "xp-mira",
+          "sessionId": "session-1",
           "characterClass": "fighter",
           "baseLevel": 5,
           "saveBasis": "printed",
@@ -649,8 +651,8 @@
           }
         },
         {
-          "sessionId": "session-1",
           "characterId": "xp-tal",
+          "sessionId": "session-1",
           "characterClass": "fighter",
           "baseLevel": 1,
           "saveBasis": "printed",
@@ -688,8 +690,8 @@
           }
         },
         {
-          "sessionId": "session-1",
           "characterId": "xp-oren",
+          "sessionId": "session-1",
           "characterClass": "fighter",
           "baseLevel": 1,
           "saveBasis": "printed",
@@ -727,8 +729,8 @@
           }
         },
         {
-          "sessionId": "session-1",
           "characterId": "xp-nera",
+          "sessionId": "session-1",
           "characterClass": "fighter",
           "baseLevel": 1,
           "saveBasis": "printed",
@@ -766,8 +768,8 @@
           }
         },
         {
-          "sessionId": "session-1",
           "characterId": "xp-bram",
+          "sessionId": "session-1",
           "characterClass": "fighter",
           "baseLevel": 1,
           "saveBasis": "printed",
@@ -805,8 +807,8 @@
           }
         },
         {
-          "sessionId": "session-2",
           "characterId": "xp-mira",
+          "sessionId": "session-2",
           "characterClass": "fighter",
           "baseLevel": 5,
           "saveBasis": "printed",
@@ -844,8 +846,8 @@
           }
         },
         {
-          "sessionId": "session-2",
           "characterId": "xp-tal",
+          "sessionId": "session-2",
           "characterClass": "fighter",
           "baseLevel": 1,
           "saveBasis": "printed",
@@ -883,8 +885,8 @@
           }
         },
         {
-          "sessionId": "session-2",
           "characterId": "xp-oren",
+          "sessionId": "session-2",
           "characterClass": "fighter",
           "baseLevel": 1,
           "saveBasis": "printed",
@@ -922,8 +924,8 @@
           }
         },
         {
-          "sessionId": "session-2",
           "characterId": "xp-nera",
+          "sessionId": "session-2",
           "characterClass": "fighter",
           "baseLevel": 1,
           "saveBasis": "printed",
@@ -961,8 +963,8 @@
           }
         },
         {
-          "sessionId": "session-2",
           "characterId": "xp-bram",
+          "sessionId": "session-2",
           "characterClass": "fighter",
           "baseLevel": 1,
           "saveBasis": "printed",
@@ -1192,8 +1194,8 @@
               "overrideReason": "",
               "before": 34800,
               "after": 35001,
-              "discarded": 349,
               "fullAward": 550,
+              "discarded": 349,
               "cap": {
                 "characterClass": "fighter",
                 "baseLevel": 5,
@@ -1239,17 +1241,19 @@
     "id": "synthetic-b1-native",
     "title": "Synthetic XP cap expedition",
     "notes": "Invented campaign for snapshot persistence checks.",
-    "schemaVersion": 12,
+    "schemaVersion": 21,
     "sessions": [
       {
         "id": "session-1",
         "label": "First expedition",
-        "notes": ""
+        "notes": "",
+        "partyOrder": ["xp-mira", "xp-tal", "xp-oren", "xp-nera", "xp-bram"]
       },
       {
         "id": "session-2",
         "label": "Return and descent",
-        "notes": ""
+        "notes": "",
+        "partyOrder": ["xp-mira", "xp-tal", "xp-oren", "xp-nera", "xp-bram"]
       }
     ],
     "records": [
@@ -1845,8 +1849,8 @@
       ],
       "profiles": [
         {
-          "sessionId": "session-1",
           "characterId": "xp-mira",
+          "sessionId": "session-1",
           "characterClass": "fighter",
           "baseLevel": 5,
           "saveBasis": "printed",
@@ -1884,8 +1888,8 @@
           }
         },
         {
-          "sessionId": "session-1",
           "characterId": "xp-tal",
+          "sessionId": "session-1",
           "characterClass": "fighter",
           "baseLevel": 1,
           "saveBasis": "printed",
@@ -1923,8 +1927,8 @@
           }
         },
         {
-          "sessionId": "session-1",
           "characterId": "xp-oren",
+          "sessionId": "session-1",
           "characterClass": "fighter",
           "baseLevel": 1,
           "saveBasis": "printed",
@@ -1962,8 +1966,8 @@
           }
         },
         {
-          "sessionId": "session-1",
           "characterId": "xp-nera",
+          "sessionId": "session-1",
           "characterClass": "fighter",
           "baseLevel": 1,
           "saveBasis": "printed",
@@ -2001,8 +2005,8 @@
           }
         },
         {
-          "sessionId": "session-1",
           "characterId": "xp-bram",
+          "sessionId": "session-1",
           "characterClass": "fighter",
           "baseLevel": 1,
           "saveBasis": "printed",
@@ -2040,8 +2044,8 @@
           }
         },
         {
-          "sessionId": "session-2",
           "characterId": "xp-mira",
+          "sessionId": "session-2",
           "characterClass": "fighter",
           "baseLevel": 5,
           "saveBasis": "printed",
@@ -2079,8 +2083,8 @@
           }
         },
         {
-          "sessionId": "session-2",
           "characterId": "xp-tal",
+          "sessionId": "session-2",
           "characterClass": "fighter",
           "baseLevel": 1,
           "saveBasis": "printed",
@@ -2118,8 +2122,8 @@
           }
         },
         {
-          "sessionId": "session-2",
           "characterId": "xp-oren",
+          "sessionId": "session-2",
           "characterClass": "fighter",
           "baseLevel": 1,
           "saveBasis": "printed",
@@ -2157,8 +2161,8 @@
           }
         },
         {
-          "sessionId": "session-2",
           "characterId": "xp-nera",
+          "sessionId": "session-2",
           "characterClass": "fighter",
           "baseLevel": 1,
           "saveBasis": "printed",
@@ -2196,8 +2200,8 @@
           }
         },
         {
-          "sessionId": "session-2",
           "characterId": "xp-bram",
+          "sessionId": "session-2",
           "characterClass": "fighter",
           "baseLevel": 1,
           "saveBasis": "printed",
@@ -2497,8 +2501,8 @@
               "overrideReason": "",
               "before": 34800,
               "after": 34900,
-              "discarded": 0,
               "fullAward": 100,
+              "discarded": 0,
               "cap": {
                 "characterClass": "fighter",
                 "baseLevel": 5,
@@ -2637,8 +2641,8 @@
               "overrideReason": "",
               "before": 34900,
               "after": 35001,
-              "discarded": 99,
               "fullAward": 200,
+              "discarded": 99,
               "cap": {
                 "characterClass": "fighter",
                 "baseLevel": 5,
@@ -2684,17 +2688,19 @@
     "id": "synthetic-b1-native",
     "title": "Synthetic XP cap expedition",
     "notes": "Invented campaign for snapshot persistence checks.",
-    "schemaVersion": 12,
+    "schemaVersion": 21,
     "sessions": [
       {
         "id": "session-1",
         "label": "First expedition",
-        "notes": ""
+        "notes": "",
+        "partyOrder": ["xp-mira", "xp-tal", "xp-oren", "xp-nera", "xp-bram"]
       },
       {
         "id": "session-2",
         "label": "Return and descent",
-        "notes": ""
+        "notes": "",
+        "partyOrder": ["xp-mira", "xp-tal", "xp-oren", "xp-nera", "xp-bram"]
       }
     ],
     "records": [
@@ -3290,8 +3296,8 @@
       ],
       "profiles": [
         {
-          "sessionId": "session-1",
           "characterId": "xp-mira",
+          "sessionId": "session-1",
           "characterClass": "fighter",
           "baseLevel": 6,
           "saveBasis": "printed",
@@ -3329,8 +3335,8 @@
           }
         },
         {
-          "sessionId": "session-1",
           "characterId": "xp-tal",
+          "sessionId": "session-1",
           "characterClass": "fighter",
           "baseLevel": 1,
           "saveBasis": "printed",
@@ -3368,8 +3374,8 @@
           }
         },
         {
-          "sessionId": "session-1",
           "characterId": "xp-oren",
+          "sessionId": "session-1",
           "characterClass": "fighter",
           "baseLevel": 1,
           "saveBasis": "printed",
@@ -3407,8 +3413,8 @@
           }
         },
         {
-          "sessionId": "session-1",
           "characterId": "xp-nera",
+          "sessionId": "session-1",
           "characterClass": "fighter",
           "baseLevel": 1,
           "saveBasis": "printed",
@@ -3446,8 +3452,8 @@
           }
         },
         {
-          "sessionId": "session-1",
           "characterId": "xp-bram",
+          "sessionId": "session-1",
           "characterClass": "fighter",
           "baseLevel": 1,
           "saveBasis": "printed",
@@ -3485,8 +3491,8 @@
           }
         },
         {
-          "sessionId": "session-2",
           "characterId": "xp-mira",
+          "sessionId": "session-2",
           "characterClass": "fighter",
           "baseLevel": 5,
           "saveBasis": "printed",
@@ -3524,8 +3530,8 @@
           }
         },
         {
-          "sessionId": "session-2",
           "characterId": "xp-tal",
+          "sessionId": "session-2",
           "characterClass": "fighter",
           "baseLevel": 1,
           "saveBasis": "printed",
@@ -3563,8 +3569,8 @@
           }
         },
         {
-          "sessionId": "session-2",
           "characterId": "xp-oren",
+          "sessionId": "session-2",
           "characterClass": "fighter",
           "baseLevel": 1,
           "saveBasis": "printed",
@@ -3602,8 +3608,8 @@
           }
         },
         {
-          "sessionId": "session-2",
           "characterId": "xp-nera",
+          "sessionId": "session-2",
           "characterClass": "fighter",
           "baseLevel": 1,
           "saveBasis": "printed",
@@ -3641,8 +3647,8 @@
           }
         },
         {
-          "sessionId": "session-2",
           "characterId": "xp-bram",
+          "sessionId": "session-2",
           "characterClass": "fighter",
           "baseLevel": 1,
           "saveBasis": "printed",
@@ -4025,8 +4031,8 @@
               "overrideReason": "",
               "before": 34800,
               "after": 34900,
-              "discarded": 0,
               "fullAward": 100,
+              "discarded": 0,
               "cap": {
                 "characterClass": "fighter",
                 "baseLevel": 5,
@@ -4165,8 +4171,8 @@
               "overrideReason": "",
               "before": 34900,
               "after": 35001,
-              "discarded": 99,
               "fullAward": 200,
+              "discarded": 99,
               "cap": {
                 "characterClass": "fighter",
                 "baseLevel": 5,
@@ -4364,8 +4370,8 @@
               "overrideReason": "Synthetic full-award correction",
               "before": 34800,
               "after": 34850,
-              "discarded": 0,
               "fullAward": 50,
+              "discarded": 0,
               "cap": {
                 "characterClass": "fighter",
                 "baseLevel": 5,
@@ -4504,8 +4510,8 @@
               "overrideReason": "",
               "before": 34850,
               "after": 35001,
-              "discarded": 49,
               "fullAward": 200,
+              "discarded": 49,
               "cap": {
                 "characterClass": "fighter",
                 "baseLevel": 5,
@@ -4551,17 +4557,19 @@
     "id": "synthetic-b1-native",
     "title": "Synthetic XP expedition",
     "notes": "Invented campaign for snapshot persistence checks.",
-    "schemaVersion": 11,
+    "schemaVersion": 21,
     "sessions": [
       {
         "id": "session-1",
         "label": "First expedition",
-        "notes": ""
+        "notes": "",
+        "partyOrder": ["xp-mira", "xp-tal", "xp-oren", "xp-nera", "xp-bram"]
       },
       {
         "id": "session-2",
         "label": "Return and descent",
-        "notes": ""
+        "notes": "",
+        "partyOrder": ["xp-mira", "xp-tal", "xp-oren", "xp-nera", "xp-bram"]
       }
     ],
     "records": [],
@@ -4609,8 +4617,8 @@
       ],
       "profiles": [
         {
-          "sessionId": "session-1",
           "characterId": "xp-mira",
+          "sessionId": "session-1",
           "characterClass": "fighter",
           "baseLevel": 1,
           "saveBasis": "printed",
@@ -4648,8 +4656,8 @@
           }
         },
         {
-          "sessionId": "session-1",
           "characterId": "xp-tal",
+          "sessionId": "session-1",
           "characterClass": "fighter",
           "baseLevel": 1,
           "saveBasis": "printed",
@@ -4687,8 +4695,8 @@
           }
         },
         {
-          "sessionId": "session-1",
           "characterId": "xp-oren",
+          "sessionId": "session-1",
           "characterClass": "fighter",
           "baseLevel": 1,
           "saveBasis": "printed",
@@ -4726,8 +4734,8 @@
           }
         },
         {
-          "sessionId": "session-1",
           "characterId": "xp-nera",
+          "sessionId": "session-1",
           "characterClass": "fighter",
           "baseLevel": 1,
           "saveBasis": "printed",
@@ -4765,8 +4773,8 @@
           }
         },
         {
-          "sessionId": "session-1",
           "characterId": "xp-bram",
+          "sessionId": "session-1",
           "characterClass": "fighter",
           "baseLevel": 1,
           "saveBasis": "printed",
@@ -4804,8 +4812,8 @@
           }
         },
         {
-          "sessionId": "session-2",
           "characterId": "xp-mira",
+          "sessionId": "session-2",
           "characterClass": "fighter",
           "baseLevel": 1,
           "saveBasis": "printed",
@@ -4843,8 +4851,8 @@
           }
         },
         {
-          "sessionId": "session-2",
           "characterId": "xp-tal",
+          "sessionId": "session-2",
           "characterClass": "fighter",
           "baseLevel": 1,
           "saveBasis": "printed",
@@ -4882,8 +4890,8 @@
           }
         },
         {
-          "sessionId": "session-2",
           "characterId": "xp-oren",
+          "sessionId": "session-2",
           "characterClass": "fighter",
           "baseLevel": 1,
           "saveBasis": "printed",
@@ -4921,8 +4929,8 @@
           }
         },
         {
-          "sessionId": "session-2",
           "characterId": "xp-nera",
+          "sessionId": "session-2",
           "characterClass": "fighter",
           "baseLevel": 1,
           "saveBasis": "printed",
@@ -4960,8 +4968,8 @@
           }
         },
         {
-          "sessionId": "session-2",
           "characterId": "xp-bram",
+          "sessionId": "session-2",
           "characterClass": "fighter",
           "baseLevel": 1,
           "saveBasis": "printed",
@@ -5001,7 +5009,7 @@
       ]
     },
     "xp": {
-      "version": 1,
+      "version": 2,
       "sessionOrder": ["session-1", "session-2"],
       "openings": [
         {
@@ -6155,7 +6163,11 @@
             }
           ]
         }
-      ]
+      ],
+      "timeline": {
+        "session-2": ["refuge-point", "later-fungus"],
+        "session-1": ["raiders", "money", "scroll"]
+      }
     }
   }
 }

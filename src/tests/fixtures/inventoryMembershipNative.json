@@ -9,7 +9,16 @@
       {
         "id": "day2",
         "label": "Day 2",
-        "notes": ""
+        "notes": "",
+        "partyOrder": [
+          "roster-mira",
+          "roster-oren",
+          "roster-tal",
+          "roster-nera",
+          "roster-bram",
+          "roster-eli",
+          "roster-ash"
+        ]
       },
       {
         "id": "day3",
@@ -22,7 +31,16 @@
           "combatInstanceIds": [],
           "inventoryId": "day2-stock",
           "copyNotes": false
-        }
+        },
+        "partyOrder": [
+          "roster-mira",
+          "roster-oren",
+          "roster-tal",
+          "roster-nera",
+          "roster-bram",
+          "roster-eli",
+          "roster-ash"
+        ]
       }
     ],
     "records": [],
@@ -969,7 +987,16 @@
         {
           "id": "day2",
           "label": "Day 2",
-          "notes": ""
+          "notes": "",
+          "partyOrder": [
+            "roster-mira",
+            "roster-oren",
+            "roster-tal",
+            "roster-nera",
+            "roster-bram",
+            "roster-eli",
+            "roster-ash"
+          ]
         },
         {
           "id": "day3",
@@ -982,7 +1009,16 @@
             "combatInstanceIds": [],
             "inventoryId": "day2-stock",
             "copyNotes": false
-          }
+          },
+          "partyOrder": [
+            "roster-mira",
+            "roster-oren",
+            "roster-tal",
+            "roster-nera",
+            "roster-bram",
+            "roster-eli",
+            "roster-ash"
+          ]
         }
       ],
       "records": [],
@@ -2219,7 +2255,16 @@
         {
           "id": "day2",
           "label": "Day 2",
-          "notes": ""
+          "notes": "",
+          "partyOrder": [
+            "roster-mira",
+            "roster-oren",
+            "roster-tal",
+            "roster-nera",
+            "roster-bram",
+            "roster-eli",
+            "roster-ash"
+          ]
         },
         {
           "id": "day3",
@@ -2232,7 +2277,16 @@
             "combatInstanceIds": [],
             "inventoryId": "day2-stock",
             "copyNotes": false
-          }
+          },
+          "partyOrder": [
+            "roster-mira",
+            "roster-oren",
+            "roster-tal",
+            "roster-nera",
+            "roster-bram",
+            "roster-eli",
+            "roster-ash"
+          ]
         },
         {
           "id": "day4",
@@ -2241,6 +2295,7 @@
           "continuation": {
             "sourceSessionId": "day2",
             "sourceFingerprint": "81a8db34b97b72925b08604a0ceca3798464b4ee0352e3d0f62acbaea738f1a5",
+            "requestFingerprint": "00d2cd7cc52e6758004629d4bc2ed381028e158f3519797a01703f6e726c3d69",
             "combatInstanceIds": [],
             "inventoryId": "day2-stock",
             "inventoryCharacterIds": [
@@ -2249,9 +2304,17 @@
               "inventory-bram"
             ],
             "copyNotes": false,
-            "partyCharacterIds": ["roster-mira", "roster-nera", "roster-bram"],
-            "requestFingerprint": "00d2cd7cc52e6758004629d4bc2ed381028e158f3519797a01703f6e726c3d69"
-          }
+            "partyCharacterIds": ["roster-mira", "roster-nera", "roster-bram"]
+          },
+          "partyOrder": [
+            "roster-mira",
+            "roster-oren",
+            "roster-tal",
+            "roster-nera",
+            "roster-bram",
+            "roster-eli",
+            "roster-ash"
+          ]
         }
       ],
       "records": [],
@@ -2721,13 +2784,13 @@
               }
             ]
           },
-          "origin": {
-            "kind": "checkpoint",
-            "checkpointId": "carried-source"
-          },
           "continuedFrom": {
             "sessionId": "day2",
             "instanceId": "day2-stock",
+            "checkpointId": "carried-source"
+          },
+          "origin": {
+            "kind": "checkpoint",
             "checkpointId": "carried-source"
           }
         }
@@ -3894,7 +3957,16 @@
         {
           "id": "day2",
           "label": "Day 2",
-          "notes": ""
+          "notes": "",
+          "partyOrder": [
+            "roster-mira",
+            "roster-oren",
+            "roster-tal",
+            "roster-nera",
+            "roster-bram",
+            "roster-eli",
+            "roster-ash"
+          ]
         },
         {
           "id": "day3",
@@ -3907,7 +3979,16 @@
             "combatInstanceIds": [],
             "inventoryId": "day2-stock",
             "copyNotes": false
-          }
+          },
+          "partyOrder": [
+            "roster-mira",
+            "roster-oren",
+            "roster-tal",
+            "roster-nera",
+            "roster-bram",
+            "roster-eli",
+            "roster-ash"
+          ]
         },
         {
           "id": "day4",
@@ -3916,6 +3997,7 @@
           "continuation": {
             "sourceSessionId": "day2",
             "sourceFingerprint": "81a8db34b97b72925b08604a0ceca3798464b4ee0352e3d0f62acbaea738f1a5",
+            "requestFingerprint": "00d2cd7cc52e6758004629d4bc2ed381028e158f3519797a01703f6e726c3d69",
             "combatInstanceIds": [],
             "inventoryId": "day2-stock",
             "inventoryCharacterIds": [
@@ -3924,9 +4006,17 @@
               "inventory-bram"
             ],
             "copyNotes": false,
-            "partyCharacterIds": ["roster-mira", "roster-nera", "roster-bram"],
-            "requestFingerprint": "00d2cd7cc52e6758004629d4bc2ed381028e158f3519797a01703f6e726c3d69"
-          }
+            "partyCharacterIds": ["roster-mira", "roster-nera", "roster-bram"]
+          },
+          "partyOrder": [
+            "roster-mira",
+            "roster-oren",
+            "roster-tal",
+            "roster-nera",
+            "roster-bram",
+            "roster-eli",
+            "roster-ash"
+          ]
         }
       ],
       "records": [],
@@ -4396,13 +4486,13 @@
               }
             ]
           },
-          "origin": {
-            "kind": "checkpoint",
-            "checkpointId": "carried-source"
-          },
           "continuedFrom": {
             "sessionId": "day2",
             "instanceId": "day2-stock",
+            "checkpointId": "carried-source"
+          },
+          "origin": {
+            "kind": "checkpoint",
             "checkpointId": "carried-source"
           }
         }
@@ -5583,7 +5673,16 @@
         {
           "id": "day2",
           "label": "Day 2",
-          "notes": ""
+          "notes": "",
+          "partyOrder": [
+            "roster-mira",
+            "roster-oren",
+            "roster-tal",
+            "roster-nera",
+            "roster-bram",
+            "roster-eli",
+            "roster-ash"
+          ]
         },
         {
           "id": "day3",
@@ -5596,7 +5695,16 @@
             "combatInstanceIds": [],
             "inventoryId": "day2-stock",
             "copyNotes": false
-          }
+          },
+          "partyOrder": [
+            "roster-mira",
+            "roster-oren",
+            "roster-tal",
+            "roster-nera",
+            "roster-bram",
+            "roster-eli",
+            "roster-ash"
+          ]
         },
         {
           "id": "day4",
@@ -5605,6 +5713,7 @@
           "continuation": {
             "sourceSessionId": "day2",
             "sourceFingerprint": "81a8db34b97b72925b08604a0ceca3798464b4ee0352e3d0f62acbaea738f1a5",
+            "requestFingerprint": "00d2cd7cc52e6758004629d4bc2ed381028e158f3519797a01703f6e726c3d69",
             "combatInstanceIds": [],
             "inventoryId": "day2-stock",
             "inventoryCharacterIds": [
@@ -5613,9 +5722,17 @@
               "inventory-bram"
             ],
             "copyNotes": false,
-            "partyCharacterIds": ["roster-mira", "roster-nera", "roster-bram"],
-            "requestFingerprint": "00d2cd7cc52e6758004629d4bc2ed381028e158f3519797a01703f6e726c3d69"
-          }
+            "partyCharacterIds": ["roster-mira", "roster-nera", "roster-bram"]
+          },
+          "partyOrder": [
+            "roster-mira",
+            "roster-oren",
+            "roster-tal",
+            "roster-nera",
+            "roster-bram",
+            "roster-eli",
+            "roster-ash"
+          ]
         }
       ],
       "records": [],
@@ -6156,13 +6273,13 @@
               }
             ]
           },
-          "origin": {
-            "kind": "checkpoint",
-            "checkpointId": "carried-source"
-          },
           "continuedFrom": {
             "sessionId": "day2",
             "instanceId": "day2-stock",
+            "checkpointId": "carried-source"
+          },
+          "origin": {
+            "kind": "checkpoint",
             "checkpointId": "carried-source"
           }
         }
@@ -6964,6 +7081,11 @@
           }
         },
         {
+          "characterCopy": {
+            "characterId": "inventory-vitameno",
+            "targetWorkingId": "later-inventory",
+            "targetSessionId": "day4"
+          },
           "id": "returned-source",
           "workingId": "day2-stock",
           "sessionId": "day2",
@@ -7212,11 +7334,6 @@
                 ]
               }
             ]
-          },
-          "characterCopy": {
-            "characterId": "inventory-vitameno",
-            "targetWorkingId": "later-inventory",
-            "targetSessionId": "day4"
           }
         }
       ],

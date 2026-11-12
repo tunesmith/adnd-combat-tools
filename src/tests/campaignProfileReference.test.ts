@@ -1,4 +1,4 @@
-import fixture from './fixtures/campaignProfilesV8.json';
+import fixture from './fixtures/campaignProfiles.json';
 import {
   parseCampaign,
   serializeCampaign,
@@ -54,10 +54,9 @@ test('expanded profiles round trip and explicit carry makes independent referenc
   expect(combatValuesForProfile(copy)).toEqual(combatValuesForProfile(prior));
 });
 
-test('old profiles migrate with unknown reference fields and invalid typed values are rejected', () => {
+test('profiles allow unknown reference fields and reject invalid typed values', () => {
   const legacy = {
     ...fixture,
-    schemaVersion: 7,
     party: {
       ...fixture.party,
       profiles: fixture.party.profiles.map(({ reference: _, ...p }) => p),

@@ -5,7 +5,7 @@ import '@testing-library/jest-dom';
 import PartyReference from '../components/desktop/PartyReference';
 import { parseCampaign } from '../helpers/campaignDocument';
 import { emptyProfile, updatePartyProfile } from '../helpers/campaignParty';
-import baseline from './fixtures/campaignB1V2.json';
+import baseline from './fixtures/campaignSnapshots.json';
 
 test('calculated rows use the rules table and only manual rows accept numeric targets', () => {
   const calculated = updatePartyProfile(

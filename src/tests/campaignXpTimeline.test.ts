@@ -19,7 +19,7 @@ import {
   moveXpTimelineEntry,
   xpTimelineEntries,
 } from '../helpers/campaignXpTimeline';
-test('old XP ordering migrates into a shared list without rewriting accepted data or balances', () => {
+test('ordered XP round-trips without rewriting accepted data or balances', () => {
   const doc = parseCampaign(JSON.stringify(replay.confirmed));
   expect(doc.schemaVersion).toBe(21);
   expect(doc.xp?.version).toBe(2);

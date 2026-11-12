@@ -1,4 +1,4 @@
-import baseline from './fixtures/campaignB1V2.json';
+import baseline from './fixtures/campaignSnapshots.json';
 import { syntheticCombat, syntheticInventory } from './fixtures/campaignB1';
 import {
   parseCampaign,
@@ -243,24 +243,7 @@ test('a continued encounter can be removed, saved and recovered with frozen stat
   expect(() => validateHistoryTransition(removed, forged, '')).toThrow(
     'retain'
   );
-  const legacy = {
-    ...removed,
-    schemaVersion: 6,
-    party: {
-      ...required(removed.party),
-      combatLinks: [],
-      inventoryLinks: [],
-    },
-  };
-  const migrated = parseCampaign(JSON.stringify(legacy));
-  expect(migrated).toEqual(removed);
-  for (const key of ['combatLinks', 'inventoryLinks'] as const) {
-    expect(() =>
-      validateCampaign({ ...legacy, party: { ...legacy.party, [key]: [{}] } })
-    ).toThrow();
-  }
-  expect(() => validateCampaign({ ...legacy, schemaVersion: 7 })).toThrow();
-  const reopened = parseCampaign(serializeCampaign(migrated));
+  const reopened = parseCampaign(serializeCampaign(removed));
   const recovered = setEncounterRemoval(reopened, 'continued', 'session-2', 1);
   expect(() =>
     validateHistoryTransition(reopened, recovered, '')

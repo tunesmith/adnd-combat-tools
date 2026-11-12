@@ -48,23 +48,25 @@ export interface InventoryCheckpoint {
   document: EncumbranceDmDocument;
 }
 const id = z.string().min(1);
-const inventory = z.unknown().superRefine((value, ctx) => {
-  try {
-    if (
-      canonical(value) !==
-      canonical(
-        interpretSource('inventory-json', JSON.stringify(value)).payload
+const inventory = z
+  .custom<EncumbranceDmDocument>()
+  .superRefine((value, ctx) => {
+    try {
+      if (
+        canonical(value) !==
+        canonical(
+          interpretSource('inventory-json', JSON.stringify(value)).payload
+        )
       )
-    )
-      ctx.addIssue({
-        code: 'custom',
-        message:
-          'Working inventory contains unsupported or unnormalized fields.',
-      });
-  } catch (error) {
-    ctx.addIssue({ code: 'custom', message: String(error) });
-  }
-});
+        ctx.addIssue({
+          code: 'custom',
+          message:
+            'Working inventory contains unsupported or unnormalized fields.',
+        });
+    } catch (error) {
+      ctx.addIssue({ code: 'custom', message: String(error) });
+    }
+  });
 export const workingInventorySchema = z
   .object({
     id,

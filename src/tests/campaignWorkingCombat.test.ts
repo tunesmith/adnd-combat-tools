@@ -1,4 +1,4 @@
-import baseline from './fixtures/campaignB1V2.json';
+import baseline from './fixtures/campaignSnapshots.json';
 import { parseCampaign, serializeCampaign } from '../helpers/campaignDocument';
 import {
   createWorkingCombat,
@@ -7,10 +7,7 @@ import {
   restoreWorkingCombat,
   emptyWorkingCombat,
 } from '../helpers/campaignWorkingCombat';
-import {
-  startWorkingInventory,
-  captureInventoryCheckpoint,
-} from '../helpers/campaignWorkingInventory';
+import { startWorkingInventory } from '../helpers/campaignWorkingInventory';
 import { syntheticCombat, syntheticInventory } from './fixtures/campaignB1';
 import {
   insertRoundAfterActive,
@@ -40,33 +37,6 @@ function setup() {
     'encounter-1'
   );
 }
-test('V3 migration preserves inventory/checkpoint data and every B1 field', () => {
-  const doc = captureInventoryCheckpoint(
-    setup(),
-    'inventory-work',
-    'Camp',
-    'inventory-check',
-    at
-  );
-  const { workingCombats, combatCheckpoints, ...v3 } = doc;
-  void workingCombats;
-  void combatCheckpoints;
-  const old = {
-    ...v3,
-    schemaVersion: 3,
-    sessions: v3.sessions.map(({ id, label }) => ({ id, label })),
-    workspace: { sessionId: 'session-1', view: 'possessions' },
-  };
-  const migrated = parseCampaign(JSON.stringify(old));
-  expect(migrated).toEqual({
-    ...old,
-    sessions: old.sessions.map((s) => ({ ...s, notes: '' })),
-    schemaVersion: 21,
-    workingCombats: [],
-    combatCheckpoints: [],
-    workspace: { ...old.workspace, combatSelections: {} },
-  });
-});
 test('two distinct encounters, rounds, every tracker field and inventory survive a complete serialization', () => {
   let doc = setup();
   const first = doc.workingCombats[0];

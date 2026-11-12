@@ -358,12 +358,6 @@ export default function DesktopWorkspace() {
           )}
         </div>
       </header>
-      {state?.status.startsWith('Opened older campaign') && (
-        <p className={styles['notice']} role="status">
-          Save upgrades this campaign to the current format and keeps the
-          previous file in its backup.
-        </p>
-      )}
       {state?.status.includes('Could not remember path') && (
         <p className={styles['notice']} role="alert">
           Couldn’t remember this file. Use Open next time.

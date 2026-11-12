@@ -10,7 +10,7 @@ import {
 import DesktopWorkspace from '../components/desktop/DesktopWorkspace';
 import { parseCampaign } from '../helpers/campaignDocument';
 import { startWorkingInventory } from '../helpers/campaignWorkingInventory';
-import baseline from './fixtures/campaignB1V2.json';
+import baseline from './fixtures/campaignSnapshots.json';
 import { createWorkingCombat } from '../helpers/campaignWorkingCombat';
 import { syntheticCombat, syntheticInventory } from './fixtures/campaignB1';
 import type { DocumentState, CampaignStorage } from '../types/campaignStorage';

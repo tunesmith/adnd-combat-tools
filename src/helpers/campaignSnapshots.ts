@@ -461,7 +461,7 @@ const revisionSchema = z
     contentHash: string,
     sourceVersion: number.int(),
     normalizerVersion: z.literal(1),
-    payload: z.unknown(),
+    payload: z.custom<Json>((value) => value !== undefined),
   })
   .strict();
 export interface CampaignRevision extends SnapshotInterpretation {

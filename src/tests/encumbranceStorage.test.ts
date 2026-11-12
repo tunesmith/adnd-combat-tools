@@ -1,5 +1,5 @@
 import { bankingReplacementReview } from '../helpers/campaignBanking';
-import baseline from './fixtures/campaignB1V2.json';
+import baseline from './fixtures/campaignSnapshots.json';
 import { storageInventory } from './fixtures/storageInventory';
 import {
   inventoryHolders,
@@ -191,19 +191,18 @@ test('player redaction and both edited/deleted moved-item merge conflicts preser
     applyPlayerMergePlan(carried, buildPlayerMergePlan(carried, fresh))
   ).toEqual({ ...carried, activeCharacterId: 'synthetic-tal' });
 });
-test('V8 migration preserves original revisions and historical documents while only working inventories upgrade', () => {
+test('current campaigns preserve V9 evidence and checkpoints alongside V10 working inventory', () => {
   const oldInventory = required(
     required(baseline.records[1]).revisions[0]
   ).payload;
   const old = {
     ...parseCampaign(JSON.stringify(baseline)),
-    schemaVersion: 8,
     workingInventories: [
       {
         id: 'working',
         sessionId: 'session-1',
         title: 'Possessions',
-        document: oldInventory,
+        document: { ...oldInventory, version: 10, storageLocations: [] },
         origin: { kind: 'empty' },
       },
     ],

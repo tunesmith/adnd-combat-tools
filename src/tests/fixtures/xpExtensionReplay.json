@@ -3,28 +3,30 @@
   "id": "synthetic-d49",
   "title": "Synthetic Backward XP",
   "notes": "Synthetic campaign notes",
-  "schemaVersion": 13,
-  "workingCombats": [],
-  "combatCheckpoints": [],
+  "schemaVersion": 21,
   "sessions": [
     {
       "id": "s70",
       "label": "Session 70",
+      "partyOrder": ["amber", "birch", "cedar"],
       "notes": "Synthetic earlier notes"
     },
     {
       "id": "s80",
       "label": "Session 80",
+      "partyOrder": ["amber", "birch", "cedar"],
       "notes": "Synthetic earlier notes"
     },
     {
       "id": "s85",
       "label": "Session 85",
+      "partyOrder": ["amber", "birch", "cedar"],
       "notes": "Existing cutoff notes"
     },
     {
       "id": "s90",
       "label": "Session 90",
+      "partyOrder": ["amber", "birch", "cedar"],
       "notes": "Existing later notes"
     }
   ],
@@ -36,6 +38,8 @@
     "view": "xp",
     "combatSelections": {}
   },
+  "workingCombats": [],
+  "combatCheckpoints": [],
   "party": {
     "roster": [
       {
@@ -88,6 +92,52 @@
         "sessionId": "s90",
         "balance": 77,
         "reason": "Trusted synthetic baseline"
+      }
+    ],
+    "extensions": [
+      {
+        "id": "synthetic-stretch-1",
+        "confirmedAt": "2026-11-07T12:00:00.000Z",
+        "eventIds": [
+          "synthetic-stretch-1-award-0",
+          "synthetic-stretch-1-award-1"
+        ],
+        "openings": [
+          {
+            "previous": {
+              "id": "opening-amber",
+              "characterId": "amber",
+              "sessionId": "s85",
+              "balance": 10000,
+              "reason": "Trusted synthetic baseline"
+            },
+            "replacement": {
+              "id": "opening-amber",
+              "characterId": "amber",
+              "sessionId": "s70",
+              "balance": 6000,
+              "reason": "Reconciled historical opening"
+            },
+            "applied": 4000
+          },
+          {
+            "previous": {
+              "id": "opening-birch",
+              "characterId": "birch",
+              "sessionId": "s85",
+              "balance": 8000,
+              "reason": "Trusted synthetic baseline"
+            },
+            "replacement": {
+              "id": "opening-birch",
+              "characterId": "birch",
+              "sessionId": "s70",
+              "balance": 5000,
+              "reason": "Reconciled historical opening"
+            },
+            "applied": 3000
+          }
+        ]
       }
     ],
     "rewards": [
@@ -566,8 +616,8 @@
             "overrideReason": "",
             "before": 10000,
             "after": 10500,
-            "discarded": 0,
             "fullAward": 500,
+            "discarded": 0,
             "cap": {
               "characterClass": null,
               "baseLevel": null,
@@ -596,8 +646,8 @@
             "overrideReason": "",
             "before": 8000,
             "after": 8200,
-            "discarded": 0,
             "fullAward": 200,
+            "discarded": 0,
             "cap": {
               "characterClass": null,
               "baseLevel": null,
@@ -782,8 +832,8 @@
             "overrideReason": "Recorded full synthetic award",
             "before": 6000,
             "after": 7500,
-            "discarded": 300,
             "fullAward": 1800,
+            "discarded": 300,
             "cap": {
               "characterClass": null,
               "baseLevel": null,
@@ -812,8 +862,8 @@
             "overrideReason": "",
             "before": 5000,
             "after": 6000,
-            "discarded": 0,
             "fullAward": 1000,
+            "discarded": 0,
             "cap": {
               "characterClass": null,
               "baseLevel": null,
@@ -998,8 +1048,8 @@
             "overrideReason": "",
             "before": 7500,
             "after": 10000,
-            "discarded": 0,
             "fullAward": 2500,
+            "discarded": 0,
             "cap": {
               "characterClass": null,
               "baseLevel": null,
@@ -1028,8 +1078,8 @@
             "overrideReason": "",
             "before": 6000,
             "after": 8000,
-            "discarded": 0,
             "fullAward": 2000,
+            "discarded": 0,
             "cap": {
               "characterClass": null,
               "baseLevel": null,
@@ -1071,52 +1121,6 @@
               }
             ]
           }
-        ]
-      }
-    ],
-    "extensions": [
-      {
-        "id": "synthetic-stretch-1",
-        "confirmedAt": "2026-11-07T12:00:00.000Z",
-        "openings": [
-          {
-            "previous": {
-              "id": "opening-amber",
-              "characterId": "amber",
-              "sessionId": "s85",
-              "balance": 10000,
-              "reason": "Trusted synthetic baseline"
-            },
-            "replacement": {
-              "id": "opening-amber",
-              "characterId": "amber",
-              "sessionId": "s70",
-              "balance": 6000,
-              "reason": "Reconciled historical opening"
-            },
-            "applied": 4000
-          },
-          {
-            "previous": {
-              "id": "opening-birch",
-              "characterId": "birch",
-              "sessionId": "s85",
-              "balance": 8000,
-              "reason": "Trusted synthetic baseline"
-            },
-            "replacement": {
-              "id": "opening-birch",
-              "characterId": "birch",
-              "sessionId": "s70",
-              "balance": 5000,
-              "reason": "Reconciled historical opening"
-            },
-            "applied": 3000
-          }
-        ],
-        "eventIds": [
-          "synthetic-stretch-1-award-0",
-          "synthetic-stretch-1-award-1"
         ]
       }
     ]

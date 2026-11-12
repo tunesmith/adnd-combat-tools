@@ -117,9 +117,9 @@ accepted state; **Discard rejected edits** deliberately restores accepted state.
 A disk-save failure leaves the draft available for another Save attempt.
 
 An external-file conflict offers **Save As**, **Reload**, or Cancel. Save As keeps
-local edits in another file; Reload replaces them with the disk version. Ordinary
-saves do not create `.bak` files. The first save that upgrades an older on-disk
-schema preserves its exact bytes in a collision-safe recovery copy.
+local edits in another file; Reload replaces them with the disk version. Saves do not create `.bak` files. Keep deliberate backup copies separately.
+The app requires campaign schema 21; older files must be upgraded with the previous
+app before opening them here. Unsupported files are rejected without rewriting them.
 
 Saves are explicit, not crash autosave. Use one campaign window and avoid concurrent
 writers. Selected session/view, encounter/round and inventory holder are persisted;

@@ -10,8 +10,19 @@ function fixture() {
   let doc: CampaignDocument = {
     ...parseCampaign(
       JSON.stringify({
+        workingCombats: [],
+        combatCheckpoints: [],
+        workingInventories: [],
+        inventoryCheckpoints: [],
+        sessions: [],
+        records: [],
+        workspace: {
+          sessionId: null,
+          view: 'possessions',
+          combatSelections: {},
+        },
         kind: 'adnd-campaign',
-        schemaVersion: 1,
+        schemaVersion: 21,
         id: 'synthetic',
         title: 'Test',
         notes: '',

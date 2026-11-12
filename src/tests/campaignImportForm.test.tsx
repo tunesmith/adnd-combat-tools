@@ -11,8 +11,19 @@ function setup(fail = false) {
   const doc = {
     ...parseCampaign(
       JSON.stringify({
+        workingCombats: [],
+        combatCheckpoints: [],
+        workingInventories: [],
+        inventoryCheckpoints: [],
+        sessions: [],
+        records: [],
+        workspace: {
+          sessionId: null,
+          view: 'possessions',
+          combatSelections: {},
+        },
         kind: 'adnd-campaign',
-        schemaVersion: 1,
+        schemaVersion: 21,
         id: 'test',
         title: 'Test',
         notes: '',

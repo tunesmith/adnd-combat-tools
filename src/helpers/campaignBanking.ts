@@ -20,7 +20,6 @@ import type {
   BankOpening,
   BankExtension,
   CampaignBanking,
-  BankPossessionsReconciliation,
 } from './campaignBankingModel';
 import { encumbranceCatalogById } from '../tables/encumbranceCatalog';
 import { getInventoryItemInfo } from './encumbranceRules';
@@ -1394,121 +1393,6 @@ export const bankReconciliationFingerprint = (
     sessionId,
   });
 
-function reconciliationAllowance(
-  doc: CampaignDocument,
-  sessionId: string,
-  source: BankEntry,
-  holderId: string,
-  denomination: BankDenomination,
-  records = bankLedger(doc).possessionsReconciliations ?? []
-) {
-  const outgoing = source.changes
-    .filter(
-      (c) =>
-        c.holderId === holderId &&
-        c.denomination === denomination &&
-        c.quantity < 0
-    )
-    .reduce((sum, c) => safe(sum - c.quantity), 0);
-  const used = records
-    .filter((r) => r.sessionId === sessionId && r.sourceEntryId === source.id)
-    .flatMap((r) => r.changes)
-    .filter((c) => c.holderId === holderId && c.denomination === denomination)
-    .reduce((sum, c) => safe(sum - c.quantity), 0);
-  return outgoing - used;
-}
-function validatePossessionsReconciliations(
-  doc: CampaignDocument,
-  unique: (id: string) => void
-) {
-  const ledger = bankLedger(doc),
-    prefix: BankPossessionsReconciliation[] = [];
-  let entryCount = 0;
-  for (const record of ledger.possessionsReconciliations ?? []) {
-    unique(record.id);
-    sessionIndex(doc, record.sessionId);
-    if (
-      !doc.workingInventories.some(
-        (w) => w.id === record.workingId && w.sessionId === record.sessionId
-      ) &&
-      !doc.inventoryCheckpoints.some(
-        (c) =>
-          c.workingId === record.workingId && c.sessionId === record.sessionId
-      )
-    )
-      throw Error('Missing reconciled possessions history.');
-    if (
-      record.entryCount < entryCount ||
-      record.entryCount > ledger.entries.length
-    )
-      throw Error('Invalid possessions reconciliation ledger position.');
-    entryCount = record.entryCount;
-    const source = activeBankEntries(
-      ledger.entries.slice(0, record.entryCount)
-    ).find(
-      (e) =>
-        e.id === record.sourceEntryId &&
-        e.status === 'posted' &&
-        sessionIndex(doc, e.sessionId) < sessionIndex(doc, record.sessionId)
-    );
-    if (!source)
-      throw Error(
-        'Possessions reconciliation needs its earlier recorded outgoing transaction.'
-      );
-    const keys = new Set<string>();
-    for (const change of record.changes) {
-      const key = canonical([change.holderId, change.item.id]);
-      if (
-        keys.has(key) ||
-        change.quantity >= 0 ||
-        change.fee ||
-        moneyDenomination(change.item) !== change.denomination ||
-        -change.quantity > change.item.quantity
-      )
-        throw Error('Invalid reconciled money stack evidence.');
-      keys.add(key);
-    }
-    const holders = Array.from(new Set(record.changes.map((c) => c.holderId)));
-    if (
-      new Set(record.balances.map((b) => b.holderId)).size !== holders.length ||
-      record.balances.length !== holders.length ||
-      record.balances.some((b) => !holders.includes(b.holderId))
-    )
-      throw Error('Reconciliation balances must match their holders.');
-    for (const balance of record.balances) {
-      const delta = bankChangesAmounts(record.changes, balance.holderId);
-      if (
-        canonical(addBankAmounts(balance.before, delta)) !==
-        canonical(balance.after)
-      )
-        throw Error('Reconciled possessions quantities disagree.');
-      for (const code of bankDenominations) {
-        const removed = -(delta[code] ?? 0);
-        if (!removed) continue;
-        if (
-          balance.ledger[code] === null ||
-          balance.before[code] === null ||
-          balance.after[code] === null ||
-          (balance.after[code] ?? -1) < (balance.ledger[code] ?? 0) ||
-          removed >
-            reconciliationAllowance(
-              doc,
-              record.sessionId,
-              source,
-              balance.holderId,
-              code,
-              prefix
-            )
-        )
-          throw Error(
-            'Reconciliation exceeds the earlier loss or the recorded possessions difference.'
-          );
-      }
-    }
-    prefix.push(record);
-  }
-}
-
 export function bankingReplacementReview(
   doc: CampaignDocument,
   sessionId: string,
@@ -1764,7 +1648,6 @@ export function validateCampaignBanking(
   doc.workingInventories.forEach((w) => validatePhysicalMoney(w.document));
   if (!doc.banking) return;
   const ledger = doc.banking;
-  validatePossessionsReconciliations(doc, unique);
   const holderIds = new Set([
     ...[...doc.workingInventories, ...doc.inventoryCheckpoints].flatMap((w) =>
       bankHolders(w.document).map((h) => h.id)
@@ -1897,14 +1780,6 @@ export function validateBankingTransition(
     throw Error(
       'Recorded banking history is immutable. Edit through a new transaction revision.'
     );
-  const oldReconciliations = previous.possessionsReconciliations ?? [],
-    newReconciliations = current.possessionsReconciliations ?? [];
-  if (
-    canonical(newReconciliations.slice(0, oldReconciliations.length)) !==
-      canonical(oldReconciliations) ||
-    newReconciliations.length !== oldReconciliations.length
-  )
-    throw Error('Recorded possessions reconciliations are immutable.');
   const additions = current.entries.slice(previous.entries.length);
   const extensions = current.extensions.slice(previous.extensions.length);
   if (extensions.length) {

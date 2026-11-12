@@ -1,4 +1,4 @@
-import baseline from './campaignB1V2.json';
+import baseline from './campaignSnapshots.json';
 import { parseCampaign } from '../../helpers/campaignDocument';
 import { emptyProfile, updatePartyProfile } from '../../helpers/campaignParty';
 import { emptyProfileReference } from '../../helpers/campaignPartyModel';

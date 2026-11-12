@@ -1,7 +1,7 @@
 import type { CampaignDocument } from './campaignDocument';
 import type { CampaignXp, XpPoint, XpPosition } from './campaignXpModel';
 const phases = { opening: 0, during: 1, end: 2 };
-function legacyXpPosition(a: XpPosition, b: XpPosition): number {
+function compareBoundaryPosition(a: XpPosition, b: XpPosition): number {
   return phases[a.phase] - phases[b.phase] || a.order - b.order;
 }
 function entries(xp: CampaignXp) {
@@ -24,26 +24,10 @@ function entries(xp: CampaignXp) {
       })),
   ];
 }
-export function migrateXpTimeline(xp: CampaignXp): CampaignXp {
-  if (xp.version === 2) return xp;
-  if (xp.timeline) throw new Error('Unexpected timeline on legacy XP data.');
-  const timeline: Record<string, string[]> = {};
-  for (const entry of entries(xp).sort(
-    (a, b) =>
-      legacyXpPosition(a.position, b.position) ||
-      (a.kind === b.kind ? 0 : a.kind === 'event' ? -1 : 1)
-  ))
-    timeline[entry.sessionId] = [
-      ...(timeline[entry.sessionId] || []),
-      entry.id,
-    ];
-  return { ...xp, version: 2, timeline };
-}
 export function syncXpTimeline(xp: CampaignXp): CampaignXp {
-  const migrated = migrateXpTimeline(xp),
-    all = entries(migrated),
+  const all = entries(xp),
     timeline: Record<string, string[]> = {};
-  for (const [sessionId, ids] of Object.entries(migrated.timeline || {}))
+  for (const [sessionId, ids] of Object.entries(xp.timeline))
     timeline[sessionId] = ids.filter((id) =>
       all.some((e) => e.id === id && e.sessionId === sessionId)
     );
@@ -51,13 +35,13 @@ export function syncXpTimeline(xp: CampaignXp): CampaignXp {
     const ids = timeline[entry.sessionId] || [];
     if (!ids.includes(entry.id)) timeline[entry.sessionId] = [...ids, entry.id];
   }
-  return { ...migrated, timeline };
+  return { ...xp, timeline };
 }
 export function xpTimelineEntries(doc: CampaignDocument, sessionId: string) {
   const xp = doc.xp;
   if (!xp) return [];
   const all = entries(xp),
-    timeline = migrateXpTimeline(xp).timeline || {};
+    timeline = xp.timeline;
   return (timeline[sessionId] || []).flatMap((id) => {
     const e = all.find((e) => e.id === id);
     return e ? [e] : [];
@@ -86,25 +70,14 @@ export function compareXpTimeline(
   const sessions = doc.sessions.map((s) => s.id),
     session = sessions.indexOf(a.sessionId) - sessions.indexOf(b.sessionId);
   if (session) return session;
-  const ids =
-    migrateXpTimeline(
-      doc.xp || {
-        version: 2,
-        sessionOrder: [],
-        openings: [],
-        rewards: [],
-        points: [],
-        events: [],
-        timeline: {},
-      }
-    ).timeline?.[a.sessionId] || [];
+  const ids = doc.xp?.timeline[a.sessionId] || [];
   const ai = aId ? ids.indexOf(aId) : -1,
     bi = bId ? ids.indexOf(bId) : -1;
   if (ai >= 0 && bi >= 0) return ai - bi;
   // Session balance boundaries are virtual, not rows in the timeline.
   if (ai >= 0 && !bId && b.phase === 'opening' && b.order === 0) return 1;
   if (ai >= 0 && !bId && b.phase === 'end' && b.order === 9999) return -1;
-  return legacyXpPosition(a, b);
+  return compareBoundaryPosition(a, b);
 }
 export function compareXpAwards(
   doc: CampaignDocument,

@@ -1,4 +1,4 @@
-import baseline from './fixtures/campaignB1V2.json';
+import baseline from './fixtures/campaignSnapshots.json';
 import { parseCampaign, serializeCampaign } from '../helpers/campaignDocument';
 import {
   captureInventoryCheckpoint,
@@ -20,7 +20,7 @@ function setup() {
     at
   );
 }
-test('V2 migration retains every B1 record, source, identity and metadata', () => {
+test('current campaign reads retain every source record, identity and metadata', () => {
   const doc = parseCampaign(JSON.stringify(baseline));
   expect(doc.schemaVersion).toBe(21);
   expect(doc.records).toEqual(baseline.records);

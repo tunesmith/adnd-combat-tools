@@ -114,17 +114,7 @@ impl Session {
         self.revision = Some(hash(&bytes));
         self.view.path = Some(path.clone());
         self.view.dirty = false;
-        self.view.status = if serde_json::from_slice::<serde_json::Value>(&bytes)
-            .ok()
-            .and_then(|v| v.get("schemaVersion").and_then(|v| v.as_u64()))
-            .map(|v| v < 21)
-            .unwrap_or(false)
-        {
-            "Opened older campaign — first Save upgrades to V21 and preserves an original recovery copy"
-        } else {
-            "Opened successfully"
-        }
-        .into();
+        self.view.status = "Opened successfully".into();
         self.remember(app, &path);
         Ok(())
     }

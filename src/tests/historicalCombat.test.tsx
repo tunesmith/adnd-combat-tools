@@ -43,7 +43,7 @@ test('campaign history replaces the editor for inspection and returns without a 
   const { createWorkingCombat } = await import(
     '../helpers/campaignWorkingCombat'
   );
-  const baseline = (await import('./fixtures/campaignB1V2.json')).default;
+  const baseline = (await import('./fixtures/campaignSnapshots.json')).default;
   jest.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null);
   const doc = createWorkingCombat(
     parseCampaign(JSON.stringify(baseline)),
