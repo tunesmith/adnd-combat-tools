@@ -953,6 +953,10 @@ export default function DesktopWorkspace() {
                   sessionId={sessionId}
                   editorVersion={editorVersion}
                   onChange={(change) => mutate(change, scope)}
+                  onCreateEncounter={async (change) => {
+                    if (!scope) throw new Error('Campaign unavailable.');
+                    await acceptMutation(change, scope);
+                  }}
                   onEdit={(id, ownedSession, generation, next) => {
                     if (
                       editorVersion !== editorVersionRef.current ||

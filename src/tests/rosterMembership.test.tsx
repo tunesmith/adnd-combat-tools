@@ -119,6 +119,7 @@ function harness(initial: CampaignDocument, day = 'd93', includeXp = false) {
               onConfirmExtension={async () => undefined}
             />
             <CampaignCombats
+              onCreateEncounter={() => Promise.resolve()}
               document={document}
               sessionId={day}
               onChange={change}

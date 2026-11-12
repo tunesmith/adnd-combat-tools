@@ -196,13 +196,17 @@ test('workspace starts the selected continuation atomically, edits notes indepen
   );
   fireEvent.click(screen.getByRole('button', { name: 'Combats', exact: true }));
   fireEvent.click(screen.getByRole('button', { name: '+ Encounter' }));
-  expect(screen.getByLabelText('Rename encounter')).toHaveFocus();
-  fireEvent.change(screen.getByLabelText('Rename encounter'), {
-    target: { value: 'Draft name' },
+  expect(screen.getByLabelText('Name')).toHaveFocus();
+  expect(screen.getByLabelText('Start with')).toHaveValue('');
+  fireEvent.change(screen.getByLabelText('Name'), {
+    target: { value: 'Untitled encounter' },
   });
-  fireEvent.keyDown(screen.getByLabelText('Rename encounter'), {
-    key: 'Escape',
-  });
+  fireEvent.click(screen.getByRole('button', { name: 'Create encounter' }));
+  await waitFor(() =>
+    expect(
+      screen.queryByRole('dialog', { name: 'Create encounter' })
+    ).not.toBeInTheDocument()
+  );
   expect(
     screen.getByRole('button', {
       name: 'Untitled encounter',

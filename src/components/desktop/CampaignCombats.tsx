@@ -5,6 +5,7 @@ import {
 } from '../../helpers/campaignParty';
 import { ownedHistory } from '../../helpers/campaignHistory';
 import { useState } from 'react';
+import CreateEncounterDialog from './CreateEncounterDialog';
 import RenamableTab from './RenamableTab';
 import CombatTracker from '../tracker/CombatTracker';
 import VersionToolbar from './VersionToolbar';
@@ -13,7 +14,6 @@ import type { CampaignDocument } from '../../helpers/campaignDocument';
 import {
   createWorkingCombat,
   changeWorkingCombat,
-  emptyWorkingCombat,
   captureCombatCheckpoint,
   restoreWorkingCombat,
 } from '../../helpers/campaignWorkingCombat';
@@ -26,6 +26,7 @@ export default function CampaignCombats({
   sessionId,
   onChange,
   onEdit,
+  onCreateEncounter,
   editorVersion,
   active,
 }: {
@@ -38,9 +39,13 @@ export default function CampaignCombats({
     generation: number,
     state: TrackerState
   ) => boolean;
+  onCreateEncounter: (
+    change: (d: CampaignDocument) => CampaignDocument
+  ) => Promise<void>;
   editorVersion: number;
   active: boolean;
 }) {
+  const [creating, setCreating] = useState(false);
   const [confirmRemovalId, setConfirmRemovalId] = useState<string>();
   const [undo, setUndo] = useState<string>();
   const [newEncounterId, setNewEncounterId] = useState<string>();
@@ -231,17 +236,22 @@ export default function CampaignCombats({
               ))}
               <button
                 className={styles['addTab']}
-                onClick={() =>
-                  create(
-                    { ...emptyWorkingCombat(), title: 'Untitled encounter' },
-                    { kind: 'empty' }
-                  )
-                }
+                onClick={() => setCreating(true)}
               >
                 + Encounter
               </button>
             </div>
           </div>
+          {creating && active && (
+            <CreateEncounterDialog
+              key={`${document.id}:${sessionId}`}
+              document={document}
+              sessionId={sessionId}
+              selectedId={selected?.id}
+              onCreate={onCreateEncounter}
+              onClose={() => setCreating(false)}
+            />
+          )}
           {!selected && (
             <p>
               Create an encounter above, or choose a stored source in Campaign

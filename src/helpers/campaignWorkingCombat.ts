@@ -6,7 +6,10 @@ import type { EncounterStatus, ContinuedFrom } from './campaignContinuityModel';
 import { ownsVersion } from './campaignHistory';
 import { z } from 'zod';
 import { canonical, interpretSource } from './campaignSnapshots';
-import { createInitialTrackerState } from './trackerState';
+import {
+  createInitialTrackerState,
+  startNewCombatFromActiveRound,
+} from './trackerState';
 import type { TrackerState } from '../types/tracker';
 import type { CampaignDocument } from './campaignDocument';
 export interface WorkingCombat {
@@ -215,4 +218,66 @@ export function restoreWorkingCombat(
         : c
     ),
   };
+}
+
+/** Snapshot only the last-round party; this is a new encounter, not a continuation. */
+export function createEncounterFromParty(
+  doc: CampaignDocument,
+  sessionId: string,
+  title: string,
+  source: { id: string; generation: number } | undefined,
+  encounterId: string,
+  checkpointId: string,
+  at: string
+): CampaignDocument {
+  if (doc.workingCombats.some((c) => c.id === encounterId)) return doc;
+  if (!source)
+    return createWorkingCombat(
+      doc,
+      sessionId,
+      title,
+      emptyWorkingCombat(),
+      { kind: 'empty' },
+      encounterId
+    );
+  const combat = doc.workingCombats.find(
+    (c) =>
+      c.id === source.id &&
+      c.sessionId === sessionId &&
+      c.generation === source.generation &&
+      !c.removedAt
+  );
+  const last = combat?.state.rounds[combat.state.rounds.length - 1];
+  if (!combat || !last?.party.length)
+    throw new Error(
+      'Source encounter changed or is unavailable. Choose a party again.'
+    );
+  const fresh = startNewCombatFromActiveRound(
+    { ...combat.state, activeRound: combat.state.rounds.length - 1 },
+    'carry-current'
+  );
+  const round = fresh.rounds[0];
+  if (!round) throw new Error('Missing initial round');
+  round.enemies = [];
+  round.enemyStates = [];
+  round.cells = [];
+  round.partyStates = round.partyStates.map((state, i) => ({
+    ...state,
+    notes: last.partyStates[i]?.notes ?? '',
+  }));
+  const preserved = captureCombatCheckpoint(
+    doc,
+    combat.id,
+    `Party copied to ${title.trim() || 'Untitled encounter'}`.slice(0, 1000),
+    checkpointId,
+    at
+  );
+  return createWorkingCombat(
+    preserved,
+    sessionId,
+    title,
+    fresh,
+    { kind: 'checkpoint', checkpointId },
+    encounterId
+  );
 }
