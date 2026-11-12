@@ -45,7 +45,6 @@ import type { EncumbranceDmDocument } from '../../types/encumbrance';
 import type {
   DocumentState,
   CombatEditKey,
-  EditQueueStatus,
   DocumentCommand,
 } from '../../types/campaignStorage';
 import styles from './campaignWorkspace.module.css';
@@ -61,7 +60,6 @@ export default function DesktopWorkspace() {
     sessionId: string;
   } | null>(null);
   const [state, setState] = useState<DocumentState | null>(null);
-  const current = useRef<DocumentState | null>(null);
   const draggedSession = useRef<string | null>(null);
   const [dropSession, setDropSession] = useState<string | null>(null);
   const [activeTool, setActiveTool] = useState<StandaloneTool | null>(null);
@@ -85,174 +83,77 @@ export default function DesktopWorkspace() {
     setToolPath(path);
     window.history.replaceState(window.history.state, '', `${path}.html`);
   }, []);
-  const pending = useRef(0);
-  const needsEditorReset = useRef(false);
-  const editorVersionRef = useRef(0);
-  const [editorVersion, setEditorVersion] = useState(0);
-  const resetEditor = useCallback(() => {
-    editorVersionRef.current += 1;
-    setEditorVersion(editorVersionRef.current);
-  }, []);
-  const [queueStatus, setQueueStatus] = useState<EditQueueStatus>({
-    phase: 'idle',
-    queued: 0,
-    error: null,
-  });
+  const editorVersion = state?.editorVersion || 0;
+  const pending = (state?.queue?.queued || 0) > 0;
   const [error, setError] = useState<string | null>(null);
   const [inventoryHistorySelections, setInventoryHistorySelections] = useState<
     Record<string, string>
   >({});
-  const receive = useCallback(
-    (next: DocumentState) => {
-      if (current.current?.epoch !== next.epoch) {
-        setAddingInventory(null);
-        if (current.current) {
-          returnToWorkspace();
-        }
-        pending.current = 0;
-        needsEditorReset.current = false;
-        setError(null);
-        current.current = next;
-        setState(next);
-        return;
-      }
-      if (pending.current > 0 || needsEditorReset.current) {
-        // Native status must remain visible without rolling back newer or rejected input.
-        const merged = {
-          ...next,
-          document: current.current?.document || next.document,
-          dirty: true,
-        };
-        current.current = merged;
-        setState(merged);
-        return;
-      }
-      if (pending.current === 0) {
-        current.current = next;
-        setState(next);
-      }
-    },
-    [returnToWorkspace]
-  );
+  const toolEpoch = useRef<number>();
+  useEffect(() => {
+    setAddingInventory(null);
+    if (toolEpoch.current !== undefined) returnToWorkspace();
+    toolEpoch.current = state?.epoch;
+  }, [state?.epoch, returnToWorkspace]);
   useEffect(() => {
     let disposed = false;
     let unsubscribe: (() => void) | undefined;
-    let unsubscribeStatus: (() => void) | undefined;
     void import('../../helpers/tauriCampaignStorage')
       .then(async ({ createTauriStorage }) => {
         const storage = window.campaignStorage || (await createTauriStorage());
         if (!storage || disposed) return;
         window.campaignStorage = storage;
-        unsubscribeStatus = storage.subscribeStatus?.((status) => {
-          if (!disposed) setQueueStatus(status);
-        });
         unsubscribe = storage.subscribe((next) => {
-          if (!disposed) receive(next);
+          if (!disposed) setState(next);
         });
         const next = await storage.getState();
-        if (!disposed) receive(next);
+        if (!disposed) setState(next);
       })
       .catch((e) => setError(String(e)));
     return () => {
       disposed = true;
       unsubscribe?.();
-      unsubscribeStatus?.();
     };
-  }, [receive]);
+  }, []);
+  const acceptMutation = useCallback(
+    (
+      change: (doc: CampaignDocument) => CampaignDocument,
+      owner: DocumentState | null = state,
+      combat?: CombatEditKey,
+      preview = false
+    ) => {
+      if (!owner?.document || !window.campaignStorage)
+        throw new Error('Campaign unavailable.');
+      return window.campaignStorage
+        .mutate(owner.document.id, owner.epoch, change, combat, {
+          editorVersion: owner.editorVersion,
+          preview,
+        })
+        .then((accepted) => {
+          if (!accepted)
+            throw new Error('Campaign changed. Reopen the dialog.');
+        });
+    },
+    [state]
+  );
   const mutate = useCallback(
-    function mutate(
-      change: (document: CampaignDocument) => CampaignDocument,
-      owner: DocumentState | null = current.current,
+    (
+      change: (doc: CampaignDocument) => CampaignDocument,
+      owner: DocumentState | null = state,
       combat?: CombatEditKey
-    ) {
-      if (!owner?.document || !window.campaignStorage) return false;
-      const id = owner.document.id,
-        epoch = owner.epoch;
-      const active = current.current;
-      if (active?.epoch !== epoch || active.document?.id !== id) return false;
+    ) => {
       try {
-        const next = change(active.document);
-        pending.current += 1;
-        setError(null);
-        const optimistic = {
-          ...active,
-          document: next,
-          dirty: true,
-          status: 'Unsaved campaign changes',
-        };
-        current.current = optimistic;
-        setState(optimistic);
-        void window.campaignStorage
-          .mutate(id, epoch, change, combat)
-          .then((accepted) => {
-            if (
-              current.current?.epoch !== epoch ||
-              current.current?.document?.id !== id
-            )
-              return;
-            pending.current = Math.max(0, pending.current - 1);
-            if (accepted && pending.current === 0) {
-              setError(null);
-              receive(accepted);
-            }
-          })
-          .catch((e) => {
-            if (current.current?.epoch === epoch) {
-              pending.current = Math.max(0, pending.current - 1);
-              needsEditorReset.current = true;
-              setError(String(e));
-            }
-          });
+        void acceptMutation(change, owner, combat, true).catch(() => undefined);
         return true;
-      } catch (e) {
-        needsEditorReset.current = true;
-        setError(String(e));
+      } catch {
         return false;
       }
     },
-    [receive]
+    [acceptMutation, state]
   );
-  async function acceptMutation(
-    change: (doc: CampaignDocument) => CampaignDocument,
-    owner: DocumentState
-  ) {
-    const storage = window.campaignStorage;
-    if (!storage || !owner.document) throw new Error('Campaign unavailable.');
-    if (
-      current.current?.epoch !== owner.epoch ||
-      current.current.document?.id !== owner.document.id
-    )
-      throw new Error('Campaign changed. Reopen the dialog.');
-    change(current.current.document);
-    pending.current += 1;
-    setError(null);
-    try {
-      const accepted = await storage.mutate(
-        owner.document.id,
-        owner.epoch,
-        change
-      );
-      if (
-        !accepted ||
-        current.current?.epoch !== owner.epoch ||
-        current.current.document?.id !== owner.document.id
-      )
-        throw new Error('Campaign changed before the edit was accepted.');
-      pending.current = Math.max(0, pending.current - 1);
-      receive(accepted);
-    } catch (e) {
-      if (current.current?.epoch === owner.epoch) {
-        pending.current = Math.max(0, pending.current - 1);
-        needsEditorReset.current = true;
-        setError(String(e));
-      }
-      throw e;
-    }
-  }
   const navigate = useCallback(
     (view: WorkspaceView) => {
-      if (current.current?.document?.workspace.view !== view)
-        mutate((d) => ({ ...d, workspace: { ...d.workspace, view } }));
+      mutate((d) => ({ ...d, workspace: { ...d.workspace, view } }));
     },
     [mutate]
   );
@@ -303,18 +204,16 @@ export default function DesktopWorkspace() {
         '6': 'xp',
       };
       const view = views[event.code.replace('Digit', '')];
-      if (view && current.current?.document) {
+      if (view && state?.document) {
         event.preventDefault();
         navigate(view);
       }
     };
     window.addEventListener('keydown', keydown);
     return () => window.removeEventListener('keydown', keydown);
-  }, [navigate]);
+  }, [navigate, state?.document]);
   const command = (action: DocumentCommand) => {
-    void window.campaignStorage
-      ?.command(action)
-      .catch((e) => setError(String(e)));
+    void window.campaignStorage?.command(action).catch(() => undefined);
   };
   const document = state?.document;
   const sessionId =
@@ -455,12 +354,7 @@ export default function DesktopWorkspace() {
               {document ? 'Return to campaign' : 'Back to welcome'}
             </button>
           ) : (
-            <CampaignSaveStatus
-              state={state}
-              pending={pending.current > 0}
-              hasError={Boolean(error || queueStatus.error)}
-              queuePhase={queueStatus.phase}
-            />
+            <CampaignSaveStatus state={state} />
           )}
         </div>
       </header>
@@ -475,42 +369,30 @@ export default function DesktopWorkspace() {
           Couldn’t remember this file. Use Open next time.
         </p>
       )}
-      {(error || state?.error || queueStatus.error) && (
+      {(error || state?.error) && (
         <div role="alert" className={styles['error']}>
-          {error || state?.error || queueStatus.error}
-          {(needsEditorReset.current || queueStatus.rejected) &&
-            window.campaignStorage?.retryRejectedEdits && (
+          {error || state?.error}
+          {state?.queue?.rejected && (
+            <>
               <button
                 onClick={() => {
                   void window.campaignStorage
                     ?.retryRejectedEdits?.()
-                    .then((accepted) => {
-                      needsEditorReset.current = false;
-                      setError(null);
-                      receive(accepted);
-                    })
-                    .catch((e) => setError(String(e)));
+                    .catch(() => undefined);
                 }}
               >
                 Retry pending edits
               </button>
-            )}
-          {(needsEditorReset.current || queueStatus.rejected) && (
-            <button
-              onClick={() => {
-                void window.campaignStorage
-                  ?.discardRejectedEdits()
-                  .then((accepted) => {
-                    needsEditorReset.current = false;
-                    resetEditor();
-                    setError(null);
-                    receive(accepted);
-                  })
-                  .catch((e) => setError(String(e)));
-              }}
-            >
-              Discard rejected edits
-            </button>
+              <button
+                onClick={() => {
+                  void window.campaignStorage
+                    ?.discardRejectedEdits()
+                    .catch(() => undefined);
+                }}
+              >
+                Discard rejected edits
+              </button>
+            </>
           )}
         </div>
       )}
@@ -717,7 +599,7 @@ export default function DesktopWorkspace() {
               </div>
               <button
                 className={styles['addTab']}
-                disabled={state.busy || pending.current > 0}
+                disabled={state.busy || pending}
                 onClick={() => setContinuing({ sessionId, owner: state })}
               >
                 + Session
@@ -793,7 +675,7 @@ export default function DesktopWorkspace() {
                       key={`${state.epoch}:${sessionId}`}
                       document={document}
                       token={state.token}
-                      busy={state.busy || pending.current > 0}
+                      busy={state.busy || pending}
                       activeSessionId={sessionId}
                     />
                   </details>
@@ -828,7 +710,11 @@ export default function DesktopWorkspace() {
                   </div>
                 ) : (
                   <EncumbranceApp
-                    key={`${state.epoch}:${working.id}:${editorVersion}`}
+                    key={`${state.epoch}:${
+                      working.id
+                    }:${editorVersion}:${working.document.characters
+                      .map((c) => c.id)
+                      .join()}`}
                     mode="dm"
                     campaign={{
                       document: working.document,
@@ -860,19 +746,9 @@ export default function DesktopWorkspace() {
                       },
                       active: view === 'possessions' && !activeTool,
                       onDocumentChange: (next) => {
-                        if (
-                          next.kind !== 'adnd-encumbrance-dm' ||
-                          editorVersion !== editorVersionRef.current
-                        )
-                          return false;
+                        if (next.kind !== 'adnd-encumbrance-dm') return false;
                         const workId = working.id,
                           owner = scope;
-                        if (
-                          !current.current?.document?.workingInventories.some(
-                            (w) => w.id === workId && w.sessionId === sessionId
-                          )
-                        )
-                          return false;
                         const removal = working.document.characters.some(
                           (c) => !next.characters.some((n) => n.id === c.id)
                         )
@@ -893,7 +769,7 @@ export default function DesktopWorkspace() {
                       onExport: () => {
                         void window.campaignStorage
                           ?.exportWorking(document.id, state.epoch, working.id)
-                          .catch((e) => setError(String(e)));
+                          .catch(() => undefined);
                       },
                     }}
                   />
@@ -993,22 +869,8 @@ export default function DesktopWorkspace() {
                   sessionId={sessionId}
                   editorVersion={editorVersion}
                   onChange={(change) => mutate(change, scope)}
-                  onCreateEncounter={async (change) => {
-                    if (!scope) throw new Error('Campaign unavailable.');
-                    await acceptMutation(change, scope);
-                  }}
+                  onCreateEncounter={(change) => acceptMutation(change, scope)}
                   onEdit={(id, ownedSession, generation, next) => {
-                    if (
-                      editorVersion !== editorVersionRef.current ||
-                      !current.current?.document?.workingCombats.some(
-                        (c) =>
-                          c.id === id &&
-                          c.sessionId === ownedSession &&
-                          c.generation === generation &&
-                          !c.removedAt
-                      )
-                    )
-                      return false;
                     return mutate(
                       (d) =>
                         changeWorkingCombat(
@@ -1095,7 +957,6 @@ export default function DesktopWorkspace() {
                 workingId={addingInventory.workingId}
                 sessionId={addingInventory.sessionId}
                 onChange={(change) => mutate(change, addingInventory.owner)}
-                onAdded={resetEditor}
                 onClose={() => setAddingInventory(null)}
               />
             )}

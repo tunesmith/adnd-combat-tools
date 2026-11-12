@@ -347,43 +347,6 @@ async fn campaign_state(app: tauri::AppHandle) -> View {
     .unwrap()
 }
 #[tauri::command]
-async fn campaign_edit(app: tauri::AppHandle, title: String, notes: String) -> Result<(), String> {
-    tauri::async_runtime::spawn_blocking(move || {
-        let state = app.state::<State>();
-        let mut s = state.session.lock().unwrap();
-        if let Some(mut doc) = s.view.document.clone() {
-            doc.title = title;
-            doc.notes = notes;
-            if doc.title.encode_utf16().count() > 1000
-                || doc.notes.encode_utf16().count() > 1_000_000
-            {
-                return Err("Title or notes is too large".into());
-            }
-            if serde_json::to_vec_pretty(&doc)
-                .map_err(|e| e.to_string())?
-                .len()
-                + 1
-                > 8_000_000
-            {
-                return Err("Campaign exceeds 8 MB".into());
-            }
-            s.view.dirty = s.saved.as_ref() != Some(&doc);
-            s.view.document = Some(doc);
-            s.view.token += 1;
-            s.view.status = if s.view.dirty {
-                "Unsaved changes"
-            } else {
-                "No unsaved changes"
-            }
-            .into();
-            s.view.error = None;
-        }
-        Ok(())
-    })
-    .await
-    .map_err(|e| e.to_string())?
-}
-#[tauri::command]
 async fn campaign_command(app: tauri::AppHandle, command: String) -> Result<(), String> {
     tauri::async_runtime::spawn_blocking(move || {
         if command == "openPending" {
@@ -417,7 +380,6 @@ fn main() {
             campaign_diagnostic,
             campaign_diagnostic_fault,
             campaign_state,
-            campaign_edit,
             campaign_command,
             campaign_replace,
             campaign_pick_source,

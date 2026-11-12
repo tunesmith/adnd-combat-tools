@@ -70,7 +70,6 @@ test.each([false, true])(
       mutate,
       command,
       replace: jest.fn(),
-      edit: jest.fn(),
       pickSource: jest.fn(),
       exportSource: jest.fn(),
       exportWorking: jest.fn(),

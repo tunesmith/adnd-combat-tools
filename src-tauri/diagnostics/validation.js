@@ -45,8 +45,8 @@ window.__CAMPAIGN_DIAGNOSTICS__ = true;
   const state = () => storage.getState();
   let phase = 'start';
   let queue;
-  storage.subscribeStatus((next) => {
-    queue = next;
+  storage.subscribe((next) => {
+    queue = next.queue;
   });
   try {
     await wait(() => notes());

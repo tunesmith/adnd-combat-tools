@@ -20,9 +20,17 @@ test.each(['save', 'quit', 'openPending'])(
       core: {
         invoke: <T>(command: string): Promise<T> => {
           calls.push(command);
-          return (command === 'campaign_edit'
-            ? pendingEdit
-            : Promise.resolve(undefined)) as unknown as Promise<T>;
+          return (command === 'campaign_replace'
+            ? pendingEdit.then(() => ({
+                document: { id: 'synthetic' },
+                epoch: 1,
+                token: 1,
+              }))
+            : Promise.resolve({
+                document: { id: 'synthetic' },
+                epoch: 1,
+                token: 0,
+              })) as unknown as Promise<T>;
         },
       },
       event: {
@@ -37,15 +45,24 @@ test.each(['save', 'quit', 'openPending'])(
       },
     };
     const storage = await createTauriStorage();
-    const edit = storage?.edit('Synthetic', 'Keep the final keystroke');
+    const edit = storage?.mutate('synthetic', 1, (d) => ({
+      ...d,
+      title: 'Synthetic',
+      notes: 'Keep the final keystroke',
+    }));
+    await Promise.resolve();
     await Promise.resolve();
     menuAction?.({ payload: action });
-    expect(calls).toEqual(['campaign_edit']);
+    expect(calls).toEqual(['campaign_state', 'campaign_replace']);
     finishEdit();
     await edit;
     await Promise.resolve();
     await Promise.resolve();
-    expect(calls).toEqual(['campaign_edit', 'campaign_command']);
+    expect(calls).toEqual([
+      'campaign_state',
+      'campaign_replace',
+      'campaign_command',
+    ]);
   }
 );
 
@@ -60,7 +77,7 @@ test('Save waits for attachment validation and application', async () => {
       invoke: <T>(name: string): Promise<T> => {
         calls.push(name);
         return (name === 'campaign_replace'
-          ? mutation
+          ? mutation.then(() => ({ document: null, epoch: 1, token: 1 }))
           : Promise.resolve()) as unknown as Promise<T>;
       },
     },
@@ -384,6 +401,7 @@ function queueHarness() {
   const writes: string[] = [],
     saved: string[] = [];
   const events = new Map<string, (event: { payload: unknown }) => void>();
+  let readBlock: Promise<void> | undefined;
   let block: Promise<void> | undefined,
     blockCommand: Promise<void> | undefined,
     rejection: Error | undefined;
@@ -393,7 +411,10 @@ function queueHarness() {
         name: string,
         args?: Record<string, unknown>
       ): Promise<T> => {
-        if (name === 'campaign_state') return current as unknown as T;
+        if (name === 'campaign_state') {
+          if (readBlock) await readBlock;
+          return current as unknown as T;
+        }
         if (name === 'campaign_replace') {
           if (block) await block;
           if (rejection) throw rejection;
@@ -429,6 +450,9 @@ function queueHarness() {
     saved,
     events,
     current: () => current,
+    blockRead: (promise?: Promise<void>) => {
+      readBlock = promise;
+    },
     block: (promise?: Promise<void>) => {
       block = promise;
     },
@@ -530,7 +554,8 @@ test('menu failures are visible; rejected input is retained for retry in order, 
   const h = queueHarness(),
     storage = await createTauriStorage();
   const phases: string[] = [];
-  storage?.subscribeStatus?.((s) => phases.push(s.error || s.phase));
+  await storage?.getState();
+  storage?.subscribe((s) => phases.push(s.error || s.queue?.phase || 'idle'));
   h.reject(new Error('Validation timed out'));
   const bad = storage?.mutate(
     'c',
@@ -695,3 +720,206 @@ test.each(['banking', 'xp'] as const)(
       ).toBe(true);
   }
 );
+
+test('one subscription keeps newer optimistic input over native status while mutation promises return accepted data', async () => {
+  const h = queueHarness(),
+    storage = await createTauriStorage();
+  if (!storage) throw Error('Missing storage');
+  let shown = await storage.getState();
+  storage.subscribe((s) => {
+    shown = s;
+  });
+  const delay = deferred();
+  h.block(delay.promise);
+  const first = storage.mutate(
+    'c',
+    1,
+    (d) => ({ ...d, notes: 'first' }),
+    combatKey
+  );
+  const save = storage.command('save');
+  const last = storage.mutate(
+    'c',
+    1,
+    (d) => ({ ...d, notes: 'latest' }),
+    combatKey
+  );
+  expect(shown.document?.notes).toBe('latest');
+  expect(shown.queue?.queued).toBe(3);
+  h.events.get('campaign-state')?.({
+    payload: { ...h.current(), busy: true, activity: 'save' },
+  });
+  expect(shown.document?.notes).toBe('latest');
+  expect(shown.busy).toBe(true);
+  delay.resolve();
+  expect((await first)?.document?.notes).toBe('first');
+  await save;
+  await last;
+  expect(shown.document?.notes).toBe('latest');
+  expect(shown.queue?.queued).toBe(0);
+  expect(shown.dirty).toBe(true);
+  // A delayed native snapshot must not roll back the accepted revision.
+  h.events.get('campaign-state')?.({
+    payload: {
+      ...h.current(),
+      token: 0,
+      document: { ...h.current().document, notes: 'stale' },
+    },
+  });
+  expect(shown.document?.notes).toBe('latest');
+});
+
+test('discard owns editor invalidation and preserves input submitted during recovery', async () => {
+  const h = queueHarness(),
+    storage = await createTauriStorage();
+  if (!storage) throw Error('Missing storage');
+  let shown = await storage.getState();
+  const version = shown.editorVersion;
+  storage.subscribe((s) => {
+    shown = s;
+  });
+  h.reject(Error('Rejected'));
+  const rejected = storage.mutate('c', 1, (d) => ({
+    ...d,
+    notes: 'discard this',
+  }));
+  await expect(rejected).rejects.toThrow('Rejected');
+  expect(shown.document?.notes).toBe('discard this');
+  expect(shown.queue?.rejected).toBe(true);
+  const read = deferred();
+  h.blockRead(read.promise);
+  h.reject();
+  const discard = storage.discardRejectedEdits();
+  const newer = storage.mutate('c', 1, (d) => ({
+    ...d,
+    notes: 'typed during discard',
+  }));
+  expect(shown.document?.notes).toBe('typed during discard');
+  read.resolve();
+  await discard;
+  await newer;
+  expect(shown.document?.notes).toBe('typed during discard');
+  expect(shown.editorVersion).toBe((version || 0) + 1);
+  expect(shown.queue?.rejected).toBe(false);
+  expect(
+    await storage.mutate(
+      'c',
+      1,
+      (d) => ({ ...d, notes: 'late editor callback' }),
+      combatKey,
+      { editorVersion: version }
+    )
+  ).toBeNull();
+  expect(shown.document?.notes).toBe('typed during discard');
+});
+
+test('late errors from the previous document cannot poison the new document', async () => {
+  const h = queueHarness(),
+    storage = await createTauriStorage();
+  if (!storage) throw Error('Missing storage');
+  let shown = await storage.getState();
+  storage.subscribe((s) => {
+    shown = s;
+  });
+  const delay = deferred();
+  h.block(delay.promise);
+  h.reject(Error('Old edit rejected'));
+  const old = storage.mutate('c', 1, (d) => ({ ...d, notes: 'old input' }));
+  await Promise.resolve();
+  await Promise.resolve();
+  h.epoch();
+  h.events.get('campaign-state')?.({ payload: h.current() });
+  delay.resolve();
+  await expect(old).rejects.toThrow('Old edit rejected');
+  expect(shown.epoch).toBe(2);
+  expect(shown.error).toBeNull();
+  expect(shown.queue?.rejected).toBe(false);
+  h.reject();
+  await storage.mutate('c', 2, (d) => ({ ...d, notes: 'new document input' }));
+  await storage.command('save');
+  expect(h.saved).toEqual(['new document input']);
+});
+
+test('accepted-only operations do not show an unconfirmed result as an optimistic edit', async () => {
+  const h = queueHarness(),
+    storage = await createTauriStorage();
+  if (!storage) throw Error('Missing storage');
+  let shown = await storage.getState();
+  storage.subscribe((s) => {
+    shown = s;
+  });
+  const delay = deferred();
+  h.block(delay.promise);
+  const confirmation = storage.mutate(
+    'c',
+    1,
+    (d) => ({ ...d, title: 'confirmed transaction' }),
+    undefined,
+    { preview: false }
+  );
+  const edit = storage.mutate(
+    'c',
+    1,
+    (d) => ({ ...d, notes: 'typed while confirming' }),
+    combatKey
+  );
+  expect(shown.document?.title).toBe('');
+  expect(shown.document?.notes).toBe('typed while confirming');
+  delay.resolve();
+  await confirmation;
+  await edit;
+  expect(shown.document?.title).toBe('confirmed transaction');
+  expect(shown.document?.notes).toBe('typed while confirming');
+});
+
+test('inventory membership invalidates callbacks from the editor it replaces', async () => {
+  const h = queueHarness(),
+    storage = await createTauriStorage();
+  if (!storage) throw Error('Missing storage');
+  const { syntheticInventory } = await import('./fixtures/campaignB1');
+  const { startWorkingInventory } = await import(
+    '../helpers/campaignWorkingInventory'
+  );
+  await storage.getState();
+  await storage.mutate('c', 1, (d) =>
+    startWorkingInventory(
+      { ...d, sessions: [{ id: 'session', label: 'Session' }] },
+      'session',
+      syntheticInventory(),
+      { kind: 'empty' },
+      'inventory',
+      'checkpoint',
+      '2026-11-12T12:00:00.000Z'
+    )
+  );
+  const oldEditor = await storage.getState();
+  await storage.mutate('c', 1, (d) => ({
+    ...d,
+    workingInventories: d.workingInventories.map((w) => ({
+      ...w,
+      document: {
+        ...w.document,
+        characters: [
+          ...w.document.characters,
+          ...w.document.characters.slice(0, 1).map((c) => ({
+            ...c,
+            id: 'added',
+            name: 'New member',
+            inventory: [],
+          })),
+        ],
+      },
+    })),
+  }));
+  expect((await storage.getState()).editorVersion).not.toBe(
+    oldEditor.editorVersion
+  );
+  const stale = jest.fn((d) => ({ ...d, notes: 'stale inventory edit' }));
+  expect(
+    await storage.mutate('c', 1, stale, undefined, {
+      editorVersion: oldEditor.editorVersion,
+    })
+  ).toBeNull();
+  expect(stale).not.toHaveBeenCalled();
+  expect(h.current().document.notes).toBe('');
+});

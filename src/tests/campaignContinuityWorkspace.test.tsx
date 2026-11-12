@@ -108,7 +108,6 @@ test('workspace starts the selected continuation atomically, edits notes indepen
       return native;
     },
     replace: jest.fn(),
-    edit: jest.fn(),
     command: jest.fn(),
     pickSource: jest.fn(),
     exportWorking: jest.fn(),

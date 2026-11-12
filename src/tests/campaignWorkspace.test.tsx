@@ -86,7 +86,6 @@ test('campaign-controlled edits survive navigation, and shortcuts do not steal t
       return native;
     },
     replace: jest.fn(),
-    edit: jest.fn(),
     command: jest.fn(),
     pickSource: jest.fn(),
     exportSource: jest.fn(),

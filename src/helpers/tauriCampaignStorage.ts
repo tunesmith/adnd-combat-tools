@@ -21,8 +21,7 @@ export async function createTauriStorage(): Promise<CampaignStorage | null> {
   const { invoke } = native.core;
   const { listen } = native.event;
   let pending: Promise<void> = Promise.resolve();
-  let editError: unknown = null;
-  let commandError: unknown = null;
+  let failure: unknown = null;
   let failed: Job<unknown>[] = [];
   let draft: Draft | undefined;
   let depth = 0;
@@ -32,12 +31,11 @@ export async function createTauriStorage(): Promise<CampaignStorage | null> {
   let composing: Promise<void> | undefined;
   let endComposition: (() => void) | undefined;
   const listeners = new Set<(state: DocumentState) => void>();
-  const statusListeners = new Set<(status: EditQueueStatus) => void>();
+  let accepted: DocumentState | undefined;
+  let optimistic: CampaignDocument | undefined;
+  let editorVersion = 0;
   let status: EditQueueStatus = { phase: 'idle', queued: 0, error: null };
-  function publish(
-    phase?: EditQueueStatus['phase'],
-    error = editError || commandError
-  ) {
+  function publish(phase?: EditQueueStatus['phase'], error = failure) {
     status = {
       phase:
         phase ||
@@ -52,7 +50,42 @@ export async function createTauriStorage(): Promise<CampaignStorage | null> {
       rejected: failed.length > 0,
       error: error ? String(error) : null,
     };
-    statusListeners.forEach((listener) => listener(status));
+    if (!depth && !failed.length && !recovering) optimistic = undefined;
+    if (accepted) {
+      const next = view(accepted);
+      listeners.forEach((listener) => listener(next));
+    }
+  }
+  function view(state: DocumentState): DocumentState {
+    return {
+      ...state,
+      document: optimistic || state.document,
+      dirty: !!optimistic || state.dirty,
+      error: status.error || state.error,
+      queue: status,
+      editorVersion,
+    };
+  }
+  function accept(next: DocumentState): DocumentState {
+    if (
+      accepted &&
+      (next.epoch < accepted.epoch ||
+        (next.epoch === accepted.epoch && next.token < accepted.token))
+    )
+      return accepted;
+    if (
+      accepted &&
+      (next.epoch !== accepted.epoch ||
+        next.document?.id !== accepted.document?.id)
+    ) {
+      optimistic = undefined;
+      failed = [];
+      failure = null;
+      editorVersion++;
+    }
+    accepted = next;
+    publish();
+    return next;
   }
   let diagnosticCount = 0;
   function trace(name: string, start: number, count = depth) {
@@ -97,7 +130,8 @@ export async function createTauriStorage(): Promise<CampaignStorage | null> {
     else failed.push(job);
   }
   function enqueue<T>(job: Job<T>, recoverable = true): Promise<T> {
-    commandError = null;
+    if (!failed.length) failure = null;
+    const owner = accepted;
     const enqueued = performance.now();
     depth++;
     trace('enqueue', enqueued);
@@ -106,13 +140,18 @@ export async function createTauriStorage(): Promise<CampaignStorage | null> {
       trace('queue_wait', enqueued);
       const started = performance.now();
       try {
-        if (editError) throw editError;
+        if (failed.length) throw failure;
         return await job.run();
       } catch (error) {
-        if (recoverable) {
-          remember(job);
-          editError = error;
-        } else commandError = error;
+        if (
+          owner &&
+          accepted &&
+          (owner.epoch !== accepted.epoch ||
+            owner.document?.id !== accepted.document?.id)
+        )
+          throw error;
+        if (recoverable) remember(job);
+        failure = error;
         publish('failed', error);
         throw error;
       } finally {
@@ -133,11 +172,11 @@ export async function createTauriStorage(): Promise<CampaignStorage | null> {
   function command(action: DocumentCommand | 'openPending'): Promise<void> {
     if (commandTask) {
       if (commandAction === action) return commandTask;
-      return Promise.reject(
-        new Error(
-          'A document command is already in progress. Wait for it to finish.'
-        )
+      const error = new Error(
+        'A document command is already in progress. Wait for it to finish.'
       );
+      publish('failed', error);
+      return Promise.reject(error);
     }
     commandAction = action;
     flush();
@@ -166,7 +205,7 @@ export async function createTauriStorage(): Promise<CampaignStorage | null> {
     return commandTask;
   }
   await listen<DocumentState>('campaign-state', ({ payload }) => {
-    listeners.forEach((listener) => listener(payload));
+    accept(payload);
   });
   await listen<DocumentCommand | 'openPending'>(
     'campaign-action',
@@ -185,14 +224,47 @@ export async function createTauriStorage(): Promise<CampaignStorage | null> {
     const document = change(current.document);
     const text = JSON.stringify(document);
     trace('serialize', start, text.length);
-    return invoke<DocumentState>('campaign_replace', {
-      id,
-      token: current.token,
-      text,
-    });
+    const result = accept(
+      await invoke<DocumentState>('campaign_replace', {
+        id,
+        token: current.token,
+        text,
+      })
+    );
+    return result.epoch === epoch && result.document?.id === id ? result : null;
   }
   return {
-    mutate: (id, epoch, change, combat) => {
+    mutate: (id, epoch, change, combat, options) => {
+      if (
+        accepted &&
+        (accepted.epoch !== epoch ||
+          accepted.document?.id !== id ||
+          (options?.editorVersion !== undefined &&
+            options.editorVersion !== editorVersion))
+      )
+        return Promise.resolve(null);
+      if (accepted?.document && options?.preview !== false) {
+        try {
+          const before = optimistic || accepted.document;
+          const next = change(before);
+          // Membership changes replace inventory editors, just like an explicit discard.
+          const members = (doc: CampaignDocument) =>
+            JSON.stringify(
+              doc.workingInventories.map((w) => [
+                w.id,
+                w.document.characters.map((c) => c.id),
+              ])
+            );
+          if (
+            before.workingInventories !== next.workingInventories &&
+            members(before) !== members(next)
+          )
+            editorVersion++;
+          optimistic = next;
+        } catch {
+          // The preview may be stale. Decide against accepted native state below.
+        }
+      }
       const key = combat
         ? JSON.stringify([
             id,
@@ -205,6 +277,7 @@ export async function createTauriStorage(): Promise<CampaignStorage | null> {
       if (key && draft?.key === key) {
         draft.change = change;
         trace('coalesced', performance.now());
+        publish();
         return draft.result;
       }
       flush();
@@ -264,35 +337,33 @@ export async function createTauriStorage(): Promise<CampaignStorage | null> {
             token,
             purpose,
             text: JSON.stringify(document),
-          }),
+          }).then(accept),
       });
     },
     pickSource: () => invoke('campaign_pick_source'),
     exportSource: (id, recordId, revisionId) =>
       invoke('campaign_export', { id, recordId, revisionId }),
-    getState: () => invoke<DocumentState>('campaign_state'),
+    getState: async () =>
+      view(accept(await invoke<DocumentState>('campaign_state'))),
     retryRejectedEdits: () => {
       if (recovering) return recovering;
       flush();
       const retry = pending.then(async () => {
         const jobs = failed;
         failed = [];
-        editError = null;
-        commandError = null;
+        failure = null;
         publish('editing');
         for (let i = 0; i < jobs.length; i++) {
           try {
             await jobs[i]?.run();
           } catch (error) {
             failed = jobs.slice(i);
-            editError = error;
+            failure = error;
             publish('failed');
             throw error;
           }
         }
-        const accepted = await invoke<DocumentState>('campaign_state');
-        publish();
-        return accepted;
+        return accept(await invoke<DocumentState>('campaign_state'));
       });
       pending = retry.then(
         () => undefined,
@@ -300,18 +371,20 @@ export async function createTauriStorage(): Promise<CampaignStorage | null> {
       );
       recovering = retry.finally(() => {
         recovering = undefined;
+        publish();
       });
       return recovering;
     },
     discardRejectedEdits: () => {
       flush();
+      const discarded = optimistic;
       const discard = pending.then(async () => {
-        const accepted = await invoke<DocumentState>('campaign_state');
+        const current = await invoke<DocumentState>('campaign_state');
         failed = [];
-        editError = null;
-        commandError = null;
-        publish();
-        return accepted;
+        failure = null;
+        if (optimistic === discarded) optimistic = undefined;
+        editorVersion++;
+        return accept(current);
       });
       pending = discard.then(
         () => undefined,
@@ -319,20 +392,7 @@ export async function createTauriStorage(): Promise<CampaignStorage | null> {
       );
       return discard;
     },
-    edit(title, notes) {
-      flush();
-      return enqueue({
-        run: () => invoke<void>('campaign_edit', { title, notes }),
-      });
-    },
     command,
-    subscribeStatus(listener) {
-      statusListeners.add(listener);
-      listener(status);
-      return () => {
-        statusListeners.delete(listener);
-      };
-    },
     subscribe(listener) {
       listeners.add(listener);
       return () => {

@@ -42,7 +42,6 @@ function setup(fail = false) {
     discardRejectedEdits: jest.fn(),
     subscribe: () => () => undefined,
     mutate: jest.fn(),
-    edit: jest.fn(),
     command: jest.fn(),
     exportWorking: jest.fn(),
     exportSource: jest.fn(),

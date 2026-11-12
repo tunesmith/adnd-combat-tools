@@ -12,14 +12,12 @@ export default function AddInventoryCharacterDialog({
   sessionId,
   workingId,
   onChange,
-  onAdded,
   onClose,
 }: {
   document: CampaignDocument;
   sessionId: string;
   workingId: string;
   onChange: (change: (d: CampaignDocument) => CampaignDocument) => boolean;
-  onAdded: () => void;
   onClose: () => void;
 }) {
   const [sources] = useState(() =>
@@ -95,7 +93,6 @@ export default function AddInventoryCharacterDialog({
             if (
               onChange((doc) => addCampaignInventoryCharacter(doc, request))
             ) {
-              onAdded();
               onClose();
             }
           } catch (e) {

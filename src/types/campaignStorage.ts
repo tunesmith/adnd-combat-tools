@@ -10,6 +10,8 @@ export type DocumentCommand =
   | 'quit';
 export interface DocumentState {
   document: CampaignDocument | null;
+  queue?: EditQueueStatus;
+  editorVersion?: number;
   path: string | null;
   recentPath: string | null;
   dirty: boolean;
@@ -36,13 +38,13 @@ export interface EditQueueStatus {
 export interface CampaignStorage {
   getState(): Promise<DocumentState>;
   retryRejectedEdits?(): Promise<DocumentState>;
-  subscribeStatus?(listener: (status: EditQueueStatus) => void): () => void;
   discardRejectedEdits(): Promise<DocumentState>;
   mutate(
     id: string,
     epoch: number,
     change: (document: CampaignDocument) => CampaignDocument,
-    combat?: CombatEditKey
+    combat?: CombatEditKey,
+    options?: { editorVersion?: number; preview?: boolean }
   ): Promise<DocumentState | null>;
   exportWorking(id: string, epoch: number, workingId: string): Promise<boolean>;
   replace(
@@ -56,7 +58,6 @@ export interface CampaignStorage {
     recordId: string,
     revisionId: string
   ): Promise<boolean>;
-  edit(title: string, notes: string): Promise<void>;
   command(command: DocumentCommand): Promise<void>;
   subscribe(listener: (state: DocumentState) => void): () => void;
 }

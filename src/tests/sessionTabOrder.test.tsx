@@ -44,6 +44,7 @@ test.each([false, true])(
       status: '',
       error: null,
     };
+    const listeners = new Set<(state: DocumentState) => void>();
     const mutate = jest.fn(
       async (
         id: string,
@@ -59,19 +60,24 @@ test.each([false, true])(
         const next = parseCampaign(serializeCampaign(change(native.document)));
         validateHistoryTransition(native.document, next, '');
         native = { ...native, document: next, token: native.token + 1 };
+        listeners.forEach((listener) => listener(native));
         return native;
       }
     );
     window.campaignStorage = {
       getState: async () => native,
       discardRejectedEdits: async () => native,
-      subscribe: () => () => undefined,
+      subscribe: (listener) => {
+        listeners.add(listener);
+        return () => {
+          listeners.delete(listener);
+        };
+      },
       mutate,
       replace: async (document) => ({ ...native, document }),
       pickSource: async () => null,
       exportSource: async () => false,
       exportWorking: async () => false,
-      edit: async () => undefined,
       command: async () => undefined,
     };
     render(<DesktopWorkspace />);
