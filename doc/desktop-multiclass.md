@@ -70,3 +70,13 @@ Synthetic fixtures cover Kramrak's shared 6 HP, Fighter 1/Thief 1, separate bonu
 exact fractions, one capped class, manual training, session copies, live treasure,
 legacy balance mapping, corrections, repeated backward extensions and native
 save/reopen/failure/conflict handling. No campaign sources are bundled.
+
+## Character display order
+
+Drag a character’s name on Session to reorder the campaign roster. A focused name
+also supports Alt+Shift+Up/Down. The campaign's existing roster array stores this
+order without another schema upgrade. References, Session XP, XP event recipients,
+openings and award columns use it for display, including historical inspections.
+New characters append to the roster. Hidden/retired identities remain intact.
+Reordering does not rewrite profiles, accepted XP snapshots, allocations or
+balances, and does not synchronize inventory or combat rosters.

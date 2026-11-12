@@ -1,5 +1,6 @@
 import {
   xpRecipientAvailable,
+  inPartyOrder,
   profileLabel,
 } from '../../helpers/campaignParty';
 import { useState } from 'react';
@@ -30,8 +31,10 @@ export default function XpRecipients({
 }) {
   const available = (id: string) =>
     xpRecipientAvailable(document, reward.origin.sessionId, id);
-  const visibleRecipients = reward.recipients.filter((r) =>
-    available(r.characterId)
+  const visibleRecipients = inPartyOrder(
+    document,
+    reward.recipients.filter((r) => available(r.characterId)),
+    (r) => r.characterId
   );
   const candidates =
     document.party?.roster.filter(

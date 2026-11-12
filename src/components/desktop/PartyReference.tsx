@@ -9,6 +9,7 @@ import {
   calculatedSaves,
   emptyProfile,
   profilesInSession,
+  reorderPartyCharacter,
   updatePartyProfile,
 } from '../../helpers/campaignParty';
 import { saveCategories } from '../../tables/savingThrows';
@@ -79,6 +80,11 @@ export default function PartyReference({
           <SessionProfileTable
             document={document}
             profiles={rows}
+            onReorder={(fromId, targetId) =>
+              onChange((doc) =>
+                reorderPartyCharacter(doc, sessionId, fromId, targetId)
+              )
+            }
             onEdit={(profile, character) => setEditor({ profile, character })}
             onToggle={(characterId) =>
               update(characterId, (p) => ({

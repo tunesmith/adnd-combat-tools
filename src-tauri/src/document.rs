@@ -1170,3 +1170,26 @@ mod multiclass_tests {
         assert_eq!(fs::read(&path).unwrap(),b"external synthetic edit");
     }
 }
+
+#[cfg(test)]
+mod party_order_tests {
+    use super::*;
+    #[test]
+    fn roster_display_order_saves_without_rewriting_xp_or_upgrading_schema() {
+        let before=parse(include_bytes!("../../src/tests/fixtures/multiclassNative.json")).unwrap();
+        let mut after=before.clone();
+        after.party.as_mut().unwrap()["roster"].as_array_mut().unwrap().swap(0,1);
+        after.validate().unwrap();
+        validate_replacement(&before,&after).unwrap();
+        assert_eq!(after.xp,before.xp);
+        assert_eq!(after.party.as_ref().unwrap()["profiles"],before.party.as_ref().unwrap()["profiles"]);
+        let dir=tempfile::tempdir().unwrap();
+        let path=dir.path().join("party-order.adnd");
+        let revision=save(&path,&before,None).unwrap();
+        save(&path,&after,Some(&revision)).unwrap();
+        let reopened=parse(&fs::read(&path).unwrap()).unwrap();
+        assert_eq!(reopened,after);
+        assert_eq!(reopened.party.unwrap()["roster"][0]["id"],"xp-tal");
+        assert_eq!(fs::read_dir(dir.path()).unwrap().count(),1);
+    }
+}

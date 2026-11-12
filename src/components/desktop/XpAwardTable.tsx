@@ -1,6 +1,9 @@
-import { profileClassLabel } from '../../helpers/campaignParty';
+import {
+  inPartyOrder,
+  profileClassLabel,
+  xpRecipientAvailable,
+} from '../../helpers/campaignParty';
 import { classReviewCap } from '../../helpers/campaignXpClasses';
-import { xpRecipientAvailable } from '../../helpers/campaignParty';
 import { awardCapBasis } from '../../helpers/campaignXpCap';
 import type { CampaignDocument } from '../../helpers/campaignDocument';
 import type {
@@ -61,7 +64,8 @@ export default function XpAwardTable({
     reason: string
   ) => void;
 }) {
-  const characters =
+  const characters = inPartyOrder(
+    document,
     readOnly && rows
       ? rows.map((r) => ({ id: r.characterId, name: r.name }))
       : Array.from(
@@ -90,7 +94,9 @@ export default function XpAwardTable({
                 )
             )
           ).values()
-        );
+        ),
+    (c) => c.id
+  );
   const orderedRewards = [...rewards].sort((a, b) =>
     compareXpTimeline(document, a.origin, b.origin, a.id, b.id)
   );

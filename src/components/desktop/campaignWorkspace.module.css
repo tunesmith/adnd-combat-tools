@@ -984,3 +984,13 @@
   font-weight: 650;
   margin-bottom: 0.4rem;
 }
+
+.sessionName[draggable='true'] {
+  cursor: grab;
+}
+.profileDropBefore > :is(th, td) {
+  box-shadow: inset 0 2px #a47832;
+}
+.profileDropAfter > :is(th, td) {
+  box-shadow: inset 0 -2px #a47832;
+}

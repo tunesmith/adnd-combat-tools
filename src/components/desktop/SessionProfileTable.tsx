@@ -1,3 +1,4 @@
+import { useRef, useState } from 'react';
 import type { CampaignDocument } from '../../helpers/campaignDocument';
 import type {
   PartyProfile,
@@ -15,12 +16,33 @@ export default function SessionProfileTable({
   profiles,
   onEdit,
   onToggle,
+  onReorder,
 }: {
   document: CampaignDocument;
   profiles: PartyProfile[];
   onEdit: (profile: PartyProfile, character: RosterCharacter) => void;
   onToggle: (characterId: string) => void;
+  onReorder?: (fromId: string, targetId: string) => void;
 }) {
+  const draggedCharacter = useRef<{
+    characterId: string;
+    campaignId: string;
+    sessionId: string;
+  } | null>(null);
+  const [dropTarget, setDropTarget] = useState<string | null>(null);
+  const finishDrag = () => {
+    draggedCharacter.current = null;
+    setDropTarget(null);
+  };
+  const canDrop = (profile: PartyProfile) => {
+    const source = draggedCharacter.current;
+    return (
+      !!onReorder &&
+      source?.campaignId === document.id &&
+      source.sessionId === profile.sessionId &&
+      source.characterId !== profile.characterId
+    );
+  };
   return (
     <div
       className={styles['sessionTableWrap']}
@@ -80,10 +102,85 @@ export default function SessionProfileTable({
               .filter(Boolean)
               .join(' · ');
             return (
-              <tr key={profile.characterId}>
+              <tr
+                key={profile.characterId}
+                className={
+                  dropTarget === profile.characterId && canDrop(profile)
+                    ? styles[
+                        profiles.findIndex(
+                          (p) =>
+                            p.characterId ===
+                            draggedCharacter.current?.characterId
+                        ) > profiles.indexOf(profile)
+                          ? 'profileDropBefore'
+                          : 'profileDropAfter'
+                      ]
+                    : undefined
+                }
+                onDragStart={(event) => {
+                  if (!onReorder || profiles.length < 2) {
+                    event.preventDefault();
+                    return;
+                  }
+                  draggedCharacter.current = {
+                    characterId: profile.characterId,
+                    campaignId: document.id,
+                    sessionId: profile.sessionId,
+                  };
+                  event.dataTransfer.setData(
+                    'application/x-adnd-party-character',
+                    profile.characterId
+                  );
+                  event.dataTransfer.setData('text/plain', character.name);
+                  event.dataTransfer.effectAllowed = 'move';
+                }}
+                onDragOver={(event) => {
+                  if (canDrop(profile)) {
+                    event.preventDefault();
+                    event.dataTransfer.dropEffect = 'move';
+                    setDropTarget(profile.characterId);
+                  }
+                }}
+                onDrop={(event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  const source = draggedCharacter.current;
+                  if (
+                    canDrop(profile) &&
+                    source &&
+                    event.dataTransfer.getData(
+                      'application/x-adnd-party-character'
+                    ) === source.characterId
+                  )
+                    onReorder?.(source.characterId, profile.characterId);
+                  finishDrag();
+                }}
+                onDragEnd={finishDrag}
+              >
                 <th scope="row">
                   <button
                     className={styles['sessionName']}
+                    type="button"
+                    draggable={!!onReorder && profiles.length > 1}
+                    title={
+                      onReorder ? 'Drag to reorder; click to edit' : undefined
+                    }
+                    onKeyDown={(event) => {
+                      if (!onReorder || !event.altKey || !event.shiftKey)
+                        return;
+                      const direction =
+                        event.key === 'ArrowUp'
+                          ? -1
+                          : event.key === 'ArrowDown'
+                          ? 1
+                          : 0;
+                      const target =
+                        profiles[profiles.indexOf(profile) + direction];
+                      if (direction && target) {
+                        event.preventDefault();
+                        onReorder(profile.characterId, target.characterId);
+                      }
+                    }}
                     onClick={(event) => {
                       event.currentTarget.focus();
                       onEdit(profile, character);

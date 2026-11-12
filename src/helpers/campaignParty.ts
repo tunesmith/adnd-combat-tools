@@ -162,10 +162,52 @@ export const emptyProfile = (
   overrides: [null, null, null, null, null],
   saveNotes: ['', '', ''],
 });
+export function inPartyOrder<T>(
+  doc: Pick<CampaignDocument, 'party'>,
+  items: readonly T[],
+  characterId: (item: T) => string
+): T[] {
+  const ranks = new Map(
+    doc.party?.roster.map((c, index) => [c.id, index]) ?? []
+  );
+  return [...items].sort(
+    (a, b) =>
+      (ranks.get(characterId(a)) ?? ranks.size) -
+      (ranks.get(characterId(b)) ?? ranks.size)
+  );
+}
 export const profilesInSession = (doc: CampaignDocument, sessionId: string) =>
-  doc.party?.profiles.filter(
-    (p) => p.sessionId === sessionId && p.participating
-  ) || [];
+  inPartyOrder(
+    doc,
+    doc.party?.profiles.filter(
+      (p) => p.sessionId === sessionId && p.participating
+    ) ?? [],
+    (p) => p.characterId
+  );
+
+export function reorderPartyCharacter(
+  doc: CampaignDocument,
+  sessionId: string,
+  fromId: string,
+  targetId: string
+): CampaignDocument {
+  if (fromId === targetId) return doc;
+  const visible = profilesInSession(doc, sessionId);
+  const party = doc.party;
+  if (
+    !party ||
+    !visible.some((p) => p.characterId === fromId) ||
+    !visible.some((p) => p.characterId === targetId)
+  )
+    throw Error('Session characters changed; try dragging again.');
+  const from = party.roster.find((c) => c.id === fromId),
+    target = party.roster.findIndex((c) => c.id === targetId);
+  if (!from || target < 0)
+    throw Error('Campaign characters changed; try dragging again.');
+  const roster = party.roster.filter((c) => c.id !== fromId);
+  roster.splice(target, 0, from);
+  return { ...doc, party: { ...party, roster } };
+}
 
 export function rosterEligibleForSession(
   doc: CampaignDocument,

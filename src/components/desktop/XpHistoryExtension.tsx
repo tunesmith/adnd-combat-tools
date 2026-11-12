@@ -1,5 +1,5 @@
 import ClassXpBalancesFields from './ClassXpBalancesFields';
-import { profileClassLabel } from '../../helpers/campaignParty';
+import { profileClassLabel, inPartyOrder } from '../../helpers/campaignParty';
 import { useRef, useState } from 'react';
 import type { CampaignDocument } from '../../helpers/campaignDocument';
 import {
@@ -51,20 +51,24 @@ export default function XpHistoryExtension({
     document.sessions.find((s) => s.id === id)?.label;
   const name = (id: string) =>
     document.party?.roster.find((c) => c.id === id)?.name ?? id;
-  const openings = Array.from(characters).map(
-    (characterId) =>
-      inputs.find((o) => o.characterId === characterId) ?? {
-        characterId,
-        sessionId: '',
-        balance: null,
-        ...(xp.openings.find((o) => o.characterId === characterId)?.classes
-          ? {
-              classes: xp.openings
-                .find((o) => o.characterId === characterId)
-                ?.classes?.map((c) => ({ ...c, balance: null })),
-            }
-          : {}),
-      }
+  const openings = inPartyOrder(
+    document,
+    Array.from(characters).map(
+      (characterId) =>
+        inputs.find((o) => o.characterId === characterId) ?? {
+          characterId,
+          sessionId: '',
+          balance: null,
+          ...(xp.openings.find((o) => o.characterId === characterId)?.classes
+            ? {
+                classes: xp.openings
+                  .find((o) => o.characterId === characterId)
+                  ?.classes?.map((c) => ({ ...c, balance: null })),
+              }
+            : {}),
+        }
+    ),
+    (o) => o.characterId
   );
   const request = { pointIds: selected.map((p) => p.id), openings };
   const update = (opening: XpExtensionRequest['openings'][number]) => {

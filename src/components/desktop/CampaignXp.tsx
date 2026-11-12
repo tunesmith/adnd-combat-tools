@@ -1,7 +1,7 @@
 import { profileClassReviews } from '../../helpers/campaignXpClasses';
 import ClassXpBalancesFields from './ClassXpBalancesFields';
 import XpClassAwardEdit from './XpClassAwardEdit';
-import { pendingXpReward } from '../../helpers/campaignParty';
+import { pendingXpReward, inPartyOrder } from '../../helpers/campaignParty';
 import XpHistoryExtension from './XpHistoryExtension';
 import XpTimeline from './XpTimeline';
 import XpAwardDialog from './XpAwardDialog';
@@ -747,7 +747,7 @@ export default function CampaignXp({
                   {preview.later.map(({ event, rows }) => (
                     <p key={event.id}>
                       <strong>{event.point.label}</strong>:{' '}
-                      {rows
+                      {inPartyOrder(document, rows, (r) => r.characterId)
                         .map((r) => {
                           const old = event.rows.find(
                             (n) => n.characterId === r.characterId
@@ -980,7 +980,7 @@ export default function CampaignXp({
             <h2>{inspectedEvent.title}</h2>
             <p>{inspectedEvent.evidence.label}</p>
             {inspectedEvent.notes && <p>{inspectedEvent.notes}</p>}
-            <XpRewardCalculation reward={inspectedEvent} />
+            <XpRewardCalculation document={document} reward={inspectedEvent} />
             <button autoFocus onClick={() => setInspectedEvent(undefined)}>
               Close
             </button>

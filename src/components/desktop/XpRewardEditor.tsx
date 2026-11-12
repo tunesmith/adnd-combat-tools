@@ -1,4 +1,4 @@
-import { pendingXpReward } from '../../helpers/campaignParty';
+import { pendingXpReward, inPartyOrder } from '../../helpers/campaignParty';
 import XpRecipients from './XpRecipients';
 import { useState } from 'react';
 import type { SetStateAction } from 'react';
@@ -22,7 +22,13 @@ import {
 import { xpDisplay, xpDifferenceDisplay } from '../../helpers/xpArithmetic';
 import styles from './xpWorkspace.module.css';
 const nullable = (value: string) => value.trim() || null;
-export function XpRewardCalculation({ reward }: { reward: XpReward }) {
+export function XpRewardCalculation({
+  reward,
+  document,
+}: {
+  reward: XpReward;
+  document?: CampaignDocument;
+}) {
   try {
     let reviewError = '';
     try {
@@ -117,7 +123,11 @@ export function XpRewardCalculation({ reward }: { reward: XpReward }) {
             </tr>
           </thead>
           <tbody>
-            {result.allocations.map((a) => (
+            {inPartyOrder(
+              { party: document?.party },
+              result.allocations,
+              (a) => a.characterId
+            ).map((a) => (
               <tr key={a.characterId}>
                 <th>
                   {
