@@ -162,13 +162,31 @@ export const emptyProfile = (
   overrides: [null, null, null, null, null],
   saveNotes: ['', '', ''],
 });
+/** Freeze each legacy session's roster-based display before any ordering edit. */
+export function stabilizePartyOrders(doc: CampaignDocument): CampaignDocument {
+  if (!doc.party) return doc;
+  return {
+    ...doc,
+    sessions: doc.sessions.map((s) =>
+      s.partyOrder
+        ? s
+        : {
+            ...s,
+            partyOrder: doc.party?.roster.map((c) => c.id) ?? [],
+          }
+    ),
+  };
+}
 export function inPartyOrder<T>(
-  doc: Pick<CampaignDocument, 'party'>,
+  doc: Pick<CampaignDocument, 'party'> &
+    Partial<Pick<CampaignDocument, 'sessions' | 'workspace'>>,
   items: readonly T[],
-  characterId: (item: T) => string
+  characterId: (item: T) => string,
+  sessionId = doc.workspace?.sessionId
 ): T[] {
+  const order = doc.sessions?.find((s) => s.id === sessionId)?.partyOrder;
   const ranks = new Map(
-    doc.party?.roster.map((c, index) => [c.id, index]) ?? []
+    (order ?? doc.party?.roster.map((c) => c.id) ?? []).map((id, i) => [id, i])
   );
   return [...items].sort(
     (a, b) =>
@@ -182,7 +200,8 @@ export const profilesInSession = (doc: CampaignDocument, sessionId: string) =>
     doc.party?.profiles.filter(
       (p) => p.sessionId === sessionId && p.participating
     ) ?? [],
-    (p) => p.characterId
+    (p) => p.characterId,
+    sessionId
   );
 
 export function reorderPartyCharacter(
@@ -192,21 +211,25 @@ export function reorderPartyCharacter(
   targetId: string
 ): CampaignDocument {
   if (fromId === targetId) return doc;
-  const visible = profilesInSession(doc, sessionId);
-  const party = doc.party;
-  if (
-    !party ||
-    !visible.some((p) => p.characterId === fromId) ||
-    !visible.some((p) => p.characterId === targetId)
-  )
-    throw Error('Session characters changed; try dragging again.');
-  const from = party.roster.find((c) => c.id === fromId),
-    target = party.roster.findIndex((c) => c.id === targetId);
-  if (!from || target < 0)
-    throw Error('Campaign characters changed; try dragging again.');
-  const roster = party.roster.filter((c) => c.id !== fromId);
-  roster.splice(target, 0, from);
-  return { ...doc, party: { ...party, roster } };
+  const stable = stabilizePartyOrders(doc);
+  const session = stable.sessions.find((s) => s.id === sessionId);
+  const order = [...(session?.partyOrder ?? [])];
+  // Inventory-only roster matches may not have a participating profile.
+  for (const id of [fromId, targetId]) {
+    if (!doc.party?.roster.some((c) => c.id === id))
+      throw Error('Session characters changed; try dragging again.');
+    if (!order.includes(id)) order.push(id);
+  }
+  if (!session) throw Error('Session changed; try dragging again.');
+  const target = order.indexOf(targetId);
+  order.splice(order.indexOf(fromId), 1);
+  order.splice(target, 0, fromId);
+  return {
+    ...stable,
+    sessions: stable.sessions.map((s) =>
+      s.id === sessionId ? { ...s, partyOrder: order } : s
+    ),
+  };
 }
 
 export function rosterEligibleForSession(
@@ -396,6 +419,7 @@ export function updatePartyProfile(
   profile: PartyProfile,
   character?: RosterCharacter
 ): CampaignDocument {
+  doc = stabilizePartyOrders(doc);
   const party = doc.party || emptyParty();
   const matches = (p: PartyProfile) =>
     p.sessionId === profile.sessionId && p.characterId === profile.characterId;
@@ -431,7 +455,27 @@ export function updatePartyProfile(
   const profiles = party.profiles.some(matches)
     ? party.profiles.map((p) => (matches(p) ? profile : p))
     : [...party.profiles, profile];
-  const next = { ...doc, party: { ...party, roster, profiles } };
+  const next = {
+    ...doc,
+    party: { ...party, roster, profiles },
+    sessions: doc.sessions.map((s) =>
+      s.id !== profile.sessionId
+        ? s
+        : {
+            ...s,
+            partyOrder: profile.participating
+              ? previous?.participating
+                ? s.partyOrder
+                : [
+                    ...(s.partyOrder ?? []).filter(
+                      (id) => id !== profile.characterId
+                    ),
+                    profile.characterId,
+                  ]
+              : (s.partyOrder ?? []).filter((id) => id !== profile.characterId),
+          }
+    ),
+  };
   if (known && character?.earnsXp === false && known.earnsXp !== false)
     return clearPendingXpRecipient(next, character.id);
   if (previous && previous.participating !== profile.participating)
@@ -504,6 +548,14 @@ export function validatePartyReferences(
   doc: CampaignDocument,
   unique: (id: string) => void
 ) {
+  for (const session of doc.sessions) {
+    const order = session.partyOrder ?? [];
+    if (
+      new Set(order).size !== order.length ||
+      order.some((id) => !doc.party?.roster.some((c) => c.id === id))
+    )
+      throw Error('Invalid session party order.');
+  }
   const carriedProfiles = doc.sessions.flatMap((s) =>
     (s.continuation?.partyCharacterIds || []).map((characterId) => ({
       sessionId: s.id,

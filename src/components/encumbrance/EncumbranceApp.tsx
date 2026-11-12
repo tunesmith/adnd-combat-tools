@@ -73,6 +73,8 @@ interface EncumbranceAppProps {
     onDocumentChange: (document: EncumbranceDocument) => boolean | void;
     onExport: () => void;
     onAddCharacter?: () => void;
+    characterOrder?: string[];
+    onReorderCharacter?: (fromId: string, targetId: string) => void;
   };
 }
 
@@ -810,10 +812,41 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
     () => getActiveCharacterState(document),
     [document]
   );
+  const draggedCharacter = useRef<string>();
+  const orderedCharacters = useMemo(() => {
+    if (!isDmDocument(document)) return [];
+    const ranks = new Map(
+      campaign?.characterOrder?.map((id, i) => [id, i]) ?? []
+    );
+    return [...document.characters].sort(
+      (a, b) =>
+        (ranks.get(a.id) ?? ranks.size) - (ranks.get(b.id) ?? ranks.size)
+    );
+  }, [document, campaign?.characterOrder]);
   const dmCharacters = useMemo(
-    () => (isDmDocument(document) ? getDmHolderStates(document) : []),
-    [document]
+    () =>
+      isDmDocument(document)
+        ? getDmHolderStates({ ...document, characters: orderedCharacters })
+        : [],
+    [document, orderedCharacters]
   );
+  const reorderCharacter = (fromId: string, targetId: string) => {
+    if (readOnly || fromId === targetId) return;
+    if (campaign?.onReorderCharacter) {
+      campaign.onReorderCharacter(fromId, targetId);
+      return;
+    }
+    setDocument((current) => {
+      if (!isDmDocument(current)) return current;
+      const characters = [...current.characters];
+      const source = characters.find((c) => c.id === fromId);
+      const target = characters.findIndex((c) => c.id === targetId);
+      if (!source || target < 0) return current;
+      characters.splice(characters.indexOf(source), 1);
+      characters.splice(target, 0, source);
+      return { ...current, characters };
+    });
+  };
   const activeStorage = isDmDocument(document)
     ? document.storageLocations.find(
         (location) => location.id === activeCharacter.id
@@ -3418,7 +3451,7 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
                   >
                     <div className={styles['characterTabs']}>
                       {isDmDocument(document) &&
-                        document.characters.map((character) => (
+                        orderedCharacters.map((character, index) => (
                           <button
                             key={character.id}
                             type="button"
@@ -3428,6 +3461,54 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
                                 ? styles['characterTabActive']
                                 : ''
                             }`}
+                            draggable={
+                              !readOnly && orderedCharacters.length > 1
+                            }
+                            title="Drag to reorder; Alt+Shift+Arrow keys to move"
+                            onDragStart={(event) => {
+                              draggedCharacter.current = character.id;
+                              event.dataTransfer.setData(
+                                'application/x-adnd-inventory-character',
+                                character.id
+                              );
+                              event.dataTransfer.effectAllowed = 'move';
+                            }}
+                            onDragOver={(event) => {
+                              if (!readOnly && draggedCharacter.current)
+                                event.preventDefault();
+                            }}
+                            onDrop={(event) => {
+                              event.preventDefault();
+                              if (draggedCharacter.current)
+                                reorderCharacter(
+                                  draggedCharacter.current,
+                                  character.id
+                                );
+                              draggedCharacter.current = undefined;
+                            }}
+                            onDragEnd={() => {
+                              draggedCharacter.current = undefined;
+                            }}
+                            onKeyDown={(event) => {
+                              if (!event.altKey || !event.shiftKey || readOnly)
+                                return;
+                              const direction = [
+                                'ArrowLeft',
+                                'ArrowUp',
+                              ].includes(event.key)
+                                ? -1
+                                : ['ArrowRight', 'ArrowDown'].includes(
+                                    event.key
+                                  )
+                                ? 1
+                                : 0;
+                              const target =
+                                orderedCharacters[index + direction];
+                              if (direction && target) {
+                                event.preventDefault();
+                                reorderCharacter(character.id, target.id);
+                              }
+                            }}
                             onClick={() => selectActiveCharacter(character.id)}
                           >
                             {getCharacterDisplayName(character.name)}

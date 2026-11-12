@@ -1,3 +1,4 @@
+import { inSessionInventoryOrder } from './campaignInventoryOrder';
 import { validHistoricalSessionMove } from './campaignSessionOrder';
 import type { CampaignDocument } from './campaignDocument';
 import type {
@@ -113,7 +114,12 @@ export function bankHolderName(doc: CampaignDocument, holderId: string) {
 export function bankBalanceHolders(doc: CampaignDocument, sessionId: string) {
   const working = doc.workingInventories.find((w) => w.sessionId === sessionId);
   if (!working) return [];
-  const current = bankHolders(working.document).map((h) => ({
+  const current = inSessionInventoryOrder(
+    doc,
+    sessionId,
+    bankHolders(working.document),
+    (h) => h.id
+  ).map((h) => ({
     id: h.id,
     name: h.name,
   }));
@@ -126,33 +132,39 @@ export function bankBalanceHolders(doc: CampaignDocument, sessionId: string) {
       ...differences.map((d) => d.holderId),
     ])
   );
-  return [
-    ...current,
-    ...ids
-      .filter((id) => !current.some((h) => h.id === id))
-      .flatMap((id) => {
-        const balance = bankBalance(doc, id, sessionId);
-        const relevant =
-          ledger.openings.some(
-            (o) =>
-              o.holderId === id &&
-              sessionIndex(doc, o.sessionId) <= sessionIndex(doc, sessionId)
-          ) ||
-          ledger.entries.some(
-            (e) =>
-              e.status === 'posted' &&
-              sessionIndex(doc, e.sessionId) <= sessionIndex(doc, sessionId) &&
-              e.changes.some((c) => c.holderId === id)
-          );
-        return (relevant &&
-          bankDenominations.some(
-            (code) => balance[code] === null || balance[code] !== 0
-          )) ||
-          differences.some((d) => d.holderId === id)
-          ? [{ id, name: bankHolderName(doc, id) }]
-          : [];
-      }),
-  ];
+  return inSessionInventoryOrder(
+    doc,
+    sessionId,
+    [
+      ...current,
+      ...ids
+        .filter((id) => !current.some((h) => h.id === id))
+        .flatMap((id) => {
+          const balance = bankBalance(doc, id, sessionId);
+          const relevant =
+            ledger.openings.some(
+              (o) =>
+                o.holderId === id &&
+                sessionIndex(doc, o.sessionId) <= sessionIndex(doc, sessionId)
+            ) ||
+            ledger.entries.some(
+              (e) =>
+                e.status === 'posted' &&
+                sessionIndex(doc, e.sessionId) <=
+                  sessionIndex(doc, sessionId) &&
+                e.changes.some((c) => c.holderId === id)
+            );
+          return (relevant &&
+            bankDenominations.some(
+              (code) => balance[code] === null || balance[code] !== 0
+            )) ||
+            differences.some((d) => d.holderId === id)
+            ? [{ id, name: bankHolderName(doc, id) }]
+            : [];
+        }),
+    ],
+    (h) => h.id
+  );
 }
 export function moneyStacks(document: EncumbranceDmDocument) {
   return bankHolders(document).flatMap((holder) =>

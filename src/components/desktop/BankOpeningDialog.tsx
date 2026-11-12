@@ -1,3 +1,4 @@
+import { inSessionInventoryOrder } from '../../helpers/campaignInventoryOrder';
 import { useRef, useState } from 'react';
 import type { CampaignDocument } from '../../helpers/campaignDocument';
 import {
@@ -32,12 +33,17 @@ export default function BankOpeningDialog({
   const working = document.workingInventories.find(
     (w) => w.sessionId === sessionId
   );
-  const holders = Array.from(
-    new Map(
-      [...document.workingInventories, ...document.inventoryCheckpoints]
-        .flatMap((w) => bankHolders(w.document))
-        .map((h) => [h.id, h])
-    ).values()
+  const holders = inSessionInventoryOrder(
+    document,
+    sessionId,
+    Array.from(
+      new Map(
+        [...document.workingInventories, ...document.inventoryCheckpoints]
+          .flatMap((w) => bankHolders(w.document))
+          .map((h) => [h.id, h])
+      ).values()
+    ),
+    (h) => h.id
   );
   const [extending, setExtending] = useState(false);
   const [selected, setSelected] = useState<string[]>([]);

@@ -1,3 +1,7 @@
+import {
+  inSessionInventoryOrder,
+  reorderInventoryCharacter,
+} from '../../helpers/campaignInventoryOrder';
 import AddInventoryCharacterDialog from './AddInventoryCharacterDialog';
 import CampaignBanking from './CampaignBanking';
 import {
@@ -788,6 +792,24 @@ export default function DesktopWorkspace() {
                     mode="dm"
                     campaign={{
                       document: working.document,
+                      characterOrder: inSessionInventoryOrder(
+                        document,
+                        sessionId,
+                        working.document.characters,
+                        (c) => c.id
+                      ).map((c) => c.id),
+                      onReorderCharacter: (fromId, targetId) => {
+                        mutate(
+                          (d) =>
+                            reorderInventoryCharacter(
+                              d,
+                              sessionId,
+                              fromId,
+                              targetId
+                            ),
+                          scope
+                        );
+                      },
                       onAddCharacter: () => {
                         if (!scope) return;
                         setAddingInventory({

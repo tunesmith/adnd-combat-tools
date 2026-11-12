@@ -1,3 +1,4 @@
+import { stabilizePartyOrders } from './campaignParty';
 import {
   campaignBankingSchema,
   legacyCampaignBankingSchema,
@@ -377,6 +378,7 @@ export function validateCampaign(value: unknown): CampaignDocument {
     ];
     parsed.sessions.sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
   }
+  parsed.sessions = stabilizePartyOrders(parsed).sessions;
   const ids = new Set<string>();
   const unique = (id: string) => {
     if (ids.has(id)) throw new Error('Duplicate campaign identity.');

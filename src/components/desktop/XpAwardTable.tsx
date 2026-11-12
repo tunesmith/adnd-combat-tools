@@ -95,7 +95,8 @@ export default function XpAwardTable({
             )
           ).values()
         ),
-    (c) => c.id
+    (c) => c.id,
+    point.position.sessionId
   );
   const orderedRewards = [...rewards].sort((a, b) =>
     compareXpTimeline(document, a.origin, b.origin, a.id, b.id)

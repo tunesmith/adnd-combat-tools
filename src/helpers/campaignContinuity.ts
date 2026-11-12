@@ -31,8 +31,11 @@ export interface NextSessionRequest {
 function sourceContext(doc: CampaignDocument, id: string) {
   const session = doc.sessions.find((s) => s.id === id);
   if (!session) throw new Error('Source session no longer exists.');
+  // Ordering is already represented by the ordered profiles below. Omit the
+  // optional migration field so pre-order continuation fingerprints stay valid.
+  const { partyOrder: _partyOrder, ...sessionContext } = session;
   return {
-    session,
+    session: sessionContext,
     records: doc.records,
     combats: doc.workingCombats.filter((c) => c.sessionId === id),
     inventory: doc.workingInventories.filter((w) => w.sessionId === id),
@@ -109,6 +112,9 @@ export function startNextSession(
       {
         id: request.destinationId,
         label,
+        partyOrder: profilesInSession(doc, source.id)
+          .filter((p) => request.partyCharacterIds?.includes(p.characterId))
+          .map((p) => p.characterId),
         notes: request.copyNotes ? source.notes || '' : '',
         continuation: { ...origin, requestFingerprint: fingerprint },
       },

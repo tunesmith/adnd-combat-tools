@@ -472,6 +472,7 @@ export interface CampaignRevision extends SnapshotInterpretation {
   sourceName: string;
 }
 export interface CampaignSession {
+  partyOrder?: string[];
   id: string;
   label: string;
 }
@@ -484,7 +485,11 @@ export interface CampaignRecord {
   revisions: CampaignRevision[];
 }
 export const sessionSchema = z
-  .object({ id: string.min(1), label: string.min(1).max(1000) })
+  .object({
+    id: string.min(1),
+    label: string.min(1).max(1000),
+    partyOrder: z.array(string.min(1)).max(500).optional(),
+  })
   .strict();
 export const recordSchema = z
   .object({

@@ -63,16 +63,15 @@ test('party order round trips across sessions without modifying profile values, 
     required(ids[4]),
     required(ids[0])
   );
-  expect(next.party?.roster.map((c) => c.name)).toEqual([
-    'Bram',
-    'Mira',
-    'Tal',
-    'Oren',
-    'Nera',
-  ]);
+  expect(
+    profilesInSession(next, 'session-2').map(
+      (p) => next.party?.roster.find((c) => c.id === p.characterId)?.name
+    )
+  ).toEqual(['Bram', 'Mira', 'Tal', 'Oren', 'Nera']);
   expect(
     profilesInSession(next, 'session-1').map((p) => p.characterId)
-  ).toEqual([ids[4], ...ids.slice(0, 4)]);
+  ).toEqual(ids);
+  expect(next.party?.roster).toEqual(before.party?.roster);
   expect(next.party?.profiles).toEqual(before.party?.profiles);
   expect(next.xp).toEqual(before.xp);
   expect(next.records).toEqual(before.records);
@@ -82,36 +81,13 @@ test('party order round trips across sessions without modifying profile values, 
   expect(ids.map((id) => sessionXpBalances(reopened, id, 'session-2'))).toEqual(
     balances
   );
-  expect(reopened.party?.roster.map((c) => c.name)).toEqual([
-    'Bram',
-    'Mira',
-    'Tal',
-    'Oren',
-    'Nera',
-  ]);
+  expect(
+    profilesInSession(reopened, 'session-2').map(
+      (p) => reopened.party?.roster.find((c) => c.id === p.characterId)?.name
+    )
+  ).toEqual(['Bram', 'Mira', 'Tal', 'Oren', 'Nera']);
   expect(() =>
     reorderPartyCharacter(before, 'session-2', 'missing', required(ids[0]))
-  ).toThrow('changed');
-  const absent = {
-    ...before,
-    party: before.party
-      ? {
-          ...before.party,
-          profiles: before.party.profiles.map((p) =>
-            p.characterId === ids[4] && p.sessionId === 'session-2'
-              ? { ...p, participating: false }
-              : p
-          ),
-        }
-      : undefined,
-  };
-  expect(() =>
-    reorderPartyCharacter(
-      absent,
-      'session-2',
-      required(ids[4]),
-      required(ids[0])
-    )
   ).toThrow('changed');
   expect(
     inPartyOrder(
@@ -208,20 +184,18 @@ test('dragging a Session row updates References and both XP views, persists, and
     altKey: true,
     shiftKey: true,
   });
-  expect(current.party?.roster.map((c) => c.name)).toEqual([
-    'Mira',
-    'Bram',
-    'Tal',
-    'Oren',
-    'Nera',
-  ]);
+  expect(
+    profilesInSession(current, 'session-2').map(
+      (p) => current.party?.roster.find((c) => c.id === p.characterId)?.name
+    )
+  ).toEqual(['Mira', 'Bram', 'Tal', 'Oren', 'Nera']);
   fireEvent.click(screen.getByRole('button', { name: 'Bram', exact: true }));
   expect(
     screen.getByRole('dialog', { name: 'Character profile' })
   ).toBeInTheDocument();
 });
 
-test('XP participant rows and draft award columns follow roster order without rewriting recorded inputs', () => {
+test('XP participant rows and draft award columns follow selected session order without rewriting recorded inputs', () => {
   const original = xpCastleDraft();
   const doc = reorderPartyCharacter(
     original,

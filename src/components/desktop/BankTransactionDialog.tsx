@@ -1,3 +1,4 @@
+import { inSessionInventoryOrder } from '../../helpers/campaignInventoryOrder';
 import { useRef, useState } from 'react';
 import type { CampaignDocument } from '../../helpers/campaignDocument';
 import {
@@ -61,7 +62,14 @@ export default function BankTransactionDialog({
   const working = document.workingInventories.find(
     (w) => w.sessionId === sessionId
   );
-  const currentHolders = working ? bankHolders(working.document) : [];
+  const currentHolders = working
+    ? inSessionInventoryOrder(
+        document,
+        sessionId,
+        bankHolders(working.document),
+        (h) => h.id
+      )
+    : [];
   const historicalIds = Array.from(
     new Set([
       ...bankBalanceHolders(document, sessionId).map((h) => h.id),

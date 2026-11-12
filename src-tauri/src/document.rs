@@ -605,6 +605,7 @@ mod continuity_tests {
         let path = dir.path().join("legacy-v6.adnd");
         fs::write(&path, &bytes).unwrap();
         let migrated = parse(&fs::read(&path).unwrap()).unwrap();
+        source.sessions[0]["partyOrder"] = serde_json::json!(["pc"]);
         assert_eq!(migrated, source);
         assert_eq!(fs::read(&path).unwrap(), bytes);
         save(&path, &migrated, Some(&hash(&bytes))).unwrap();
@@ -1175,10 +1176,15 @@ mod multiclass_tests {
 mod party_order_tests {
     use super::*;
     #[test]
-    fn roster_display_order_saves_without_rewriting_xp_or_upgrading_schema() {
+    fn session_display_order_saves_without_rewriting_other_sessions_or_xp() {
         let before=parse(include_bytes!("../../src/tests/fixtures/multiclassNative.json")).unwrap();
         let mut after=before.clone();
-        after.party.as_mut().unwrap()["roster"].as_array_mut().unwrap().swap(0,1);
+        after.sessions[1]["partyOrder"].as_array_mut().unwrap().swap(0,1);
+        assert_eq!(after.sessions[0],before.sessions[0]);
+        assert_eq!(after.party,before.party);
+        let mut invalid = after.clone();
+        invalid.sessions[1]["partyOrder"] = serde_json::json!(["missing"]);
+        assert!(invalid.validate().is_err());
         after.validate().unwrap();
         validate_replacement(&before,&after).unwrap();
         assert_eq!(after.xp,before.xp);
@@ -1189,7 +1195,7 @@ mod party_order_tests {
         save(&path,&after,Some(&revision)).unwrap();
         let reopened=parse(&fs::read(&path).unwrap()).unwrap();
         assert_eq!(reopened,after);
-        assert_eq!(reopened.party.unwrap()["roster"][0]["id"],"xp-tal");
+        assert_eq!(reopened.sessions[1]["partyOrder"][0],"xp-tal");
         assert_eq!(fs::read_dir(dir.path()).unwrap().count(),1);
     }
 }

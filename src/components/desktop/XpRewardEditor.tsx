@@ -124,7 +124,7 @@ export function XpRewardCalculation({
           </thead>
           <tbody>
             {inPartyOrder(
-              { party: document?.party },
+              document ?? {},
               result.allocations,
               (a) => a.characterId
             ).map((a) => (
