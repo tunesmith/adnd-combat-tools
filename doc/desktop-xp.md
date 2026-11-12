@@ -1,119 +1,120 @@
-# Campaign XP rewards and awards
+# Campaign XP
 
-The current cap policy and V12/calculator-version-2 additions are documented in [XP caps](desktop-xp-caps.md). Legacy accepted calculations below retain their original version.
+An XP event records **where XP was earned**. An award point records **where it was
+settled**. Session balances include accepted awards at or before that session's end,
+not pending events earned there. Campaign Save persists XP drafts and history but
+never confirms an award implicitly. See [profiles](desktop-party-reference.md) for
+trained levels, class identities and bonuses.
 
-XP is the fifth session tab, after Combats. A reward records where it was earned; an award point records where XP was actually awarded. Pending rewards are campaign-wide. Session XP balances include only confirmed awards at or before that session's end. Session labels and encounter titles are never parsed as dates or identities.
+## Record and award XP
 
-## Hands-on award workflow
+1. Establish **Opening balances**, including each character's starting session.
+   Blank is unknown, not zero. **Set listed unlocked balances to 0** is an explicit
+   choice for known zeros; multiclass openings can hold separate class balances.
+2. Use **+ XP Event** for Monsters, Money or Treasure. Enter facts manually or copy
+   encounter/possession evidence for review. Recording an event establishes that it
+   was obtained; saving it creates a pending draft, not an award.
+3. Review participation and XP-recipient flags independently. Monster inputs use
+   literal HD/levels, actual total starting HP and ability counts. Remaining combat
+   HP and attack categories are not substitutes. Profiles/participants are mapped
+   explicitly. **Override…** edits the ratio; **Adjust XP…** edits raw totals, shares
+   or allocations with a reason. Calculated values remain inspectable.
+4. For Treasure, enter Retained-item XP and/or Sale value (GP), then choose Keep,
+   Sell or Defer. Keep uses retained XP; Sell uses sale value; Defer stays pending.
+   None of these choices changes possessions or Banking.
+5. Use **+ Award point** in the settlement session. Name it and place it in the
+   timeline after the relevant earned events. Select intended event rows in the
+   award matrix. Future and deferred events cannot be included. Review each
+   recipient's bonus, cap and settlement choice.
+6. **Preview award** shows full awards, additions, discards and before/after balances
+   in the same matrix. Bonus/final-award adjustments invalidate the preview. Unknown
+   balances or unresolved caps require review. **Confirm award** accepts the result;
+   closing the modal or saving a draft does not.
 
-1. On Session, establish the campaign character roster and relevant session profiles. The character table retains its separate **XP bonus** percentage. The compact **XP** reference beneath it shows base level, XP awarded in the selected session and ending XP balance; an unknown balance displays a dash.
-2. In XP, open **Opening balances**. Choose each character's starting session and enter their prior XP. Use **Set listed unlocked balances to 0** only when zero is explicitly known, then save. New characters can start later without fabricating rewards.
-3. Use **+ XP Event** for monsters, money, or treasure. The selected session is the earned session, shown beside the event heading; the event is added to its ordered XP timeline. Manual entries are first-class. The secondary evidence chooser can copy selected encounter monsters or a specific possession/lot, including items in storage.
-4. Enter actual HD/levels, total starting HP and ability counts. Use the two column-header checkboxes to select all participants and all XP recipients, or change individual boxes independently. Level-at-event and calculated XP are in this same table. The single ratio line shows adjusted HD / participating levels = the uncapped quotient, followed by (1) when capped; **Override…**, directly beside the ratio, edits it, with **Use calculated ratio** restoring the monster calculation. **Adjust XP…** deliberately changes all recipient allocations, one character’s allocation/shares, or the raw total; ordinary entry needs no adjustment. Recording an event establishes that it was obtained; there is no recovery status or recovery gate. Money and Treasure default to ratio 1, with Override available for a deliberate reduction. Delete an unawarded mistaken event from its editor. Source maximum HP is offered for explicit review; remaining HP and tracker attack categories are not substitutes for starting HP or literal HD. Campaign character mapping is explicit. Saving the XP event creates or updates a pending draft; it awards no XP.
-5. For treasure, enter Retained-item XP and/or Sale value (GP), then choose Keep, Sell or Defer. The DM can enter the listed sale value before any sale decision. Keep uses only retained XP; Sell uses only the sale value; Defer leaves the event pending. XP decisions do not move money, sell inventory, remove items or change ownership.
-6. In the session where settlement occurs, use **+ Award point**. Name it in the visible text field at the top of the modal and use the timeline arrows to place it at the settlement point, after the relevant events and before later events. In the award matrix, check only the intended event rows. Character columns show each accepted share; adjusted cells have a clickable marker for their original value and reason. Later rewards and deferred entries cannot be included. Bonus percentages are copied once from that session's profiles. Click a Bonus cell to edit its percentage/note; unknown bonuses require explicit entry, including zero.
-7. **Preview award** fills the footer of the same matrix with bonuses, rounded awards and previous/new balances. Exact pre-rounding totals are available on award amounts. Click an award amount for a deliberate final adjustment; applying a bonus/final adjustment clears the preview and requires a fresh one. **Confirm award** is the sole confirmation action. Ordinary Campaign Save persists drafts and accepted events without confirming anything implicitly.
-8. Campaign Save, fully Quit, reopen, then inspect XP, Session balances and Award history. A confirmed reward ID cannot be awarded twice. Repeated confirmation retries are idempotent.
+XP opens on the timeline. Click an event or award to inspect/edit it. Pending rows
+can move earlier/later; confirmed points and events used in accepted history are
+fixed. Session-tab order is the chronology, not dates parsed from labels. Award
+rows display event chronology even when their stored selection order differs.
+An unawarded mistaken event can be deleted only if no accepted version uses it.
 
-For the first replay, establish five known zero balances before the first session. Enter the 17-creature monster group with 1/2 HD, 44 total starting HP and no ability additions. Its raw XP is 129. Use **Adjust XP…**, leave **Apply to** as **All recipients**, enter **26** in **XP each** and **Historical award-row rounding** in **Note**, then Apply. This is an explicit exception; ordinarily skip adjustment and use the calculated 25.8 share. Each adjusted row retains its calculated 25.8 underneath, and the accepted award snapshot retains total allocation 129 → 130 (+1). Add the recovered 675 GP and the kept scroll's 1,500 XP separately. At the castle award point in the second session, placed before the later encounter, select those three rewards and review four 10% bonuses and one explicit 0%. The accepted awards are 507/507/507/461/507; the earlier session's balances remain zero.
+## Recipient settlement
 
-The separate later alarm-creature example uses 3 HD, 14 starting HP and zero special additions: calculated raw XP 77. An explained historical raw override to 92 retains the DM's extra 15 without inventing a special ability. Its historical proposal of 0.5 and recorded accepted ratio of 1 can be retained separately from the rules-derived proposal. Place this event after the castle award and leave it pending.
+For each unresolved original share, choose **Award now**, **Later**, or **Forfeit**.
+Only Award now enters bonus, rounding, class and cap calculations. Forfeit can record
+a reason; Later stays pending. Save draft retains provisional choices; Cancel drops
+them. Confirmation records payments and forfeitures together, with duplicate protection.
 
-## Rules, precision and judgment
+Retirement automatically forfeits unresolved shares after the inclusive last
+eligible session. Temporary absence or removal from a session does not forfeit earned
+XP. An absent recipient uses the latest known profile at or before the award session,
+never a future profile; review its bonus/cap basis as needed. No share is redistributed
+because another recipient forfeits or reaches a cap.
 
-The coefficients and division/difficulty rules were checked directly against AD&D 1e **Dungeon Masters Guide, printed pp.84–85**. The table is on p.85. Its first band applies below 1−1; exactly 1−1 belongs to the second row, per the DM's clarification. Class levels use the table's n+1 HP hit-dice category. Positive HP additions add one difficulty HD, separately from selecting the raw-XP coefficient band. Each special/exceptional ability adds one difficulty HD. Ability classifications and unusual circumstances require DM review; there is no automatic monster-database integration.
+The first confirmation freezes participation, ratio, allocations and treasure choice.
+Later settlements retain that basis. Allocation changes are blocked while another
+active settlement uses the event; correct those settlements first. Use **Edit award**
+for corrections rather than silently editing accepted calculations.
 
-All 17 printed bands are represented. Raw monster XP uses base + cumulative ability additions + actual starting HP × XP/HP. Money uses the entered GP-equivalent value. Retained-item XP and GP sale value remain separate inputs. The proposed monster ratio is min(1, adjusted difficulty / recorded participating levels); Money and Treasure default to full XP (ratio 1) in new/editable drafts; existing recorded ratios are preserved. Recorded money reductions are preserved. Missing HD/HP cannot silently become zero. Explained overrides preserve missing/underlying inputs and remain visible.
+## Calculation and training caps
 
-Arithmetic uses reduced BigInt rational strings, including allocation and bonus aggregation. The reviewed product default is nearest whole XP, halves upward, **only after aggregating each character's accepted shares and applying their bonus**. It is not asserted to be every historical spreadsheet's rounding rule. The ordinary synthetic case retains 460.8 + 46.08 = 506.88, while the historical allocation case retains 461 + 46.1 = 507.1, even though both finally award 507.
+Monster XP uses base value + cumulative ability additions + starting HP × XP/HP.
+The proposed ratio is `min(1, adjusted difficulty / participating levels)`. Money and
+Treasure default to ratio 1, with reviewed reductions available. Missing facts remain
+unknown. Explained overrides retain their calculated/underlying values for inspection.
 
-Participation, settlement eligibility, shares, recorded levels, allocations, raw XP, ratio and final awards are distinct review inputs. Explicit allocation/final overrides can represent historical exceptions or DM cap decisions with reasons. There is no automatic henchman policy, cap enforcement, training, level advancement, spell/HP accounting, banking or profile synchronization.
+Arithmetic uses exact reduced rational values. Aggregate a character's accepted
+shares, apply its bonus, then round to nearest whole XP with halves upward. For a
+multiclass recipient, divide its base equally among classes, apply each class's
+bonus and rounding, then apply each class's cap independently. Character totals sum
+the actual class additions; a multiclass character still receives one character share.
 
-## History, corrections and identity
+The campaign's cap policy applies **after** calculating the full award:
 
-Confirmed events freeze selected reward versions/evidence, coefficients, recipients, names, levels, bonuses, allocations, rounding, overrides and before/after balances. Later source, profile, participation or custody edits do not recalculate them. Draft evidence changes are flagged; **Refresh and review** is explicit and retains manually entered HD/ability information while updating copied source facts.
+- Added XP = `min(full award, max(0, cap − existing balance))`.
+- Discarded XP = `full award − added XP`.
+- New balance = `existing balance + added XP`.
 
-Encounter candidate discovery deduplicates combatants across rounds and known encounter continuations using stable encounter/key identities. Known sources and ambiguous remapped names are flagged, with an explicit distinct-reward explanation available for legitimate additional rewards. Inventory candidates use item identity within known inventory lineage, so moving stock or carrying it to another session cannot create a fresh reward automatically. No name-based profile links are introduced.
+The standard cap is the first XP point of the next trained class level. Temporary
+effective-level effects do not increase it. Training is a manual session-profile
+change; discarded XP is neither banked nor restored by later training. Balances
+already at/above a cap are not reduced. Unknown, custom or terminal caps require an
+explicit reviewed basis; absolute-cap and uncapped exceptions require a reason.
 
-**Edit award…** opens draft changes at the same place in the list. The original remains immutable and inspectable. A correction that affects later accepted balances previews those changes and requires explicit acknowledgment; one atomic operation appends the replacement and linked balance-review versions of dependent awards. Later amounts and accepted inputs stay frozen. Superseded versions are labeled as retained history, and the primary view follows the current accepted version. Duplicate retries cannot half-apply the operation.
+For example, Fighter 5 at 34,800 with a 500 share and 10% bonus has full XP 550,
+adds 201 to reach 35,001, and discards 349. Training a later profile to Fighter 6
+changes its next cap, not the old receipt. Mapping accepted single-class history
+into classes requires explicit class balances that sum to the prior total; class
+identities already used by XP cannot simply be removed.
 
-Session-tab order is the chronology. Drag tabs (or focus one and press Option-Shift-Left/Right) before the first confirmation; there is no separate chronology panel. Reordering established session history or moving a confirmed award to a different position is outside this slice; corrections retain position. Opening balances already used by confirmed history are fixed. An incorrect opening amount can be addressed through a reasoned award correction rather than rewriting the original opening/history.
+Rules references and data: DMG printed pp. 84–85 and
+[monster XP coefficients](../src/tables/monsterExperience.ts); PHB printed
+pp. 20–27, 30–31 and 117–118 and [class thresholds](../src/tables/classExperience.ts).
+The monster table distinguishes below 1−1 from exactly 1−1; positive HP additions
+also affect difficulty separately from coefficient-band selection. Ability
+classification and unusual circumstances remain DM judgments. No automatic monster
+database, training, racial-level-limit, spell or HP accounting is implied.
 
-## Persistence and verification
+## History and corrections
 
-Campaign V11 uses optional version-2 `xp` data, with one per-session timeline of stable XP-event and award-point IDs: session-order compatibility mirror, opening balances, rewards, award points and immutable event versions. V1–V10 open without invented XP, preserving all prior identities, profiles, storage, continuations, source evidence and checkpoints. XP survives ordinary saves and session creation/carry-forward without duplicating rewards or backdating balances. TypeScript and the native QuickJS boundary share the same validator/calculators, including exact arithmetic and immutable-history transitions.
+Accepted awards freeze source versions/evidence, recipients, levels, allocations,
+bonuses, rounding, cap bases and balances. Later profile/source/custody changes do
+not recalculate them. Draft evidence can be explicitly refreshed and reviewed;
+source identity and continuation lineage prevent accidental duplicate rewards.
 
-Quiet saves remain unchanged: no routine `.bak`; an actual disk-schema upgrade preserves the exact original once using a collision-safe recovery name. Atomic replacement, validation, conflict checks, save/quit/open queues, rejected-edit handling and document-load epochs cover XP too. Existing 8 MB campaign and source-size limits still apply to the expanded document.
+**Edit award…** creates a linked correction while retaining the original. If later
+accepted balances change, preview and acknowledge them; confirmation appends the
+correction and dependent reviewed versions atomically. Later full amounts and cap
+bases remain recorded, with additions/discards recalculated against the corrected
+balances. Legacy calculator versions retain their original rules; unrecorded cap
+history is not fabricated from today's profile.
 
-Synthetic tests cover all coefficient bands, first-band and HP-addition boundaries, exact fractions, historical overrides, unknown inputs, participation/shares, treasure decisions, source discovery/refresh and continuation, cross-session timing, duplicate confirmations, corrections and dependent balances, migrations, immutable evidence, serialization, native failure/conflict/backup paths, and Save/Quit/Finder Open waiting for atomic XP acceptance. The packaged walkthrough uses disposable synthetic files; public standalone tools retain independent behavior. No private campaign, original spreadsheet or monster-database contents are imported into source or build assets.
+**Extend history backward** reconciles earlier award drafts and earlier openings
+against established history. Differences must reconcile exactly, including each
+class rather than only the character total. Previously accepted openings and audit
+records remain inspectable. This is the explicit route for historical reconstruction,
+not permission to reorder confirmed history or overwrite accepted receipts.
 
-The packaged-app replay established five explicit zero balances, changed the deferred scroll to Keep using retained XP 1,500 while leaving market GP 7,500 separate, created a castle award in the second session, selected only the three earlier rewards, inspected the 129 → 130 allocation adjustment, confirmed once and immediately saved. After a full process exit and Reopen last, awards remained 507/507/507/461/507, the earlier Session table still showed five zero balances, and the later reward remained pending. A separate native Save As copy accepted an explained 500-XP final override for one recipient through the correction flow; its original confirmed event remained byte-for-byte equal as a JSON value. File inspection confirmed independent unchanged storage and no routine backup siblings. The isolated app ran from a non-indexed temporary folder and was fully quit after verification.
-
-Session tabs now provide the visible chronology. Native keyboard reordering was verified on a disposable unawarded campaign, and the user verified mouse drag-and-drop in the packaged Mac app. Gesture tests cover active-session identity, persistence and the post-confirmation lock. The window delegates HTML drag/drop to the WebView; existing native File/Finder opening remains handled separately. The isolated test app was quit and unregistered after the hands-on check.
-
-A reward-dialog regression covers inventories with long decimal unit values and scientific-notation prices. Numeric inventory values are converted from their recorded decimal representation into exact fractions, independently of the manual XP-input precision limit. Monster entry does not scan unrelated possessions. Possession-evidence failures remain local to the chooser with an inline explanation and manual entry available. The packaged Mac regression confirmed that the dialog remains open both for Monsters and after switching to Recovered money.
-
-The XP timeline is the timing UI: earned events and award points share one ordered list in each session, with no begin/during/end or numeric order fields. New entries append; move-earlier/later controls adjust pending entries. Confirmed points and any event used in confirmed history are fixed. Adding or moving an unawarded event does not amend an older award’s selected events. A new award placed before an existing award still requires the existing explicit later-balance review at confirmation.
-
-XP data V1 is migrated into V2 by sorting each session’s entries using the old phase/order, with source events before an award at an equal old position. Original rewards, award points, immutable calculation snapshots, event IDs and before/after balances retain their exact values. Legacy position fields stay as archival compatibility data; V2 timing uses list IDs. Campaign V11 makes this explicit at the native boundary; the first real on-disk upgrade gets the existing exact-original recovery copy, and routine saves remain quiet.
-
-The unified-list packaged-app check moved a draft award below a later pending event and observed that event becoming selectable, then moved the award back above it and observed the cutoff being restored. Confirmation still produced 507/507/507/461/507 and locked the award row. A V10/XP-V1 synthetic file opened with the same award and pending-event order, saved as V11/XP-V2, fully quit/reopened with unchanged balances and accepted records, preserved an exact original `.bak` once, and generated no new recovery file on the subsequent ordinary save. File inspection compared retained rewards and confirmed events directly with the original fixture. Tests also reject a stale preview after the list changes, even when selected totals are unchanged.
-
-The event editor has one name for single-group entry and one character table: participation, XP eligibility, editable level-at-event, and calculated XP. Two independent column-header checkboxes replace repeated row clicks without coupling participation to eligibility. The raw total and the challenge’s adjusted HD / participant levels remain visible even when other inputs are incomplete. No intermediate rounding is added.
-
-The separate monster-label disclosure, Include controls, participation-exceptions table, historical-allocation section, individual-allocation table, Calculation section, challenge/decision fieldset, band/exclusion disclosures and historical-proposal input form have been removed from ordinary event entry. Existing band choices, historical ratio context, evidence, independent names and overrides remain preserved; relevant existing calculation metadata is displayed read-only. Ratio Override is a small inline edit with Apply/Cancel/reset. Adjust XP is one small dialog with target, amount and note; a selected individual also exposes their shares. Adjustments are local drafts until Apply and remain reversible by using calculated XP. No schema upgrade is needed for this UI pass.
-
-The single-table packaged-app check selected both columns in two clicks and obtained 129 raw XP / 25.8 each. Changing one recorded level from 1 to 16 displayed 20 participating levels, ratio 0.425 and five shares of 10.965; restoring it returned 25.8. Adjustment Cancel left the calculation unchanged. Ordinary Save, full quit and Reopen last retained the inputs, separate flags and calculated fractional shares without an override or backup. The final layout has one modal scrollbar rather than a separately scrolling character table. Ratio Change to 1/2 displayed 12.9 each, and Use calculated ratio restored 25.8. The small adjustment dialog applied 26 with one historical note and persisted those explicit overrides on Save. Synthetic file inspection confirmed no award had been confirmed. The isolated app was quit, unregistered and archived after verification. The checks passed with 871 Jest tests, 19 native tests, type checking, formatting, lint (one pre-existing warning), and both desktop/public static builds.
-
-Recording money or treasure is the recovery decision; Pending means not yet awarded. The Recovery status selector, exclusion status labels and their award gates are removed. The legacy `eligibility` property is optional archived metadata and is preserved verbatim where it already exists, including immutable accepted snapshots; new events do not create it and calculators/selection ignore it. No schema rewrite is needed. New money events default to ratio 1; old money drafts with an unset ratio also use 1, while explicit ratios and confirmed calculations remain unchanged. The money UI uses Money / GP equivalent. Delete event is available only for persisted events never used in any confirmed award, including superseded history. Deletion removes draft award references and timeline entries, clears the preview and prunes unused bonus rows; stale editors and stale confirmations are rejected. Source possessions, combat evidence and accepted awards are untouched.
-
-Treasure now has one Sale value (GP) field alongside Retained-item XP. Existing explicit sale amounts take precedence; when absent, the legacy market value supplies the displayed and calculated sale value. Explicit zero remains zero, and clearing the field clears both legacy GP slots so the old value cannot reappear. Unrelated edits preserve old recorded values, source evidence and immutable awarded snapshots. Internal historical field names are retained for compatibility without a schema upgrade; the two-field market/proceeds distinction is removed from the UI. Keep/Sell/Defer still select which value, if any, counts toward XP.
-
-Ratio Override now sits directly beside the ratio instead of at the far right. Adjust XP sits with Raw XP above the character table, separating allocation/raw-total adjustments from the ratio multiplier. New Treasure events start at ratio 1. Older editable drafts with both ratio fields unset receive 1 in the editor, including after copying possession evidence; Save persists that choice. Existing explicit proposals/overrides are retained, and Use default ratio returns Money/Treasure to 1. Defaulting is confined to editable drafts so the calculator and recorded resolutions for accepted override-only treasure snapshots remain unchanged. No monster/treasure linking is introduced, and Defer still postpones the Keep/Sell decision.
-
-The award view now uses one event-by-character matrix for selection, preview and accepted history. It replaces the pending-event/recipient-list table, permanent bonus and final-override forms, per-event calculation tables and separate appended preview. Award names are edited inline in their modal heading, including draft changes; confirmed names remain frozen. Base shares use the existing exact resolver; preview/footer totals use the existing award calculator, and accepted history displays stored allocations and balances. Event names open the existing editor or a read-only historical inspection. Adjusted shares display only their accepted value plus a marker; clicking it shows calculated value and reason. Bonus and final-award cells open small contextual editors with Apply/Cancel, and successful changes invalidate confirmation previews. Deferred/future entries remain visible but unavailable for selection. Correction/rebase acknowledgment and immutable prior versions remain intact; no schema or calculation policy changes are introduced.
-
-Award matrix event rows follow their original session/timeline order in both drafts and confirmed history. Only a copied display array is sorted; recorded selection order, accepted snapshots, calculations and document bytes remain unchanged. A synthetic regression deliberately uses different creation, timeline and selection orders across two sessions and verifies chronological display and unchanged serialization for both draft and accepted awards.
-
-The packaged matrix check used five synthetic events (monsters, three money finds and a kept scroll) and one later pending event. Inline award rename worked; Preview populated the same matrix with base 460.8, bonus 46.08 for four recipients and final awards 507/507/507/461/507. The later event was disabled. Editing a bonus and cancelling preserved the existing preview. Confirmation, immediate Campaign Save, full process quit and Reopen last retained the five source rows, exact allocations, frozen totals and pending later event. The original-schema file acquired no routine backup. The isolated test app was quit, unregistered and archived. Automated UI tests cover bonus Apply/Cancel, preview invalidation, allocation-marker inspection, final overrides, correction naming and exact preservation of the original accepted event. All 879 Jest tests and 19 native tests passed, as did type checking, formatting, lint (one existing warning) and both desktop/public static builds. No live/private campaign data was used or modified.
-
-All XP timeline rows now open details in a modal; entering a session never selects or displays an award automatically. Award drafts and confirmed/history versions use the same single-table award modal. Closing it returns to the timeline, and clicking the row opens it again. Draft awards show a visible name field in the title position, with the existing name selected on opening. Confirmed awards show a plain heading. Edit award opens a linked draft of the same logical award, with Reason for changes, Confirm changes and Discard changes controls. Original accepted events, duplicate protection, explicit confirmation and later-balance review remain unchanged. Closing a draft does not confirm it.
-
-Session includes a compact read-only XP reference below the character table, with characters as columns and Base level, XP cap, XP added this session and XP balance as rows. The old XP-balance column is removed from the wider character table to avoid duplication. Session totals use only active accepted award versions, so replacements are not counted twice; event-origin sessions do not acquire XP awarded later. Temporary effective-level effects do not change the recorded base-level row. Unknown balances remain unknown rather than zero. The trained-level XP cap is now shown and enforced for new awards as described in the cap document; training remains a manual profile update.
-
-The packaged modal walkthrough opened a disposable confirmed campaign with no selected award/table, opened and closed the award modal, opened and cancelled the later event modal, then reopened the award. Edit award opened draft changes; Preview exposed Confirm changes; Discard changes returned to the timeline without changing the accepted award. Session showed base levels and 507/507/507/461/507 awarded/balances for the second session, with zero awarded/balances in the first. Save, full quit and Reopen last preserved the compact reference and timeline-only XP landing view. File comparison verified identical XP ledger, profiles, original evidence, checkpoints and working documents; no routine backup was created. The isolated app was quit, unregistered and archived. All 882 Jest tests, 19 native tests, type/format/lint checks and desktop/static builds passed; the sole lint warning predates this change.
-
-### Recipient settlement
-
-Select an event in the live award dialog, then choose **Award now**, **Later**,
-or **Forfeit** beneath each unresolved recipient's original base share. Award
-now is the default. Only those shares enter bonus, rounding, multiclass, and
-cap calculations. Forfeit optionally records a reason; Later stays pending.
-Cancel discards the provisional choices; Save draft retains them without
-posting XP. Confirm records payments and forfeitures together. Repeating the
-same confirmation cannot pay a share twice.
-
-Retirement automatically forfeits unresolved shares after the last eligible
-session and hides that character from new award choices. Confirmed XP remains
-unchanged, and original encounter allocations stay intact without redistribution.
-Temporary absence or removing a session profile does not forfeit earned XP.
-An absent recipient's cap and bonus use the latest known profile at or before
-the award session, never a future profile. The cap stays visible even when the
-share is left for Later. Review or override that basis in the award dialog when
-needed. Capped excess is discarded, not deferred.
-
-The first confirmation freezes the event's participation, ratio, allocations,
-and treasure disposition. Later settlements retain that basis. Use Edit award
-for corrections. Allocation changes are blocked while another active settlement
-uses that event: correct those settlements first, so another recipient's
-accepted allocation cannot silently change. Earlier awards can settle different
-shares through the existing backward-history reconciliation.
-
-For the isolated shrieker walkthrough, select the event on Day3: Reatha and
-Chocolato **Award now**, Vitameno **Later**. Retired Stan is omitted and his share is automatically forfeited. The four original
-23-base-XP shares remain intact. With starting balances 507/461 and reviewed
-bonuses 10%/0%, Reatha reaches 532 and Chocolato 484. On Day5, add Vitameno's
-existing roster identity with Fighter 1 and 10% XP bonus, then select the event:
-only his share remains available. Award it to add 25 XP and reach 532. Stan's
-507 and the original castle award remain unchanged. Automated synthetic tests
-exercise this sequence without reading or writing the live SOCK campaign.
+The [XP helpers](../src/helpers/campaignXp.ts), [class calculations](../src/helpers/campaignXpClasses.ts)
+and [cap logic](../src/helpers/campaignXpCap.ts) share their validation with the native
+boundary. Source snapshots and historical amounts remain protected through save,
+reopen, correction and retry.

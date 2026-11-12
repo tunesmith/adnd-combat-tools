@@ -1,141 +1,78 @@
-# Session and References
+# Profiles, membership and references
 
-The session tabs are **Session, References, Possessions, Combats**.
-**Session** shows a compact character comparison table above the session notes.
-At window widths of 1,440px and up, notes appear to the right of the table.
-Session notes grow and shrink with their contents. General character notes
-use a full-width autosizing field, capped below the modal height with internal
-scrolling for longer text.
-Choose **+ Character** to add a roster identity and a session profile. Click a
-character name to edit it. Both Session and References open the same modal and
-use the same profiles. Save profile accepts the draft through the campaign's
-queued persistence. Cancel and Escape discard it and return focus to the
-trigger. References shows the saving-throw table.
+See the [desktop guide](desktop.md) for navigation and session creation.
+**Session → + Character** adds or returns a roster identity with a session profile.
+Click a character's name in Session or References to edit its profile. Save profile
+accepts the draft; Cancel/Escape discards it. Blank numeric values mean unknown,
+not zero, and display as a dash.
 
-Names, players, and general character notes belong to the campaign roster.
-Race, gender, age, alignment, six attributes, profile maximum HP, and reference
-bonuses belong to the selected session. Changing them in a later session
-preserves the earlier session's values. Zero is a recorded value. Blank is
-unknown, displayed as a dash. Exceptional strength has an integer score and
-a separate percentile, displayed as 18/64 or 18/00. The maximum percentile is
-stored as 100. The Session level cell shows effective level. Its compact +1
-button has the named adjustment and base level in its tooltip and accessible
-label.
+## Identity and session-specific values
 
-Reference bonuses are manual inputs for melee hit/damage, missile hit,
-and reaction percentage. The +10% XP bonus is a manually set checkbox, following
-the PHB's high-ability-score bonus. Clear marks it as unrecorded. The display adds a plus sign
-for positive values, including in the editing fields, and preserves zero
-and negative values. The saved values are numeric. Older nonstandard XP
-percentages retain their recorded values until explicitly changed. Attributes accept
-integers from 0 to 25. Age and maximum HP accept nonnegative integers up to
-1,000,000. Reference bonuses accept signed integers from -1,000 to 1,000.
-These are input bounds. The bonuses do not automatically recalculate from
-attributes, race, or class.
+Names, players and general character notes belong to the campaign roster. Classes,
+trained levels, race, gender, age, alignment, attributes, maximum HP, reference
+bonuses and save notes belong to the selected session's profile. Editing a later
+profile does not change an earlier one. Exceptional strength has an integer score
+and a separate percentile; the maximum percentile displays as 18/00.
 
-The five numeric columns show base saving throws at effective level. The three
-notes columns are editable text and expand to fit their contents. Profiles
-without calculated saves have a **Manual saving throws** section. Leave a
-target blank if you don't know it. Choose **Manual targets** under **Rules
-basis** to use a manual row for a house rule.
+Reference bonuses and XP bonuses are entered explicitly. They are not inferred
+from attributes, equipment or notes. Name a temporary level adjustment in the
+profile, then use its +1 toggle in the session table. Effective level affects
+supported reference calculations; XP training caps use trained levels instead.
+The compact Session XP table shows base level, cap, additions in that session and
+ending balance from accepted awards.
 
-Give a level adjustment a name in the profile, then use its +1 toggle on the
-row. The displayed effective level and base saving throws change immediately.
-The base character level and entered notes are retained. References
-uses the profile to calculate saves. Each encounter owns its class, level,
-HP, and equipment values. **Advance Round** inherits those values from the
-combat round. Possessions stores its own characters, strength, and equipment.
+**Remove from session** removes participation in that session without deleting the
+roster identity, possessions, combatants or earned XP shares. **Retire from roster**
+sets an inclusive last eligible session. Later awards automatically forfeit the
+retired character's outstanding shares; confirmed XP and existing profiles remain.
+Temporary absence is not retirement. See [recipient settlement](desktop-xp.md#recipient-settlement).
 
-In **Combats**, use **Add from party/profile…** to pick a profile from the
-current session. The editor copies its name and, where supported, its class and
-effective level. Review armor, weapon, movement, and HP in the draft and choose
-**Add party member**. Each copy becomes a separate combatant, even when names
-match. Later combat edits and profile edits are independent.
-The picker omits names present in the selected round's party, ignoring
-leading/trailing whitespace and letter case. It hides when no choices remain
-and updates when rounds or participants change. This is an availability
-heuristic for imported rosters. It does not merge identities. Use manual
-**Add Party Member** for distinct same-name characters. Renaming a copied
-combatant can make the profile available again because copies have no identity
-link. Drafts still require explicit confirmation when a matching name appears.
+Profiles, combatants and inventory characters are independent. Copying a profile
+into combat is a one-time supported name/class/effective-level copy, not an HP,
+equipment or identity link. The picker omits names already in that round after
+trimming whitespace and ignoring case. This is an availability heuristic;
+manual creation still permits distinct same-name combatants.
 
-**+ Session** can carry selected party profiles separately from inventory,
-encounters, and notes. All transfer boxes start unchecked. **+ Encounter**
-opens an empty encounter and starts inline renaming.
+## Multiclass and saving throws
 
-In **Combats**, open **…** beside **Version** below the editor and choose
-**Remove encounter from this session**. An empty encounter offers immediate
-Undo. A populated encounter names the encounter and session and asks for
-confirmation. **Removed encounters** can recover either one after reopening.
-Removing an instance does not remove the fight from any other session.
+A profile can have two or three class entries under one character identity. Each
+class retains its own stable ID, trained level and XP bonus. Identity, attributes
+and maximum HP are shared. Choose a combat basis explicitly; unequal class levels
+also require a reviewed participation level for an XP event. Copying profiles to
+another session retains class IDs while making the values independently editable.
 
-## Printed rules and manual cases
+Calculated saving throws use the lowest base target per category across classes.
+A temporary effect selects one affected class. Manual targets and save notes can
+represent house rules or unsupported cases; unknown targets stay blank. Situational,
+ability, racial and equipment bonuses are not folded into these base targets.
 
-Saving throws use AD&D 1e _Dungeon Masters Guide_, printed p. 79,
-**Saving Throw Matrix I**, verified against the Orange Spine printing.
-The table tests check both ends of each printed level band for Cleric/Druid,
-Fighter/Paladin/Ranger (including the zero-level row), Magic-user/Illusionist,
-and Thief/Assassin/Monk. The category help names the full groups and notes the
-printed exclusions. A natural 1 fails. These targets exclude situational,
-ability, racial, equipment, and other bonuses.
+Bards use their retained fighter/thief levels and current bard level's druid saves
+where supported, choosing the best save per category. Combat uses the retained
+fighter level. Retained levels are explicit; the temporary toggle does not invent
+changes to them. Manual/creature profiles and **Copy name only** require reviewed
+combat values rather than a guessed conversion.
 
-The Orange Spine _Players Handbook_, printed pp. 21 and 30, gives the druid and
-monk saving bases. Printed pp. 117–118 give the original bard progression and
-save/attack rules: use the best save in each category from retained fighter
-and thief levels and current bard level as a druid. Combat uses retained
-fighter level. The toggle adjusts the current bard level only. If a campaign
-rules that the adjustment affects a retained class as well, use explicit
-manual targets or select a single matrix and use its reviewed basis.
-No retained level is inferred. A missing bard save basis gives a manual row.
+Rules references: DMG printed p. 79, Saving Throw Matrix I; PHB printed pp. 21, 30
+and 117–118 for druid, monk and bard bases, and pp. 16, 18, 32–33 for multiclass
+rules. The [saving-throw tables](../src/tables/savingThrows.ts) and
+[profile helpers](../src/helpers/campaignParty.ts) implement the supported cases.
+Class-combination legality, racial level limits, training costs, spell accounting
+and automatic HP advancement are not calculated.
 
-The copy action converts supported profile levels to tracker categories.
-For bards it uses the retained fighter level for combat. For creatures,
-unsupported classes, or **Copy name only** under **Rules basis**, set class
-and level in the combatant editor. The editor supplies its usual defaults and
-leaves maximum HP blank. Nonstandard saving rules can use manual targets in
-References.
+## Character order and carry-forward
 
-## Document and verification
+Drag character names in Session or Possessions to reorder them. Focused names also
+accept Option-Shift-Up/Down; Possessions accepts Left/Right as well. The selected
+session owns its order. References, current XP displays, Possessions and Banking
+follow that order subject to membership/eligibility; earlier sessions and confirmed
+records remain unchanged.
 
-Campaign V8 adds an optional typed `reference` object on each session
-profile. V1–V7 documents open with those values unknown. Existing IDs,
-profiles, notes, rules, manual targets, effects, imports, working data,
-checkpoints, and continuation provenance retain their recorded values.
-V6 empty mapping lists are accepted. V6 files with nonempty mapping lists
-remain unsupported following the removal of profile linking.
+Possessions uses unique normalized-name matching to align holders with roster
+identities. Ambiguous/unmatched holders remain in their own following group and
+can be reordered there; storage follows characters. There is no saved profile link.
 
-Explicitly carried profiles receive deep copies of the reference object,
-attributes, strength percentile, and bonuses. The one-time combat copy still
-copies only the existing supported name/class/level fields. Opening leaves
-disk bytes intact. Save upgrades the document and keeps the previous file
-bytes in the normal backup. The shared native validator checks the expanded
-types and ranges.
-
-Removal retains the complete working instance with a timestamp, including
-its logical encounter ID, continuation provenance, and history. Removal and
-recovery advance the editor generation, so late editor changes cannot modify
-the archived instance. The native mutation boundary validates its frozen
-state. **Removed encounters** restores an instance with its existing data and
-logical identity.
-
-Synthetic tests cover migration of older profiles, exact original
-backup bytes, independent profile transfer, stale callbacks, and encounter
-removal and recovery. The tracker tests cover draft cancellation, duplicate
-copies with fresh keys, and round inheritance after a profile changes.
-
-The dense Session checks passed 829 Jest tests and 16 native Rust tests.
-The isolated packaged walkthrough used five invented characters at the
-normal 1,180px window width and at about 790px. It checked table-only
-horizontal scrolling, modal keyboard wrapping, Escape and focus return,
-zero maximum HP, 18/00 strength, a negative reaction percentage, and
-independent profile carry-forward. Saved profiles and multiline notes
-survived a complete quit and reopen. A denied save retained edits and left
-disk bytes intact. External-change cancellation preserved the external
-file. The first V7 upgrade saved an exact original backup. The public static
-export also passed standalone tracker share/reload and inventory
-edit/export/reimport checks in Chrome.
-
-Build with `npm run desktop:build` and launch with `npm run desktop:run`, or
-double-click `src-tauri/target/release/bundle/macos/AD&D Tools.app`. The public
-build still uses `npm run build`. Save your campaign explicitly with
-Command-S or File → Save.
+**+ Session** copies selected profiles and their order independently of inventory,
+encounters and notes. New/returning profiles append to the destination's order.
+Retired profiles are omitted according to their last eligible session. Restoring
+membership through Session's **+ Character** does not restore gear; use the separate
+[possessions workflow](desktop-possessions.md#inventory-membership).
