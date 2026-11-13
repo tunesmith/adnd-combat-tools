@@ -278,10 +278,6 @@ export default function XpAwardTable({
           full: row ? row.fullAward ?? row.award : affected ? null : 0,
           added: row?.award ?? (affected ? null : 0),
           discarded: row?.discarded ?? (affected ? null : 0),
-          toCap:
-            after !== null && cap?.limit != null
-              ? Math.max(0, cap.limit - after)
-              : null,
         },
       ] as const;
     })
@@ -334,8 +330,6 @@ export default function XpAwardTable({
               ? after
               : field === 'full'
               ? snapshot?.fullAward ?? (unchanged ? 0 : undefined)
-              : field === 'toCap' && after != null && cap?.limit != null
-              ? Math.max(0, cap.limit - after)
               : undefined;
           const text =
             field === 'base' && (snapshot || unchanged)
@@ -621,7 +615,61 @@ export default function XpAwardTable({
             </tr>
           )}
           <tr>
-            <th scope="row">Base XP</th>
+            <th scope="row">Next level</th>
+            {characters.map((c) => {
+              const cap = totals.get(c.id)?.cap;
+              const capError = totals.get(c.id)?.capError;
+              return (
+                <td key={c.id}>
+                  {classCell(c.id, 'cap') ??
+                    (!readOnly && !cap && !totals.get(c.id)?.affected ? (
+                      <span title="A cap is only needed when awarding XP now.">
+                        Not needed
+                      </span>
+                    ) : readOnly && !cap ? (
+                      <span title="Legacy award: no cap was recorded">
+                        Not recorded
+                      </span>
+                    ) : (
+                      <button
+                        className={styles['textButton']}
+                        aria-label={`${readOnly ? 'Inspect' : 'Review'} ${
+                          c.name
+                        } XP cap`}
+                        title={
+                          cap
+                            ? `${
+                                cap.characterClass || 'Unknown class'
+                              } · trained level ${cap.baseLevel ?? 'unknown'}${
+                                cap.reason ? ` · ${cap.reason}` : ''
+                              }`
+                            : capError
+                        }
+                        onClick={() => onCap?.(c.id, cap)}
+                      >
+                        {cap
+                          ? cap.mode === 'uncapped'
+                            ? 'Uncapped'
+                            : cap.limit?.toLocaleString()
+                          : 'Review trained level…'}
+                      </button>
+                    ))}
+                </td>
+              );
+            })}
+          </tr>
+          <tr>
+            <th scope="row">Previous balance</th>
+            {characters.map((c) => (
+              <td key={c.id}>
+                {classCell(c.id, 'before') ??
+                  totals.get(c.id)?.before?.toLocaleString() ??
+                  '—'}
+              </td>
+            ))}
+          </tr>
+          <tr>
+            <th scope="row">XP</th>
             {characters.map((c) => {
               const value =
                 rows?.find((r) => r.characterId === c.id)?.base ??
@@ -668,50 +716,6 @@ export default function XpAwardTable({
                       value
                     ) : (
                       '—'
-                    ))}
-                </td>
-              );
-            })}
-          </tr>
-          <tr>
-            <th scope="row">XP cap</th>
-            {characters.map((c) => {
-              const cap = totals.get(c.id)?.cap;
-              const capError = totals.get(c.id)?.capError;
-              return (
-                <td key={c.id}>
-                  {classCell(c.id, 'cap') ??
-                    (!readOnly && !cap && !totals.get(c.id)?.affected ? (
-                      <span title="A cap is only needed when awarding XP now.">
-                        Not needed
-                      </span>
-                    ) : readOnly && !cap ? (
-                      <span title="Legacy award: no cap was recorded">
-                        Not recorded
-                      </span>
-                    ) : (
-                      <button
-                        className={styles['textButton']}
-                        aria-label={`${readOnly ? 'Inspect' : 'Review'} ${
-                          c.name
-                        } XP cap`}
-                        title={
-                          cap
-                            ? `${
-                                cap.characterClass || 'Unknown class'
-                              } · trained level ${cap.baseLevel ?? 'unknown'}${
-                                cap.reason ? ` · ${cap.reason}` : ''
-                              }`
-                            : capError
-                        }
-                        onClick={() => onCap?.(c.id, cap)}
-                      >
-                        {cap
-                          ? cap.mode === 'uncapped'
-                            ? 'Uncapped'
-                            : cap.limit?.toLocaleString()
-                          : 'Review trained level…'}
-                      </button>
                     ))}
                 </td>
               );
@@ -769,11 +773,9 @@ export default function XpAwardTable({
           </tr>
           {(
             [
-              ['XP added', 'added'],
               ['Discarded', 'discarded'],
-              ['Previous balance', 'before'],
+              ['Awarded', 'added'],
               ['New balance', 'after'],
-              ['XP to cap', 'toCap'],
             ] as const
           ).map(([label, field]) => (
             <tr

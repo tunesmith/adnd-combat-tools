@@ -70,17 +70,19 @@ test('cap preview separates full/add/discard, recalculates on training and persi
       .getByRole('row', { name: new RegExp(`^${label}`) })
       .querySelector('td')?.textContent;
   expect(value('Full award')).toBe('550');
-  expect(value('XP added')).toBe('201');
+  expect(value('Awarded')).toBe('201');
   expect(value('Discarded')).toBe('349');
   expect(value('New balance')).toBe('35,001');
-  expect(value('XP to cap')).toBe('0');
+  expect(
+    table.queryByRole('row', { name: /^XP to cap/ })
+  ).not.toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: 'Synthetic training' }));
   expect(screen.getByRole('button', { name: 'Confirm award' })).toBeEnabled();
   table = within(screen.getByRole('table', { name: 'XP award' }));
   expect(
     table.getByRole('button', { name: 'Review Mira XP cap' })
   ).toHaveTextContent('70,001');
-  expect(value('XP added')).toBe('550');
+  expect(value('Awarded')).toBe('550');
   expect(value('Discarded')).toBe('0');
   fireEvent.click(screen.getByRole('button', { name: 'Confirm award' }));
   expect(current.xp?.events[0]?.rows[0]).toMatchObject({
@@ -145,7 +147,7 @@ test('unknown caps need an explicit decision; cancellation cannot create an unca
   fireEvent.click(cap.getByRole('button', { name: 'Apply cap' }));
   expect(
     within(screen.getByRole('table', { name: 'XP award' })).getByRole('row', {
-      name: /^XP added/,
+      name: /^Awarded/,
     })
   ).toHaveTextContent('201');
 });
@@ -169,9 +171,10 @@ test('Session cap is available without an opening balance and directly follows b
     'Character',
     'Class',
     'Base level',
-    'XP cap',
-    'XP added this session',
-    'XP balance',
+    'Next Level',
+    'Starting XP',
+    'Awarded',
+    'Total',
   ]);
   expect(table.getByRole('row', { name: /^Mira/ })).toHaveTextContent('35,001');
   expect(table.getByRole('row', { name: /^Mira/ })).toHaveTextContent('—');

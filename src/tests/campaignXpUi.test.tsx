@@ -1020,7 +1020,7 @@ test('live recipient decisions preview, cancel, and confirm without changing the
     );
   };
   choose();
-  expect(dialog.getByRole('row', { name: /^XP added/ })).toHaveTextContent(
+  expect(dialog.getByRole('row', { name: /^Awarded/ })).toHaveTextContent(
     '250023'
   );
   fireEvent.click(dialog.getByRole('button', { name: 'Cancel' }));

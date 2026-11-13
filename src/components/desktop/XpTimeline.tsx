@@ -88,7 +88,12 @@ export default function XpTimeline({
                 moveXpTimelineEntry(doc, sessionId, entry.id, direction)
               );
             return (
-              <li key={entry.id} className={styles['timelineRow']}>
+              <li
+                key={entry.id}
+                className={`${styles['timelineRow']} ${
+                  entry.kind === 'award' ? styles['timelineAward'] : ''
+                }`}
+              >
                 <span className={styles['timelineKind']}>
                   {entry.kind === 'event' ? 'XP event' : 'XP award'}
                 </span>

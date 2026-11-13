@@ -119,10 +119,29 @@ test('live award shows separate class results immediately, edits bonus/cap, canc
     within(screen.getByRole('table', { name: 'XP award' }))
       .getByRole('row', { name: new RegExp(`^${label}`) })
       .querySelector('td');
+  expect(
+    Array.from(
+      screen
+        .getByRole('table', { name: 'XP award' })
+        .querySelectorAll('tfoot th')
+    ).map((h) => h.textContent)
+  ).toEqual([
+    'Trained level',
+    'Next level',
+    'Previous balance',
+    'XP',
+    'Bonus',
+    'Full award',
+    'Discarded',
+    'Awarded',
+    'New balance',
+  ]);
   expect(cell('Full award')).toHaveTextContent('Fighter55Thief55');
-  expect(cell('XP added')).toHaveTextContent('Fighter11Thief55');
+  expect(cell('Awarded')).toHaveTextContent('Fighter11Thief55');
   expect(cell('Discarded')).toHaveTextContent('Fighter44Thief0');
-  expect(cell('XP to cap')).toHaveTextContent('Fighter0Thief96');
+  expect(
+    screen.queryByRole('row', { name: /^XP to cap/ })
+  ).not.toBeInTheDocument();
   fireEvent.click(
     screen.getByRole('button', { name: 'Review Kramrak Smugward Thief bonus' })
   );
@@ -133,7 +152,7 @@ test('live award shows separate class results immediately, edits bonus/cap, canc
     target: { value: '0' },
   });
   fireEvent.click(editor.getByRole('button', { name: 'Apply' }));
-  expect(cell('XP added')).toHaveTextContent('Fighter11Thief50');
+  expect(cell('Awarded')).toHaveTextContent('Fighter11Thief50');
   fireEvent.keyDown(screen.getByRole('dialog', { name: 'XP award' }), {
     key: 'Escape',
   });
@@ -141,7 +160,7 @@ test('live award shows separate class results immediately, edits bonus/cap, canc
   fireEvent.click(
     screen.getByRole('button', { name: /Synthetic first settlement Draft/ })
   );
-  expect(cell('XP added')).toHaveTextContent('Fighter11Thief55');
+  expect(cell('Awarded')).toHaveTextContent('Fighter11Thief55');
   fireEvent.click(screen.getByRole('button', { name: 'Confirm award' }));
   expect(current.xp?.events[0]?.rows[0]?.classes?.map((c) => c.award)).toEqual([
     11, 55,
@@ -205,6 +224,6 @@ test('opening dialog keeps class unknowns, offers explicit zeros, and Session XP
     table.getByRole('cell', { name: 'Thief', exact: true })
   ).toBeInTheDocument();
   expect(
-    table.getByRole('columnheader', { name: 'XP added this session' })
+    table.getByRole('columnheader', { name: 'Awarded' })
   ).toBeInTheDocument();
 });

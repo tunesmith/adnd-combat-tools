@@ -277,7 +277,7 @@ test('Day93 removal, restoration and roster XP settings preserve combat and conf
     { target: { value: 'later' } }
   );
   expect(
-    removalPreview.getByRole('row', { name: /^XP added/ })
+    removalPreview.getByRole('row', { name: /^Awarded/ })
   ).toHaveTextContent('60');
   fireEvent.click(removalPreview.getByRole('button', { name: 'Cancel' }));
 
@@ -330,7 +330,7 @@ test('Day93 removal, restoration and roster XP settings preserve combat and conf
     award.getByLabelText('Hell hound opals: settlement for Squeeleo'),
     { target: { value: 'forfeit' } }
   );
-  expect(table.getByRole('row', { name: /^XP added/ })).toHaveTextContent('60');
+  expect(table.getByRole('row', { name: /^Awarded/ })).toHaveTextContent('60');
   fireEvent.click(award.getByRole('button', { name: 'Confirm award' }));
   expect(xpLedger(current()).events.at(-1)?.rows).toMatchObject([
     { characterId: 'sot', award: 60 },

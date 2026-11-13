@@ -48,13 +48,25 @@ export default function SessionXpReference({
             <th>Character</th>
             <th>Class</th>
             <th>Base level</th>
-            <th>XP cap</th>
-            <th>XP added this session</th>
-            <th>XP balance</th>
+            <th>Next Level</th>
+            <th>Starting XP</th>
+            <th>Awarded</th>
+            <th>Total</th>
           </tr>
         </thead>
         <tbody>
           {characters.flatMap(({ character, profile }) => {
+            const sessionBalances = sessionXpBalances(
+              document,
+              character.id,
+              sessionId
+            );
+            const startingClasses = xpClassBalances(
+              document,
+              character.id,
+              { sessionId, phase: 'opening', order: 0 },
+              false
+            );
             const balances = xpClassBalances(document, character.id, {
               sessionId,
               phase: 'end',
@@ -83,9 +95,12 @@ export default function SessionXpReference({
                 (sum, row) => sum + row.award,
                 0
               );
+              const before = profile.classes
+                ? startingClasses[c.id]
+                : sessionBalances.opening;
               const after = profile.classes
                 ? balances[c.id]
-                : sessionXpBalances(document, character.id, sessionId).closing;
+                : sessionBalances.closing;
               return (
                 <tr key={`${character.id}-${c.id}`}>
                   {i === 0 && (
@@ -96,6 +111,7 @@ export default function SessionXpReference({
                   <td>{profileClassLabel(c.characterClass)}</td>
                   <td>{c.baseLevel}</td>
                   <td>{cap?.limit?.toLocaleString() ?? '—'}</td>
+                  <td>{before?.toLocaleString() ?? '—'}</td>
                   <td>{added.toLocaleString()}</td>
                   <td>{after?.toLocaleString() ?? '—'}</td>
                 </tr>

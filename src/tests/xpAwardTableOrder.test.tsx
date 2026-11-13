@@ -53,6 +53,18 @@ test('draft and confirmed award rows follow session/timeline order without rewri
       .getAllByRole('row')
       .slice(1, 5)
       .map((row) => within(row).getAllByRole('button')[0]?.textContent);
+  const summaryOrder = [
+    'Next level',
+    'Previous balance',
+    'XP',
+    'Bonus',
+    'Full award',
+    'Discarded',
+    'Awarded',
+    'New balance',
+  ];
+  const summaryLabels = (table: HTMLElement) =>
+    Array.from(table.querySelectorAll('tfoot th')).map((h) => h.textContent);
   const beforeDraft = serializeCampaign(doc);
   const onSelect = jest.fn();
   const draft = render(
@@ -67,6 +79,9 @@ test('draft and confirmed award rows follow session/timeline order without rewri
   );
   expect(titles(draft.getByRole('table', { name: 'XP award' }))).toEqual(
     expected
+  );
+  expect(summaryLabels(draft.getByRole('table', { name: 'XP award' }))).toEqual(
+    summaryOrder
   );
   fireEvent.click(draft.getByLabelText('Include Recovered coin lots'));
   expect(onSelect).toHaveBeenCalledWith('money', false);
@@ -99,6 +114,9 @@ test('draft and confirmed award rows follow session/timeline order without rewri
   expect(titles(history.getByRole('table', { name: 'XP award' }))).toEqual(
     expected
   );
+  expect(
+    summaryLabels(history.getByRole('table', { name: 'XP award' }))
+  ).toEqual(summaryOrder);
   expect(accepted.rewards.map((r) => r.id)).toEqual(selectedIds);
   expect(serializeCampaign(confirmed)).toBe(beforeHistory);
   expect(parseCampaign(beforeHistory).xp?.events).toEqual(confirmed.xp?.events);
@@ -331,21 +349,24 @@ test('confirmed partial awards hide retired forfeitures and show accurate unchan
   );
   const headers = view.getAllByRole('columnheader').map((h) => h.textContent);
   expect(headers).toEqual(['XP event', 'Mira', 'Oren', 'Nera', 'Bram']);
-  const cell = (label: string, name: string) =>
-    within(
-      view.getByRole('row', { name: new RegExp('^' + label) })
-    ).getAllByRole('cell')[headers.indexOf(name) - 1];
+  const cell = (label: string, name: string) => {
+    const row = view
+      .getByRole('rowheader', {
+        name: label === 'XP' ? 'XP' : new RegExp('^' + label),
+      })
+      .closest('tr');
+    if (!row) throw Error('Missing award row');
+    return within(row).getAllByRole('cell')[headers.indexOf(name) - 1];
+  };
   for (const name of ['Oren', 'Bram']) {
-    for (const label of ['Base XP', 'Full award', 'XP added', 'Discarded'])
+    for (const label of ['XP', 'Full award', 'Awarded', 'Discarded'])
       expect(cell(label, name)).toHaveTextContent(/^0$/);
     expect(cell('Bonus', name)).toHaveTextContent('+0 (10%)');
     expect(cell('Previous balance', name)).toHaveTextContent(/^507$/);
     expect(cell('New balance', name)).toHaveTextContent(/^507$/);
   }
-  expect(cell('XP cap', 'Oren')).toHaveTextContent('2,001');
-  expect(cell('XP cap', 'Bram')).toHaveTextContent('2,501');
-  expect(cell('XP to cap', 'Oren')).toHaveTextContent('1,494');
-  expect(cell('XP to cap', 'Bram')).toHaveTextContent('1,994');
+  expect(cell('Next level', 'Oren')).toHaveTextContent('2,001');
+  expect(cell('Next level', 'Bram')).toHaveTextContent('2,501');
   expect(cell('Later alarm fungus', 'Oren')).toHaveTextContent('23Later');
   expect(cell('New balance', 'Mira')).toHaveTextContent('532');
   expect(cell('New balance', 'Nera')).toHaveTextContent('484');

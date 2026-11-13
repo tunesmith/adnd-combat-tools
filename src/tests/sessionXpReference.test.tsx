@@ -15,6 +15,10 @@ import SessionXpReference from '../components/desktop/SessionXpReference';
 import { parseCampaign, serializeCampaign } from '../helpers/campaignDocument';
 import replay from './fixtures/xpSyntheticReplay.json';
 import { xpCampaign } from './fixtures/xpCampaign';
+import {
+  sessionFingerprint,
+  startNextSession,
+} from '../helpers/campaignContinuity';
 
 test('compact Session XP is historical, uses base levels and counts only accepted correction versions', () => {
   const doc = parseCampaign(JSON.stringify(replay.corrected));
@@ -40,6 +44,13 @@ test('compact Session XP is historical, uses base levels and counts only accepte
       .slice(1)
       .map((row) => row.children[index] as HTMLElement);
   };
+  expect(cells('Starting XP').map((c) => c.textContent)).toEqual([
+    '0',
+    '0',
+    '0',
+    '0',
+    '0',
+  ]);
   expect(Array.from(cells('Base level')).map((c) => c.textContent)).toEqual([
     '1',
     '1',
@@ -47,10 +58,14 @@ test('compact Session XP is historical, uses base levels and counts only accepte
     '1',
     '1',
   ]);
-  expect(
-    Array.from(cells('XP added this session')).map((c) => c.textContent)
-  ).toEqual(['500', '507', '507', '461', '507']);
-  expect(Array.from(cells('XP balance')).map((c) => c.textContent)).toEqual([
+  expect(Array.from(cells('Awarded')).map((c) => c.textContent)).toEqual([
+    '500',
+    '507',
+    '507',
+    '461',
+    '507',
+  ]);
+  expect(Array.from(cells('Total')).map((c) => c.textContent)).toEqual([
     '500',
     '507',
     '507',
@@ -66,10 +81,14 @@ test('compact Session XP is historical, uses base levels and counts only accepte
       }
     />
   );
-  expect(
-    Array.from(cells('XP added this session')).map((c) => c.textContent)
-  ).toEqual(['0', '0', '0', '0', '0']);
-  expect(Array.from(cells('XP balance')).map((c) => c.textContent)).toEqual([
+  expect(Array.from(cells('Awarded')).map((c) => c.textContent)).toEqual([
+    '0',
+    '0',
+    '0',
+    '0',
+    '0',
+  ]);
+  expect(Array.from(cells('Total')).map((c) => c.textContent)).toEqual([
     '0',
     '0',
     '0',
@@ -87,16 +106,27 @@ test('compact Session XP is historical, uses base levels and counts only accepte
       }
     />
   );
-  expect(Array.from(cells('XP balance')).map((c) => c.textContent)).toEqual([
+  expect(cells('Starting XP').map((c) => c.textContent)).toEqual([
     '—',
     '—',
     '—',
     '—',
     '—',
   ]);
-  expect(
-    Array.from(cells('XP added this session')).map((c) => c.textContent)
-  ).toEqual(['0', '0', '0', '0', '0']);
+  expect(Array.from(cells('Total')).map((c) => c.textContent)).toEqual([
+    '—',
+    '—',
+    '—',
+    '—',
+    '—',
+  ]);
+  expect(Array.from(cells('Awarded')).map((c) => c.textContent)).toEqual([
+    '0',
+    '0',
+    '0',
+    '0',
+    '0',
+  ]);
 });
 
 test('mixed class rows retain independent caps, awards, balances and selected session order', () => {
@@ -124,9 +154,10 @@ test('mixed class rows retain independent caps, awards, balances and selected se
     'Character',
     'Class',
     'Base level',
-    'XP cap',
-    'XP added this session',
-    'XP balance',
+    'Next Level',
+    'Starting XP',
+    'Awarded',
+    'Total',
   ]);
   expect(table.getAllByRole('rowheader')[0]).toHaveTextContent('Tal');
   expect(
@@ -135,10 +166,84 @@ test('mixed class rows retain independent caps, awards, balances and selected se
   const fighterRow = table.getByRole('row', { name: /^Kramrak/ });
   expect(
     Array.from(fighterRow.querySelectorAll('td')).map((c) => c.textContent)
-  ).toEqual(['Fighter', '1', '2,001', '11', '2,001']);
+  ).toEqual(['Fighter', '1', '2,001', '1,990', '11', '2,001']);
   const thiefRow = table.getByRole('row', { name: /^Thief/ });
   expect(
     Array.from(thiefRow.querySelectorAll('td')).map((c) => c.textContent)
-  ).toEqual(['Thief', '2', '2,501', '55', '1,155']);
+  ).toEqual(['Thief', '2', '2,501', '1,100', '55', '1,155']);
+  expect(serializeCampaign(doc)).toBe(before);
+  doc = acceptMulti(multiMoneyAward(doc, 'next', '100', 'session-2'), 'next');
+  view.rerender(
+    <SessionXpReference
+      document={doc}
+      sessionId="session-2"
+      profiles={profilesInSession(doc, 'session-2')}
+    />
+  );
+  expect(
+    Array.from(
+      table.getByRole('row', { name: /^Kramrak/ }).querySelectorAll('td')
+    ).map((c) => c.textContent)
+  ).toEqual(['Fighter', '1', '2,001', '2,001', '0', '2,001']);
+  expect(
+    Array.from(
+      table.getByRole('row', { name: /^Thief/ }).querySelectorAll('td')
+    ).map((c) => c.textContent)
+  ).toEqual(['Thief', '1', '1,251', '1,155', '55', '1,210']);
+});
+
+test('creating a session carries previous totals into Starting XP without copying or rewriting the XP ledger', () => {
+  const doc = acceptMulti(
+    multiMoneyAward(multiclassCampaign(1990, 1100), 'carry', '100'),
+    'carry'
+  );
+  const profiles = profilesInSession(doc, 'session-2');
+  const view = render(
+    <SessionXpReference
+      document={doc}
+      sessionId="session-2"
+      profiles={profiles}
+    />
+  );
+  const rows = () =>
+    Array.from(
+      view
+        .getByRole('table', { name: 'Session XP reference' })
+        .querySelectorAll('tbody tr')
+    );
+  const totals = rows().map(
+    (row) => row.querySelectorAll('td')[5]?.textContent
+  );
+  const before = serializeCampaign(doc);
+  const created = startNextSession(doc, {
+    campaignId: doc.id,
+    sourceSessionId: 'session-2',
+    sourceFingerprint: sessionFingerprint(doc, 'session-2'),
+    destinationId: 'next-session',
+    label: 'Next session',
+    combats: [],
+    inventory: null,
+    copyNotes: false,
+    partyCharacterIds: profiles.map((p) => p.characterId),
+    capturedAt: '2026-11-12T12:00:00.000Z',
+  });
+  expect(created.xp).toBe(doc.xp);
+  const reopened = parseCampaign(serializeCampaign(created));
+  view.rerender(
+    <SessionXpReference
+      document={reopened}
+      sessionId="next-session"
+      profiles={profilesInSession(reopened, 'next-session')}
+    />
+  );
+  expect(
+    rows().map((row) => row.querySelectorAll('td')[3]?.textContent)
+  ).toEqual(totals);
+  expect(
+    rows().map((row) => row.querySelectorAll('td')[4]?.textContent)
+  ).toEqual(totals.map(() => '0'));
+  expect(
+    rows().map((row) => row.querySelectorAll('td')[5]?.textContent)
+  ).toEqual(totals);
   expect(serializeCampaign(doc)).toBe(before);
 });
