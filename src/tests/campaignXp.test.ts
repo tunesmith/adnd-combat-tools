@@ -332,6 +332,26 @@ test('corrections retain originals, reject stale previews/retries and atomically
     ...point,
     correctionReason: 'Synthetic historical correction',
   });
+  const rename = saveXpPoint(doc, {
+    ...point,
+    label: 'New award name',
+    correctionReason: '',
+  });
+  const renamePreview = previewXpAward(rename, point.id);
+  expect(renamePreview.later).toEqual([]);
+  const renamed = confirmXpAward(
+    rename,
+    point.id,
+    renamePreview.fingerprint,
+    'renamed',
+    xpAt
+  );
+  expect(renamed.xp?.events).toHaveLength(3);
+  expect(renamed.xp?.events[1]).toEqual(before.xp?.events[1]);
+  expect(renamed.xp?.events[2]?.rows).toEqual(before.xp?.events[0]?.rows);
+  expect(renamed.xp?.events[2]?.reason).toBe('');
+  expect(parseCampaign(serializeCampaign(renamed))).toEqual(renamed);
+  validateHistoryTransition(before, renamed, '');
   const reward = required(point.rewardOverrides.find((r) => r.id === 'money'));
   if (reward.input.category !== 'money') throw Error('Fixture');
   doc = saveXpReward(

@@ -453,6 +453,15 @@ export default function BankTransactionDialog({
       saveError = e instanceof Error ? e.message : String(e);
     }
   }
+  const incoming = ordinaryTransfer
+    ? summaryPreview?.candidate.changes.filter((c) => c.quantity > 0)
+    : undefined;
+  const requestedIncoming = completed.filter((c) => c.quantity > 0);
+  const separated = incoming?.some(
+    (change, i) =>
+      change.item.id !== requestedIncoming[i]?.item.id ||
+      change.quantity !== requestedIncoming[i]?.quantity
+  );
   const proposedInventory = summaryPreview?.inventory ?? working?.document;
   const projectedLedger = summaryPreview?.projection ?? document;
   const unknown = {
@@ -1028,6 +1037,7 @@ export default function BankTransactionDialog({
                         Number.isSafeInteger(change.quantity) &&
                         change.quantity !== 0 &&
                         summaryPreview?.candidate.status === 'posted' &&
+                        !(separated && change.quantity > 0) &&
                         resulting != null && (
                           <small>
                             Resulting stack {resulting?.toLocaleString()}
@@ -1110,6 +1120,21 @@ export default function BankTransactionDialog({
         >
           {existingMode && !existingSettlement ? '+ Stack' : '+ Money change'}
         </button>
+        {separated && incoming && (
+          <details>
+            <summary>Incoming stacks by source</summary>
+            <ul>
+              {incoming.map((c, i) => (
+                <li key={i}>
+                  {bankHolderName(document, c.holderId)} · {c.quantity}{' '}
+                  {c.denomination} · {c.item.name || c.item.catalogId} · Day{' '}
+                  {c.item.day}
+                  {sourceNote(c.item) && ' · ' + sourceNote(c.item)}
+                </li>
+              ))}
+            </ul>
+          </details>
+        )}
         {(request.kind === 'purchase' || request.kind === 'fee') && (
           <output
             aria-label="Payment total"

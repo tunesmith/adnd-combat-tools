@@ -923,7 +923,36 @@ export interface XpAwardPreview {
   rewards: XpReward[];
   rows: XpAwardRow[];
   resolutions: ReturnType<typeof resolveXpReward>[];
-  later: { event: XpEvent; rows: XpAwardRow[] }[];
+  calculatorVersion: XpEvent['calculatorVersion'];
+  later: {
+    event: XpEvent;
+    rows: XpAwardRow[];
+    differences: { characterId: string; name: string; changes: string[] }[];
+  }[];
+}
+// Rebasing retains accepted rewards, settlements and cap bases. Compare the
+// resulting numbers by identity, including classes whose deltas can cancel.
+function awardDifferences(previous: XpAwardRow, next: XpAwardRow) {
+  const changes: string[] = [];
+  function compare(a: XpAwardRow, b: XpAwardRow, prefix = '') {
+    for (const [label, old, value] of [
+      ['Starting XP', a.before, b.before],
+      ['Bonus', xpExact(xpNumber(a.bonus)), xpExact(xpNumber(b.bonus))],
+      ['Full award', a.fullAward ?? a.award, b.fullAward ?? b.award],
+      ['Awarded', a.award, b.award],
+      ['Discarded', a.discarded, b.discarded],
+      ['Total', a.after, b.after],
+    ] as const) {
+      if (old !== value)
+        changes.push(`${prefix}${label} ${old ?? '—'} → ${value ?? '—'}`);
+    }
+  }
+  compare(previous, next);
+  for (const c of next.classes ?? []) {
+    const old = previous.classes?.find((v) => v.classId === c.classId);
+    if (old) compare(old, c, c.name + ' · ');
+  }
+  return changes;
 }
 export function xpCapProfileSignature(doc: CampaignDocument, point: XpPoint) {
   const ids = pointRewards(doc, point).flatMap((r) =>
@@ -1069,8 +1098,6 @@ function reviewXpAward(
     )
       fail('A correction retains its original award position.');
   }
-  if (point.correctionOf && !point.correctionReason.trim())
-    fail('Add a reason for the changes.');
   if (
     !point.rewardIds.length ||
     new Set(point.rewardIds).size !== point.rewardIds.length
@@ -1222,11 +1249,23 @@ function reviewXpAward(
           'Retain the multiclass profile for this award or review its class identities.'
         );
     }
-  const caps = new Map(
-    Object.keys(before)
-      .filter((id) => !point.bonuses.find((b) => b.characterId === id)?.classes)
-      .map((id) => [id, awardCapBasis(doc, point, id)])
-  );
+  const original = xp.events.find((e) => e.id === point.correctionOf);
+  const retainUncapped =
+    original?.calculatorVersion === 1 &&
+    !point.caps?.length &&
+    canonical(rewards) === canonical(original.rewards) &&
+    canonical(point.bonuses) === canonical(original.point.bonuses) &&
+    canonical(reviewedPoint.settlements) ===
+      canonical(original.point.settlements);
+  const caps = retainUncapped
+    ? undefined
+    : new Map(
+        Object.keys(before)
+          .filter(
+            (id) => !point.bonuses.find((b) => b.characterId === id)?.classes
+          )
+          .map((id) => [id, awardCapBasis(doc, point, id)])
+      );
   const classes = new Map(
     Object.keys(before).map((id) => [
       id,
@@ -1255,11 +1294,12 @@ function reviewXpAward(
     replaces: point.correctionOf,
     correctionRoot: null,
     reason: point.correctionReason,
-    calculatorVersion:
-      rows.some((r) => r.classes) ||
-      reviewedPoint.bonuses.some((b) => b.classes)
-        ? 3
-        : 2,
+    calculatorVersion: retainUncapped
+      ? 1
+      : rows.some((r) => r.classes) ||
+        reviewedPoint.bonuses.some((b) => b.classes)
+      ? 3
+      : 2,
     rounding: 'nearest-whole-half-up-after-bonus',
     rewards,
     rows,
@@ -1280,21 +1320,31 @@ function reviewXpAward(
         xpAwardRoot(doc, event.point)
       );
       if (balance === null) fail('A later balance cannot be rebased.');
-      return r.classes
-        ? rebaseClassAwards(
-            r,
-            xpClassBalances(
-              doc,
-              r.characterId,
-              event.point.position,
-              false,
-              simulated,
-              xpAwardRoot(doc, event.point)
-            )
-          )
-        : rebaseXpRow(r, balance);
+      if (!r.classes) return rebaseXpRow(r, balance);
+      const balances = xpClassBalances(
+        doc,
+        r.characterId,
+        event.point.position,
+        false,
+        simulated,
+        xpAwardRoot(doc, event.point)
+      );
+      // At the first class mapping the ledger only knows the character total.
+      // Keep the accepted split if it still reconciles with that total.
+      if (Object.keys(balances).length === 0 && balance === r.before) return r;
+      return rebaseClassAwards(r, balances);
     });
-    later.push({ event, rows: rebased });
+    const differences = rebased.flatMap((row, index) => {
+      const previous = event.rows[index];
+      if (!previous || previous.characterId !== row.characterId)
+        fail('Missing accepted XP row.');
+      const changes = awardDifferences(previous, row);
+      return changes.length
+        ? [{ characterId: row.characterId, name: row.name, changes }]
+        : [];
+    });
+    if (!differences.length) continue;
+    later.push({ event, rows: rebased, differences });
     simulated.push({
       ...event,
       id: `preview-${event.id}`,
@@ -1303,6 +1353,7 @@ function reviewXpAward(
     });
   }
   const result = {
+    calculatorVersion: revised.calculatorVersion,
     point: clone(reviewedPoint),
     rewards: clone(rewards),
     rows,
@@ -1379,11 +1430,7 @@ function awardEvent(
     replaces: preview.point.correctionOf,
     correctionRoot: null,
     reason: preview.point.correctionReason,
-    calculatorVersion:
-      preview.rows.some((r) => r.classes) ||
-      preview.point.bonuses.some((b) => b.classes)
-        ? 3
-        : 2,
+    calculatorVersion: preview.calculatorVersion,
     rounding: 'nearest-whole-half-up-after-bonus',
     rewards: preview.rewards,
     rows: preview.rows,
@@ -1950,10 +1997,9 @@ export function validateCampaignXp(
           doc,
           previous.point.position,
           event.point.position
-        ) !== 0 ||
-        !event.reason.trim()
+        ) !== 0
       )
-        fail('Corrections retain their award position and require a reason.');
+        fail('Corrections retain their award position.');
     }
     if (
       event.correctionRoot &&

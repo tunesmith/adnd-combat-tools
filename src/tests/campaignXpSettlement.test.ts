@@ -151,13 +151,18 @@ test('shrieker whole shares settle on Day3 and Day5 without redistribution or du
   );
   correction = saveXpPoint(correction, {
     ...point,
-    correctionReason: 'Review forfeiture explanation',
+    label: 'Reviewed forfeiture',
     settlements: point.settlements?.map((s) => ({
       ...s,
       reason: s.decision === 'forfeit' ? 'Confirmed ruling' : s.reason,
     })),
   });
+  expect(previewXpAward(correction, 'correction').later).toEqual([]);
   const corrected = confirm(correction, 'correction');
+  expect(corrected.xp?.events).toHaveLength((doc.xp?.events.length ?? 0) + 1);
+  expect(
+    recipientSettlement(corrected, source.id, required(xpTestIds[2]))?.id
+  ).toBe('day5-award-confirmed');
   expect(
     xpBalance(corrected, required(xpTestIds[2]), {
       sessionId: 'day5',

@@ -688,17 +688,6 @@ export default function CampaignXp({
               aria-label={preview ? 'Confirm XP award' : 'Award draft'}
               className={preview ? styles['preview'] : undefined}
             >
-              {point.correctionOf && (
-                <label>
-                  Reason for changes
-                  <input
-                    value={point.correctionReason}
-                    onChange={(e) =>
-                      changePoint({ correctionReason: e.target.value })
-                    }
-                  />
-                </label>
-              )}
               {historical && (
                 <p>
                   Historical draft. Preview and confirm it through Opening
@@ -762,22 +751,19 @@ export default function CampaignXp({
               {preview?.later.length ? (
                 <div className={styles['warning']}>
                   <h4>Later balances to review</h4>
-                  {preview.later.map(({ event, rows }) => (
-                    <p key={event.id}>
-                      <strong>{event.point.label}</strong>:{' '}
-                      {inPartyOrder(document, rows, (r) => r.characterId)
-                        .map((r) => {
-                          const old = event.rows.find(
-                            (n) => n.characterId === r.characterId
-                          );
-                          return `${r.name}: XP added ${old?.award} → ${
-                            r.award
-                          }; discarded ${old?.discarded ?? 'not recorded'} → ${
-                            r.discarded ?? 'not recorded'
-                          }; balance ${r.before} → ${r.after}`;
-                        })
-                        .join(' · ')}
-                    </p>
+                  {preview.later.map(({ event, differences }) => (
+                    <div key={event.id}>
+                      <strong>{event.point.label}</strong>
+                      {inPartyOrder(
+                        document,
+                        differences,
+                        (r) => r.characterId
+                      ).map((r) => (
+                        <p key={r.characterId}>
+                          {r.name} · {r.changes.join(', ')}
+                        </p>
+                      ))}
+                    </div>
                   ))}
                   <label className={styles['check']}>
                     <input

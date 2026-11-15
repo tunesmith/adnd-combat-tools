@@ -876,9 +876,6 @@ test('one award matrix handles inspection, bonus cancellation, final adjustments
     screen.queryByRole('button', { name: 'Edit Mira XP bonus' })
   ).not.toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: 'Edit award…' }));
-  fireEvent.change(screen.getByLabelText('Reason for changes'), {
-    target: { value: 'Remove the historical cap and restore bonus' },
-  });
   fireEvent.change(screen.getByLabelText('Award name'), {
     target: { value: 'Corrected synthetic award' },
   });
@@ -961,7 +958,7 @@ test('timeline events and awards open modals without automatically showing an aw
   );
   award = within(screen.getByRole('dialog', { name: 'XP award' }));
   fireEvent.click(award.getByRole('button', { name: 'Edit award…' }));
-  expect(screen.getByLabelText('Reason for changes')).toBeInTheDocument();
+  expect(screen.queryByLabelText('Reason for changes')).not.toBeInTheDocument();
   expect(current.xp?.events).toEqual(JSON.parse(before).xp.events);
   fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
   expect(

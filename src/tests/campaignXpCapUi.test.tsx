@@ -14,6 +14,7 @@ import {
   serializeCampaign,
   validateHistoryTransition,
 } from '../helpers/campaignDocument';
+import { confirmXpAward, previewXpAward } from '../helpers/campaignXp';
 import { updatePartyProfile } from '../helpers/campaignParty';
 
 beforeEach(() => {
@@ -178,4 +179,82 @@ test('Session cap is available without an opening balance and directly follows b
   ]);
   expect(table.getByRole('row', { name: /^Mira/ })).toHaveTextContent('35,001');
   expect(table.getByRole('row', { name: /^Mira/ })).toHaveTextContent('—');
+});
+
+test('award correction gates confirmation on the current changed later results', () => {
+  let current = capCampaign(34800, 5, 0);
+  for (const [id, amount] of [
+    ['first', '100'],
+    ['later', '200'],
+  ] as const) {
+    current = capMoneyAward(current, id, amount);
+    current = confirmXpAward(
+      current,
+      id,
+      previewXpAward(current, id).fingerprint,
+      'event-' + id,
+      '2026-11-10T12:00:00.000Z'
+    );
+  }
+  function Harness() {
+    const [doc, setDoc] = useState(current);
+    return (
+      <CampaignXp
+        document={doc}
+        sessionId="session-1"
+        onConfirmExtension={async () => undefined}
+        onChange={(fn) => {
+          current = fn(doc);
+          setDoc(current);
+          return true;
+        }}
+      />
+    );
+  }
+  render(<Harness />);
+  fireEvent.click(
+    screen.getByRole('button', {
+      name: /^Synthetic first settlement Confirmed/,
+    })
+  );
+  fireEvent.click(screen.getByRole('button', { name: 'Edit award…' }));
+  fireEvent.change(screen.getByLabelText('Award name'), {
+    target: { value: 'Renamed settlement' },
+  });
+  const confirm = () => screen.getByRole('button', { name: 'Confirm changes' });
+  const acknowledgement = () =>
+    screen.queryByRole('checkbox', {
+      name: /reviewed the recalculated later balances/,
+    });
+  expect(screen.queryByLabelText('Reason for changes')).not.toBeInTheDocument();
+  expect(acknowledgement()).toBeNull();
+  expect(confirm()).toBeEnabled();
+  fireEvent.click(
+    screen.getByRole('button', { name: 'Adjust Mira full award' })
+  );
+  const edit = within(
+    screen.getByRole('dialog', { name: 'Full award adjustment' })
+  );
+  fireEvent.change(edit.getByLabelText('Full award XP'), {
+    target: { value: '50' },
+  });
+  fireEvent.change(edit.getByRole('textbox', { name: /Reason|Note/i }), {
+    target: { value: 'Reviewed tender' },
+  });
+  fireEvent.click(edit.getByRole('button', { name: 'Apply' }));
+  expect(screen.getByText(/Awarded 101 → 151/)).toHaveTextContent(
+    'Discarded 99 → 49'
+  );
+  expect(confirm()).toBeDisabled();
+  fireEvent.click(
+    screen.getByRole('checkbox', {
+      name: /reviewed the recalculated later balances/,
+    })
+  );
+  expect(confirm()).toBeEnabled();
+  fireEvent.change(screen.getByLabelText('Award name'), {
+    target: { value: 'Final settlement' },
+  });
+  expect(acknowledgement()).not.toBeChecked();
+  expect(confirm()).toBeDisabled();
 });

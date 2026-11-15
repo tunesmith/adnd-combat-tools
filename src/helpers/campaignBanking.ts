@@ -347,6 +347,123 @@ function normalizeInventory(inventory: EncumbranceDmDocument) {
     throw Error('Banking requires campaign DM possessions.');
   return parsed;
 }
+/** Allocate each denomination in row order. The positive legs are also the
+ * persisted instructions used to replay, revise or reverse the physical move. */
+function transferChanges(
+  inventory: EncumbranceDmDocument,
+  request: BankTransactionRequest,
+  previous?: BankEntry
+): BankChange[] {
+  const holders = bankHolders(inventory);
+  const items = new Map(
+    holders.flatMap((h) =>
+      h.inventory.map((item) => [item.id, { holderId: h.id, item }] as const)
+    )
+  );
+  const prior = previous?.effect === 'inventory' ? previous.changes : [];
+  const debits = request.changes
+    .filter((c) => c.quantity < 0)
+    .map((c) => {
+      const current = items.get(c.item.id);
+      const currentItem =
+        current?.holderId === c.holderId &&
+        current.item.containerId === c.item.containerId
+          ? current.item
+          : undefined;
+      const previousLegs = prior.filter(
+        (p) =>
+          p.holderId === c.holderId &&
+          p.item.id === c.item.id &&
+          p.item.containerId === c.item.containerId
+      );
+      const source =
+        currentItem ?? previousLegs.find((p) => p.quantity < 0)?.item;
+      if (!source || moneyDenomination(source) !== c.denomination)
+        throw Error('Choose the current source money stack.');
+      const available = previousLegs.reduce(
+        (n, p) => safe(n - p.quantity),
+        currentItem?.quantity ?? 0
+      );
+      return { ...c, item: { ...source, quantity: available } };
+    });
+  const sources = debits.map((change) => ({ change, left: -change.quantity }));
+  const credits: BankChange[] = [];
+  const metadata = ({
+    id,
+    quantity,
+    containerId,
+    ...details
+  }: EncumbranceInventoryItem) => canonical(details);
+  for (const destination of request.changes.filter((c) => c.quantity > 0)) {
+    let needed = destination.quantity;
+    for (const source of sources) {
+      if (!needed) break;
+      if (
+        !source.left ||
+        source.change.denomination !== destination.denomination
+      )
+        continue;
+      const quantity = Math.min(source.left, needed);
+      const from = source.change.item;
+      let id = destination.item.id;
+      const compatible = (id: string) => {
+        // A correction to a former whole-stack move may now leave a remainder
+        // at the source. Reserve its ID even if it currently lives at the destination.
+        if (
+          id === from.id &&
+          quantity < from.quantity &&
+          (source.change.holderId !== destination.holderId ||
+            from.containerId !== destination.item.containerId)
+        )
+          return false;
+        const target = items.get(id);
+        if (!target) return true;
+        if (
+          target.holderId === destination.holderId &&
+          target.item.containerId === destination.item.containerId
+        )
+          return metadata(target.item) === metadata(from);
+        // An explicit whole-stack relocation may retain its existing ID.
+        return (
+          id === from.id &&
+          target.holderId === source.change.holderId &&
+          target.item.quantity === quantity &&
+          source.left === quantity
+        );
+      };
+      if (!compatible(id)) {
+        // Stable across preview, commit and retries; never overwrite an unrelated item.
+        let suffix = 0;
+        do {
+          id =
+            'transfer-' +
+            fingerprint([
+              request.transactionId,
+              destination.holderId,
+              destination.item.containerId,
+              destination.item.id,
+              from.id,
+              suffix++,
+            ]);
+        } while (!compatible(id));
+      }
+      const item = {
+        ...from,
+        id,
+        containerId: destination.item.containerId,
+        quantity,
+      };
+      credits.push({ ...destination, item, quantity });
+      items.set(id, { holderId: destination.holderId, item });
+      source.left -= quantity;
+      needed -= quantity;
+    }
+    // An unbalanced progress preview can contain a credit before its debit is entered.
+    if (needed) credits.push({ ...destination, quantity: needed });
+  }
+  return [...debits, ...credits];
+}
+
 function applyBankChanges(
   inventory: EncumbranceDmDocument,
   changes: BankChange[]
@@ -1156,11 +1273,19 @@ function projectBankTransaction(
   validateChanges(candidate, physicalProgress);
   let inventory = working.document;
   if (candidate.effect === 'inventory') {
+    if (
+      candidate.kind === 'transfer' &&
+      status !== 'void' &&
+      (previous?.kind !== 'transfer' ||
+        canonical(changes) !== canonical(previous.changes))
+    ) {
+      candidate.changes = transferChanges(inventory, request, previous);
+    }
     const deltas = [
       ...(previous?.effect === 'inventory'
         ? previous.changes.map((c) => ({ ...c, quantity: -c.quantity }))
         : []),
-      ...(status !== 'void' ? changes : []),
+      ...(status !== 'void' ? candidate.changes : []),
     ];
     const keys = Array.from(
       new Set(
@@ -1183,7 +1308,7 @@ function projectBankTransaction(
       const quantity = matching.reduce((sum, c) => safe(sum + c.quantity), 0);
       return source && quantity ? [{ ...source, quantity }] : [];
     });
-    inventory = applyBankChanges(inventory, previous ? net : changes);
+    inventory = applyBankChanges(inventory, previous ? net : candidate.changes);
   }
   const projection = {
     ...doc,
@@ -1843,7 +1968,7 @@ export function validateBankingTransition(
       entry.replaces === null &&
       entry.id === entry.transactionId &&
       entry.effect === 'inventory' &&
-      ['adjustment', 'transfer'].includes(entry.kind);
+      entry.kind === 'adjustment';
     if (isDirectEdit) {
       const changes = inventoryMoneyChanges(oldWork.document, newWork.document);
       if (

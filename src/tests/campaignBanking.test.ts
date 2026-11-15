@@ -650,3 +650,230 @@ test('exchange progress uses entered quantities before GP values balance, and fe
     })
   ).toThrow('fee');
 });
+
+test('physical transfer routes portions by denomination and preserves source metadata through replay, revision and reversal', () => {
+  const doc = bankFixture(),
+    work = inventory(doc),
+    vault = required(work.storageLocations[0]);
+  const a = required(vault.inventory.find((i) => i.id === 'castle-ep'));
+  Object.assign(a, {
+    name: 'Recovered coins',
+    day: 4,
+    playerNotes: 'from beetles',
+    dmNotes: 'private',
+    playerKnowsValue: false,
+    playerMagicKnowledge: 'unknown',
+    isMagical: true,
+    fullyIdentified: true,
+    valueGpOverride: 0.5,
+    encumbranceGpOverride: 2,
+    customItem: {
+      id: a.catalogId,
+      name: 'Old electrum',
+      category: 'coins',
+      encumbranceGp: 2,
+      valueGp: 0.5,
+    },
+  });
+  a.quantity = 400;
+  const b = {
+    ...a,
+    id: 'second-ep',
+    quantity: 300,
+    day: 5,
+    playerNotes: 'from hobgoblins',
+  };
+  vault.inventory.push(b);
+  const dest = required(
+    work.characters.find((c) => c.id === 'inventory-reatha')
+  );
+  const existing = { ...a, id: 'compatible', containerId: null, quantity: 10 };
+  dest.inventory.push(existing);
+  const leg = (
+    holder: string,
+    n: number,
+    id: string,
+    container: string | null = null
+  ) => bankLeg(doc, 'day3', holder, 'ep', n, id, container);
+  const request = {
+    transactionId: 'source-routing',
+    sessionId: 'day3',
+    description: 'Distribute electrum',
+    kind: 'transfer' as const,
+    changes: [
+      leg(vault.id, -400, a.id),
+      leg(vault.id, -200, b.id),
+      leg(dest.id, 450, existing.id),
+      leg('inventory-vitameno', 120, 'split-id'),
+      leg(vault.id, 30, 'loose'),
+    ],
+  };
+  const old = serializeCampaign(doc);
+  const preview = previewBankTransaction(doc, request);
+  expect(previewBankProgress(doc, request).candidate.changes).toEqual(
+    preview.candidate.changes
+  );
+  let next = commitBankTransaction(
+    doc,
+    request,
+    preview.fingerprint,
+    'post',
+    bankingAt
+  );
+  expect(
+    commitBankTransaction(next, request, preview.fingerprint, 'post', bankingAt)
+  ).toBe(next);
+  validateHistoryTransition(doc, next, '');
+  next = parseCampaign(serializeCampaign(next));
+  const inv = inventory(next),
+    rows = required(next.banking?.entries.at(-1)).changes;
+  const merged = required(
+    inv.characters.find((c) => c.id === dest.id)
+  ).inventory;
+  expect(merged.find((i) => i.id === existing.id)).toEqual({
+    ...existing,
+    quantity: 410,
+  });
+  const separate = required(
+    merged.find((i) => i.playerNotes === b.playerNotes)
+  );
+  expect(separate).toEqual({
+    ...b,
+    id: separate.id,
+    quantity: 50,
+    containerId: null,
+  });
+  expect(separate.id).not.toBe(existing.id);
+  const exported = redactEncumbranceDocument(inv, dest.id);
+  const playerItem = required(
+    exported.character.inventory.find((i) => i.id === separate.id)
+  );
+  expect(playerItem.playerNotes).toBe(b.playerNotes);
+  expect(playerItem.dmNotes).toBeUndefined();
+  expect(playerItem.isMagical).toBeUndefined();
+
+  expect(
+    inv.storageLocations[0]?.inventory.find((i) => i.id === a.id)
+  ).toBeUndefined();
+  expect(inv.storageLocations[0]?.inventory.find((i) => i.id === b.id)).toEqual(
+    { ...b, quantity: 100 }
+  );
+  for (const c of rows.filter((c) => c.quantity > 0)) {
+    const actual = required(
+      bankHolders(inv)
+        .find((h) => h.id === c.holderId)
+        ?.inventory.find((i) => i.id === c.item.id)
+    );
+    expect(c.item).toEqual({ ...actual, quantity: c.quantity });
+  }
+  expect(serializeCampaign(doc)).toBe(old);
+  expect(next.xp).toEqual(doc.xp);
+  const edited = {
+    ...request,
+    changes: rows.map((c, i) =>
+      i === 1
+        ? { ...c, quantity: -190 }
+        : c.item.id === 'loose'
+        ? { ...c, quantity: 20 }
+        : c
+    ),
+  };
+  const changed = bankPost(next, edited);
+  expect(
+    inventory(changed).storageLocations[0]?.inventory.find((i) => i.id === b.id)
+      ?.quantity
+  ).toBe(110);
+  const deleted = bankPost(changed, { ...edited, remove: true });
+  for (const holder of bankHolders(work)) {
+    const actual = required(
+      bankHolders(inventory(deleted)).find((h) => h.id === holder.id)
+    );
+    expect(
+      actual.inventory.slice().sort((a, b) => a.id.localeCompare(b.id))
+    ).toEqual(
+      holder.inventory.slice().sort((a, b) => a.id.localeCompare(b.id))
+    );
+  }
+});
+
+test.each([null, 'castle-chest'])(
+  'full transfer to a new stack preserves its source in destination container %s',
+  (container) => {
+    const doc = bankFixture(),
+      source = required(
+        inventory(doc).characters.find((c) => c.id === 'inventory-vitameno')
+          ?.inventory[0]
+      );
+    source.day = 3;
+    source.playerNotes = 'from a chest';
+    source.dmNotes = 'private note';
+    const request = {
+      transactionId: 'full',
+      sessionId: 'day3',
+      description: 'Deposit',
+      kind: 'transfer' as const,
+      changes: [
+        bankLeg(doc, 'day3', 'inventory-vitameno', 'ep', -50, source.id),
+        bankLeg(
+          doc,
+          'day3',
+          'castle-kifu-storage',
+          'ep',
+          50,
+          'new-stack',
+          container
+        ),
+      ],
+    };
+    const next = bankPost(doc, request),
+      actual = required(
+        inventory(next).storageLocations[0]?.inventory.find(
+          (i) => i.id === 'new-stack'
+        )
+      );
+    expect(actual).toEqual({
+      ...source,
+      id: 'new-stack',
+      quantity: 50,
+      containerId: container,
+    });
+  }
+);
+
+test('correcting a whole-stack relocation into a split restores a distinct source remainder', () => {
+  const doc = bankFixture(),
+    src = required(
+      inventory(doc).characters.find((c) => c.id === 'inventory-vitameno')
+        ?.inventory[0]
+    );
+  src.day = 2;
+  src.playerNotes = 'from the shrine';
+  const debit = bankLeg(doc, 'day3', 'inventory-vitameno', 'ep', -50, src.id);
+  const credit = { ...debit, holderId: 'castle-kifu-storage', quantity: 50 };
+  const request = {
+    transactionId: 'relocate',
+    sessionId: 'day3',
+    description: 'Deposit all',
+    kind: 'transfer' as const,
+    changes: [debit, credit],
+  };
+  const moved = bankPost(doc, request);
+  const fixed = bankPost(moved, {
+    ...request,
+    changes: [
+      { ...debit, quantity: -30 },
+      { ...credit, quantity: 30 },
+    ],
+  });
+  const inv = inventory(fixed);
+  expect(
+    inv.characters.find((c) => c.id === debit.holderId)?.inventory
+  ).toContainEqual({ ...src, quantity: 20 });
+  const credited = required(fixed.banking?.entries.at(-1)?.changes[1]);
+  expect(credited.item.id).not.toBe(src.id);
+  expect(inv.storageLocations[0]?.inventory).toContainEqual({
+    ...src,
+    id: credited.item.id,
+    quantity: 30,
+  });
+});

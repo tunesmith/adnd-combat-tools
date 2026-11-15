@@ -182,7 +182,6 @@ test('class corrections atomically rebase later capped balances and retain immut
   const source = required(doc.xp?.events[0]?.rewards[0]);
   point = {
     ...point,
-    correctionReason: 'Synthetic correction',
     rewardOverrides: [{ ...source, input: { category: 'money', gp: '40' } }],
   };
   doc = saveXpPoint(doc, point);
@@ -191,6 +190,9 @@ test('class corrections atomically rebase later capped balances and retain immut
   expect(preview.later[0]?.rows[0]?.classes?.map((c) => c.after)).toEqual([
     2001, 1177,
   ]);
+  const changes = preview.later[0]?.differences.flatMap((r) => r.changes);
+  expect(changes?.some((c) => c.startsWith('Thief · Total'))).toBe(true);
+  expect(changes?.some((c) => c.startsWith('Fighter ·'))).toBe(false);
   const accepted = acceptMulti(doc, 'fix', 'fix-event', true);
   validateHistoryTransition(before, accepted, '');
   expect(accepted.xp?.events.slice(0, 2)).toEqual(before.xp?.events);

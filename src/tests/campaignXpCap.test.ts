@@ -211,7 +211,6 @@ test('an earlier correction recalculates later caps from frozen full amounts and
   expect(point.caps?.[0]?.basis.baseLevel).toBe(5);
   point = {
     ...point,
-    correctionReason: 'Correct earlier amount',
     bonuses: point.bonuses.map((b) => ({
       ...b,
       finalOverride: 50,
@@ -236,6 +235,13 @@ test('an earlier correction recalculates later caps from frozen full amounts and
   expect(() =>
     confirmXpAward(doc, 'fix', p.fingerprint, 'fixed', xpAt)
   ).toThrow('later balances');
+  const editedAgain = saveXpPoint(doc, {
+    ...point,
+    bonuses: point.bonuses.map((b) => ({ ...b, finalOverride: 60 })),
+  });
+  expect(() =>
+    confirmXpAward(editedAgain, 'fix', p.fingerprint, 'fixed', xpAt, true)
+  ).toThrow('fresh preview');
   const next = confirmXpAward(doc, 'fix', p.fingerprint, 'fixed', xpAt, true);
   expect(next.xp?.events.slice(0, 2)).toEqual(originals);
   validateHistoryTransition(doc, next, '');
@@ -259,12 +265,12 @@ test('calculator-1 awards retain their uncapped history even above today’s cap
   const old = doc.xp?.events[0];
   if (!old) throw Error('Fixture');
   const correction = beginXpCorrection(doc, old.id, 'legacy-fix');
-  expect(() => previewXpAward(correction, 'legacy-fix')).toThrow('reason');
+  expect(previewXpAward(correction, 'legacy-fix').rows).toEqual(old.rows);
   const draft = xpLedger(correction).points.find((p) => p.id === 'legacy-fix');
   if (!draft) throw Error('Fixture');
   const reviewed = saveXpPoint(correction, {
     ...draft,
-    correctionReason: 'Historical review',
+    bonuses: draft.bonuses.map((b) => ({ ...b, percent: '1' })),
   });
   expect(() => previewXpAward(reviewed, 'legacy-fix')).toThrow(
     'historical trained level'
@@ -383,4 +389,37 @@ test('discarded cap excess closes the whole recipient share after training', () 
     confirmedEventId: null,
   });
   expect(() => previewXpAward(later, 'retry-cap')).toThrow('already awarded');
+});
+
+test('a correction absorbed by the earlier cap leaves the later award intact', () => {
+  let doc = accept(
+    capMoneyAward(capCampaign(35000, 5, 0), 'first', '100'),
+    'first'
+  );
+  doc = accept(capMoneyAward(doc, 'later', '50'), 'later');
+  const later = doc.xp?.events[1];
+  doc = beginXpCorrection(doc, 'event-first', 'fix-cap');
+  const point = doc.xp?.points.find((p) => p.id === 'fix-cap');
+  if (!point) throw Error('Fixture');
+  doc = saveXpPoint(doc, {
+    ...point,
+    bonuses: point.bonuses.map((b) => ({
+      ...b,
+      finalOverride: 50,
+      finalReason: 'Reviewed full amount',
+    })),
+  });
+  const preview = previewXpAward(doc, point.id);
+  expect(preview.rows[0]).toMatchObject({ award: 1, discarded: 49 });
+  expect(preview.later).toEqual([]);
+  const next = confirmXpAward(
+    doc,
+    point.id,
+    preview.fingerprint,
+    'changed',
+    xpAt
+  );
+  expect(next.xp?.events).toHaveLength(3);
+  expect(next.xp?.events[1]).toEqual(later);
+  expect(parseCampaign(serializeCampaign(next))).toEqual(next);
 });
