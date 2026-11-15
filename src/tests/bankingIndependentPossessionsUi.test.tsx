@@ -110,6 +110,9 @@ test('all four transaction types offer the existing-possessions mode and Payment
   expect(
     dialog.getByText('No remaining reconciliation difference.')
   ).toBeInTheDocument();
+  expect(dialog.getByLabelText('Payment total')).toHaveTextContent(
+    'Payment total: 10 gp'
+  );
   expect(current).toBe(before);
   fireEvent.click(dialog.getByRole('button', { name: 'Save transaction' }));
   expect(bankBalance(current, holder, 'day3').ep).toBe(30);
@@ -118,6 +121,9 @@ test('all four transaction types offer the existing-possessions mode and Payment
   expect(bankLedger(current).entries[0]?.effect).toBe('ledger');
   fireEvent.click(screen.getByRole('button', { name: 'Repair the lantern' }));
   dialog = within(screen.getByRole('dialog', { name: 'Banking transaction' }));
+  expect(dialog.getByLabelText('Payment total')).toHaveTextContent(
+    'Payment total: 10 gp'
+  );
   fireEvent.click(dialog.getByRole('button', { name: 'Delete transaction' }));
   expect(bankBalance(current, holder, 'day3').ep).toBe(50);
   expect(current.workingInventories).toEqual(before.workingInventories);

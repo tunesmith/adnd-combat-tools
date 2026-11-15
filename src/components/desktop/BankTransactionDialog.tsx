@@ -116,6 +116,23 @@ function sourceNote(item: BankChange['item']) {
   const note = item.playerNotes.trim().replace(/\s+/g, ' ');
   return note.length > 80 ? note.slice(0, 79).trimEnd() + '…' : note;
 }
+function paymentTotal(changes: BankChange[]): string {
+  // Cleared quantity inputs are NaN. Every other entered amount must be a safe whole number.
+  const entered = changes.filter((c) => !Number.isNaN(c.quantity));
+  if (entered.some((c) => !Number.isSafeInteger(c.quantity))) return '—';
+  try {
+    const amount = bankGp(
+      bankChangesAmounts(entered.map((c) => ({ ...c, quantity: -c.quantity })))
+    );
+    const [whole = '', fraction] = amount.split('.');
+    return `${whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}${
+      fraction ? '.' + fraction : ''
+    } gp`;
+  } catch {
+    // Several individually valid rows can overflow the supported denomination total.
+    return '—';
+  }
+}
 export default function BankTransactionDialog({
   document,
   sessionId,
@@ -985,10 +1002,17 @@ export default function BankTransactionDialog({
                           existingMode && !existingSettlement ? 1 : undefined
                         }
                         value={
-                          Number.isNaN(change.quantity) ? '' : change.quantity
+                          Number.isFinite(change.quantity)
+                            ? change.quantity
+                            : ''
                         }
                         onChange={(e) =>
-                          update(index, { quantity: e.target.valueAsNumber })
+                          update(index, {
+                            // Browsers expose both blank and malformed number input as NaN.
+                            quantity: e.target.validity.badInput
+                              ? Infinity
+                              : e.target.valueAsNumber,
+                          })
                         }
                       />
                       {(!Number.isSafeInteger(change.quantity) ||
@@ -1086,6 +1110,14 @@ export default function BankTransactionDialog({
         >
           {existingMode && !existingSettlement ? '+ Stack' : '+ Money change'}
         </button>
+        {(request.kind === 'purchase' || request.kind === 'fee') && (
+          <output
+            aria-label="Payment total"
+            className={styles['bankSummaryTitle']}
+          >
+            Payment total: {paymentTotal(request.changes)}
+          </output>
+        )}
         {existingMode ? (
           <>
             <BankBalances

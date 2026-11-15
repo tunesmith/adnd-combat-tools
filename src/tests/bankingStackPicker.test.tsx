@@ -239,3 +239,90 @@ test('partial payments expose the remainder, full payments hide it, and edits re
   fireEvent.click(screen.getByRole('button', { name: 'Remove change 2' }));
   expect(option(2, a.id)).toHaveTextContent('available 32');
 });
+
+test.each(['purchase', 'fee'] as const)(
+  'reopens a posted %s with the full training tender even after the stacks were spent',
+  (kind) => {
+    const { doc, holder } = fixture();
+    const before = JSON.stringify(doc);
+    const tender = [
+      ['diamond', -2],
+      ['ep', -750],
+      ['ep', -750],
+      ['ep', -750],
+      ['sp', -1000],
+      ['sp', -1000],
+      ['sp', -885],
+      ['sp', -115],
+      ['sp', -415],
+      ['sp', -85],
+    ] as const;
+    const { onChange } = open(doc, {
+      id: 'posted',
+      transactionId: 'training',
+      at: receiptAt,
+      sessionId: 'day1',
+      kind,
+      order: 0,
+      status: 'posted',
+      effect: 'inventory',
+      replaces: null,
+      description: 'Training',
+      changes: tender.map(([denomination, quantity], i) => ({
+        holderId: holder.id,
+        denomination,
+        quantity,
+        item: newBankMoneyItem(denomination, `spent-${i}`),
+      })),
+    });
+    expect(screen.getByLabelText('Payment total')).toHaveTextContent(
+      'Payment total: 1,500 gp'
+    );
+    expect(onChange).not.toHaveBeenCalled();
+    expect(JSON.stringify(doc)).toBe(before);
+  }
+);
+
+test('payment total follows signed draft quantities, independently of save readiness', () => {
+  const { doc } = fixture();
+  const { onChange } = open(doc);
+  const total = () => screen.getByLabelText('Payment total').textContent;
+  expect(total()).toBe('Payment total: 0 gp');
+  select('Change 1 quantity', '-10');
+  add();
+  select('Change 2 denomination', 'sp');
+  select('Change 2 quantity', '20');
+  expect(total()).toBe('Payment total: 9 gp');
+  select('Change 2 denomination', 'cp');
+  expect(total()).toBe('Payment total: 9.8 gp');
+  select('Change 2 quantity', '1001');
+  expect(total()).toBe('Payment total: -0.01 gp');
+  select('Change 2 quantity', '0.5');
+  expect(total()).toBe('Payment total: —');
+  select('Change 2 quantity', '');
+  expect(total()).toBe('Payment total: 10 gp');
+  select('Change 2 denomination', 'gp');
+  select('Change 2 stack', 'gold-250');
+  select('Change 2 quantity', '-5');
+  expect(total()).toBe('Payment total: 15 gp');
+  select('Change 2 holder', 'vitameno-inventory');
+  expect(total()).toBe('Payment total: 15 gp');
+  select('Change 2 quantity', '-9007199254740991');
+  expect(total()).toBe('Payment total: —');
+  select('Change 2 quantity', '9007199254740992');
+  expect(total()).toBe('Payment total: —');
+  fireEvent.click(screen.getByLabelText('Remove change 2'));
+  expect(total()).toBe('Payment total: 10 gp');
+  for (const kind of ['income', 'transfer', 'exchange']) {
+    select('Transaction type', kind);
+    expect(screen.queryByLabelText('Payment total')).not.toBeInTheDocument();
+  }
+  select('Transaction type', 'purchase');
+  select('Change 1 denomination', 'emerald');
+  select('Change 1 quantity', '-3');
+  expect(total()).toBe('Payment total: 1,500 gp');
+  expect(
+    screen.getByRole('button', { name: 'Save transaction' })
+  ).toBeDisabled();
+  expect(onChange).not.toHaveBeenCalled();
+});
