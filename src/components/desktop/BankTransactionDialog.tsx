@@ -42,10 +42,80 @@ type BankStackOption = {
   denomination: BankDenomination;
   item: BankChange['item'];
   currentQuantity: number;
-  previousAllocation: number;
   available: number | null;
+  physical?: boolean;
   direction?: 'incoming' | 'outgoing';
 };
+type StackIdentity = Pick<BankChange, 'holderId' | 'item'>;
+const sameStack = (a: StackIdentity, b: StackIdentity) =>
+  a.holderId === b.holderId && a.item.id === b.item.id;
+const unselected = (stack: StackIdentity, otherRows: BankChange[]) =>
+  !otherRows.some((row) => sameStack(stack, row));
+
+// Exclude the row being edited. A blank row holds its choice until it has an amount.
+function remainingQuantity(
+  stack: BankStackOption,
+  others: BankChange[],
+  settlement?: ReturnType<typeof existingSettlementAvailability>
+) {
+  const matching = others.filter((c) => sameStack(c, stack));
+  if (
+    matching.some((c) => !Number.isSafeInteger(c.quantity) || c.quantity === 0)
+  )
+    return 0;
+  if (stack.available === null) return null;
+  if (stack.physical) {
+    return Math.max(
+      0,
+      matching.reduce(
+        (quantity, row) => quantity + row.quantity,
+        stack.available
+      )
+    );
+  }
+  const allocated = matching.reduce(
+    (sum, row) => sum + Math.max(0, row.quantity),
+    0
+  );
+  if (!stack.direction || !settlement)
+    return Math.max(0, stack.available - allocated);
+  const limit = settlement.limits.find((l) => l.holderId === stack.holderId);
+  const outgoing = stack.direction === 'outgoing';
+  const bound = (outgoing ? limit?.outgoing : limit?.incoming)?.[
+    stack.denomination
+  ];
+  if (bound == null) return null;
+  const net = others.reduce(
+    (sum, c) =>
+      c.holderId === stack.holderId &&
+      c.denomination === stack.denomination &&
+      Number.isSafeInteger(c.quantity)
+        ? sum + c.quantity
+        : sum,
+    0
+  );
+  return Math.max(
+    0,
+    Math.min(
+      outgoing ? bound + net : bound - net,
+      outgoing ? stack.available + net : stack.available - allocated
+    )
+  );
+}
+function chooseStack(
+  options: BankStackOption[],
+  others: BankChange[],
+  settlement?: ReturnType<typeof existingSettlementAvailability>
+) {
+  const usable = options.filter(
+    (s) => (remainingQuantity(s, others, settlement) ?? 0) > 0
+  );
+  return usable.find((s) => unselected(s, others)) ?? usable[0];
+}
+function sourceNote(item: BankChange['item']) {
+  const note = item.playerNotes.trim().replace(/\s+/g, ' ');
+  return note.length > 80 ? note.slice(0, 79).trimEnd() + '…' : note;
+}
 export default function BankTransactionDialog({
   document,
   sessionId,
@@ -88,6 +158,33 @@ export default function BankTransactionDialog({
       })),
   ];
   const stacks = working ? moneyStacks(working.document) : [];
+  const ordinaryOptions: BankStackOption[] = stacks.map((s) => ({
+    ...s,
+    currentQuantity: s.item.quantity,
+    available: null,
+  }));
+  // A posted payment can consume its stack completely. Preserve the recorded ID when editing it.
+  for (const change of entry?.changes ?? []) {
+    if (!ordinaryOptions.some((s) => sameStack(s, change)))
+      ordinaryOptions.push({
+        ...change,
+        currentQuantity: 0,
+        available: null,
+      });
+  }
+  for (const stack of ordinaryOptions) {
+    const posted =
+      entry?.effect === 'inventory' && entry.status === 'posted'
+        ? entry.changes
+        : [];
+    stack.physical = true;
+    stack.available =
+      stack.currentQuantity -
+      posted.reduce(
+        (sum, c) => (sameStack(c, stack) ? sum + c.quantity : sum),
+        0
+      );
+  }
   const makeChange = (
     holderId = holders[0]?.id ?? '',
     denomination: BankDenomination = 'gp',
@@ -95,37 +192,17 @@ export default function BankTransactionDialog({
     otherChanges: BankChange[] = [],
     allowOtherHolder = false
   ): BankChange => {
-    const choices: (typeof stacks[number] & { available: number | null })[] =
+    const choices: BankStackOption[] =
       receiptMode === 'existing'
         ? existingMoneyAvailability(document, sessionId, entry?.transactionId)
             .stacks
-        : stacks.map((stack) => ({ ...stack, available: null }));
-    const hasRoom = (stack: typeof choices[number]) => {
-      if (receiptMode !== 'existing') return true;
-      const capacity = stack.available;
-      if (typeof capacity !== 'number') return false;
-      const used = otherChanges
-        .filter(
-          (c) =>
-            c.holderId === stack.holderId &&
-            c.denomination === stack.denomination &&
-            c.item.id === stack.item.id &&
-            Number.isSafeInteger(c.quantity) &&
-            c.quantity > 0
-        )
-        .reduce((sum, c) => sum + c.quantity, 0);
-      return capacity > used;
-    };
+        : ordinaryOptions;
+    const currency = choices.filter((s) => s.denomination === denomination);
     const source =
-      choices.find(
-        (s) =>
-          s.holderId === holderId &&
-          s.denomination === denomination &&
-          hasRoom(s)
-      ) ??
-      (allowOtherHolder
-        ? choices.find((s) => s.denomination === denomination && hasRoom(s))
-        : undefined);
+      chooseStack(
+        currency.filter((s) => s.holderId === holderId),
+        otherChanges
+      ) ?? (allowOtherHolder ? chooseStack(currency, otherChanges) : undefined);
     return {
       holderId: source?.holderId ?? holderId,
       denomination,
@@ -144,30 +221,23 @@ export default function BankTransactionDialog({
       sessionId,
       entry?.transactionId
     );
-    const options: BankStackOption[] = preferOutgoing
+    const directional: BankStackOption[] = preferOutgoing
       ? choices.outgoing
       : choices.incoming;
+    const options = directional.filter(
+      (s) => s.denomination === code && (!holderId || s.holderId === holderId)
+    );
     const selected =
-      options.find(
-        (c) =>
-          c.holderId === holderId &&
-          c.denomination === code &&
-          (c.available ?? 0) > 0
-      ) ??
-      (!holderId
-        ? options.find((c) => c.denomination === code && (c.available ?? 0) > 0)
-        : undefined) ??
-      options.find((c) => c.holderId === holderId && c.denomination === code);
+      chooseStack(options, otherChanges, choices) ??
+      (preferOutgoing
+        ? options.find((s) => unselected(s, otherChanges))
+        : undefined);
     const id = selected?.holderId ?? holderId ?? holders[0]?.id ?? '';
     return {
       holderId: id,
       denomination: code,
       quantity: 0,
-      item:
-        selected?.item ??
-        (preferOutgoing
-          ? bankBalanceSourceItem(id, code, 0)
-          : makeChange(id, code, 'existing', otherChanges).item),
+      item: selected?.item ?? newBankMoneyItem(code, uid()),
     };
   };
   const makeTransferPair = (
@@ -194,6 +264,7 @@ export default function BankTransactionDialog({
       ...sources.filter((s) => s.holderId === preferredSource),
       ...sources.filter((s) => s.holderId !== preferredSource),
     ];
+    const otherDestinations = otherChanges.filter((_, i) => i % 2 === 1);
     const destinationOrder = [
       ...incoming.filter((s) => s.holderId === preferredDestination),
       ...incoming.filter((s) => s.holderId !== preferredDestination),
@@ -209,20 +280,12 @@ export default function BankTransactionDialog({
           )
           .reduce((sum, c) => sum - c.quantity, 0);
         if ((source.amounts[code] ?? 0) <= spent) continue;
-        const destination = destinationOrder.find((stack) => {
-          if (stack.holderId === source.holderId || stack.denomination !== code)
-            return false;
-          const used = otherChanges
-            .filter(
-              (c) =>
-                c.quantity > 0 &&
-                c.holderId === stack.holderId &&
-                c.item.id === stack.item.id &&
-                c.denomination === code
-            )
-            .reduce((sum, c) => sum + c.quantity, 0);
-          return (stack.available ?? 0) > used;
-        });
+        const destination = chooseStack(
+          destinationOrder.filter(
+            (s) => s.holderId !== source.holderId && s.denomination === code
+          ),
+          otherDestinations
+        );
         if (destination)
           return [
             {
@@ -256,7 +319,7 @@ export default function BankTransactionDialog({
         preferredDestination,
         preferredCode,
         'existing',
-        otherChanges,
+        otherDestinations,
         true
       ),
     ];
@@ -288,71 +351,6 @@ export default function BankTransactionDialog({
     existingMode && !existingSettlement
       ? existingMoneyAvailability(document, sessionId, entry?.transactionId)
       : undefined;
-  const availableForRow = (
-    stack: {
-      holderId: string;
-      denomination: BankDenomination;
-      item: { id: string };
-      available: number | null;
-      direction?: 'incoming' | 'outgoing';
-    },
-    index: number
-  ) => {
-    if (stack.available === null) return null;
-    if (existingSettlement && stack.direction && settlement) {
-      const other = request.changes.filter(
-        (c, i) =>
-          i !== index &&
-          c.holderId === stack.holderId &&
-          c.denomination === stack.denomination &&
-          Number.isSafeInteger(c.quantity)
-      );
-      const incoming = other
-          .filter((c) => c.quantity > 0)
-          .reduce((n, c) => n + c.quantity, 0),
-        outgoing = other
-          .filter((c) => c.quantity < 0)
-          .reduce((n, c) => n - c.quantity, 0);
-      const limit = settlement.limits.find(
-        (c) => c.holderId === stack.holderId
-      );
-      const net =
-        stack.direction === 'outgoing'
-          ? limit?.outgoing[stack.denomination]
-          : limit?.incoming[stack.denomination];
-      if (net == null) return null;
-      const max =
-        stack.direction === 'outgoing'
-          ? net + incoming - outgoing
-          : net + outgoing - incoming;
-      const sameStack = other
-        .filter((c) => c.quantity > 0 && c.item.id === stack.item.id)
-        .reduce((n, c) => n + c.quantity, 0);
-      return Math.max(
-        0,
-        Math.min(
-          max,
-          stack.direction === 'incoming'
-            ? stack.available - sameStack
-            : stack.available + incoming - outgoing
-        )
-      );
-    }
-
-    const others = request.changes.reduce(
-      (sum, c, i) =>
-        i !== (existingTransfer ? index * 2 + 1 : index) &&
-        c.holderId === stack.holderId &&
-        c.denomination === stack.denomination &&
-        c.item.id === stack.item.id &&
-        Number.isSafeInteger(c.quantity) &&
-        c.quantity > 0
-          ? sum + c.quantity
-          : sum,
-      0
-    );
-    return Math.max(0, stack.available - others);
-  };
   const [error, setError] = useState('');
   const operation = useRef<{ fingerprint: string; id: string; at: string }>();
   const completed = rows.flatMap((change, index) => {
@@ -457,15 +455,17 @@ export default function BankTransactionDialog({
         const previous = request.changes[index];
         const current = previous ? { ...previous, ...change } : undefined;
         if (current) {
-          if (current.quantity < 0)
+          if (
+            current.quantity < 0 &&
+            !settlement?.outgoing.some((s) => sameStack(s, current))
+          )
             change = {
               ...change,
-              item: bankBalanceSourceItem(
+              item: makeSettlementChange(
                 current.holderId,
                 current.denomination,
-                settlement?.limits.find((s) => s.holderId === current.holderId)
-                  ?.recorded[current.denomination] ?? 0
-              ),
+                rows.filter((_, i) => i !== index)
+              ).item,
             };
           else if (
             current.quantity > 0 &&
@@ -664,38 +664,35 @@ export default function BankTransactionDialog({
                   ...request,
                   receiptMode: mode,
                   changes:
-                    mode === 'existing' &&
-                    ['purchase', 'fee', 'exchange'].includes(request.kind)
-                      ? request.changes.map((c) => ({
-                          ...makeSettlementChange(
-                            c.holderId,
-                            c.denomination,
-                            [],
-                            c.quantity <= 0
-                          ),
-                          quantity: c.quantity,
-                          fee: c.fee,
-                        }))
-                      : request.kind === 'transfer' && mode === 'existing'
+                    request.kind === 'transfer' && mode === 'existing'
                       ? makeTransferPair()
                       : (existingTransfer
                           ? [makeChange()]
                           : request.changes
                         ).reduce<BankChange[]>((changes, change) => {
-                          const fresh = makeChange(
-                            change.holderId,
-                            change.denomination,
-                            mode,
-                            changes
-                          );
-                          return [
-                            ...changes,
-                            {
-                              ...change,
-                              holderId: fresh.holderId,
-                              item: fresh.item,
-                            },
-                          ];
+                          const fresh =
+                            mode === 'existing' &&
+                            ['purchase', 'fee', 'exchange'].includes(
+                              request.kind
+                            )
+                              ? makeSettlementChange(
+                                  change.holderId,
+                                  change.denomination,
+                                  changes,
+                                  change.quantity <= 0
+                                )
+                              : makeChange(
+                                  change.holderId,
+                                  change.denomination,
+                                  mode,
+                                  changes
+                                );
+                          changes.push({
+                            ...change,
+                            holderId: fresh.holderId,
+                            item: fresh.item,
+                          });
+                          return changes;
                         }, []),
                 });
               }}
@@ -735,20 +732,17 @@ export default function BankTransactionDialog({
             <tbody>
               {rows.map((change, index) => {
                 const holder = holders.find((h) => h.id === change.holderId);
-                const options: BankStackOption[] = (
-                  (settlement
-                    ? [...settlement.outgoing, ...settlement.incoming]
-                    : availability?.stacks) ??
-                  stacks.map((stack) => ({
-                    ...stack,
-                    currentQuantity: stack.item.quantity,
-                    previousAllocation: 0,
-                    available: null,
-                  }))
-                ).filter(
+                const otherRows = rows.filter((_, i) => i !== index);
+                const candidates: BankStackOption[] = settlement
+                  ? [...settlement.outgoing, ...settlement.incoming]
+                  : availability?.stacks ?? ordinaryOptions;
+                const options = candidates.filter(
                   (s) =>
                     s.holderId === change.holderId &&
-                    s.denomination === change.denomination
+                    s.denomination === change.denomination &&
+                    (sameStack(s, change) ||
+                      unselected(s, otherRows) ||
+                      (remainingQuantity(s, otherRows, settlement) ?? 0) > 0)
                 );
                 const selected = options.find(
                   (s) => s.item.id === change.item.id
@@ -814,18 +808,14 @@ export default function BankTransactionDialog({
                             ? makeSettlementChange(
                                 e.target.value,
                                 change.denomination,
-                                request.changes.filter((_, i) => i !== index),
+                                otherRows,
                                 change.quantity <= 0
                               )
                             : makeChange(
                                 e.target.value,
                                 change.denomination,
                                 request.receiptMode,
-                                request.changes.filter((_, i) =>
-                                  existingTransfer
-                                    ? i !== index * 2 && i !== index * 2 + 1
-                                    : i !== index
-                                )
+                                otherRows
                               );
                           update(index, {
                             ...fresh,
@@ -864,20 +854,14 @@ export default function BankTransactionDialog({
                                 ? makeSettlementChange(
                                     change.holderId,
                                     code,
-                                    request.changes.filter(
-                                      (_, i) => i !== index
-                                    ),
+                                    otherRows,
                                     change.quantity <= 0
                                   )
                                 : makeChange(
                                     change.holderId,
                                     code,
                                     request.receiptMode,
-                                    request.changes.filter((_, i) =>
-                                      existingTransfer
-                                        ? i !== index * 2 && i !== index * 2 + 1
-                                        : i !== index
-                                    )
+                                    otherRows
                                   )),
                               quantity: change.quantity,
                               fee: change.fee,
@@ -924,43 +908,49 @@ export default function BankTransactionDialog({
                               : 'Choose existing stack'}
                           </option>
                         )}
-                        {options.map((s) => (
-                          <option
-                            key={s.item.id}
-                            value={s.item.id}
-                            disabled={
-                              existingMode &&
-                              s.item.id !== change.item.id &&
-                              availableForRow(s, index) === 0
-                            }
-                          >
-                            {settlement && 'direction' in s
-                              ? `${
-                                  s.direction === 'outgoing'
-                                    ? 'Outgoing · '
-                                    : 'Incoming · '
-                                }`
-                              : ''}
-                            {s.item.name ||
-                              getInventoryItemInfo(
-                                s.item,
-                                encumbranceCatalogById
-                              )?.name}{' '}
-                            · {existingMode ? 'current ' : ''}
-                            {s.currentQuantity}
-                            {availability || settlement
-                              ? ' · available ' +
-                                (availableForRow(s, index)?.toLocaleString() ??
-                                  'Unknown')
-                              : ''}
-                            {s.item.containerId
-                              ? ' · ' +
-                                (holder?.inventory.find(
-                                  (i) => i.id === s.item.containerId
-                                )?.name || 'container')
-                              : ''}
-                          </option>
-                        ))}
+                        {options.map((s) => {
+                          const item =
+                            holder?.inventory.find((i) => i.id === s.item.id) ??
+                            s.item;
+                          const note = sourceNote(item);
+                          return (
+                            <option
+                              key={s.item.id}
+                              value={s.item.id}
+                              disabled={
+                                existingMode &&
+                                s.item.id !== change.item.id &&
+                                remainingQuantity(s, otherRows, settlement) ===
+                                  0
+                              }
+                            >
+                              {s.direction === 'outgoing' && 'Outgoing · '}
+                              {s.direction === 'incoming' && 'Incoming · '}
+                              {item.name ||
+                                getInventoryItemInfo(
+                                  item,
+                                  encumbranceCatalogById
+                                )?.name}{' '}
+                              · {existingMode ? 'current ' : ''}
+                              {s.currentQuantity}
+                              {existingMode || !unselected(s, otherRows)
+                                ? ' · available ' +
+                                  (remainingQuantity(
+                                    s,
+                                    otherRows,
+                                    settlement
+                                  )?.toLocaleString() ?? 'Unknown')
+                                : ''}
+                              {item.containerId
+                                ? ' · ' +
+                                  (holder?.inventory.find(
+                                    (i) => i.id === item.containerId
+                                  )?.name || 'container')
+                                : ''}
+                              {note && ` · ${note}`}
+                            </option>
+                          );
+                        })}
                         {!existingMode && (
                           <option value="new:">New stack · loose</option>
                         )}
@@ -1086,8 +1076,8 @@ export default function BankTransactionDialog({
                         last?.holderId,
                         last?.denomination,
                         request.receiptMode,
-                        request.changes,
-                        true
+                        rows,
+                        existingMode
                       ),
                     ]),
               ],

@@ -84,6 +84,22 @@ test('Transfer offers an existing-possessions mode with paired From/To allocatio
     expect(dialog.getByLabelText(`Change ${index} denomination`)).toHaveValue(
       code
     );
+    if (index === 4) {
+      const third = dialog.getByLabelText(
+        'Change 3 stack'
+      ) as HTMLSelectElement;
+      const fourth = dialog.getByLabelText(
+        'Change 4 stack'
+      ) as HTMLSelectElement;
+      expect(third.value).toBe('electrum-300');
+      expect(fourth.value).toBe('electrum-400');
+      expect(Array.from(third.options, (o) => o.value)).not.toContain(
+        fourth.value
+      );
+      expect(Array.from(fourth.options, (o) => o.value)).not.toContain(
+        third.value
+      );
+    }
     fireEvent.change(dialog.getByLabelText(`Change ${index} quantity`), {
       target: { value: String(quantity) },
     });

@@ -91,10 +91,10 @@ test('the editor allocates an existing receipt across three stacks, previews the
   ).toBeInTheDocument();
   expect(dialog.getByLabelText('Change 2 stack')).toHaveValue('electrum-400');
   expect(
-    within(dialog.getByLabelText('Change 2 stack')).getByRole('option', {
-      name: /current 300.*available 0/,
+    within(dialog.getByLabelText('Change 2 stack')).queryByRole('option', {
+      name: /current 300/,
     })
-  ).toBeDisabled();
+  ).not.toBeInTheDocument();
   expect(dialog.getByText('Enter quantity')).toBeInTheDocument();
   expect(
     dialog.getByRole('button', { name: 'Save transaction' })
