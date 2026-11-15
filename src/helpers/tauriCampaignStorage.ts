@@ -9,7 +9,7 @@ import type { CampaignDocument } from './campaignDocument';
 type Job<T> = { run: () => Promise<T>; key?: string };
 type Draft = {
   key: string;
-  change: (document: CampaignDocument) => CampaignDocument;
+  changes: Map<string, (document: CampaignDocument) => CampaignDocument>;
   release: () => void;
   result: Promise<DocumentState | null>;
 };
@@ -234,7 +234,8 @@ export async function createTauriStorage(): Promise<CampaignStorage | null> {
     return result.epoch === epoch && result.document?.id === id ? result : null;
   }
   return {
-    mutate: (id, epoch, change, combat, options) => {
+    flushEdits: flush,
+    mutate: (id, epoch, change, edit, options) => {
       if (
         accepted &&
         (accepted.epoch !== epoch ||
@@ -265,17 +266,38 @@ export async function createTauriStorage(): Promise<CampaignStorage | null> {
           // The preview may be stale. Decide against accepted native state below.
         }
       }
-      const key = combat
+      const inventory = edit && 'workingId' in edit ? edit : undefined;
+      const key = inventory
         ? JSON.stringify([
+            'inventory',
             id,
             epoch,
-            combat.sessionId,
-            combat.combatId,
-            combat.generation,
+            inventory.sessionId,
+            inventory.workingId,
+            editorVersion,
+          ])
+        : edit && 'combatId' in edit
+        ? JSON.stringify([
+            'combat',
+            id,
+            epoch,
+            edit.sessionId,
+            edit.combatId,
+            edit.generation,
+            editorVersion,
           ])
         : undefined;
+      const field = inventory
+        ? JSON.stringify([
+            inventory.holderId,
+            inventory.itemId,
+            inventory.fields,
+          ])
+        : 'combat';
       if (key && draft?.key === key) {
-        draft.change = change;
+        // Field patches are absolute. Keep the last write in its actual order.
+        draft.changes.delete(field);
+        draft.changes.set(field, change);
         trace('coalesced', performance.now());
         publish();
         return draft.result;
@@ -289,7 +311,7 @@ export async function createTauriStorage(): Promise<CampaignStorage | null> {
       const timer = window.setTimeout(release, EDIT_DELAY_MS);
       const entry: Draft = {
         key,
-        change,
+        changes: new Map([[field, change]]),
         release: () => {
           window.clearTimeout(timer);
           release();
@@ -298,12 +320,18 @@ export async function createTauriStorage(): Promise<CampaignStorage | null> {
       };
       draft = entry;
       entry.result = enqueue({
-        key,
+        // Failed inventory batches can contain different fields. Retry each in order.
+        key: inventory ? undefined : key,
         run: async () => {
           await gate;
           if (composing) await composing;
           if (draft === entry) draft = undefined;
-          return apply(id, epoch, entry.change);
+          return apply(id, epoch, (doc) => {
+            entry.changes.forEach((patch) => {
+              doc = patch(doc);
+            });
+            return doc;
+          });
         },
       });
       // A rejected predecessor can prevent run() from clearing the draft slot.
@@ -315,6 +343,7 @@ export async function createTauriStorage(): Promise<CampaignStorage | null> {
       return entry.result;
     },
     exportWorking: async (id, epoch, workingId) => {
+      if (composing) await composing;
       flush();
       return enqueue(
         {

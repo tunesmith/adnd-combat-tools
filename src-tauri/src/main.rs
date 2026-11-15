@@ -665,8 +665,14 @@ async fn campaign_export_working(
             if s.view.epoch!=epoch||s.view.document.as_ref().map(|d|d.id.as_str())!=Some(id.as_str()){return Err("Campaign changed; export cancelled.".into());}
             let working=s.view.document.as_ref().unwrap().working_inventories.iter().find(|w|w["id"]==working_id).ok_or("Working inventory changed")?;
             (serde_json::to_string_pretty(&working["document"]).map_err(|e|e.to_string())?+"\n",s.view.path.clone())};
-        let Some(file)=app.dialog().file().set_file_name("working-DM-inventory.json").blocking_save_file() else{return Ok(false)};
-        let path=file.into_path().map_err(|e|e.to_string())?;
+        #[cfg(feature = "diagnostic-harness")]
+        let injected = std::env::var_os("ADND_DIAGNOSTIC_EXPORT").map(PathBuf::from);
+        #[cfg(not(feature = "diagnostic-harness"))]
+        let injected: Option<PathBuf> = None;
+        let path = if let Some(path) = injected { path } else {
+            let Some(file)=app.dialog().file().set_file_name("working-DM-inventory.json").blocking_save_file() else{return Ok(false)};
+            file.into_path().map_err(|e|e.to_string())?
+        };
         let current=app.state::<State>().session.lock().unwrap().view.path.clone();
         for p in [protected,current].into_iter().flatten(){for p in [p.clone(),PathBuf::from(format!("{}.bak",p.display()))]{if document::is_recovery_path(&path,&p)||path==p||matches!((path.canonicalize().ok(),p.canonicalize().ok()),(Some(a),Some(b)) if a==b){return Err("Export to a different file; campaign and backup are protected.".into());}}}
         use std::io::Write;

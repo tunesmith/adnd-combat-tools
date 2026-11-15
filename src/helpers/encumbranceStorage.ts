@@ -1,5 +1,6 @@
 import type {
   EncumbranceDmDocumentV10,
+  EncumbranceDmCharacter,
   EncumbranceInventoryItem,
 } from '../types/encumbrance';
 import { getDescendantIds } from './encumbranceRules';
@@ -111,5 +112,50 @@ export function selectInventoryCharacters(
     )
       ? document.activeCharacterId
       : characters[0]?.id ?? document.storageLocations[0]?.id ?? '',
+  };
+}
+
+export type InventoryFieldEdit =
+  | {
+      kind: 'item';
+      holderId: string;
+      itemId: string;
+      fields: Partial<
+        Omit<EncumbranceInventoryItem, 'id' | 'catalogId' | 'customItem'>
+      >;
+    }
+  | {
+      kind: 'character';
+      holderId: string;
+      fields: Partial<
+        Pick<EncumbranceDmCharacter, 'name' | 'strength' | 'dmNotes'>
+      >;
+    };
+
+/** Apply only the fields the user edited, against the current holder and item. */
+export function applyInventoryFields(
+  doc: EncumbranceDmDocumentV10,
+  edit: InventoryFieldEdit
+): EncumbranceDmDocumentV10 {
+  if (edit.kind === 'item') {
+    return updateHolderInventory(doc, edit.holderId, (items) => {
+      if (!items.some((i) => i.id === edit.itemId))
+        throw Error(
+          'Inventory item moved or was removed. Reopen the item editor.'
+        );
+      return items.map((i) =>
+        i.id === edit.itemId ? { ...i, ...edit.fields } : i
+      );
+    });
+  }
+  if (!doc.characters.some((c) => c.id === edit.holderId))
+    throw Error(
+      'Inventory character was removed. Reopen the character editor.'
+    );
+  return {
+    ...doc,
+    characters: doc.characters.map((c) =>
+      c.id === edit.holderId ? { ...c, ...edit.fields } : c
+    ),
   };
 }

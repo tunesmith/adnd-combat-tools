@@ -1,3 +1,5 @@
+import { applyInventoryFields } from './encumbranceStorage';
+import type { InventoryFieldEdit } from './encumbranceStorage';
 import {
   assertBankingReplacementReviewed,
   validatePhysicalMoney,
@@ -104,7 +106,7 @@ export const workspaceSchema = z
     view: z.enum(['possessions', 'combats', 'history', 'details', 'tools']),
   })
   .strict();
-function normalizeWorkingInventory(value: unknown): EncumbranceDmDocument {
+function normalizeWorkingInventory(value: unknown) {
   const document = parseEncumbranceDocument(JSON.stringify(value));
   if (document.kind !== 'adnd-encumbrance-dm')
     throw new Error('DM inventory required.');
@@ -228,4 +230,31 @@ export function changeWorkingInventory(
       w.id === workingId ? { ...w, document: normalized } : w
     ),
   };
+}
+
+export function editWorkingInventoryFields(
+  campaign: CampaignDocument,
+  workingId: string,
+  sessionId: string,
+  edit: InventoryFieldEdit
+) {
+  const working = campaign.workingInventories.find(
+    (w) => w.id === workingId && w.sessionId === sessionId
+  );
+  if (
+    !working ||
+    (campaign.workspace.sessionId ?? campaign.sessions[0]?.id) !== sessionId ||
+    campaign.workspace.view !== 'possessions'
+  )
+    throw Error('Inventory editor changed. Reopen the item or character.');
+  const inventory =
+    working.document.version === 10
+      ? working.document
+      : normalizeWorkingInventory(working.document);
+  return changeWorkingInventory(
+    campaign,
+    workingId,
+    sessionId,
+    applyInventoryFields(inventory, edit)
+  );
 }

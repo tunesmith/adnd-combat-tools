@@ -19,9 +19,11 @@ edit. Awaited confirmations can suppress optimistic preview until acceptance.
 The [adapter](../src/helpers/tauriCampaignStorage.ts) owns recovery and editor
 invalidation; React does not maintain a second pending counter or reconciliation loop.
 
-Combat changes coalesce over a 180 ms window and while acceptance is in flight.
-Only adjacent replaceable changes with the same document identity, epoch, session,
-encounter and generation can merge. Discrete mutations seal that batch. Each
+Combat and inventory field changes coalesce over a 180 ms window and while acceptance is in flight.
+Combat batches belong to one document, epoch, session, encounter and generation.
+Possessions batches belong to one working inventory and editor revision. They retain
+the latest edits to each holder, item and set of fields and replay those fields on
+accepted inventory. Inventory membership, transfers and container changes seal a batch. Discrete mutations seal that batch. Each
 operation rebases on current native state, so a later combat snapshot cannot
 replace an intervening banking or XP operation.
 
@@ -117,6 +119,8 @@ repeated commands, navigation, Save As, Quit and external conflicts.
 npm run desktop:build -- --features diagnostic-harness
 python3 scripts/desktopBacklogHarness.py --campaign /path/to/SOCK.adnd --mode timing
 python3 scripts/desktopBacklogHarness.py --campaign /path/to/SOCK.adnd
+python3 scripts/desktopBacklogHarness.py --campaign /path/to/SOCK.adnd --mode inventory-timing
+python3 scripts/desktopBacklogHarness.py --campaign /path/to/SOCK.adnd --mode inventory-validation
 npm run desktop:build
 ```
 
@@ -124,7 +128,10 @@ This harness is scenario-specific: its timing case needs an encounter named
 Hobgoblins; the full case also expects Giant Rats and another session. Use the
 representative SOCK input or an equivalent fixture. It creates private temporary
 copies, checks the original hash and retained history, prints its artifact directory,
-and has a 120-second process deadline. Picker/prompt answers are injected, so it
+and bounds process runtime. Inventory modes select Day5 Possessions and exercise
+named coin stacks in storage. Timing logs contain counts, input/DOM time, queue
+wait, native validation and disk timings. The validation run also checks exported
+DM JSON, final IME input and recovery against files in the temporary directory. Picker/prompt answers are injected, so it
 does not verify OS dialog interaction or physical keyboard accelerator delivery.
 
 `ADND_DIAGNOSTICS=1` enables bounded native operation/size/timing output; renderer

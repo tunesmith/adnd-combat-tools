@@ -23,11 +23,20 @@ export interface DocumentState {
   status: string;
   error: string | null;
 }
-export interface CombatEditKey {
+interface CombatEditKey {
   combatId: string;
   sessionId: string;
   generation: number;
 }
+export type ReplaceableEditKey =
+  | CombatEditKey
+  | {
+      workingId: string;
+      sessionId: string;
+      holderId: string;
+      itemId?: string;
+      fields: string[];
+    };
 export interface EditQueueStatus {
   phase: 'idle' | 'editing' | 'waiting' | 'command' | 'failed';
   queued: number;
@@ -37,13 +46,14 @@ export interface EditQueueStatus {
 /** No paths or filesystem primitives are accepted from the renderer. */
 export interface CampaignStorage {
   getState(): Promise<DocumentState>;
+  flushEdits?(): void;
   retryRejectedEdits?(): Promise<DocumentState>;
   discardRejectedEdits(): Promise<DocumentState>;
   mutate(
     id: string,
     epoch: number,
     change: (document: CampaignDocument) => CampaignDocument,
-    combat?: CombatEditKey,
+    edit?: ReplaceableEditKey,
     options?: { editorVersion?: number; preview?: boolean }
   ): Promise<DocumentState | null>;
   exportWorking(id: string, epoch: number, workingId: string): Promise<boolean>;

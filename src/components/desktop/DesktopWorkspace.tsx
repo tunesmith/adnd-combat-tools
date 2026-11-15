@@ -1,3 +1,4 @@
+import { canonical } from '../../helpers/campaignSnapshots';
 import {
   inSessionInventoryOrder,
   reorderInventoryCharacter,
@@ -34,6 +35,7 @@ import type { CampaignDocument } from '../../helpers/campaignDocument';
 import {
   captureInventoryCheckpoint,
   changeWorkingInventory,
+  editWorkingInventoryFields,
   emptyWorkingInventory,
   startWorkingInventory,
 } from '../../helpers/campaignWorkingInventory';
@@ -44,7 +46,7 @@ import type {
 import type { EncumbranceDmDocument } from '../../types/encumbrance';
 import type {
   DocumentState,
-  CombatEditKey,
+  ReplaceableEditKey,
   DocumentCommand,
 } from '../../types/campaignStorage';
 import styles from './campaignWorkspace.module.css';
@@ -77,6 +79,7 @@ export default function DesktopWorkspace() {
   const openTool = useCallback((path: string) => {
     const tool = standaloneToolForRoute(path);
     if (!tool) return;
+    window.campaignStorage?.flushEdits?.();
     if (!toolMode.current) toolHome.current = window.location.href;
     toolMode.current = true;
     setActiveTool(tool);
@@ -119,13 +122,13 @@ export default function DesktopWorkspace() {
     (
       change: (doc: CampaignDocument) => CampaignDocument,
       owner: DocumentState | null = state,
-      combat?: CombatEditKey,
+      edit?: ReplaceableEditKey,
       preview = false
     ) => {
       if (!owner?.document || !window.campaignStorage)
         throw new Error('Campaign unavailable.');
       return window.campaignStorage
-        .mutate(owner.document.id, owner.epoch, change, combat, {
+        .mutate(owner.document.id, owner.epoch, change, edit, {
           editorVersion: owner.editorVersion,
           preview,
         })
@@ -140,10 +143,10 @@ export default function DesktopWorkspace() {
     (
       change: (doc: CampaignDocument) => CampaignDocument,
       owner: DocumentState | null = state,
-      combat?: CombatEditKey
+      edit?: ReplaceableEditKey
     ) => {
       try {
-        void acceptMutation(change, owner, combat, true).catch(() => undefined);
+        void acceptMutation(change, owner, edit, true).catch(() => undefined);
         return true;
       } catch {
         return false;
@@ -244,6 +247,7 @@ export default function DesktopWorkspace() {
   const inventoryVersion =
     inventoryHistorySelections[inventoryVersionKey] || '';
   function setInventoryVersion(id: string) {
+    window.campaignStorage?.flushEdits?.();
     setInventoryHistorySelections((old) => ({
       ...old,
       [inventoryVersionKey]: id,
@@ -739,6 +743,32 @@ export default function DesktopWorkspace() {
                         });
                       },
                       active: view === 'possessions' && !activeTool,
+                      onFieldEdit: (edit) => {
+                        const fields = Object.keys(edit.fields);
+                        if (!fields.length) return true;
+                        return mutate(
+                          (d) =>
+                            editWorkingInventoryFields(
+                              d,
+                              working.id,
+                              sessionId,
+                              edit
+                            ),
+                          scope,
+                          fields.includes('containerId')
+                            ? undefined
+                            : {
+                                workingId: working.id,
+                                sessionId,
+                                holderId: edit.holderId,
+                                itemId:
+                                  edit.kind === 'item'
+                                    ? edit.itemId
+                                    : undefined,
+                                fields,
+                              }
+                        );
+                      },
                       onDocumentChange: (next) => {
                         if (next.kind !== 'adnd-encumbrance-dm') return false;
                         const workId = working.id,
@@ -748,17 +778,27 @@ export default function DesktopWorkspace() {
                         )
                           ? { id: uid(), at: new Date().toISOString() }
                           : undefined;
-                        return mutate(
-                          (d) =>
-                            changeWorkingInventory(
-                              d,
-                              workId,
-                              sessionId,
-                              next,
-                              removal
-                            ),
-                          owner
-                        );
+                        return mutate((d) => {
+                          const current = d.workingInventories.find(
+                            (w) => w.id === workId && w.sessionId === sessionId
+                          );
+                          if (
+                            !current ||
+                            (current.document !== working.document &&
+                              canonical(current.document) !==
+                                canonical(working.document))
+                          )
+                            throw Error(
+                              'Inventory changed since this action. Review the current possessions.'
+                            );
+                          return changeWorkingInventory(
+                            d,
+                            workId,
+                            sessionId,
+                            next,
+                            removal
+                          );
+                        }, owner);
                       },
                       onExport: () => {
                         void window.campaignStorage

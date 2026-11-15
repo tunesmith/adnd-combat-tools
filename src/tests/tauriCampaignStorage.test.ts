@@ -1,4 +1,5 @@
 /** @jest-environment jsdom */
+import type { CampaignDocument } from '../helpers/campaignDocument';
 import { createTauriStorage } from '../helpers/tauriCampaignStorage';
 
 afterEach(() => {
@@ -373,8 +374,8 @@ test.each(['save', 'quit', 'openPending'])(
   }
 );
 
-function queueHarness() {
-  const document = {
+function queueHarness(
+  document: CampaignDocument = {
     kind: 'adnd-campaign' as const,
     schemaVersion: 21 as const,
     id: 'c',
@@ -387,7 +388,8 @@ function queueHarness() {
     workingInventories: [],
     inventoryCheckpoints: [],
     workspace: { sessionId: null, view: 'combats' as const },
-  };
+  }
+) {
   let current = {
     document,
     epoch: 1,
@@ -923,4 +925,149 @@ test('inventory membership invalidates callbacks from the editor it replaces', a
   ).toBeNull();
   expect(stale).not.toHaveBeenCalled();
   expect(h.current().document.notes).toBe('');
+});
+
+test('inventory batches rebase exact fields across a transfer, direct quantity edit and reconciliation', async () => {
+  const { bankFixture, bankLeg, bankPost, bankingAt } = await import(
+    './fixtures/bankingKifu'
+  );
+  const {
+    editWorkingInventoryFields,
+    changeWorkingInventory,
+    startWorkingInventory,
+  } = await import('../helpers/campaignWorkingInventory');
+  const {
+    bankHolders,
+    bankReconciliationFingerprint,
+    commitBankReconciliation,
+  } = await import('../helpers/campaignBanking');
+  const { parseCampaign, serializeCampaign } = await import(
+    '../helpers/campaignDocument'
+  );
+  const original = bankFixture(),
+    sessionId = 'day3',
+    holderId = 'castle-kifu-storage',
+    workingId = 'day3-stock',
+    itemId = 'castle-ep';
+  original.workspace = {
+    ...original.workspace,
+    sessionId,
+    view: 'possessions',
+  };
+  const h = queueHarness(original),
+    storage = await createTauriStorage();
+  if (!storage) throw Error('Fixture');
+  await storage.getState();
+  const edit = (
+    fields: { playerNotes?: string; quantity?: number; day?: number },
+    item = itemId
+  ) =>
+    storage.mutate(
+      original.id,
+      1,
+      (d) =>
+        editWorkingInventoryFields(d, workingId, sessionId, {
+          kind: 'item',
+          holderId,
+          itemId: item,
+          fields,
+        }),
+      {
+        sessionId,
+        workingId,
+        holderId,
+        itemId: item,
+        fields: Object.keys(fields),
+      }
+    );
+  const work = (d: CampaignDocument) => {
+    const w = d.workingInventories.find((w) => w.id === workingId);
+    if (!w || w.document.version !== 10) throw Error('Fixture');
+    return w.document;
+  };
+  const item = (d: CampaignDocument, id: string) =>
+    bankHolders(work(d))
+      .flatMap((h) => h.inventory)
+      .find((i) => i.id === id);
+  const first = edit({ playerNotes: 'partial' });
+  expect(edit({ day: 17 })).toBe(first);
+  expect(edit({ playerNotes: 'earned in vault' })).toBe(first);
+  expect(edit({ day: 3 }, 'castle-sp')).toBe(first);
+  const transfer = storage.mutate(original.id, 1, (d) =>
+    bankPost(d, {
+      transactionId: 'split',
+      sessionId,
+      description: 'Move coins',
+      kind: 'transfer',
+      changes: [
+        bankLeg(d, sessionId, holderId, 'ep', -10, itemId),
+        bankLeg(d, sessionId, 'inventory-reatha', 'ep', 10, 'split-coins'),
+      ],
+    })
+  );
+  const after = edit({ playerNotes: 'edited after transfer' });
+  await Promise.all([first, transfer, after]);
+  const accepted = h.current().document;
+  expect(h.writes).toHaveLength(3);
+  expect(item(accepted, itemId)).toMatchObject({
+    day: 17,
+    quantity: 690,
+    playerNotes: 'edited after transfer',
+  });
+  expect(item(accepted, 'split-coins')).toMatchObject({
+    day: 17,
+    quantity: 10,
+    playerNotes: 'earned in vault',
+  });
+  expect(item(accepted, 'castle-sp')?.day).toBe(3);
+  await edit({ quantity: 680 });
+  expect(h.current().document.banking).toEqual(accepted.banking);
+  await storage.mutate(original.id, 1, (d) =>
+    commitBankReconciliation(
+      d,
+      sessionId,
+      bankReconciliationFingerprint(d, sessionId),
+      'reconcile',
+      bankingAt
+    )
+  );
+  expect(h.current().document.banking?.entries.at(-1)?.kind).toBe(
+    'reconciliation'
+  );
+  expect(h.current().document.xp).toEqual(original.xp);
+
+  const pending = edit({ day: 18 });
+  await storage.mutate(original.id, 1, (d) => {
+    const inventory = work(d);
+    return changeWorkingInventory(d, workingId, sessionId, {
+      ...inventory,
+      storageLocations: inventory.storageLocations.map((h) => ({
+        ...h,
+        inventory: h.inventory.filter((i) => i.id !== itemId),
+      })),
+    });
+  });
+  await pending;
+  await expect(edit({ day: 19 })).rejects.toThrow('removed');
+  expect(item(h.current().document, itemId)).toBeUndefined();
+  await storage.discardRejectedEdits();
+  await storage.mutate(original.id, 1, (d) =>
+    startWorkingInventory(
+      d,
+      sessionId,
+      work(d),
+      { kind: 'empty' },
+      'replacement',
+      'before-restore',
+      bankingAt
+    )
+  );
+  await expect(edit({ day: 20 }, 'castle-sp')).rejects.toThrow('changed');
+  const recovered = await storage.discardRejectedEdits();
+  expect(
+    recovered.document?.workingInventories.some((w) => w.id === 'replacement')
+  ).toBe(true);
+  expect(parseCampaign(serializeCampaign(h.current().document))).toEqual(
+    h.current().document
+  );
 });

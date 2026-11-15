@@ -64,6 +64,16 @@ import {
   type EncumbranceSelectValue,
 } from '../../helpers/encumbranceSelectStyles';
 
+import type { InventoryFieldEdit } from '../../helpers/encumbranceStorage';
+
+// Drafts contain all dialog fields. Only changed values belong to this edit.
+function changedFields<T extends object>(before: T, after: T): Partial<T> {
+  const fields: Partial<T> = {};
+  for (const key in after) {
+    if (before[key] !== after[key]) fields[key] = after[key];
+  }
+  return fields;
+}
 interface EncumbranceAppProps {
   mode: EncumbranceMode;
   campaign?: {
@@ -71,6 +81,7 @@ interface EncumbranceAppProps {
     document: EncumbranceDocument | EncumbranceDmDocument;
     readOnly?: boolean;
     onDocumentChange: (document: EncumbranceDocument) => boolean | void;
+    onFieldEdit?: (edit: InventoryFieldEdit) => boolean;
     onExport: () => void;
     onAddCharacter?: () => void;
     characterOrder?: string[];
@@ -729,7 +740,7 @@ const resizeTextarea = (textarea: HTMLTextAreaElement | null) => {
 
 const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
   const [standaloneDocument, setStandaloneDocument] =
-    useState<EncumbranceDocument>(
+    useState<EncumbranceDocument>(() =>
       createEmptyEncumbranceDocument(getDocumentKindForMode(mode))
     );
   const readOnly = Boolean(campaign?.readOnly);
@@ -739,9 +750,10 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
   const campaignDocument = campaign?.document;
   const sourceDocument = useMemo(
     () =>
-      campaignDocument
+      campaignDocument?.kind === 'adnd-encumbrance-dm' &&
+      campaignDocument.version !== 10
         ? parseEncumbranceDocument(JSON.stringify(campaignDocument))
-        : standaloneDocument,
+        : campaignDocument ?? standaloneDocument,
     [campaignDocument, standaloneDocument]
   );
   const document = useMemo(
@@ -753,8 +765,16 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
   );
   const currentDocumentRef = useRef(document);
   currentDocumentRef.current = document;
+  const campaignActive = campaign?.active;
+  const editorActive = useRef(true);
+  useEffect(() => {
+    editorActive.current = !readOnly && campaignActive !== false;
+    return () => {
+      editorActive.current = false;
+    };
+  }, [readOnly, campaignActive]);
   const setDocument = (action: React.SetStateAction<EncumbranceDocument>) => {
-    if (readOnly) return false;
+    if (!editorActive.current) return false;
     if (!campaign) {
       setStandaloneDocument(action);
       return true;
@@ -1371,9 +1391,40 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
     updater: (draft: CharacterEditDraft) => CharacterEditDraft
   ) => {
     const currentDraft = characterDraftRef.current;
-    if (!currentDraft) return;
+    if (
+      !editorActive.current ||
+      !currentDraft ||
+      currentDraft.characterId !== characterEditDraft?.characterId
+    )
+      return;
     const nextDraft = updater(currentDraft);
-    if (applyCharacterDraft(nextDraft) === false) return;
+    if (campaign?.onFieldEdit) {
+      const fields = changedFields(
+        { name: currentDraft.name, dmNotes: currentDraft.dmNotes },
+        { name: nextDraft.name, dmNotes: nextDraft.dmNotes }
+      );
+      const strength =
+        currentDraft.strengthScore !== nextDraft.strengthScore ||
+        currentDraft.exceptional !== nextDraft.exceptional
+          ? {
+              strength: {
+                score: nextDraft.strengthScore,
+                exceptional:
+                  nextDraft.strengthScore === 18
+                    ? nextDraft.exceptional
+                    : ('none' as const),
+              },
+            }
+          : {};
+      if (
+        !campaign.onFieldEdit({
+          kind: 'character',
+          holderId: nextDraft.characterId,
+          fields: { ...fields, ...strength },
+        })
+      )
+        return;
+    } else if (applyCharacterDraft(nextDraft) === false) return;
     characterDraftRef.current = nextDraft;
     setCharacterEditDraft(nextDraft);
   };
@@ -1686,9 +1737,7 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
     setAddItemDetailsDraft(defaultAddItemDetailsDraft());
   };
 
-  const applyEditingItemDraft = (
-    characterId: string,
-    itemId: string,
+  const itemFields = (
     itemInfo: EncumbranceCatalogItem,
     draft: InventoryEditDraft
   ) => {
@@ -1700,18 +1749,17 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
     const normalizedDay = Math.max(0, Math.floor(Number(draft.day) || 0));
     const normalizedName = draft.name.trim();
 
-    return updateInventoryItem(characterId, itemId, (currentItem) => ({
-      ...currentItem,
+    return {
       quantity: itemInfo.isContainer
         ? 1
         : Math.max(1, Math.floor(Number(draft.quantity) || 1)),
       day: normalizedDay,
       containerId: draft.containerId || null,
       playerNotes: draft.playerNotes,
-      playerKnowsValue:
-        mode === 'dm' ? draft.playerKnowsValue : currentItem.playerKnowsValue,
       ...(mode === 'dm'
         ? {
+            playerKnowsValue: draft.playerKnowsValue,
+            playerMagicKnowledge: draft.playerMagicKnowledge,
             dmNotes: draft.dmNotes,
             isMagical: draft.isMagical,
             fullyIdentified:
@@ -1722,10 +1770,6 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
                 : undefined,
           }
         : {}),
-      playerMagicKnowledge:
-        mode === 'dm'
-          ? draft.playerMagicKnowledge
-          : currentItem.playerMagicKnowledge,
       name:
         normalizedName && normalizedName !== itemInfo.name
           ? normalizedName
@@ -1734,25 +1778,40 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
         normalizedLoad !== itemInfo.encumbranceGp ? normalizedLoad : undefined,
       valueGpOverride:
         normalizedValue !== itemInfo.valueGp ? normalizedValue : undefined,
-    }));
+    };
   };
 
   const updateEditingItemDraft = (
     updater: (draft: InventoryEditDraft) => InventoryEditDraft
   ) => {
     const currentDraft = itemDraftRef.current;
-    if (!currentDraft) return;
-    const nextDraft = updater(currentDraft);
     if (
-      editingItemInfo &&
-      applyEditingItemDraft(
-        nextDraft.characterId,
-        nextDraft.itemId,
-        editingItemInfo,
-        nextDraft
-      ) === false
+      !editorActive.current ||
+      !currentDraft ||
+      currentDraft.characterId !== editingItemDraft?.characterId ||
+      currentDraft.itemId !== editingItemDraft?.itemId
     )
       return;
+    const nextDraft = updater(currentDraft);
+    if (editingItemInfo) {
+      const after = itemFields(editingItemInfo, nextDraft);
+      const applied = campaign?.onFieldEdit
+        ? campaign.onFieldEdit({
+            kind: 'item',
+            holderId: nextDraft.characterId,
+            itemId: nextDraft.itemId,
+            fields: changedFields(
+              itemFields(editingItemInfo, currentDraft),
+              after
+            ),
+          })
+        : updateInventoryItem(
+            nextDraft.characterId,
+            nextDraft.itemId,
+            (item) => ({ ...item, ...after })
+          );
+      if (applied === false) return;
+    }
     itemDraftRef.current = nextDraft;
     setEditingItemDraft(nextDraft);
   };
