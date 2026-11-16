@@ -1,6 +1,12 @@
 /** @jest-environment jsdom */
 import '@testing-library/jest-dom';
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from '@testing-library/react';
 import BankTransactionDialog from '../components/desktop/BankTransactionDialog';
 import {
   existingBankFixture,
@@ -8,6 +14,7 @@ import {
   receiptAt,
 } from './fixtures/bankingExisting';
 import type { BankEntry } from '../helpers/campaignBankingModel';
+import { parseCampaign, serializeCampaign } from '../helpers/campaignDocument';
 import type { CampaignDocument } from '../helpers/campaignDocument';
 import { newBankMoneyItem } from '../helpers/campaignBanking';
 
@@ -325,4 +332,99 @@ test('payment total follows signed draft quantities, independently of save readi
     screen.getByRole('button', { name: 'Save transaction' })
   ).toBeDisabled();
   expect(onChange).not.toHaveBeenCalled();
+});
+
+test.each([
+  ['Day6 — 2025-10-04', 'emerald', 3, 'new:', 6],
+  ['Day 6', 'pp', 100, 'new:pouch-a', 6],
+  ['Session 93', 'pp', 100, 'new:', 0],
+] as const)(
+  'new Income stacks use the acquisition day in %s, including evidence and reopen',
+  (label, code, quantity, target, day) => {
+    const { doc } = fixture();
+    doc.sessions = [
+      { id: 'unrelated', label: 'Day 22' },
+      ...doc.sessions.map((s) => ({ ...s, label })),
+    ];
+    const h = open(doc);
+    select('Description', 'Reviewed income');
+    select('Transaction type', 'income');
+    select('Change 1 denomination', code);
+    select('Change 1 stack', target);
+    select('Change 1 quantity', String(quantity));
+    const field = screen.getByLabelText('Day for new stacks');
+    if (label === 'Session 93') {
+      expect(field).toHaveValue(null);
+      expect(
+        screen.getByRole('button', { name: 'Save transaction' })
+      ).toBeDisabled();
+      select('Day for new stacks', '0');
+    } else expect(field).toHaveValue(6);
+    fireEvent.click(screen.getByRole('button', { name: 'Save transaction' }));
+    expect(h.onChange).toHaveBeenCalledTimes(1);
+    const saved = h.current(),
+      entry = saved.banking?.entries.at(-1),
+      c = entry?.changes[0];
+    expect(c?.item).toMatchObject({
+      day,
+      containerId: target === 'new:' ? null : 'pouch-a',
+    });
+    expect(
+      saved.workingInventories[0]?.document.characters[0]?.inventory.find(
+        (i) => i.id === c?.item.id
+      )
+    ).toMatchObject({ day, quantity });
+    expect(saved.xp).toEqual(doc.xp);
+  }
+);
+
+test('editing an Income from another workspace session preserves old stack days and dates only a new destination', () => {
+  const { doc } = fixture();
+  doc.sessions[0] = { id: 'day1', label: 'Day6' };
+  const first = open(doc);
+  select('Transaction type', 'income');
+  select('Description', 'Receipt');
+  select('Change 1 quantity', '2');
+  expect(screen.queryByLabelText('Day for new stacks')).toBeNull();
+  fireEvent.click(screen.getByRole('button', { name: 'Save transaction' }));
+  const saved = first.current(),
+    entry = saved.banking?.entries.at(-1);
+  if (!entry) throw Error('Missing receipt');
+  const retained = entry.changes[0]?.item;
+  expect(retained?.day).toBe(0);
+  cleanup();
+  saved.sessions = [{ id: 'another', label: 'Day 99' }, ...saved.sessions];
+  let edited = saved;
+  render(
+    <BankTransactionDialog
+      document={saved}
+      sessionId="another"
+      entry={entry}
+      onChange={(change) => {
+        edited = change(saved);
+        return true;
+      }}
+      onClose={() => undefined}
+    />
+  );
+  expect(screen.queryByLabelText('Day for new stacks')).toBeNull();
+  add();
+  select('Change 2 denomination', 'pp');
+  select('Change 2 quantity', '100');
+  expect(screen.getByLabelText('Day for new stacks')).toHaveValue(6);
+  select('Day for new stacks', '4');
+  fireEvent.click(screen.getByRole('button', { name: 'Save transaction' }));
+  const revision = edited.banking?.entries.at(-1);
+  expect(revision?.sessionId).toBe('day1');
+  expect(revision?.changes.map((c) => c.item.day)).toEqual([0, 4]);
+  expect(edited.banking?.entries[0]).toEqual(entry);
+  const reopened = parseCampaign(
+    serializeCampaign({
+      ...edited,
+      sessions: edited.sessions.map((s) => ({ ...s, label: 'Day 70' })),
+    })
+  );
+  expect(
+    reopened.banking?.entries.at(-1)?.changes.map((c) => c.item.day)
+  ).toEqual([0, 4]);
 });

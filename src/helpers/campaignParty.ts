@@ -477,6 +477,11 @@ export function carryablePartyProfiles(
   });
 }
 
+export const eligibleSessionProfiles = (
+  doc: CampaignDocument,
+  sessionId: string
+) => carryablePartyProfiles(doc, sessionId, sessionId);
+
 export function copyPartyProfile(
   p: PartyProfile,
   sessionId: string

@@ -78,6 +78,12 @@ test('usable review flow establishes opening XP, keeps a scroll, creates an open
   fireEvent.click(screen.getByRole('button', { name: 'Opening balances' }));
   const dialog = within(screen.getByRole('dialog', { name: 'Opening XP' }));
   expect(dialog.getByLabelText('Mira opening XP')).toHaveValue(null);
+  expect(dialog.getByLabelText('Mira starting session')).toHaveValue(
+    'session-2'
+  );
+  // This reconstruction needs openings before the rewards in the first session.
+  for (const select of dialog.getAllByRole('combobox'))
+    fireEvent.change(select, { target: { value: 'session-1' } });
   fireEvent.click(
     dialog.getByRole('button', { name: 'Set listed unlocked balances to 0' })
   );

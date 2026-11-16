@@ -1,10 +1,12 @@
 import { useRef, useState } from 'react';
 import type { CampaignDocument } from '../../helpers/campaignDocument';
-import { profilesInSession } from '../../helpers/campaignParty';
+import { eligibleSessionProfiles } from '../../helpers/campaignParty';
 import {
   addCampaignInventoryCharacter,
   earlierInventoryCharacters,
   returningInventoryId,
+  inventoryMembership,
+  inventoryNameKey,
 } from '../../helpers/campaignInventoryMembership';
 import styles from './campaignWorkspace.module.css';
 export default function AddInventoryCharacterDialog({
@@ -23,27 +25,36 @@ export default function AddInventoryCharacterDialog({
   const [sources] = useState(() =>
     earlierInventoryCharacters(document, sessionId)
   );
-  const [profiles] = useState(() =>
-    profilesInSession(document, sessionId).flatMap((p) => {
+  const [profiles] = useState(() => {
+    const { matched } = inventoryMembership(document, sessionId);
+    return eligibleSessionProfiles(document, sessionId).flatMap((p) => {
       const c = document.party?.roster.find((c) => c.id === p.characterId);
-      return c &&
-        !document.workingInventories
-          .find((w) => w.id === workingId)
-          ?.document.characters.some(
-            (h) =>
-              h.name.trim().toLocaleLowerCase() ===
-              c.name.trim().toLocaleLowerCase()
-          )
-        ? [c]
-        : [];
-    })
-  );
+      return c && !matched.some((m) => m.characterId === c.id) ? [c] : [];
+    });
+  });
   const [profileId, setProfileId] = useState(''),
     [name, setName] = useState(''),
     [strength, setStrength] = useState(8),
     [sourceKey, setSourceKey] = useState(''),
+    [browse, setBrowse] = useState(false),
     [error, setError] = useState('');
   const operation = useRef<{ id: string; checkpointId: string; at: string }>();
+  const returning = returningInventoryId(document, sessionId, name, sources);
+  const recentFirst = [...sources].reverse();
+  const relevant = returning
+    ? recentFirst.filter((s) => s.character.id === returning)
+    : recentFirst.filter(
+        (s) => inventoryNameKey(s.character.name) === inventoryNameKey(name)
+      );
+  const latest = returning ? relevant.slice(0, 1) : [];
+  const browseAll = !profileId && !relevant.length;
+  const archive = browseAll ? recentFirst : relevant;
+  const choices = browse ? archive : latest;
+  function resetSource() {
+    setSourceKey('');
+    setBrowse(false);
+    setError('');
+  }
   const selected = sources.find((c) => c.key === sourceKey);
   return (
     <div className={styles['dialogShade']}>
@@ -68,10 +79,7 @@ export default function AddInventoryCharacterDialog({
                 at: new Date().toISOString(),
               };
             const op = operation.current;
-            const id =
-              selected?.character.id ??
-              returningInventoryId(document, sessionId, name) ??
-              op.id;
+            const id = selected?.character.id ?? returning ?? op.id;
             const request = {
               workingId,
               sessionId,
@@ -102,7 +110,7 @@ export default function AddInventoryCharacterDialog({
       >
         <h2>Add inventory character</h2>
         {profiles.length > 0 && (
-          <label>
+          <label className={styles['sessionNameField']}>
             Party character
             <select
               value={profileId}
@@ -110,8 +118,7 @@ export default function AddInventoryCharacterDialog({
                 setProfileId(e.target.value);
                 const c = profiles.find((c) => c.id === e.target.value);
                 setName(c?.name ?? '');
-                setSourceKey('');
-                setError('');
+                resetSource();
               }}
             >
               <option value="">Other inventory character</option>
@@ -123,18 +130,22 @@ export default function AddInventoryCharacterDialog({
             </select>
           </label>
         )}
-        <div className={styles['profileFields']}>
-          <label>
+        <div className={styles['inventoryCharacterFields']}>
+          <label className={styles['sessionNameField']}>
             Name
             <input
               required
               autoFocus
               value={selected?.character.name ?? name}
               disabled={!!selected}
-              onChange={(e) => setName(e.target.value)}
+              onChange={(e) => {
+                setName(e.target.value);
+                setProfileId('');
+                resetSource();
+              }}
             />
           </label>
-          <label>
+          <label className={styles['sessionNameField']}>
             Strength
             <input
               type="number"
@@ -146,7 +157,7 @@ export default function AddInventoryCharacterDialog({
             />
           </label>
         </div>
-        <label>
+        <label className={styles['sessionNameField']}>
           Starting inventory
           <select
             value={sourceKey}
@@ -156,23 +167,37 @@ export default function AddInventoryCharacterDialog({
             }}
           >
             <option value="">Empty</option>
-            {sources
-              .filter(
-                (c) =>
-                  !profileId ||
-                  c.character.name.trim().toLocaleLowerCase() ===
-                    profiles
-                      .find((p) => p.id === profileId)
-                      ?.name.trim()
-                      .toLocaleLowerCase()
-              )
-              .map((c) => (
-                <option key={c.key} value={c.key}>
-                  {c.sessionLabel} · {c.character.name || 'Unnamed character'}
-                </option>
-              ))}
+            {choices.map((c) => (
+              <option key={c.key} value={c.key}>
+                {c.sessionLabel} · {c.character.name || 'Unnamed character'}
+                {choices.some(
+                  (other) =>
+                    other.key !== c.key &&
+                    other.sessionLabel === c.sessionLabel &&
+                    inventoryNameKey(other.character.name) ===
+                      inventoryNameKey(c.character.name)
+                )
+                  ? ' · ' + c.character.id
+                  : ''}
+              </option>
+            ))}
           </select>
         </label>
+        {archive.length > latest.length && (
+          <label className={styles['continuationChoice']}>
+            <input
+              type="checkbox"
+              checked={browse}
+              onChange={(e) => {
+                setBrowse(e.target.checked);
+                setSourceKey('');
+              }}
+            />
+            {browseAll
+              ? 'Browse earlier inventory holders'
+              : 'Show earlier inventories for this character'}
+          </label>
+        )}
         {selected && (
           <p>
             {selected.character.inventory.length} entries copied from{' '}
@@ -185,8 +210,9 @@ export default function AddInventoryCharacterDialog({
             {error}
           </p>
         )}
-        <footer className={styles['sessionDialogFooter']}>
-          <span></span>
+        <footer
+          className={`${styles['sessionDialogFooter']} ${styles['inventoryCharacterFooter']}`}
+        >
           <button type="button" onClick={onClose}>
             Cancel
           </button>

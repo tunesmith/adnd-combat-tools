@@ -605,7 +605,7 @@ function currentTransaction(doc: CampaignDocument, id: string) {
     (e) => e.transactionId === id
   );
 }
-function historicalBankTransaction(
+export function historicalBankTransaction(
   doc: CampaignDocument,
   entry: Pick<BankEntry, 'sessionId' | 'changes'>
 ) {

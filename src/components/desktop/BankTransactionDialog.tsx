@@ -2,6 +2,7 @@ import { inSessionInventoryOrder } from '../../helpers/campaignInventoryOrder';
 import { useRef, useState } from 'react';
 import type { CampaignDocument } from '../../helpers/campaignDocument';
 import {
+  historicalBankTransaction,
   bankHolders,
   bankBalanceHolders,
   bankBalance,
@@ -135,7 +136,7 @@ function paymentTotal(changes: BankChange[]): string {
 }
 export default function BankTransactionDialog({
   document,
-  sessionId,
+  sessionId: workspaceSessionId,
   entry,
   onChange,
   onClose,
@@ -146,6 +147,15 @@ export default function BankTransactionDialog({
   onChange: (change: (doc: CampaignDocument) => CampaignDocument) => boolean;
   onClose: () => void;
 }) {
+  const sessionId = entry?.sessionId ?? workspaceSessionId;
+  const [incomeDay, setIncomeDay] = useState(() => {
+    const label =
+      document.sessions.find((s) => s.id === sessionId)?.label.trim() ?? '';
+    const day = /^Day\s*(\d+)(?:\s*[—–-]\s*\d{4}-\d{2}-\d{2})?$/i.exec(
+      label
+    )?.[1];
+    return day && Number.isSafeInteger(Number(day)) ? String(Number(day)) : '';
+  });
   const working = document.workingInventories.find(
     (w) => w.sessionId === sessionId
   );
@@ -341,7 +351,7 @@ export default function BankTransactionDialog({
       ),
     ];
   };
-  const [request, setRequest] = useState<BankTransactionRequest>(() => ({
+  const [draft, setRequest] = useState<BankTransactionRequest>(() => ({
     transactionId: entry?.transactionId ?? uid(),
     sessionId,
     description: entry?.description ?? '',
@@ -351,6 +361,28 @@ export default function BankTransactionDialog({
       makeChange(undefined, undefined, entry?.receiptMode),
     ],
   }));
+  const newIncomeStack = (c: BankChange) =>
+    !ordinaryOptions.some((s) => sameStack(c, s));
+  const needsDay =
+    (draft.kind === 'income' || draft.kind === 'refund') &&
+    !draft.receiptMode &&
+    entry?.effect !== 'ledger' &&
+    !historicalBankTransaction(document, draft) &&
+    draft.changes.some(newIncomeStack);
+  const validDay =
+    /^\d+$/.test(incomeDay) && Number.isSafeInteger(Number(incomeDay));
+  // The reviewed item snapshot is the input to both preview and commit, including native replay.
+  const request =
+    needsDay && validDay
+      ? {
+          ...draft,
+          changes: draft.changes.map((c) =>
+            newIncomeStack(c)
+              ? { ...c, item: { ...c.item, day: Number(incomeDay) } }
+              : c
+          ),
+        }
+      : draft;
   const existingMode = request.receiptMode === 'existing';
   const existingTransfer = existingMode && request.kind === 'transfer';
   const existingSettlement =
@@ -425,7 +457,9 @@ export default function BankTransactionDialog({
   let preview: ReturnType<typeof previewBankTransaction> | undefined;
   let invalid = '';
   let saveError = '';
-  if (completed.length) {
+  if (needsDay && !validDay)
+    invalid = 'Enter the acquisition day for new stacks.';
+  else if (completed.length) {
     try {
       const candidate = {
         ...request,
@@ -1142,6 +1176,19 @@ export default function BankTransactionDialog({
           >
             Payment total: {paymentTotal(request.changes)}
           </output>
+        )}
+        {needsDay && (
+          <label className={styles['incomeDay']}>
+            Day for new stacks
+            <input
+              type="number"
+              min={0}
+              step={1}
+              required
+              value={incomeDay}
+              onChange={(e) => setIncomeDay(e.target.value)}
+            />
+          </label>
         )}
         {existingMode ? (
           <>

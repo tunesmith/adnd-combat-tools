@@ -1,7 +1,11 @@
 import { profileClassReviews } from '../../helpers/campaignXpClasses';
 import ClassXpBalancesFields from './ClassXpBalancesFields';
 import XpClassAwardEdit from './XpClassAwardEdit';
-import { pendingXpReward, inPartyOrder } from '../../helpers/campaignParty';
+import {
+  pendingXpReward,
+  inPartyOrder,
+  eligibleSessionProfiles,
+} from '../../helpers/campaignParty';
 import XpHistoryExtension from './XpHistoryExtension';
 import XpTimeline from './XpTimeline';
 import XpAwardDialog from './XpAwardDialog';
@@ -122,28 +126,26 @@ function OpeningBalances({
   onExtend: () => void;
 }) {
   const [entries, setEntries] = useState<Ledger['openings']>(() =>
-    (document.party?.roster || []).map((c) => {
-      const profile = document.party?.profiles.find(
-        (p) => p.characterId === c.id && p.sessionId === sessionId
-      );
+    eligibleSessionProfiles(document, sessionId).map((profile) => {
+      const characterId = profile.characterId;
       const existing = xpLedger(document).openings.find(
-        (o) => o.characterId === c.id
+        (o) => o.characterId === characterId
       );
       if (
         existing &&
-        (existing.classes ||
-          !profile?.classes ||
-          xpOpeningLocked(document, c.id))
+        (existing.balance !== null ||
+          existing.classes ||
+          !profile.classes ||
+          xpOpeningLocked(document, characterId))
       )
         return existing;
       return {
         id: existing?.id ?? uid(),
-        characterId: c.id,
-        sessionId:
-          existing?.sessionId ?? xpSessionOrder(document)[0] ?? sessionId,
+        characterId,
+        sessionId: existing?.sessionId ?? sessionId,
         balance: null,
         reason: existing?.reason ?? '',
-        ...(profile?.classes
+        ...(profile.classes
           ? {
               classes: profile.classes.map((v) => ({
                 classId: v.id,
@@ -156,6 +158,14 @@ function OpeningBalances({
     })
   );
   const [error, setError] = useState('');
+  const history = (xpLedger(document).extensions ?? [])
+    .map((extension) => ({
+      ...extension,
+      openings: extension.openings.filter((o) =>
+        entries.some((e) => e.characterId === o.previous.characterId)
+      ),
+    }))
+    .filter((extension) => extension.openings.length);
   const locked = (id: string) => xpOpeningLocked(document, id);
   return (
     <div className={styles['backdrop']}>
@@ -278,10 +288,10 @@ function OpeningBalances({
             </tbody>
           </table>
         </div>
-        {!!xpLedger(document).extensions?.length && (
+        {!!history.length && (
           <details>
             <summary>Previous opening balances</summary>
-            {xpLedger(document).extensions?.map((extension) => (
+            {history.map((extension) => (
               <div key={extension.id}>
                 <p>{new Date(extension.confirmedAt).toLocaleString()}</p>
                 <ul>
@@ -1005,6 +1015,7 @@ export default function CampaignXp({
       )}
       {extending && (
         <XpHistoryExtension
+          sessionId={sessionId}
           document={document}
           onConfirm={onConfirmExtension}
           onClose={() => setExtending(false)}

@@ -10,6 +10,9 @@ import {
 } from '@testing-library/react';
 import EncumbranceApp from '../components/encumbrance/EncumbranceApp';
 import CampaignBanking from '../components/desktop/CampaignBanking';
+import CampaignXp from '../components/desktop/CampaignXp';
+import BankOpeningDialog from '../components/desktop/BankOpeningDialog';
+import { saveXpOpening } from '../helpers/campaignXp';
 import CreateSessionDialog from '../components/desktop/CreateSessionDialog';
 import AddInventoryCharacterDialog from '../components/desktop/AddInventoryCharacterDialog';
 import {
@@ -258,6 +261,12 @@ test('returning inventory creation is optional, empty by default, and copies onl
   fireEvent.change(screen.getByLabelText('Party character'), {
     target: { value: memberIds.absent },
   });
+  const picker = screen.getByLabelText('Starting inventory');
+  expect(within(picker).getAllByRole('option')).toHaveLength(2);
+  expect(within(picker).getAllByRole('option')[1]).toHaveTextContent('Day 3');
+  fireEvent.click(
+    screen.getByLabelText('Show earlier inventories for this character')
+  );
   const source = required(
     earlierInventoryCharacters(doc, 'day4').find(
       (c) => c.sessionId === 'day2' && c.character.id === holderIds.absent
@@ -341,4 +350,134 @@ test('a removed holder with money remains reviewable and can be settled without 
       { name: 'Tal' }
     )
   ).not.toBeInTheDocument();
+});
+
+test('opening dialogs use workspace-session membership and preserve hidden opening records', () => {
+  let doc = membershipCampaign(false);
+  for (const [id, balance] of [
+    [memberIds.retired, 20],
+    [memberIds.absent, null],
+    [memberIds.mira, 13],
+  ] as const) {
+    doc = saveXpOpening(doc, {
+      id: 'opening-' + id,
+      characterId: id,
+      sessionId: 'day2',
+      balance,
+      reason: 'Original opening',
+    });
+  }
+  const change = (fn: (d: typeof doc) => typeof doc) => {
+    const next = fn(doc);
+    validateHistoryTransition(doc, next, '');
+    doc = parseCampaign(serializeCampaign(next));
+    return true;
+  };
+  const xp = (sessionId: string) => (
+    <CampaignXp
+      document={doc}
+      sessionId={sessionId}
+      onChange={change}
+      onConfirmExtension={async () => undefined}
+    />
+  );
+  const hidden = () =>
+    doc.xp?.openings.filter(
+      (o) =>
+        o.characterId === memberIds.retired ||
+        o.characterId === memberIds.absent
+    );
+  const prior = JSON.stringify(hidden());
+  let view = render(xp('day2'));
+  fireEvent.click(screen.getByRole('button', { name: 'Opening balances' }));
+  expect(screen.getByLabelText('Oren opening XP')).toHaveValue(20);
+  expect(screen.queryByLabelText('Eli opening XP')).toBeNull();
+  view.unmount();
+  view = render(xp('day3'));
+  fireEvent.click(screen.getByRole('button', { name: 'Opening balances' }));
+  expect(screen.queryByLabelText('Oren opening XP')).toBeNull();
+  expect(screen.queryByLabelText('Tal opening XP')).toBeNull();
+  expect(screen.getByLabelText('Eli starting session')).toHaveValue('day3');
+  expect(screen.getByLabelText('Mira starting session')).toHaveValue('day2');
+  fireEvent.click(screen.getByText('Set listed unlocked balances to 0'));
+  fireEvent.click(screen.getByText('Save opening balances'));
+  expect(JSON.stringify(hidden())).toBe(prior);
+  view.unmount();
+  const old = doc.banking?.openings.filter(
+    (o) => o.holderId !== holderIds.mira
+  );
+  view = render(
+    <BankOpeningDialog
+      document={doc}
+      sessionId="day3"
+      onClose={() => undefined}
+      onChange={change}
+    />
+  );
+  expect(screen.queryByLabelText('Use Tal opening')).toBeNull();
+  expect(screen.queryByLabelText('Use Oren opening')).toBeNull();
+  expect(screen.getByLabelText('Use Castle Kifu opening')).toBeInTheDocument();
+  fireEvent.click(screen.getByLabelText('Use Mira opening'));
+  fireEvent.click(screen.getByText('Save openings'));
+  expect(
+    doc.banking?.openings.filter((o) => o.holderId !== holderIds.mira)
+  ).toEqual(old);
+  view.unmount();
+  render(
+    <BankOpeningDialog
+      document={{ ...doc, workingInventories: [] }}
+      sessionId="day3"
+      onClose={() => undefined}
+      onChange={change}
+    />
+  );
+  expect(screen.queryAllByRole('checkbox')).toHaveLength(0);
+});
+
+test('typed inventory names offer the latest reliable identity and leave ambiguous histories for explicit selection', () => {
+  const doc = membershipCampaign(false);
+  doc.sessions.push({ id: 'late', label: 'Day 6' });
+  const onChange = jest.fn(() => true);
+  const props = {
+    document: doc,
+    sessionId: 'late',
+    workingId: 'test-work',
+    onChange,
+    onClose: jest.fn(),
+  };
+  const view = render(<AddInventoryCharacterDialog {...props} />);
+  const options = () =>
+    within(screen.getByLabelText('Starting inventory'))
+      .getAllByRole('option')
+      .map((o) => o.textContent);
+  const type = (name: string) =>
+    fireEvent.change(screen.getByLabelText('Name'), {
+      target: { value: name },
+    });
+  type('New traveler');
+  expect(options()).toEqual(['Empty']);
+  type('  tAl ');
+  expect(options()).toEqual(['Empty', 'Day 3 · Tal']);
+  fireEvent.click(
+    screen.getByLabelText('Show earlier inventories for this character')
+  );
+  expect(options()).toEqual(['Empty', 'Day 3 · Tal', 'Day 2 · Tal']);
+  type('');
+  fireEvent.click(screen.getByLabelText('Browse earlier inventory holders'));
+  expect(options().length).toBeGreaterThan(3);
+  view.unmount();
+  const w = doc.workingInventories.find((w) => w.sessionId === 'day2');
+  const c = w?.document.characters.find((c) => c.id === holderIds.absent);
+  if (!c) throw Error('fixture');
+  c.id = 'distinct-tal';
+  render(<AddInventoryCharacterDialog {...props} />);
+  type('Tal');
+  expect(options()).toEqual(['Empty']);
+  fireEvent.click(
+    screen.getByLabelText('Show earlier inventories for this character')
+  );
+  expect(options()).toEqual(['Empty', 'Day 3 · Tal', 'Day 2 · Tal']);
+  expect(screen.getByLabelText('Starting inventory')).toHaveValue('');
+  fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+  expect(onChange).not.toHaveBeenCalled();
 });

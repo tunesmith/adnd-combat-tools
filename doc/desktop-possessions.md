@@ -33,7 +33,9 @@ campaign mode first checkpoints the complete inventory. Roster membership, earli
 sessions and Banking history remain intact.
 
 Campaign Possessions has its own **+ Character**. Choose an empty inventory (the
-default) or explicitly copy one from an earlier session. Copies retain holder/item
+default) or copy the most recent inventory for a returning character. The secondary
+source choice lists older inventories; use **Other inventory character** to browse
+other holders deliberately. Copies retain holder/item
 IDs, container structure, strength, notes and privacy fields, with a full source
 checkpoint. Copying is refused if item IDs already exist elsewhere in the destination;
 choose another source or start empty to avoid duplicating transferred gear.
@@ -46,7 +48,14 @@ independently editable.
 
 ## Banking transactions
 
-Establish known **Opening balances**, including explicit zeros where appropriate.
+**Opening balances** lists the selected session's inventory holders, including storage.
+A holder matched to a roster character appears in their participating, eligible sessions.
+Enter explicit zeros for known zero balances.
+
+For **Income → Add to possessions**, **Day for new stacks** defaults to the number in
+a session label such as `Day 6` or `Day6 — 2025-10-04`. Review or override it before
+saving. For other labels, enter the acquisition day explicitly (zero is valid).
+Credits to an existing stack keep its acquisition day.
 Unrecorded balances remain unknown. Banking compares ledger balances with current
 physical money. A net match does not prove every intermediate event was recorded.
 

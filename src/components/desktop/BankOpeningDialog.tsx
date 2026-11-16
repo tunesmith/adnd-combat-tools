@@ -1,3 +1,5 @@
+import { eligibleSessionProfiles } from '../../helpers/campaignParty';
+import { inventoryMembership } from '../../helpers/campaignInventoryMembership';
 import { inSessionInventoryOrder } from '../../helpers/campaignInventoryOrder';
 import { useRef, useState } from 'react';
 import type { CampaignDocument } from '../../helpers/campaignDocument';
@@ -33,16 +35,19 @@ export default function BankOpeningDialog({
   const working = document.workingInventories.find(
     (w) => w.sessionId === sessionId
   );
+  const eligible = new Set(
+    eligibleSessionProfiles(document, sessionId).map((p) => p.characterId)
+  );
+  const { matched } = inventoryMembership(document, sessionId);
   const holders = inSessionInventoryOrder(
     document,
     sessionId,
-    Array.from(
-      new Map(
-        [...document.workingInventories, ...document.inventoryCheckpoints]
-          .flatMap((w) => bankHolders(w.document))
-          .map((h) => [h.id, h])
-      ).values()
-    ),
+    working
+      ? bankHolders(working.document).filter((h) => {
+          const match = matched.find((m) => m.holderId === h.id);
+          return !match || eligible.has(match.characterId);
+        })
+      : [],
     (h) => h.id
   );
   const [extending, setExtending] = useState(false);
@@ -74,8 +79,18 @@ export default function BankOpeningDialog({
     useState<ReturnType<typeof previewBankExtension>>();
   const operation = useRef<{ fingerprint: string; id: string; at: string }>();
   const drafts = activeBankEntries(ledger.entries).filter(
-    (e) => e.status === 'draft'
+    (e) =>
+      e.status === 'draft' &&
+      e.changes.every((c) => holders.some((h) => h.id === c.holderId))
   );
+  const history = ledger.extensions
+    .map((extension) => ({
+      ...extension,
+      openings: extension.openings.filter((o) =>
+        holders.some((h) => h.id === o.previous.holderId)
+      ),
+    }))
+    .filter((extension) => extension.openings.length);
   const inputs = entries.filter((o) => selected.includes(o.holderId));
   const locked = (holderId: string) =>
     ledger.openings.some((o) => o.holderId === holderId) &&
@@ -309,10 +324,10 @@ export default function BankOpeningDialog({
             />
           </>
         )}
-        {ledger.extensions.length > 0 && (
+        {history.length > 0 && (
           <details>
             <summary>Previous banking openings</summary>
-            {ledger.extensions.map((e) => (
+            {history.map((e) => (
               <div key={e.id}>
                 <p>{new Date(e.at).toLocaleString()}</p>
                 <BankBalances

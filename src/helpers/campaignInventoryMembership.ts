@@ -14,7 +14,7 @@ import {
 } from './campaignWorkingInventory';
 import { canonical, fingerprint } from './campaignSnapshots';
 const clone = <T>(value: T): T => JSON.parse(JSON.stringify(value));
-const nameKey = (value: string) =>
+export const inventoryNameKey = (value: string) =>
   value.normalize('NFKC').trim().replace(/\s+/g, ' ').toLocaleLowerCase();
 export function currentInventoryDocument(
   value: unknown
@@ -30,10 +30,13 @@ export function inventoryMembership(doc: CampaignDocument, sessionId: string) {
   const characters = source.document.characters,
     roster = doc.party?.roster ?? [];
   const matched = characters.flatMap((holder) => {
-    const key = nameKey(holder.name);
-    if (!key || characters.filter((c) => nameKey(c.name) === key).length !== 1)
+    const key = inventoryNameKey(holder.name);
+    if (
+      !key ||
+      characters.filter((c) => inventoryNameKey(c.name) === key).length !== 1
+    )
       return [];
-    const people = roster.filter((c) => nameKey(c.name) === key);
+    const people = roster.filter((c) => inventoryNameKey(c.name) === key);
     return people.length === 1 && people[0]
       ? [{ holderId: holder.id, characterId: people[0].id, name: holder.name }]
       : [];
@@ -120,18 +123,20 @@ export function earlierInventoryCharacters(
 export function returningInventoryId(
   doc: CampaignDocument,
   sessionId: string,
-  name: string
+  name: string,
+  sources = earlierInventoryCharacters(doc, sessionId)
 ) {
-  const key = nameKey(name);
+  const key = inventoryNameKey(name);
   if (
     !key ||
-    (doc.party?.roster.filter((c) => nameKey(c.name) === key).length ?? 0) > 1
+    (doc.party?.roster.filter((c) => inventoryNameKey(c.name) === key).length ??
+      0) > 1
   )
     return undefined;
   const ids = Array.from(
     new Set(
-      earlierInventoryCharacters(doc, sessionId)
-        .filter((c) => nameKey(c.character.name) === nameKey(name))
+      sources
+        .filter((c) => inventoryNameKey(c.character.name) === key)
         .map((c) => c.character.id)
     )
   );

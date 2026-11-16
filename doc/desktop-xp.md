@@ -8,7 +8,8 @@ trained levels, class identities and bonuses.
 
 ## Record and award XP
 
-1. Establish **Opening balances**, including each character's starting session.
+1. Establish **Opening balances** for the selected session's participating, eligible characters.
+   A new opening defaults to **before the selected session**; existing openings keep their dates.
    Blank is unknown, not zero. **Set listed unlocked balances to 0** is an explicit
    choice for known zeros; multiclass openings can hold separate class balances.
 2. Use **+ XP Event** for Monsters, Money or Treasure. Enter facts manually or copy

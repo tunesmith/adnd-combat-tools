@@ -1,5 +1,9 @@
 import ClassXpBalancesFields from './ClassXpBalancesFields';
-import { profileClassLabel, inPartyOrder } from '../../helpers/campaignParty';
+import {
+  profileClassLabel,
+  inPartyOrder,
+  eligibleSessionProfiles,
+} from '../../helpers/campaignParty';
 import { useRef, useState } from 'react';
 import type { CampaignDocument } from '../../helpers/campaignDocument';
 import {
@@ -18,19 +22,28 @@ const amount = (xp: number | null | undefined) =>
 
 export default function XpHistoryExtension({
   document,
+  sessionId,
   onConfirm,
   onClose,
 }: {
   document: CampaignDocument;
+  sessionId: string;
   onConfirm: (
     change: (doc: CampaignDocument) => CampaignDocument
   ) => Promise<void>;
   onClose: () => void;
 }) {
   const xp = xpLedger(document);
-  const drafts = xpExtensionDrafts(document).sort((a, b) =>
-    compareXpAwards(document, a, b)
+  const visible = new Set(
+    eligibleSessionProfiles(document, sessionId).map((p) => p.characterId)
   );
+  const drafts = xpExtensionDrafts(document)
+    .filter((p) =>
+      draftPointRewards(document, p).every((r) =>
+        r.recipients.every((c) => !c.eligible || visible.has(c.characterId))
+      )
+    )
+    .sort((a, b) => compareXpAwards(document, a, b));
   const [pointIds, setPointIds] = useState<string[]>([]);
   const [inputs, setInputs] = useState<XpExtensionRequest['openings']>([]);
   const [preview, setPreview] =
