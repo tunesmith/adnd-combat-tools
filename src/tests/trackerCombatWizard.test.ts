@@ -73,13 +73,13 @@ describe('tracker combat wizard helpers', () => {
       side: 'enemy',
       combatantName: 'Ghoul',
       targetIndices: [0],
-      resolved: false,
+      hasOutcome: false,
     });
     expect(entries[3]).toMatchObject({
       side: 'party',
       combatantName: 'Lodi',
       targetIndices: [1],
-      resolved: true,
+      hasOutcome: true,
       result: 'hit for 4',
     });
   });

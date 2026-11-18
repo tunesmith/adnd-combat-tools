@@ -10,7 +10,7 @@ export interface CombatWizardEntry {
   intention: string;
   result: string;
   targetIndices: number[];
-  resolved: boolean;
+  hasOutcome: boolean;
 }
 
 const parseInitiative = (value: string): number => {
@@ -58,7 +58,7 @@ export const buildCombatWizardEntries = (
       intention: round.partyStates[index]?.action || '',
       result: round.partyStates[index]?.result || '',
       targetIndices: getPartyTargetIndices(round, index),
-      resolved: Boolean(round.partyStates[index]?.result.trim()),
+      hasOutcome: Boolean(round.partyStates[index]?.result.trim()),
     })
   );
 
@@ -71,7 +71,7 @@ export const buildCombatWizardEntries = (
       intention: round.enemyStates[index]?.action || '',
       result: round.enemyStates[index]?.result || '',
       targetIndices: getEnemyTargetIndices(round, index),
-      resolved: Boolean(round.enemyStates[index]?.result.trim()),
+      hasOutcome: Boolean(round.enemyStates[index]?.result.trim()),
     })
   );
 

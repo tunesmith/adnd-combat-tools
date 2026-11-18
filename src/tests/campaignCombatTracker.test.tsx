@@ -21,6 +21,58 @@ import {
 } from '../helpers/trackerState';
 
 afterEach(() => jest.restoreAllMocks());
+test('round review shows recorded results for the current combatant alongside an independent Outcome', () => {
+  jest.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null);
+  const state = createRegisterIntentionsFixtureState();
+  const round = state.rounds[0];
+  if (!round) throw new Error('Missing round');
+  const lodi = round.party[0],
+    gnoll = round.enemies[0];
+  if (!lodi || !gnoll) throw new Error('Missing combatants');
+  const outgoing = {
+    side: 'party' as const,
+    actorKey: lodi.key,
+    actorName: 'Lodi',
+    targetKeys: [gnoll.key],
+    targetLabel: 'Pillar Gnoll',
+    stepKey: null,
+    stepLabel: 'Backstab',
+    text: 'Missed the gnoll.',
+  };
+  const incoming = {
+    side: 'enemy' as const,
+    actorKey: gnoll.key,
+    actorName: 'Pillar Gnoll',
+    targetKeys: [lodi.key],
+    targetLabel: 'Lodi',
+    stepKey: null,
+    stepLabel: 'Attack',
+    text: 'Hit Lodi.',
+  };
+  round.stepResults = [
+    outgoing,
+    incoming,
+    {
+      ...incoming,
+      targetKeys: [],
+      targetLabel: 'Multiple targets',
+      text: 'Unassigned attack.',
+    },
+  ];
+  render(<CombatTracker rememberedState={state} />);
+  fireEvent.click(screen.getByRole('button', { name: 'Review round' }));
+  const dialog = within(screen.getByRole('dialog', { name: 'Review round' }));
+  expect(
+    dialog.getByText('Related results (2)').closest('details')
+  ).toHaveAttribute('open');
+  expect(dialog.getByText(outgoing.text)).toBeVisible();
+  expect(dialog.getByText(incoming.text)).toBeVisible();
+  expect(dialog.queryByText('Unassigned attack.')).toBeNull();
+  expect(dialog.getByLabelText('Outcome')).toHaveValue('');
+  fireEvent.click(dialog.getByRole('button', { name: 'Next' }));
+  expect(dialog.queryByText(/Related results/)).toBeNull();
+});
+
 test('controlled tracker sends complete live edits through campaign validation and never writes browser drafts or URL', () => {
   jest.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null);
   const local = jest.spyOn(Storage.prototype, 'setItem');
@@ -80,8 +132,12 @@ test('controlled tracker sends complete live edits through campaign validation a
   expect(screen.getAllByRole('columnheader', { name: 'Outcome' })).toHaveLength(
     2
   );
-  fireEvent.click(screen.getByRole('button', { name: 'Combat', exact: true }));
-  const combatDialog = within(screen.getByRole('dialog', { name: 'Combat' }));
+  fireEvent.click(
+    screen.getByRole('button', { name: 'Review round', exact: true })
+  );
+  const combatDialog = within(
+    screen.getByRole('dialog', { name: 'Review round' })
+  );
   fireEvent.change(combatDialog.getByLabelText('Outcome'), {
     target: { value: 'Takes 3 damage before acting' },
   });
@@ -91,15 +147,22 @@ test('controlled tracker sends complete live edits through campaign validation a
   fireEvent.click(
     combatDialog.getByRole('button', { name: 'Close', exact: true })
   );
-  fireEvent.click(screen.getByRole('button', { name: 'Combat', exact: true }));
+  fireEvent.click(
+    screen.getByRole('button', { name: 'Review round', exact: true })
+  );
   expect(
-    within(screen.getByRole('dialog', { name: 'Combat' })).getByText('Resolved')
+    within(screen.getByRole('dialog', { name: 'Review round' })).getByText(
+      'Outcome recorded'
+    )
   ).toBeInTheDocument();
   fireEvent.click(
-    within(screen.getByRole('dialog', { name: 'Combat' })).getByRole('button', {
-      name: 'Close',
-      exact: true,
-    })
+    within(screen.getByRole('dialog', { name: 'Review round' })).getByRole(
+      'button',
+      {
+        name: 'Close',
+        exact: true,
+      }
+    )
   );
   fireEvent.click(screen.getByRole('button', { name: /^Backstab/ }));
   const dialog = within(screen.getByRole('dialog', { name: 'Edit Intention' }));

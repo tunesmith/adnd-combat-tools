@@ -1534,8 +1534,6 @@ const CombatTracker = ({
   ] = useState<Record<number, number | undefined>>({});
   const [showCombatWizard, setShowCombatWizard] = useState<boolean>(false);
   const [combatWizardIndex, setCombatWizardIndex] = useState<number>(0);
-  const [combatResolvedOnEntry, setCombatResolvedOnEntry] =
-    useState<boolean>(false);
   const [combatWizardSelectedActionId, setCombatWizardSelectedActionId] =
     useState<string>('');
   const [combatWizardAnchorKeysByRound, setCombatWizardAnchorKeysByRound] =
@@ -2027,10 +2025,6 @@ const CombatTracker = ({
     currentCombatWizardActions.find(
       (action) => action.id === combatWizardSelectedActionId
     ) || currentCombatWizardActions[0];
-  const selectedCombatWizardActionTitle = selectedCombatWizardAction
-    ? getActionSummaryLines(selectedCombatWizardAction, '')[0] ||
-      formatDeclaredAction(selectedCombatWizardAction.declaredAction)
-    : undefined;
   const currentCombatWizardTargetIndices = useMemo<number[]>(() => {
     if (!currentRound || !currentCombatWizardEntry) {
       return [];
@@ -2367,7 +2361,6 @@ const CombatTracker = ({
     setIntentionResolvedOnEntry(false);
     setShowCombatWizard(false);
     setCombatWizardIndex(0);
-    setCombatResolvedOnEntry(false);
     setCellActionAssignmentTarget(undefined);
     setCellActionAssignmentDraftIds([]);
     setCellActionAssignmentError(undefined);
@@ -2408,7 +2401,6 @@ const CombatTracker = ({
   useEffect(() => {
     if (!currentRound || combatWizardEntries.length === 0) {
       setCombatWizardIndex(0);
-      setCombatResolvedOnEntry(false);
       setCombatWizardSelectedActionId('');
       return;
     }
@@ -2417,7 +2409,6 @@ const CombatTracker = ({
       const nextIndex = combatWizardEntries.length - 1;
       const nextEntry = combatWizardEntries[nextIndex];
       setCombatWizardIndex(nextIndex);
-      setCombatResolvedOnEntry(Boolean(nextEntry?.result.trim()));
       setCombatWizardSelectedActionId(
         getDefaultCombatWizardActionId(currentRound, nextEntry)
       );
@@ -3044,7 +3035,6 @@ const CombatTracker = ({
     const nextIndex = anchorIndex >= 0 ? anchorIndex : 0;
     const nextEntry = nextEntries[nextIndex];
     setCombatWizardIndex(nextIndex);
-    setCombatResolvedOnEntry(Boolean(nextEntry?.result.trim()));
     setCombatWizardSelectedActionId(
       getDefaultCombatWizardActionId(currentRound, nextEntry)
     );
@@ -3058,7 +3048,6 @@ const CombatTracker = ({
 
   const navigateCombatWizard = (nextIndex: number) => {
     if (combatWizardEntries.length === 0) {
-      setCombatResolvedOnEntry(false);
       setCombatWizardIndex(0);
       setCombatWizardSelectedActionId('');
       return;
@@ -3069,9 +3058,6 @@ const CombatTracker = ({
       Math.min(combatWizardEntries.length - 1, nextIndex)
     );
 
-    setCombatResolvedOnEntry(
-      Boolean(combatWizardEntries[boundedIndex]?.result.trim())
-    );
     setCombatWizardSelectedActionId(
       getDefaultCombatWizardActionId(
         currentRound,
@@ -3837,7 +3823,6 @@ const CombatTracker = ({
     setIntentionWizardActionError(undefined);
     setShowCombatWizard(false);
     setCombatWizardIndex(0);
-    setCombatResolvedOnEntry(false);
     setCombatWizardSelectedActionId('');
     setCombatWizardAnchorKeysByRound({});
     setAttackDetailTarget(undefined);
@@ -4260,7 +4245,7 @@ const CombatTracker = ({
   const renderRelatedResults = (
     side: TrackerSide,
     actorKey: number,
-    hideEmpty = false
+    view: 'flow' | 'grid' | 'review' = 'flow'
   ) => {
     const results = (currentRound.stepResults || []).filter(
       (result) =>
@@ -4269,11 +4254,16 @@ const CombatTracker = ({
           ? result.actorKey === actorKey
           : result.targetKeys.includes(actorKey))
     );
-    if (hideEmpty && !results.length) return null;
+    if (view !== 'flow' && !results.length) return null;
     return (
       <details
         key={`results-${state.activeRound}-${side}-${actorKey}`}
-        className={styles['roundDisclosure']}
+        open={view === 'review' || undefined}
+        className={
+          view === 'review'
+            ? styles['reviewResults']
+            : styles['roundDisclosure']
+        }
       >
         <summary>Related results ({results.length})</summary>
         {results.length ? (
@@ -4952,7 +4942,7 @@ const CombatTracker = ({
                 disabled={!canOpenCombatWizard}
                 onClick={openCombatWizard}
               >
-                Combat
+                Review round
               </button>
               <button
                 type={'button'}
@@ -5430,7 +5420,7 @@ const CombatTracker = ({
                         {field.key === 'effect' &&
                           renderNextRoundEffect('enemy', enemyIndex)}
                         {field.key === 'result' &&
-                          renderRelatedResults('enemy', combatant.key, true)}
+                          renderRelatedResults('enemy', combatant.key, 'grid')}
                       </td>
                     );
                   })}
@@ -5491,7 +5481,7 @@ const CombatTracker = ({
                         {field.key === 'effect' &&
                           renderNextRoundEffect('party', partyIndex)}
                         {field.key === 'result' &&
-                          renderRelatedResults('party', combatant.key, true)}
+                          renderRelatedResults('party', combatant.key, 'grid')}
                       </td>
                     );
                   })}
@@ -6558,15 +6548,9 @@ const CombatTracker = ({
             onClick={(event) => event.stopPropagation()}
           >
             <div id={'combat-wizard-title'} className={styles['modalTitle']}>
-              Combat
+              Review round
             </div>
-            <div
-              className={
-                combatResolvedOnEntry
-                  ? `${styles['modalBody']} ${styles['combatWizardBodyResolved']}`
-                  : styles['modalBody']
-              }
-            >
+            <div className={styles['modalBody']}>
               <div className={styles['combatWizardMeta']}>
                 <span className={styles['combatWizardBadge']}>
                   {currentCombatWizardEntry.side === 'enemy'
@@ -6576,9 +6560,9 @@ const CombatTracker = ({
                 <span className={styles['combatWizardProgress']}>
                   {combatWizardIndex + 1} of {combatWizardEntries.length}
                 </span>
-                {combatResolvedOnEntry ? (
-                  <span className={styles['combatWizardResolvedBadge']}>
-                    Resolved
+                {currentCombatWizardEntry.hasOutcome ? (
+                  <span className={styles['combatWizardOutcomeBadge']}>
+                    Outcome recorded
                   </span>
                 ) : null}
                 <div className={styles['combatWizardNav']}>
@@ -6655,6 +6639,11 @@ const CombatTracker = ({
                   </div>
                 </>
               )}
+              {renderRelatedResults(
+                currentCombatWizardEntry.side,
+                currentCombatWizardEntry.combatantKey,
+                'review'
+              )}
               <label
                 className={styles['modalLabel']}
                 htmlFor={'combat-wizard-outcome'}
@@ -6671,37 +6660,33 @@ const CombatTracker = ({
                 }
                 placeholder={'hits for 6; takes 3 damage; fails a save...'}
               />
-              <label
-                className={styles['modalLabel']}
-                htmlFor={'combat-wizard-effect'}
-              >
-                Current Effect
-              </label>
-              <AutoHeightTextarea
-                id={'combat-wizard-effect'}
-                className={styles['combatWizardTextarea']}
-                value={
-                  currentCombatWizardEntry.side === 'enemy'
-                    ? currentRound.enemyStates[currentCombatWizardEntry.index]
-                        ?.effect || ''
-                    : currentRound.partyStates[currentCombatWizardEntry.index]
-                        ?.effect || ''
-                }
-                onChange={(value) =>
-                  updateCombatWizardEffect(currentCombatWizardEntry, value)
-                }
-                placeholder={'hopeless 1/9, slowed 3/8, bless, stoneskin...'}
-              />
-              {renderNextRoundEffect(
-                currentCombatWizardEntry.side,
-                currentCombatWizardEntry.index
-              )}
-              <div className={styles['modalLabel']}>Targets</div>
-              {selectedCombatWizardActionTitle ? (
-                <div className={styles['combatWizardTargetScope']}>
-                  {selectedCombatWizardActionTitle}
-                </div>
-              ) : null}
+              <div className={styles['reviewEffect']}>
+                <label
+                  className={styles['modalLabel']}
+                  htmlFor={'combat-wizard-effect'}
+                >
+                  Current Effect
+                </label>
+                <AutoHeightTextarea
+                  id={'combat-wizard-effect'}
+                  className={styles['combatWizardTextarea']}
+                  value={
+                    currentCombatWizardEntry.side === 'enemy'
+                      ? currentRound.enemyStates[currentCombatWizardEntry.index]
+                          ?.effect || ''
+                      : currentRound.partyStates[currentCombatWizardEntry.index]
+                          ?.effect || ''
+                  }
+                  onChange={(value) =>
+                    updateCombatWizardEffect(currentCombatWizardEntry, value)
+                  }
+                  placeholder={'hopeless 1/9, slowed 3/8, bless, stoneskin...'}
+                />
+                {renderNextRoundEffect(
+                  currentCombatWizardEntry.side,
+                  currentCombatWizardEntry.index
+                )}
+              </div>
               {renderCombatTargetEditor(
                 currentCombatWizardEntry,
                 currentCombatWizardTargetIndices,

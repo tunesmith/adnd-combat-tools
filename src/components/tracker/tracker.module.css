@@ -1557,7 +1557,7 @@
 }
 
 .combatWizardBadge,
-.combatWizardResolvedBadge {
+.combatWizardOutcomeBadge {
   display: inline-block;
   border: 1px solid var(--copper);
   color: #111;
@@ -1571,7 +1571,7 @@
   background: rgba(175, 127, 0, 0.08);
 }
 
-.combatWizardResolvedBadge {
+.combatWizardOutcomeBadge {
   background: rgba(84, 111, 58, 0.14);
 }
 
@@ -1587,10 +1587,6 @@
   font-weight: 700;
   line-height: 1.15;
   margin-bottom: 0.45rem;
-}
-
-.combatWizardBodyResolved {
-  opacity: 0.82;
 }
 
 .combatWizardReadOnlyValue {
@@ -1627,11 +1623,79 @@
   box-sizing: border-box;
 }
 
-.combatWizardTargetScope {
-  margin: -0.2rem 0.75rem 0.45rem;
-  color: rgba(17, 17, 17, 0.78);
-  font-size: 0.95rem;
-  line-height: 1.2;
+.reviewResults {
+  margin: 0.45rem 0.75rem 0;
+  padding: 0.4rem 0.55rem;
+  border-left: 2px solid var(--copper);
+  background: rgba(175, 127, 0, 0.06);
+  color: #222;
+  overflow-wrap: anywhere;
+}
+
+.reviewResults summary,
+.reviewEffect summary {
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.reviewResults ul {
+  list-style: none;
+  margin: 0.3rem 0 0;
+  padding: 0;
+  max-height: 11rem;
+  overflow-y: auto;
+}
+
+.reviewResults li {
+  padding: 0.25rem 0;
+  font-size: 0.9rem;
+}
+
+.reviewResults li + li {
+  border-top: 1px solid rgba(172, 114, 35, 0.25);
+}
+
+.reviewResults li strong + div {
+  display: inline;
+  margin-left: 0.5rem;
+  color: #594c3b;
+}
+
+.reviewResults .stepResultText {
+  font: 1rem/1.25 'Sura', serif;
+}
+
+.reviewEffect {
+  margin: 0 0.75rem 0.9rem;
+}
+
+.reviewEffect .modalLabel {
+  padding-left: 0;
+}
+
+.reviewEffect .combatWizardTextarea,
+.reviewEffect .queuedEffectInput {
+  display: block;
+  width: 100%;
+  margin: 0;
+}
+
+.reviewEffect .roundDisclosure {
+  margin: 0;
+  padding: 0.4rem 0.5rem;
+  border: 1px solid var(--copper);
+  border-top: 0;
+  background: rgba(175, 127, 0, 0.08);
+  color: #332b20;
+}
+
+.reviewEffect .queuedEffectInput {
+  margin-top: 0.35rem;
+  padding: 0.4rem;
+  border: 1px solid var(--copper);
+  background: var(--eggshell);
+  color: #111;
 }
 
 .combatWizardEmptyTargets {
