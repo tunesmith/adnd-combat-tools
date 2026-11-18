@@ -131,14 +131,7 @@ test('workspace starts the selected continuation atomically, edits notes indepen
     within(screen.getByRole('navigation', { name: 'Session views' }))
       .getAllByRole('button')
       .map((button) => button.textContent)
-  ).toEqual([
-    'Session',
-    'References',
-    'Banking',
-    'Possessions',
-    'Combats',
-    'XP',
-  ]);
+  ).toEqual(['Overview', 'Reference', 'Ledger', 'Gear', 'Combat', 'XP']);
   fireEvent.change(screen.getByRole('combobox', { name: 'Version' }), {
     target: { value: 'source-history' },
   });
@@ -176,7 +169,12 @@ test('workspace starts the selected continuation atomically, edits notes indepen
   );
   fireEvent.click(screen.getByRole('button', { name: 'Session One' }));
   expect(screen.getByLabelText('Session notes')).toHaveValue('Source\nnotes');
-  fireEvent.click(screen.getByRole('button', { name: 'Combats', exact: true }));
+  fireEvent.click(
+    within(screen.getByRole('navigation', { name: 'Session views' })).getByRole(
+      'button',
+      { name: 'Combat', exact: true }
+    )
+  );
   expect(screen.getByRole('combobox', { name: 'Version' })).toHaveValue(
     'source-history'
   );
@@ -204,7 +202,12 @@ test('workspace starts the selected continuation atomically, edits notes indepen
   await waitFor(() =>
     expect(native.document?.sessions[2]?.label).toBe('Archive')
   );
-  fireEvent.click(screen.getByRole('button', { name: 'Combats', exact: true }));
+  fireEvent.click(
+    within(screen.getByRole('navigation', { name: 'Session views' })).getByRole(
+      'button',
+      { name: 'Combat', exact: true }
+    )
+  );
   fireEvent.click(screen.getByRole('button', { name: '+ Encounter' }));
   expect(screen.getByLabelText('Name')).toHaveFocus();
   expect(screen.getByLabelText('Start with')).toHaveValue('');

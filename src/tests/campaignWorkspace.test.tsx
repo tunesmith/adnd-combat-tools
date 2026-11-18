@@ -107,7 +107,7 @@ test('campaign-controlled edits survive navigation, and shortcuts do not steal t
     altKey: true,
   });
   expect(
-    screen.getByRole('button', { name: 'Possessions', exact: true })
+    screen.getByRole('button', { name: 'Gear', exact: true })
   ).toHaveAttribute('aria-pressed', 'true');
   fireEvent.keyDown(window, { key: 'Escape' });
   fireEvent.keyDown(window, {
@@ -118,12 +118,12 @@ test('campaign-controlled edits survive navigation, and shortcuts do not steal t
   });
   await waitFor(() =>
     expect(
-      screen.getByRole('button', { name: 'Combats', exact: true })
+      within(
+        screen.getByRole('navigation', { name: 'Session views' })
+      ).getByRole('button', { name: 'Combat', exact: true })
     ).toHaveAttribute('aria-pressed', 'true')
   );
-  fireEvent.click(
-    screen.getByRole('button', { name: 'Possessions', exact: true })
-  );
+  fireEvent.click(screen.getByRole('button', { name: 'Gear', exact: true }));
   await screen.findByRole('button', { name: 'Edit Blue lantern stones' });
   fireEvent.click(
     screen.getByRole('button', { name: 'Edit Blue lantern stones' })
@@ -139,7 +139,12 @@ test('campaign-controlled edits survive navigation, and shortcuts do not steal t
     )?.quantity
   ).toBe(6);
   fireEvent.keyDown(window, { key: 'Escape' });
-  fireEvent.click(screen.getByRole('button', { name: 'Combats', exact: true }));
+  fireEvent.click(
+    within(screen.getByRole('navigation', { name: 'Session views' })).getByRole(
+      'button',
+      { name: 'Combat', exact: true }
+    )
+  );
   fireEvent.click(screen.getByRole('button', { name: 'Gate', exact: true }));
   fireEvent.change(
     screen.getByPlaceholderText(
@@ -154,10 +159,13 @@ test('campaign-controlled edits survive navigation, and shortcuts do not steal t
     ),
     { target: { value: 'Bridge edit retained' } }
   );
+  fireEvent.click(screen.getByRole('button', { name: 'Gear', exact: true }));
   fireEvent.click(
-    screen.getByRole('button', { name: 'Possessions', exact: true })
+    within(screen.getByRole('navigation', { name: 'Session views' })).getByRole(
+      'button',
+      { name: 'Combat', exact: true }
+    )
   );
-  fireEvent.click(screen.getByRole('button', { name: 'Combats', exact: true }));
   fireEvent.click(screen.getByRole('button', { name: 'Gate', exact: true }));
   expect(
     screen.getByPlaceholderText(
@@ -197,7 +205,9 @@ test('campaign-controlled edits survive navigation, and shortcuts do not steal t
     expect(native.document?.title).toBe('Edited synthetic title')
   );
   expect(native.document?.notes).toBe('Campaign-wide note');
-  fireEvent.click(screen.getByRole('button', { name: 'Session', exact: true }));
+  fireEvent.click(
+    screen.getByRole('button', { name: 'Overview', exact: true })
+  );
   const overview = await screen.findByRole('region', {
     name: 'Session overview',
   });

@@ -606,11 +606,11 @@ export default function DesktopWorkspace() {
             <nav className={styles['navigation']} aria-label="Session views">
               {(
                 [
-                  ['session', 'Session'],
-                  ['party', 'References'],
-                  ['banking', 'Banking'],
-                  ['possessions', 'Possessions'],
-                  ['combats', 'Combats'],
+                  ['session', 'Overview'],
+                  ['party', 'Reference'],
+                  ['banking', 'Ledger'],
+                  ['possessions', 'Gear'],
+                  ['combats', 'Combat'],
                   ['xp', 'XP'],
                 ] as const
               ).map(([id, label]) => (
