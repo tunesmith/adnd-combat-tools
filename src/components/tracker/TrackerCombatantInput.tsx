@@ -3,7 +3,10 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ChangeEvent, FocusEvent } from 'react';
 import type { CSSObjectWithLabel, MultiValue, SingleValue } from 'react-select';
 import Select from 'react-select';
-import { getTrackerCombatantHeaderDisplay } from '../../helpers/trackerCombatantDisplay';
+import {
+  getTrackerActiveOffHandWeapon,
+  getTrackerCombatantHeaderDisplay,
+} from '../../helpers/trackerCombatantDisplay';
 import customStyles from '../../helpers/selectCustomStyles';
 import {
   DEFAULT_MISSILE_INITIATIVE_ADJUSTMENT,
@@ -850,6 +853,14 @@ const TrackerCombatantInput = ({
                     onBlur={handleAttacksPerRoutineBlur}
                   />
                 </div>
+                {getTrackerActiveOffHandWeapon(draft) !== undefined && (
+                  <p
+                    className={`${styles['modalHint']} ${styles['combatantFormHint']}`}
+                  >
+                    Two-weapon melee uses at least two attacks per routine. The
+                    second attack uses the off hand.
+                  </p>
+                )}
                 {movementSuppressesPositiveReactionInitiativeBonuses(
                   movementRateForDisplay
                 ) && missileInitiativeAdjustment > 0 ? (

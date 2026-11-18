@@ -19,7 +19,10 @@ export type InitiativeDeclaredAction =
   | 'magical-device'
   | 'spell-casting';
 
+export type InitiativeAttackHand = 'main' | 'offHand';
+
 interface InitiativeAttackRoutineComponent {
+  hand?: InitiativeAttackHand;
   id: string;
   order: number;
   label: string;
@@ -105,6 +108,7 @@ export interface InitiativeScenarioDraftCombatant {
   attacksPerRoutine?: number;
   attackRoutineCount?: number;
   weaponId: number;
+  offHandWeaponId?: number;
   intention?: string;
   result?: string;
   targetCombatantKeys?: number[];
@@ -226,6 +230,7 @@ export interface InitiativeRoundResolution {
 }
 
 export interface InitiativeAttackNode {
+  hand?: InitiativeAttackHand;
   id: string;
   combatantId: string;
   targetId?: string;

@@ -84,7 +84,9 @@ const buildAttackRoutine = (
   declaredAction: InitiativeScenarioCombatant['declaredAction'],
   weaponType: InitiativeWeaponType,
   fireRate: number | undefined,
-  attacksPerRoutine: number | undefined
+  attacksPerRoutine: number | undefined,
+  primaryWeaponName: string,
+  offHandWeaponId?: number
 ): InitiativeAttackRoutine => {
   if (declaredAction === 'none') {
     return {
@@ -156,11 +158,39 @@ const buildAttackRoutine = (
     fireRate,
     attacksPerRoutine
   );
-  const components = Array.from({ length: attackCount }, (_, index) => ({
-    id: `attack-${index + 1}`,
-    order: index + 1,
-    label: `attack ${index + 1}`,
-  }));
+  const usesBothHands =
+    offHandWeaponId !== undefined &&
+    weaponType !== 'missile' &&
+    (declaredAction === 'open-melee' ||
+      declaredAction === 'close' ||
+      declaredAction === 'charge');
+  const count = usesBothHands ? Math.max(2, attackCount) : attackCount;
+  const components: InitiativeAttackRoutine['components'] = Array.from(
+    { length: count },
+    (_, index) => {
+      const order = index + 1;
+      if (!usesBothHands)
+        return { id: `attack-${order}`, order, label: `attack ${order}` };
+      if (order === 2) {
+        const weapon =
+          getWeaponInfo(offHandWeaponId)?.name ?? `Weapon ${offHandWeaponId}`;
+        return {
+          id: `off-hand-${offHandWeaponId}`,
+          order,
+          hand: 'offHand',
+          label: `Off-hand · ${weapon}`,
+        };
+      }
+      return {
+        id: `attack-${order}`,
+        order,
+        hand: 'main',
+        label: `Main hand · ${primaryWeaponName}${
+          order > 2 ? ` (attack ${order})` : ''
+        }`,
+      };
+    }
+  );
 
   return {
     id: `routine:${combatantId}:1`,
@@ -271,6 +301,7 @@ const buildScenarioCombatants = (
 ): InitiativeScenarioCombatant[] =>
   combatants.flatMap((combatant, index) => {
     const weaponInfo = getWeaponInfo(combatant.weaponId);
+    const weaponName = weaponInfo?.name || `Weapon ${combatant.weaponId}`;
     const weaponType = getInitiativeWeaponType(weaponInfo?.weaponType);
     const combatantName = getCombatantName(combatant.name, side, index);
 
@@ -345,7 +376,7 @@ const buildScenarioCombatants = (
         activationSegments: sharedActivationSegments,
         castingSegments: sharedCastingSegments,
         weaponId: combatant.weaponId,
-        weaponName: weaponInfo?.name || `Weapon ${combatant.weaponId}`,
+        weaponName,
         weaponType,
         weaponLength:
           weaponInfo?.weaponType === 'melee' ? weaponInfo.length : undefined,
@@ -366,7 +397,9 @@ const buildScenarioCombatants = (
           weaponInfo?.weaponType === 'missile'
             ? weaponInfo.fireRate
             : undefined,
-          combatant.attacksPerRoutine
+          combatant.attacksPerRoutine,
+          weaponName,
+          combatant.offHandWeaponId
         ),
         attackRoutineCount:
           declaredAction === 'open-melee' && weaponType !== 'missile'

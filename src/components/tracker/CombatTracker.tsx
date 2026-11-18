@@ -4010,7 +4010,8 @@ const CombatTracker = ({
     partyIndex: number,
     style?: CSSProperties,
     allowVisibilityToggle = true,
-    displayMode: 'both' | 'enemyOnly' | 'partyOnly' = 'both'
+    displayMode: 'both' | 'enemyOnly' | 'partyOnly' = 'both',
+    attackHand?: TrackerAttackHand
   ) => {
     const enemyCombatant = currentRound.enemies[enemyIndex];
     const partyCombatant = currentRound.party[partyIndex];
@@ -4049,6 +4050,7 @@ const CombatTracker = ({
         partyToEnemyActionAssignmentLabel={partyAssignmentLabel}
         allowVisibilityToggle={!readOnly && allowVisibilityToggle}
         displayMode={displayMode}
+        attackHand={attackHand}
         onEnemyToPartyActionAssignmentOpen={
           enemyAssignmentLabel
             ? () =>
@@ -4380,7 +4382,8 @@ const CombatTracker = ({
   const renderCombatTargetEditor = (
     scope: CombatTargetEditorScope,
     targetIndices: number[],
-    selectedAction: TrackerActionDeclaration | undefined
+    selectedAction: TrackerActionDeclaration | undefined,
+    attackHand?: TrackerAttackHand
   ) => {
     if (targetIndices.length === 0) {
       const message =
@@ -4430,7 +4433,8 @@ const CombatTracker = ({
                     partyIndex,
                     undefined,
                     false,
-                    'enemyOnly'
+                    'enemyOnly',
+                    attackHand
                   )
                 )}
               </tr>
@@ -4538,7 +4542,8 @@ const CombatTracker = ({
                     scope.index,
                     undefined,
                     false,
-                    'partyOnly'
+                    'partyOnly',
+                    attackHand
                   )}
                   <td
                     className={`${styles['combatWizardHpCell']} ${styles['combatWizardHpCellParty']}`}
@@ -4925,7 +4930,8 @@ const CombatTracker = ({
                         {renderCombatTargetEditor(
                           selectedCombatFlowTargetScope,
                           selectedCombatFlowTargetIndices,
-                          selectedCombatFlowAction
+                          selectedCombatFlowAction,
+                          selectedCombatFlowNode.hand ?? 'main'
                         )}
                       </div>
                     ) : (
@@ -6103,7 +6109,14 @@ const CombatTracker = ({
                 ) : null}
               </dl>
               <div className={styles['attackDetailResult']}>
-                Needs {selectedAttackDetail.toHit}+ on d20
+                {selectedAttackHasOffHand ? 'Base to hit: ' : 'Needs '}
+                {selectedAttackDetail.toHit}+ on d20
+                {selectedAttackHasOffHand && (
+                  <p className={styles['modalHint']}>
+                    For two-weapon attacks, apply hand and Dexterity modifiers
+                    to your roll.
+                  </p>
+                )}
               </div>
             </div>
             <div className={styles['modalActions']}>

@@ -61,7 +61,7 @@ export const getTrackerActiveOffHandWeapon = (
 ): number | undefined =>
   getWeaponInfo(combatant.weapon)?.weaponType === 'missile'
     ? undefined
-    : combatant.offHandWeapon;
+    : combatant.offHandWeapon || undefined;
 
 export const getTrackerCombatantHeaderDisplay = (
   combatant: TrackerCombatant,
@@ -82,6 +82,10 @@ export const getTrackerCombatantHeaderDisplay = (
   const weaponLabel =
     getWeaponInfo(combatant.weapon)?.name || '(No weapon selected)';
   const offHandWeapon = getTrackerActiveOffHandWeapon(combatant);
+  const meleeAttackCount = Math.max(
+    combatant.attacksPerRoutine || 1,
+    offHandWeapon === undefined ? 1 : 2
+  );
   const offHandWeaponLabel = offHandWeapon
     ? getWeaponInfo(offHandWeapon)?.name
     : undefined;
@@ -106,9 +110,7 @@ export const getTrackerCombatantHeaderDisplay = (
           ]
         : []),
       weaponLabel,
-      ...((combatant.attacksPerRoutine || 1) > 1
-        ? [`${combatant.attacksPerRoutine} attacks/routine`]
-        : []),
+      ...(meleeAttackCount > 1 ? [`${meleeAttackCount} attacks/routine`] : []),
       ...(offHandWeaponLabel ? [offHandWeaponLabel] : []),
     ],
   };

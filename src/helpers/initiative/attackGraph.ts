@@ -78,33 +78,45 @@ const createNode = (
   placement?: InitiativeAttackNode['placement'],
   routineNumber?: number,
   componentNumber?: number
-): InitiativeAttackNode => ({
-  id:
-    kind === 'contact'
-      ? getContactNodeId(combatant.id)
-      : kind === 'movement-completion'
-      ? getMovementCompletionNodeId(combatant.id)
-      : kind === 'spell-start'
-      ? getSpellStartNodeId(combatant.id)
-      : kind === 'spell-completion'
-      ? getSpellCompletionNodeId(combatant.id)
-      : getAttackNodeId(combatant.id, attackNumber),
-  combatantId: combatant.id,
-  targetId,
-  routineId: combatant.attackRoutine.id,
-  componentId,
-  side: combatant.side,
-  attackNumber,
-  routineNumber,
-  componentNumber,
-  label,
-  actionLabel: combatant.actionLabel,
-  source,
-  kind,
-  segment,
-  segmentReason,
-  placement,
-});
+): InitiativeAttackNode => {
+  const hand =
+    source === 'timing-bonus'
+      ? combatant.attackRoutine.components[0]?.hand
+      : componentNumber !== undefined
+      ? combatant.attackRoutine.components[componentNumber - 1]?.hand
+      : undefined;
+  return {
+    ...(hand ? { hand } : {}),
+    id:
+      kind === 'contact'
+        ? getContactNodeId(combatant.id)
+        : kind === 'movement-completion'
+        ? getMovementCompletionNodeId(combatant.id)
+        : kind === 'spell-start'
+        ? getSpellStartNodeId(combatant.id)
+        : kind === 'spell-completion'
+        ? getSpellCompletionNodeId(combatant.id)
+        : getAttackNodeId(combatant.id, attackNumber),
+    combatantId: combatant.id,
+    targetId,
+    routineId: combatant.attackRoutine.id,
+    componentId,
+    side: combatant.side,
+    attackNumber,
+    routineNumber,
+    componentNumber,
+    label:
+      hand && source === 'timing-bonus'
+        ? `Main hand · ${label} (speed bonus)`
+        : label,
+    actionLabel: combatant.actionLabel,
+    source,
+    kind,
+    segment,
+    segmentReason,
+    placement,
+  };
+};
 
 // Contact allows one routine. Each of its melee components still gets a roll.
 const createContactAttackNodes = (

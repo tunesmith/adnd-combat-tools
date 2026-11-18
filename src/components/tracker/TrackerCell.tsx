@@ -25,6 +25,7 @@ interface TrackerCellProps {
     hand: TrackerAttackHand
   ) => void;
   allowVisibilityToggle?: boolean;
+  attackHand?: TrackerAttackHand;
   displayMode?: 'both' | 'enemyOnly' | 'partyOnly';
   style?: CSSProperties;
 }
@@ -47,6 +48,7 @@ const TrackerCell = ({
   onAttackDetailOpen,
   allowVisibilityToggle = true,
   displayMode = 'both',
+  attackHand,
   style,
 }: TrackerCellProps) => {
   const rowTargetArmor = expandedArmorTypes.find(
@@ -155,15 +157,18 @@ const TrackerCell = ({
     offHandToHit?: number
   ) => (
     <span className={styles['cellEntryLabels']}>
-      {renderToHitLabel(
-        mainToHit,
-        direction,
-        'main',
-        `Show ${sideLabel} main-hand attack details`
-      )}
-      {offHandToHit !== undefined ? (
+      {attackHand !== 'offHand' &&
+        renderToHitLabel(
+          mainToHit,
+          direction,
+          'main',
+          `Show ${sideLabel} main-hand attack details`
+        )}
+      {attackHand !== 'main' && offHandToHit !== undefined ? (
         <>
-          <span className={styles['cellEntryLabelSeparator']}>/</span>
+          {!attackHand && (
+            <span className={styles['cellEntryLabelSeparator']}>/</span>
+          )}
           {renderToHitLabel(
             offHandToHit,
             direction,

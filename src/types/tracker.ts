@@ -4,7 +4,7 @@ import type {
   InitiativeTimingOverride,
 } from './initiative';
 
-export type TrackerAttackHand = 'main' | 'offHand';
+export type { InitiativeAttackHand as TrackerAttackHand } from './initiative';
 export type TrackerActionSide = 'party' | 'enemy';
 export type TrackerActionDirection = 'partyToEnemy' | 'enemyToParty';
 

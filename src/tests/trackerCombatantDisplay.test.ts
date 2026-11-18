@@ -30,6 +30,7 @@ describe('tracker combatant display', () => {
       'No armor',
       'AC 10 · MV 12"',
       'Sword, short',
+      '2 attacks/routine',
       'Dagger (Held)',
     ]);
   });

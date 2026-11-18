@@ -1,3 +1,4 @@
+import { getTrackerActiveOffHandWeapon } from '../trackerCombatantDisplay';
 import { buildInitiativeScenario } from './scenario';
 import type {
   InitiativeScenario,
@@ -69,6 +70,7 @@ export const buildInitiativeScenarioFromTrackerRound = (
       combatantKey: combatant.key,
       name: combatant.name,
       weaponId: combatant.weapon,
+      offHandWeaponId: getTrackerActiveOffHandWeapon(combatant),
       movementRate: combatant.movementRate,
       missileInitiativeAdjustment: combatant.missileInitiativeAdjustment,
       attacksPerRoutine: combatant.attacksPerRoutine,
@@ -82,6 +84,7 @@ export const buildInitiativeScenarioFromTrackerRound = (
       combatantKey: combatant.key,
       name: combatant.name,
       weaponId: combatant.weapon,
+      offHandWeaponId: getTrackerActiveOffHandWeapon(combatant),
       movementRate: combatant.movementRate,
       missileInitiativeAdjustment: combatant.missileInitiativeAdjustment,
       attacksPerRoutine: combatant.attacksPerRoutine,
