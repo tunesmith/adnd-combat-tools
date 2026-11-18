@@ -4664,6 +4664,13 @@ const CombatTracker = ({
             </button>
           </div>
         </div>
+        {resolvedInitiativeRound.viewModel.chargeDefenseWarnings.map(
+          (warning, index) => (
+            <p key={index} className={styles['combatFlowStartNotice']}>
+              {warning}
+            </p>
+          )
+        )}
         <div className={styles['combatFlowBody']}>
           <div className={styles['combatFlowReadyPane']}>
             <div className={styles['combatFlowPaneTitle']}>Ready Actions</div>

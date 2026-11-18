@@ -34,6 +34,7 @@ interface InitiativeResolutionCardViewModel {
 
 export interface InitiativeRoundResolutionViewModel {
   cards: InitiativeResolutionCardViewModel[];
+  chargeDefenseWarnings: string[];
   combatantNameById: Record<string, string>;
 }
 
@@ -502,6 +503,10 @@ const getMovementSummary = (
     )} on segment ${movementResolution.contactSegment}.`;
   }
 
+  if (movementResolution.unassignedChargeDefense) {
+    return `${combatantName} reaches ${targetName} on segment ${movementResolution.contactSegment}. ${targetName} has multiple melee targets. The return routine awaits a single declared opponent.`;
+  }
+
   const directMissileChargeContext = getDirectMissileChargeContext(
     movementResolution,
     combatantById
@@ -515,6 +520,9 @@ const getMovementSummary = (
   }
 
   if (movementResolution.action === 'charge') {
+    if (movementResolution.firstStrike === undefined) {
+      return `${combatantName} reaches ${targetName} on segment ${movementResolution.contactSegment}. ${targetName} has no melee attack declared against ${combatantName}.`;
+    }
     if (movementResolution.firstStrike === 'attacker') {
       return `${combatantName} reaches ${targetName} on segment ${movementResolution.contactSegment} and can strike on the charge. The charging attacker currently has the longer reach, so ${combatantName} attacks first at contact.`;
     }
@@ -1009,8 +1017,22 @@ export const buildInitiativeRoundResolutionViewModel = (
     ...buildSpellCastingCards(scenario, combatantNameById, combatantById),
   ].filter((card): card is InitiativeResolutionCardViewModel => Boolean(card));
 
+  const pendingDefenders = new Set(
+    resolution.movementResolutions.flatMap((movement) =>
+      movement.unassignedChargeDefense && movement.targetId
+        ? [movement.targetId]
+        : []
+    )
+  );
   return {
     cards,
+    chargeDefenseWarnings: Array.from(
+      pendingDefenders,
+      (id) =>
+        `Choose one melee target in ${
+          combatantNameById[id] || id
+        }’s declaration to schedule the response to the charge.`
+    ),
     combatantNameById,
   };
 };

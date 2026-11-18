@@ -106,36 +106,32 @@ const createNode = (
   placement,
 });
 
-const createRoutineAttackNode = (
+// Contact allows one routine. Each of its melee components still gets a roll.
+const createContactAttackNodes = (
   combatant: InitiativeScenarioCombatant,
-  segment?: number,
-  targetId?: string,
-  segmentReason?: InitiativeAttackNode['segmentReason'],
-  placement?: InitiativeAttackNode['placement']
-): InitiativeAttackNode => {
-  const timingBasisComponent =
-    combatant.attackRoutine.components.find(
-      (component) =>
-        component.id === combatant.attackRoutine.timingBasisComponentId
-    ) || combatant.attackRoutine.components[0];
-
-  if (!timingBasisComponent) {
-    throw new Error(`Missing timing basis component for ${combatant.id}`);
-  }
-
-  return createNode(
-    combatant,
-    timingBasisComponent.id,
-    timingBasisComponent.order,
-    timingBasisComponent.label,
-    'routine-component',
-    'attack',
-    segment,
-    targetId,
-    segmentReason,
-    placement,
-    1,
-    timingBasisComponent.order
+  segment: number,
+  targetId: string,
+  placement: InitiativeAttackNode['placement']
+): InitiativeAttackNode[] => {
+  const components =
+    combatant.weaponType === 'missile'
+      ? combatant.attackRoutine.components.slice(0, 1)
+      : combatant.attackRoutine.components;
+  return components.map((component) =>
+    createNode(
+      combatant,
+      component.id,
+      component.order,
+      component.label,
+      'routine-component',
+      'attack',
+      segment,
+      targetId,
+      undefined,
+      placement,
+      1,
+      component.order
+    )
   );
 };
 
@@ -195,16 +191,26 @@ const hasRegisteredCombatAction = (
 const hasInvalidOpenMeleeOpposition = (
   combatant: InitiativeScenarioCombatant,
   movementResolutionByCombatantId: Map<string, InitiativeMovementResolution>
-): boolean =>
-  combatant.declaredAction === 'open-melee' &&
-  combatant.targetIds.some((targetId) => {
-    const targetMovementResolution =
-      movementResolutionByCombatantId.get(targetId);
-    return (
-      targetMovementResolution?.reason === 'invalid-open-melee-target' &&
-      targetMovementResolution.targetId === combatant.id
-    );
-  });
+): boolean => {
+  if (combatant.declaredAction !== 'open-melee' || !combatant.targetIds.length)
+    return false;
+  const opposingMoves = combatant.targetIds.map((id) =>
+    movementResolutionByCombatantId.get(id)
+  );
+  return (
+    opposingMoves.some(
+      (move) =>
+        move?.reason === 'invalid-open-melee-target' &&
+        move.targetId === combatant.id
+    ) ||
+    opposingMoves.every(
+      (move) =>
+        move?.action === 'charge' &&
+        move.reason === 'no-contact' &&
+        move.targetId === combatant.id
+    )
+  );
+};
 
 const createContactNode = (
   combatant: InitiativeScenarioCombatant,
@@ -1368,15 +1374,19 @@ export const buildInitiativeAttackGraph = (
       return;
     }
 
-    const attackerAttackNode = createRoutineAttackNode(
+    const attackerNodes = createContactAttackNodes(
       attacker,
       movementResolution.contactSegment,
-      undefined,
-      undefined,
+      target.id,
       createMovementAttackPlacement(attacker, movementResolution)
     );
-    addNode(nodesById, attackerAttackNode);
-    movementHandledCombatantIdSet.add(attacker.id);
+    attackerNodes.forEach((node) => addNode(nodesById, node));
+
+    if (movementResolution.unassignedChargeDefense) {
+      // Do not emit an ordinary untargeted routine as a fallback either.
+      movementHandledCombatantIdSet.add(target.id);
+      return;
+    }
 
     const targetMovementResolution = movementResolutionByCombatantId.get(
       target.id
@@ -1394,12 +1404,11 @@ export const buildInitiativeAttackGraph = (
       return;
     }
 
-    const targetAttackNode = createRoutineAttackNode(
+    const defenderNodes = createContactAttackNodes(
       target,
       targetMovementResolution?.contactSegment ||
         movementResolution.contactSegment,
       attacker.id,
-      undefined,
       targetMovementResolution
         ? createMovementAttackPlacement(target, targetMovementResolution)
         : movementResolution.action === 'charge'
@@ -1410,26 +1419,17 @@ export const buildInitiativeAttackGraph = (
           )
         : undefined
     );
-    addNode(nodesById, targetAttackNode);
+    defenderNodes.forEach((node) => addNode(nodesById, node));
     movementHandledCombatantIdSet.add(target.id);
 
-    if (movementResolution.firstStrike === 'attacker') {
-      mergeEdgeReason(
-        edgesByKey,
-        attackerAttackNode.id,
-        targetAttackNode.id,
-        'movement'
-      );
-      return;
-    }
-
-    if (movementResolution.firstStrike === 'target') {
-      mergeEdgeReason(
-        edgesByKey,
-        targetAttackNode.id,
-        attackerAttackNode.id,
-        'movement'
-      );
+    const firstStrike = movementResolution.firstStrike;
+    if (firstStrike === 'attacker' || firstStrike === 'target') {
+      const first = firstStrike === 'attacker' ? attackerNodes : defenderNodes;
+      const second = firstStrike === 'attacker' ? defenderNodes : attackerNodes;
+      for (const from of first) {
+        for (const to of second)
+          mergeEdgeReason(edgesByKey, from.id, to.id, 'movement');
+      }
     }
   });
 

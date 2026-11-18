@@ -192,6 +192,7 @@ export interface InitiativeMovementResolution {
   contactSegment?: number;
   remainingDistanceInches?: number;
   sameRoundAttack: boolean;
+  unassignedChargeDefense?: boolean;
   firstStrike?: InitiativeChargeFirstStrike;
   damageMultiplier?: number;
 }

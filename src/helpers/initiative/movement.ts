@@ -271,6 +271,14 @@ export const resolveMovementAgainstTarget = (
     };
   }
 
+  const defendingInMelee = target.declaredAction === 'open-melee';
+  const targetsCharger = target.targetIds.includes(attacker.id);
+  const unassignedChargeDefense =
+    attacker.declaredAction === 'charge' &&
+    defendingInMelee &&
+    targetsCharger &&
+    target.targetIds.some((id) => id !== attacker.id);
+
   return {
     combatantId: attacker.id,
     targetId,
@@ -285,8 +293,11 @@ export const resolveMovementAgainstTarget = (
       (attacker.declaredAction === 'close' &&
         target.declaredAction === 'charge' &&
         isTargetMovingTowardAttacker(attacker, target)),
+    ...(unassignedChargeDefense ? { unassignedChargeDefense } : {}),
     firstStrike:
-      attacker.declaredAction === 'charge'
+      attacker.declaredAction === 'charge' &&
+      !unassignedChargeDefense &&
+      (!defendingInMelee || targetsCharger)
         ? getChargeFirstStrike(attacker, target)
         : undefined,
   };

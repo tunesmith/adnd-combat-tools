@@ -2937,6 +2937,11 @@ const InitiativePlayground = ({
         <section className={styles['panel']}>
           <div className={styles['graphPanel']}>
             <h2 className={styles['graphTitle']}>Precedence DAG</h2>
+            {resolvedRound.viewModel.chargeDefenseWarnings.map(
+              (warning, index) => (
+                <p key={index}>{warning}</p>
+              )
+            )}
             <div className={styles['graphWorkspace']}>
               <div className={styles['graphViewportShell']}>
                 <div ref={graphViewportRef} className={styles['graphViewport']}>

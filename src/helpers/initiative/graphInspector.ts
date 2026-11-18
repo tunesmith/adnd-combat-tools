@@ -476,6 +476,16 @@ const getMovementAttackWhyHereText = ({
         ? ` reaches ${opponentName} from ${placement.distanceInches}" away`
         : ` reaches ${opponentName}`;
 
+    if (
+      placement.firstStrike === undefined &&
+      opponent?.declaredAction === 'open-melee'
+    ) {
+      const response = opponent.targetIds.includes(combatant.id)
+        ? `Choose one melee target in ${opponentName}’s declaration to schedule the response.`
+        : `${opponentName} has no melee attack declared against ${combatant.name}.`;
+      return `${combatant.name}${distanceText} on segment ${segment}. ${response}`;
+    }
+
     return `${
       combatant.name
     }${distanceText} on segment ${segment} and can strike on the charge. ${getReachPriorityText(

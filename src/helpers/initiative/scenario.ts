@@ -65,7 +65,11 @@ const getAttackComponentCount = (
     return Math.max(1, Math.floor(fireRate));
   }
 
-  if (declaredAction === 'open-melee') {
+  if (
+    declaredAction === 'open-melee' ||
+    declaredAction === 'charge' ||
+    declaredAction === 'close'
+  ) {
     return Math.max(1, Math.floor(attacksPerRoutine || 1));
   }
 
