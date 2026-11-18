@@ -23,6 +23,7 @@ function fixture() {
     hp: '',
     notes: 'Combat reference',
     effect: 'Bless',
+    nextRoundEffect: 'Silence 1/7',
     action: 'Attack',
     result: 'Hit',
   };

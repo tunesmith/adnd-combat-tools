@@ -61,6 +61,7 @@ const state = z
   .object({
     hp: string,
     effect: string,
+    nextRoundEffect: string.optional(),
     action: string,
     result: string,
     notes: string,
@@ -136,6 +137,20 @@ const round = z
     partyStates: z.array(state),
     enemyStates: z.array(state),
     actions: z.array(action).optional(),
+    stepResults: z
+      .array(
+        z.object({
+          stepKey: string.nullable(),
+          side: z.enum(['party', 'enemy']),
+          actorKey: number.int(),
+          actorName: string,
+          targetKeys: z.array(number.int()),
+          targetLabel: string,
+          stepLabel: string,
+          text: string,
+        })
+      )
+      .optional(),
     cells: z.array(z.unknown()),
   })
   .passthrough();

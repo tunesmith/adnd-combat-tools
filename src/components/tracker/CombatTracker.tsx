@@ -1,4 +1,10 @@
 import { getTrackerWeaponWarning } from '../../helpers/trackerWeaponWarning';
+import {
+  buildTrackerSteps,
+  retainPriorStepResults,
+  setTrackerStepResult,
+  type TrackerStep,
+} from '../../helpers/trackerStepResults';
 import AutoHeightTextarea from './AutoHeightTextarea';
 import { partyHasName } from '../../helpers/trackerPartyNames';
 import {
@@ -232,6 +238,7 @@ const normalizeActionEditorModeForWeapon = (
 
 type TrackerAction =
   | { type: 'replace-state'; state: TrackerState }
+  | { type: 'set-step-result'; step: TrackerStep; text: string }
   | { type: 'set-title'; value: string }
   | { type: 'set-round-label'; value: string }
   | { type: 'select-round'; index: number }
@@ -325,9 +332,14 @@ const updateCurrentRound = (
 const getNextCombatantKey = (state: TrackerState): number =>
   Math.max(
     0,
-    ...state.rounds.flatMap((round) =>
-      round.party.concat(round.enemies).map((combatant) => combatant.key)
-    )
+    ...state.rounds.flatMap((round) => [
+      ...round.party.concat(round.enemies).map((combatant) => combatant.key),
+      // Prior-step notes can still identify a creature removed from the roster.
+      ...(round.stepResults || []).flatMap((result) => [
+        result.actorKey,
+        ...result.targetKeys,
+      ]),
+    ])
   ) + 1;
 
 const formatDraftNameSummary = (names: string[]): string => {
@@ -1248,13 +1260,17 @@ const formatCombatFlowNodeTiming = (node: InitiativeAttackNode): string => {
   return 'Unsegmented';
 };
 
-const trackerReducer = (
+const applyTrackerAction = (
   state: TrackerState,
   action: TrackerAction
 ): TrackerState => {
   switch (action.type) {
     case 'replace-state':
       return action.state;
+    case 'set-step-result':
+      return updateCurrentRound(state, (round) =>
+        setTrackerStepResult(round, action.step, action.text)
+      );
     case 'set-title':
       return {
         ...state,
@@ -1433,6 +1449,26 @@ const trackerReducer = (
     default:
       return state;
   }
+};
+
+const trackerReducer = (
+  state: TrackerState,
+  action: TrackerAction
+): TrackerState => {
+  const next = applyTrackerAction(state, action);
+  // These edits can remove a step or change which creature it targeted.
+  switch (action.type) {
+    case 'set-combatant-actions':
+    case 'set-cell-visibility':
+    case 'set-cell-action-ids':
+    case 'set-cell':
+    case 'update-combatant':
+    case 'remove-combatant':
+      if (next.rounds[next.activeRound]?.stepResults?.length) {
+        return updateCurrentRound(next, retainPriorStepResults);
+      }
+  }
+  return next;
 };
 
 const CombatTracker = ({
@@ -1729,6 +1765,24 @@ const CombatTracker = ({
         : {},
     [resolvedInitiativeRound]
   );
+  const combatFlowSteps = useMemo(
+    () =>
+      resolvedInitiativeRound && currentRound
+        ? buildTrackerSteps(
+            currentRound,
+            resolvedInitiativeRound,
+            combatFlowNodeDisplayById
+          )
+        : new Map<string, TrackerStep>(),
+    [currentRound, resolvedInitiativeRound, combatFlowNodeDisplayById]
+  );
+  const activeStepsByKey = useMemo(
+    () =>
+      new Map(
+        Array.from(combatFlowSteps.values(), (step) => [step.stepKey, step])
+      ),
+    [combatFlowSteps]
+  );
   const combatFlowGraphNodeIds = useMemo(
     () =>
       new Set(
@@ -1780,9 +1834,10 @@ const CombatTracker = ({
   );
   const combatFlowSelectedNodeId =
     combatFlowSelectedNodeIdsByRound[state.activeRound];
-  const selectedCombatFlowNode = combatFlowReadyNodes.find(
-    (node) => node.id === combatFlowSelectedNodeId
-  );
+  const selectedCombatFlowNode =
+    resolvedInitiativeRound?.attackGraph.nodes.find(
+      (node) => node.id === combatFlowSelectedNodeId
+    );
   const combatFlowGraphInspectorModel = useMemo(
     () =>
       resolvedInitiativeRound && combatFlowGraphInspectorNodeId
@@ -2049,14 +2104,8 @@ const CombatTracker = ({
   );
 
   useEffect(() => {
-    idCounter.current =
-      Math.max(
-        0,
-        ...state.rounds.flatMap((round) =>
-          round.party.concat(round.enemies).map((combatant) => combatant.key)
-        )
-      ) + 1;
-  }, [state.rounds]);
+    idCounter.current = getNextCombatantKey(state);
+  }, [state]);
 
   useEffect(() => {
     if (campaign) return;
@@ -3085,9 +3134,7 @@ const CombatTracker = ({
   const openCombatFlowGraphNode = (nodeId: string) => {
     setCombatFlowGraphInspectorNodeId(nodeId);
 
-    if (combatFlowReadyNodeIds.has(nodeId)) {
-      selectCombatFlowNode(nodeId);
-    }
+    selectCombatFlowNode(nodeId);
   };
 
   const markSelectedCombatFlowNodeResolved = () => {
@@ -4178,21 +4225,115 @@ const CombatTracker = ({
     </div>
   );
 
-  const renderCombatWizardEffectEditor = (
-    value: string,
-    onChange: (value: string) => void,
-    side: CombatWizardEntry['side']
-  ) => (
-    <AutoHeightTextarea
-      className={
-        side === 'party'
-          ? `${styles['combatWizardEffectInput']} ${styles['combatWizardEffectInputParty']}`
-          : `${styles['combatWizardEffectInput']} ${styles['combatWizardEffectInputEnemy']}`
-      }
-      value={value}
-      onChange={onChange}
-    />
-  );
+  const renderNextRoundEffect = (side: TrackerSide, index: number) => {
+    const actor = getActionCombatant(currentRound, side, index);
+    const roundState = getActionRoundState(currentRound, side, index);
+    if (!actor || !roundState) return null;
+    const value = roundState.nextRoundEffect || '';
+    return (
+      <details
+        key={`queue-${state.activeRound}-${side}-${actor.key}`}
+        className={styles['roundDisclosure']}
+      >
+        <summary>Next round{value.trim() ? ' (queued)' : ''}</summary>
+        <AutoHeightTextarea
+          aria-label={`Next round effect for ${
+            side === 'party'
+              ? getPartyDisplayName(index)
+              : getEnemyDisplayName(index)
+          }`}
+          className={styles['queuedEffectInput']}
+          value={value}
+          onChange={(value) =>
+            dispatch({
+              type: side === 'party' ? 'set-party-state' : 'set-enemy-state',
+              index,
+              field: 'nextRoundEffect',
+              value,
+            })
+          }
+        />
+      </details>
+    );
+  };
+
+  const renderRelatedResults = (
+    side: TrackerSide,
+    actorKey: number,
+    hideEmpty = false
+  ) => {
+    const results = (currentRound.stepResults || []).filter(
+      (result) =>
+        result.text.trim() &&
+        (result.side === side
+          ? result.actorKey === actorKey
+          : result.targetKeys.includes(actorKey))
+    );
+    if (hideEmpty && !results.length) return null;
+    return (
+      <details
+        key={`results-${state.activeRound}-${side}-${actorKey}`}
+        className={styles['roundDisclosure']}
+      >
+        <summary>Related results ({results.length})</summary>
+        {results.length ? (
+          <ul>
+            {results.map((result, index) => {
+              const active =
+                result.stepKey && activeStepsByKey.get(result.stepKey);
+              const step = active || result;
+              const prior =
+                result.stepKey === null || (resolvedInitiativeRound && !active);
+              return (
+                <li key={index}>
+                  <strong>
+                    {step.actorName} → {step.targetLabel}
+                  </strong>
+                  <div>
+                    {prior ? 'Prior step · ' : ''}
+                    {step.stepLabel}
+                  </div>
+                  <div className={styles['stepResultText']}>{result.text}</div>
+                </li>
+              );
+            })}
+          </ul>
+        ) : (
+          <div>No results recorded.</div>
+        )}
+      </details>
+    );
+  };
+
+  const renderCombatWizardEffectEditor = (side: TrackerSide, index: number) => {
+    const roundState = getActionRoundState(currentRound, side, index);
+    return (
+      <>
+        <AutoHeightTextarea
+          className={`${styles['combatWizardEffectInput']} ${
+            side === 'enemy'
+              ? styles['combatWizardEffectInputParty']
+              : styles['combatWizardEffectInputEnemy']
+          }`}
+          aria-label={`Current effect for ${
+            side === 'party'
+              ? getPartyDisplayName(index)
+              : getEnemyDisplayName(index)
+          }`}
+          value={roundState?.effect || ''}
+          onChange={(value) =>
+            dispatch({
+              type: side === 'party' ? 'set-party-state' : 'set-enemy-state',
+              index,
+              field: 'effect',
+              value,
+            })
+          }
+        />
+        {renderNextRoundEffect(side, index)}
+      </>
+    );
+  };
 
   const renderCombatTargetEditor = (
     scope: CombatTargetEditorScope,
@@ -4304,17 +4445,7 @@ const CombatTracker = ({
                       key={`combat-party-effect-${partyIndex}`}
                       className={`${styles['combatWizardEffectCell']} ${styles['combatWizardEffectCellEnemy']}`}
                     >
-                      {renderCombatWizardEffectEditor(
-                        partyState.effect,
-                        (value) =>
-                          dispatch({
-                            type: 'set-party-state',
-                            index: partyIndex,
-                            field: 'effect',
-                            value,
-                          }),
-                        'enemy'
-                      )}
+                      {renderCombatWizardEffectEditor('party', partyIndex)}
                     </td>
                   );
                 })}
@@ -4386,17 +4517,7 @@ const CombatTracker = ({
                   <td
                     className={`${styles['combatWizardEffectCell']} ${styles['combatWizardEffectCellParty']}`}
                   >
-                    {renderCombatWizardEffectEditor(
-                      enemyState.effect,
-                      (value) =>
-                        dispatch({
-                          type: 'set-enemy-state',
-                          index: enemyIndex,
-                          field: 'effect',
-                          value,
-                        }),
-                      'party'
-                    )}
+                    {renderCombatWizardEffectEditor('enemy', enemyIndex)}
                   </td>
                 </tr>
               );
@@ -4430,10 +4551,14 @@ const CombatTracker = ({
           (combatant) => combatant.id === selectedCombatFlowNode.combatantId
         )
       : undefined;
+    const selectedStep =
+      selectedCombatFlowNode && combatFlowSteps.get(selectedCombatFlowNode.id);
     const selectedRoundState = selectedCombatant
-      ? selectedCombatant.side === 'party'
-        ? currentRound.partyStates[selectedCombatant.index]
-        : currentRound.enemyStates[selectedCombatant.index]
+      ? getActionRoundState(
+          currentRound,
+          selectedCombatant.side,
+          selectedCombatant.index
+        )
       : undefined;
     const selectedCombatFlowAction = getCombatFlowActionForCombatant(
       currentRound,
@@ -4547,7 +4672,10 @@ const CombatTracker = ({
           </div>
           <div className={styles['combatFlowResolverPane']}>
             <div className={styles['combatFlowPaneTitle']}>Selected Action</div>
-            {selectedCombatFlowNode && selectedDisplay && selectedCombatant ? (
+            {selectedCombatFlowNode &&
+            selectedDisplay &&
+            selectedCombatant &&
+            selectedStep ? (
               <div className={styles['combatFlowSelectedLayout']}>
                 <div className={styles['combatFlowSelectedTopRow']}>
                   <div className={styles['combatFlowSelectedCard']}>
@@ -4584,6 +4712,26 @@ const CombatTracker = ({
                         {selectedDisplay.actionMeta}
                       </div>
                     ) : null}
+                    <label className={styles['combatFlowField']}>
+                      <span className={styles['combatFlowFieldLabel']}>
+                        Result
+                      </span>
+                      <AutoHeightTextarea
+                        className={styles['combatFlowTextarea']}
+                        value={
+                          currentRound.stepResults?.find(
+                            (result) => result.stepKey === selectedStep.stepKey
+                          )?.text || ''
+                        }
+                        onChange={(text) =>
+                          dispatch({
+                            type: 'set-step-result',
+                            step: selectedStep,
+                            text,
+                          })
+                        }
+                      />
+                    </label>
                   </div>
                   <div className={styles['combatFlowFieldStack']}>
                     {isSelectedCombatFlowSpellStart ? (
@@ -4598,6 +4746,9 @@ const CombatTracker = ({
                       </div>
                     ) : (
                       <>
+                        <h3 className={styles['combatFlowPaneTitle']}>
+                          {selectedDisplay.combatantName}’s round
+                        </h3>
                         <label className={styles['combatFlowField']}>
                           <span className={styles['combatFlowFieldLabel']}>
                             Outcome
@@ -4621,6 +4772,10 @@ const CombatTracker = ({
                             }
                           />
                         </label>
+                        {renderRelatedResults(
+                          selectedStep.side,
+                          selectedStep.actorKey
+                        )}
                         <label className={styles['combatFlowField']}>
                           <span className={styles['combatFlowFieldLabel']}>
                             Current Effect
@@ -4642,12 +4797,19 @@ const CombatTracker = ({
                             placeholder={'hopeless 1/9, slowed 3/8, bless...'}
                           />
                         </label>
+                        {renderNextRoundEffect(
+                          selectedCombatant.side,
+                          selectedCombatant.index
+                        )}
                       </>
                     )}
                     <div className={styles['combatFlowResolverActions']}>
                       <button
                         type={'button'}
                         className={styles['combatFlowResolveButton']}
+                        disabled={
+                          !combatFlowReadyNodeIds.has(selectedCombatFlowNode.id)
+                        }
                         onClick={markSelectedCombatFlowNodeResolved}
                       >
                         Resolve action
@@ -4660,6 +4822,9 @@ const CombatTracker = ({
                         ]
                           .filter(Boolean)
                           .join(' ')}
+                        disabled={
+                          !combatFlowReadyNodeIds.has(selectedCombatFlowNode.id)
+                        }
                         onClick={
                           markSelectedCombatFlowNodeResolvedAndSelectNext
                         }
@@ -5262,6 +5427,10 @@ const CombatTracker = ({
                             }
                           />
                         )}
+                        {field.key === 'effect' &&
+                          renderNextRoundEffect('enemy', enemyIndex)}
+                        {field.key === 'result' &&
+                          renderRelatedResults('enemy', combatant.key, true)}
                       </td>
                     );
                   })}
@@ -5319,6 +5488,10 @@ const CombatTracker = ({
                             }
                           />
                         )}
+                        {field.key === 'effect' &&
+                          renderNextRoundEffect('party', partyIndex)}
+                        {field.key === 'result' &&
+                          renderRelatedResults('party', combatant.key, true)}
                       </td>
                     );
                   })}
@@ -6241,6 +6414,10 @@ const CombatTracker = ({
                 }
                 placeholder={'hopeless 1/9, slowed 3/8, bless, stoneskin...'}
               />
+              {renderNextRoundEffect(
+                currentIntentionWizardEntry.side,
+                currentIntentionWizardEntry.index
+              )}
               <div className={styles['modalLabel']}>Targets</div>
               <div
                 key={`intentions-target-grid-${currentIntentionWizardEntry.side}-${currentIntentionWizardEntry.combatantKey}`}
@@ -6300,15 +6477,8 @@ const CombatTracker = ({
                               className={`${styles['combatWizardEffectCell']} ${styles['combatWizardEffectCellEnemy']}`}
                             >
                               {renderCombatWizardEffectEditor(
-                                partyState.effect,
-                                (value) =>
-                                  dispatch({
-                                    type: 'set-party-state',
-                                    index: partyIndex,
-                                    field: 'effect',
-                                    value,
-                                  }),
-                                'enemy'
+                                'party',
+                                partyIndex
                               )}
                             </td>
                           );
@@ -6353,16 +6523,8 @@ const CombatTracker = ({
                               className={`${styles['combatWizardEffectCell']} ${styles['combatWizardEffectCellParty']}`}
                             >
                               {renderCombatWizardEffectEditor(
-                                currentRound.enemyStates[enemyIndex]?.effect ||
-                                  '',
-                                (value) =>
-                                  dispatch({
-                                    type: 'set-enemy-state',
-                                    index: enemyIndex,
-                                    field: 'effect',
-                                    value,
-                                  }),
-                                'party'
+                                'enemy',
+                                enemyIndex
                               )}
                             </td>
                           </tr>
@@ -6530,6 +6692,10 @@ const CombatTracker = ({
                 }
                 placeholder={'hopeless 1/9, slowed 3/8, bless, stoneskin...'}
               />
+              {renderNextRoundEffect(
+                currentCombatWizardEntry.side,
+                currentCombatWizardEntry.index
+              )}
               <div className={styles['modalLabel']}>Targets</div>
               {selectedCombatWizardActionTitle ? (
                 <div className={styles['combatWizardTargetScope']}>

@@ -170,6 +170,18 @@ const createNextRoundCells = (
   );
 };
 
+const carryCombatantIntoRound = (
+  state: TrackerCombatantRoundState
+): TrackerCombatantRoundState => ({
+  ...createCombatantRoundState(state.hp),
+  notes: state.notes,
+  effect: state.nextRoundEffect?.trim()
+    ? [state.effect, state.nextRoundEffect]
+        .filter((text) => text.trim())
+        .join('\n')
+    : state.effect,
+});
+
 const createTrackerRound = (
   party: TrackerCombatant[],
   enemies: TrackerCombatant[],
@@ -184,22 +196,10 @@ const createTrackerRound = (
   summary: '',
   cells: createNextRoundCells(party, enemies, previousRound),
   partyStates: previousRound
-    ? previousRound.partyStates.map((state) => ({
-        hp: state.hp,
-        effect: state.effect,
-        action: '',
-        result: '',
-        notes: state.notes,
-      }))
+    ? previousRound.partyStates.map(carryCombatantIntoRound)
     : party.map((combatant) => createCombatantRoundState(combatant.maxHp)),
   enemyStates: previousRound
-    ? previousRound.enemyStates.map((state) => ({
-        hp: state.hp,
-        effect: state.effect,
-        action: '',
-        result: '',
-        notes: state.notes,
-      }))
+    ? previousRound.enemyStates.map(carryCombatantIntoRound)
     : enemies.map((combatant) => createCombatantRoundState(combatant.maxHp)),
 });
 

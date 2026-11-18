@@ -2601,3 +2601,62 @@
 .readOnly .removeCombatant {
   display: none;
 }
+
+.roundDisclosure {
+  margin-top: 0.3rem;
+  font-size: 0.9rem;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+
+.roundDisclosure summary {
+  cursor: pointer;
+}
+
+.combatWizardEffectCell .roundDisclosure {
+  margin: 0 0.4rem 0.35rem;
+  border-top: 1px solid rgba(240, 239, 221, 0.28);
+  color: var(--eggshell);
+}
+
+.combatWizardEffectCell .roundDisclosure summary {
+  padding: 0.3rem 0;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.combatWizardEffectCell .roundDisclosure summary:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 1px;
+}
+
+.combatWizardEffectCell .queuedEffectInput {
+  display: block;
+  margin-top: 0;
+  padding: 0.3rem 0.4rem;
+  border: 1px solid var(--copper);
+  background: var(--eggshell);
+  color: #111;
+}
+
+.roundDisclosure ul {
+  margin: 0.35rem 0;
+  padding-left: 1.2rem;
+}
+
+.roundDisclosure li + li {
+  margin-top: 0.4rem;
+}
+
+.stepResultText {
+  white-space: pre-wrap;
+}
+
+.queuedEffectInput {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 2rem;
+  margin-top: 0.25rem;
+  font: inherit;
+  resize: vertical;
+}

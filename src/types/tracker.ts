@@ -103,6 +103,7 @@ export interface TrackerRoundV2 {
 }
 
 export interface TrackerCombatantRoundState {
+  nextRoundEffect?: string;
   hp: string;
   effect: string;
   action: string;
@@ -128,7 +129,20 @@ export interface TrackerRoundV6 extends Omit<TrackerRoundV5, 'cells'> {
   cells: TrackerCellState[][];
 }
 
+export interface TrackerStepResult {
+  // A prior declaration keeps its recorded context after its step disappears.
+  stepKey: string | null;
+  side: TrackerActionSide;
+  actorKey: number;
+  actorName: string;
+  targetKeys: number[];
+  targetLabel: string;
+  stepLabel: string;
+  text: string;
+}
+
 export interface TrackerRound extends TrackerRoundV6 {
+  stepResults?: TrackerStepResult[];
   label: string;
   actions?: TrackerActionDeclaration[];
 }

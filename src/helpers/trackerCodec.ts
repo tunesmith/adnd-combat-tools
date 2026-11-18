@@ -496,6 +496,7 @@ const compactRound = (round: TrackerRound): TrackerRoundV8 => {
     partyInitiative: round.partyInitiative,
     enemyInitiative: round.enemyInitiative,
     summary: round.summary,
+    ...(round.stepResults?.length ? { stepResults: round.stepResults } : {}),
     cells: compactCells(round.cells),
     partyStates: round.partyStates,
     enemyStates: round.enemyStates,
@@ -661,6 +662,7 @@ const migrateRoundV8 = (round: TrackerRoundV8): TrackerRound => {
     partyInitiative: round.partyInitiative,
     enemyInitiative: round.enemyInitiative,
     summary: round.summary,
+    ...(round.stepResults?.length ? { stepResults: round.stepResults } : {}),
     cells: hydrateSparseCells(
       round.cells,
       round.enemies.length,
