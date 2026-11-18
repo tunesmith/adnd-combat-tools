@@ -1060,6 +1060,8 @@ const buildGraphInspectorWhyHere = ({
             resolvedRound.viewModel.combatantNameById[placement.targetId] ||
             placement.targetId
           }.`
+        : placement.splitTarget
+        ? 'This shot follows the earlier shots in the split volley. Its target is unassigned.'
         : `${combatant.name}'s missile volley stays unsegmented. Ordinary firing rate is treated as one initiative-controlled volley rather than as separate early and late shots.`
     );
   } else if (placement?.kind === 'turn-undead-unsegmented') {

@@ -366,8 +366,7 @@ const getDirectMissileChargeContext = (
     !chargeCombatant ||
     !missileCombatant ||
     missileCombatant.declaredAction !== 'missile' ||
-    missileCombatant.targetIds.length !== 1 ||
-    missileCombatant.targetIds[0] !== chargeCombatant.id
+    !missileCombatant.targetIds.includes(chargeCombatant.id)
   ) {
     return undefined;
   }

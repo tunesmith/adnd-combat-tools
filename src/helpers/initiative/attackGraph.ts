@@ -889,41 +889,25 @@ const getDirectMissileChargeComponentLimit = (
   combatantById: Map<string, InitiativeScenarioCombatant>,
   movementResolutionByCombatantId: Map<string, InitiativeMovementResolution>
 ): number | undefined => {
-  if (
-    combatant.declaredAction !== 'missile' ||
-    combatant.targetIds.length !== 1
-  ) {
-    return undefined;
+  if (combatant.declaredAction !== 'missile') return undefined;
+
+  let limit: number | undefined;
+  for (const targetId of combatant.targetIds) {
+    const target = combatantById.get(targetId);
+    const movement = movementResolutionByCombatantId.get(targetId);
+    if (
+      !target ||
+      movement?.action !== 'charge' ||
+      movement.reason !== 'contact' ||
+      !movement.sameRoundAttack ||
+      movement.targetId !== combatant.id
+    )
+      continue;
+
+    if (compareCombatantInitiative(combatant, target) < 0) return 0;
+    limit = 1;
   }
-
-  const targetId = combatant.targetIds[0];
-  if (!targetId) {
-    return undefined;
-  }
-
-  const target = combatantById.get(targetId);
-  const targetMovementResolution =
-    movementResolutionByCombatantId.get(targetId);
-
-  if (
-    !target ||
-    target.declaredAction !== 'charge' ||
-    target.targetDeclarations.length !== 1 ||
-    target.targetDeclarations[0]?.targetId !== combatant.id ||
-    targetMovementResolution?.reason !== 'contact' ||
-    !targetMovementResolution.sameRoundAttack ||
-    targetMovementResolution.targetId !== combatant.id
-  ) {
-    return undefined;
-  }
-
-  const initiativeComparison = compareCombatantInitiative(combatant, target);
-
-  if (initiativeComparison === 0) {
-    return 1;
-  }
-
-  return initiativeComparison > 0 ? 1 : 0;
+  return limit;
 };
 
 type SpellTimingRelation =
@@ -1160,8 +1144,12 @@ const addSpellInterruptionEdges = (
         nodesById
       ).filter(
         (attackerNode) =>
-          attackerNode.targetId === undefined ||
-          attackerNode.targetId === caster.id
+          attackerNode.targetId === caster.id ||
+          (attackerNode.targetId === undefined &&
+            !(
+              attackerNode.placement?.kind === 'missile-volley' &&
+              attackerNode.placement.splitTarget
+            ))
       );
       if (attackerNodes.length === 0) {
         return;
@@ -1496,53 +1484,15 @@ export const buildInitiativeAttackGraph = (
             directMissileChargeComponentLimit
           );
 
-    if (
-      combatant.declaredAction === 'missile' &&
-      combatant.targetIds.length > 0
-    ) {
-      const missileTargetIds = combatant.targetIds.slice(
-        0,
-        attackOccurrences.length
-      );
-      const usesTargetSpecificMissileNodes = missileTargetIds.length > 1;
-
-      if (usesTargetSpecificMissileNodes) {
-        missileTargetIds.forEach((targetId, index) => {
-          const occurrence = attackOccurrences[index] || attackOccurrences[0];
-
-          if (!occurrence) {
-            return;
-          }
-
-          addNode(
-            nodesById,
-            createNode(
-              combatant,
-              occurrence.componentId,
-              occurrence.attackNumber,
-              occurrence.label,
-              'routine-component',
-              'attack',
-              getDeclaredActionSegment(combatant),
-              targetId,
-              getDeclaredActionSegment(combatant) !== undefined
-                ? 'declared-action'
-                : undefined,
-              {
-                kind: 'missile-volley',
-                splitTarget: true,
-                targetId,
-              },
-              occurrence.routineNumber,
-              occurrence.componentNumber
-            )
-          );
-        });
-        return;
-      }
-    }
-
-    attackOccurrences.forEach((occurrence) => {
+    const splitVolley =
+      combatant.declaredAction === 'missile' && combatant.targetIds.length > 1;
+    attackOccurrences.forEach((occurrence, index) => {
+      // In a split volley, trailing shots have no individual target yet.
+      const targetId = splitVolley
+        ? combatant.targetIds[index]
+        : combatant.targetIds.length === 1
+        ? combatant.targetIds[0]
+        : undefined;
       const graphLabel =
         combatant.declaredAction === 'none' ? 'action' : occurrence.label;
 
@@ -1556,7 +1506,7 @@ export const buildInitiativeAttackGraph = (
           'routine-component',
           'attack',
           getDeclaredActionSegment(combatant),
-          combatant.targetIds.length === 1 ? combatant.targetIds[0] : undefined,
+          targetId,
           getDeclaredActionSegment(combatant) !== undefined
             ? 'declared-action'
             : undefined,
@@ -1571,11 +1521,8 @@ export const buildInitiativeAttackGraph = (
             : combatant.declaredAction === 'missile'
             ? {
                 kind: 'missile-volley',
-                splitTarget: false,
-                targetId:
-                  combatant.targetIds.length === 1
-                    ? combatant.targetIds[0]
-                    : undefined,
+                splitTarget: splitVolley,
+                targetId,
               }
             : combatant.declaredAction === 'turn-undead'
             ? {

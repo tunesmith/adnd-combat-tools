@@ -215,6 +215,10 @@ const getTargetLabel = (
     return combatantNameById[node.targetId] || node.targetId;
   }
 
+  if (node.placement?.kind === 'missile-volley' && node.placement.splitTarget) {
+    return 'Unassigned';
+  }
+
   if (combatant?.targetIds.length === 1) {
     const targetId = combatant.targetIds[0];
     return targetId ? combatantNameById[targetId] || targetId : 'No target';

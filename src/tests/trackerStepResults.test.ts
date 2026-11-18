@@ -93,6 +93,40 @@ test('each missile occurrence keeps its own target when a volley is split', () =
   });
 });
 
+test('three darts across two targets leave only the third result target unassigned', () => {
+  const round = fixtureRound();
+  const thrower = round.party[0],
+    secondTarget = round.cells[1]?.[0],
+    thirdTarget = round.cells[2]?.[0];
+  if (!thrower || !secondTarget || !thirdTarget)
+    throw Error('Missing dart matchup');
+  thrower.weapon = 19;
+  secondTarget.partyToEnemyVisible = true;
+  const volley = steps(round);
+  const shots = Array.from(volley.values()).filter(
+    (step) => step.side === 'party' && step.actorKey === thrower.key
+  );
+  expect(shots.map((shot) => shot.targetKeys)).toEqual([[4], [5], []]);
+  const third = volley.get('attack:party-1:3');
+  if (!third) throw Error('Missing third dart');
+  expect(third.targetLabel).toBe('Unassigned');
+  expect(shots.slice(0, 2).every((shot) => !shot.resultTargetOptions)).toBe(
+    true
+  );
+  expect(third.resultTargetOptions?.map((option) => option.key)).toEqual([
+    4, 5,
+  ]);
+  const recorded = setTrackerStepResult(round, third, { targetKey: 5 });
+  expect(recorded.stepResults?.[0]).toMatchObject({
+    stepKey: third.stepKey,
+    targetKeys: [5],
+  });
+  thirdTarget.partyToEnemyVisible = true;
+  expect(steps(round).get('attack:party-1:3')).toMatchObject({
+    targetKeys: [6],
+  });
+});
+
 test('one completion can identify an explicit set, while a routine with the same candidates has no confirmed recipients', () => {
   const round = fixtureRound();
   const second = round.cells[1]?.[0];

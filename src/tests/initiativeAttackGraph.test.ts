@@ -1863,6 +1863,73 @@ describe('initiative attack graph', () => {
     ]);
   });
 
+  test.each([
+    { partyInitiative: 5, enemyInitiative: 2, distance: 4, shots: ['enemy-3'] },
+    { partyInitiative: 4, enemyInitiative: 4, distance: 4, shots: ['enemy-3'] },
+    { partyInitiative: 2, enemyInitiative: 5, distance: 4, shots: [] },
+    {
+      partyInitiative: 2,
+      enemyInitiative: 5,
+      distance: 40,
+      shots: ['enemy-3', 'enemy-4', undefined],
+    },
+  ])(
+    'split darts against a charge at distance $distance (initiative $partyInitiative vs $enemyInitiative)',
+    ({ partyInitiative, enemyInitiative, distance, shots }) => {
+      const scenario = buildInitiativeScenario({
+        label: 'Split darts',
+        partyInitiative,
+        enemyInitiative,
+        party: [
+          {
+            combatantKey: 1,
+            name: 'Thrower',
+            declaredAction: 'missile',
+            weaponId: 19,
+            targetCombatantKeys: [3, 4],
+          },
+        ],
+        enemies: [
+          {
+            combatantKey: 3,
+            name: 'First target',
+            declaredAction: 'none',
+            weaponId: 1,
+          },
+          {
+            combatantKey: 4,
+            name: 'Charger',
+            declaredAction: 'charge',
+            movementRate: 12,
+            weaponId: 56,
+            targetDeclarations: [
+              { targetCombatantKey: 1, distanceInches: distance },
+            ],
+          },
+        ],
+      });
+      const graph = buildInitiativeAttackGraph(
+        scenario,
+        resolveInitiativeRound(scenario)
+      );
+      expect(
+        graph.nodes.filter((n) => n.side === 'party').map((n) => n.targetId)
+      ).toEqual(shots);
+      if (shots.length === 3) {
+        expect(
+          graph.layers.flat().filter((id) => id.startsWith('attack:party'))
+        ).toEqual(['attack:party-1:1', 'attack:party-1:2', 'attack:party-1:3']);
+      } else if (shots.length && partyInitiative > enemyInitiative) {
+        expect(graph.layers).toEqual([
+          ['attack:party-1:1'],
+          ['attack:enemy-4:1'],
+        ]);
+      } else if (partyInitiative === enemyInitiative) {
+        expect(graph.layers).toHaveLength(1);
+      }
+    }
+  );
+
   test('lets one bow shot happen before a charge when the missile side wins initiative', () => {
     const scenario = buildInitiativeScenario({
       label: 'Bow vs Charge',
@@ -3101,93 +3168,112 @@ describe('initiative attack graph', () => {
     );
   });
 
-  test('uses target-specific missile volley nodes against multiple spellcasters', () => {
-    const scenario = buildInitiativeScenario({
-      label: 'Bowman vs Two Casters',
-      partyInitiative: 5,
-      enemyInitiative: 3,
-      party: [
-        {
-          combatantKey: 1,
-          name: 'Bowman',
-          declaredAction: 'missile',
-          weaponId: 11,
-          targetCombatantKeys: [3, 4],
-        },
-      ],
-      enemies: [
-        {
-          combatantKey: 3,
-          name: 'Shield',
-          declaredAction: 'spell-casting',
-          weaponId: 17,
-          targetDeclarations: [
-            {
-              targetCombatantKey: 1,
-              castingSegments: 1,
-            },
-          ],
-        },
-        {
-          combatantKey: 4,
-          name: 'Charm Person',
-          declaredAction: 'spell-casting',
-          weaponId: 17,
-          targetDeclarations: [
-            {
-              targetCombatantKey: 1,
-              castingSegments: 3,
-            },
-          ],
-        },
-      ],
-    });
-    const graph = buildInitiativeAttackGraph(
-      scenario,
-      resolveInitiativeRound(scenario)
-    );
+  test.each([11, 19])(
+    'only assigned shots interrupt their respective spellcasters (weapon %i)',
+    (weaponId) => {
+      const scenario = buildInitiativeScenario({
+        label: 'Bowman vs Two Casters',
+        partyInitiative: 5,
+        enemyInitiative: 3,
+        party: [
+          {
+            combatantKey: 1,
+            name: 'Bowman',
+            declaredAction: 'missile',
+            weaponId,
+            targetCombatantKeys: [3, 4],
+          },
+        ],
+        enemies: [
+          {
+            combatantKey: 3,
+            name: 'Shield',
+            declaredAction: 'spell-casting',
+            weaponId: 17,
+            targetDeclarations: [
+              {
+                targetCombatantKey: 1,
+                castingSegments: 1,
+              },
+            ],
+          },
+          {
+            combatantKey: 4,
+            name: 'Charm Person',
+            declaredAction: 'spell-casting',
+            weaponId: 17,
+            targetDeclarations: [
+              {
+                targetCombatantKey: 1,
+                castingSegments: 3,
+              },
+            ],
+          },
+        ],
+      });
+      const graph = buildInitiativeAttackGraph(
+        scenario,
+        resolveInitiativeRound(scenario)
+      );
 
-    expect(graph.nodes).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          id: 'attack:party-1:1',
-          targetId: 'enemy-3',
-        }),
-        expect.objectContaining({
-          id: 'attack:party-1:2',
-          targetId: 'enemy-4',
-        }),
-      ])
-    );
-    expect(graph.edges).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          fromNodeId: 'attack:party-1:1',
-          toNodeId: 'spell-completion:enemy-3',
-          reasons: ['spell-interruption'],
-        }),
-        expect.objectContaining({
-          fromNodeId: 'attack:party-1:2',
-          toNodeId: 'spell-completion:enemy-4',
-          reasons: ['spell-interruption'],
-        }),
-      ])
-    );
-    expect(graph.edges).not.toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          fromNodeId: 'attack:party-1:1',
-          toNodeId: 'spell-completion:enemy-4',
-          reasons: ['spell-interruption'],
-        }),
-        expect.objectContaining({
-          fromNodeId: 'attack:party-1:2',
-          toNodeId: 'spell-completion:enemy-3',
-          reasons: ['spell-interruption'],
-        }),
-      ])
-    );
-  });
+      expect(graph.nodes).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            id: 'attack:party-1:1',
+            targetId: 'enemy-3',
+          }),
+          expect.objectContaining({
+            id: 'attack:party-1:2',
+            targetId: 'enemy-4',
+          }),
+        ])
+      );
+      expect(graph.edges).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            fromNodeId: 'attack:party-1:1',
+            toNodeId: 'spell-completion:enemy-3',
+            reasons: ['spell-interruption'],
+          }),
+          expect.objectContaining({
+            fromNodeId: 'attack:party-1:2',
+            toNodeId: 'spell-completion:enemy-4',
+            reasons: ['spell-interruption'],
+          }),
+        ])
+      );
+      expect(graph.edges).not.toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            fromNodeId: 'attack:party-1:1',
+            toNodeId: 'spell-completion:enemy-4',
+            reasons: ['spell-interruption'],
+          }),
+          expect.objectContaining({
+            fromNodeId: 'attack:party-1:2',
+            toNodeId: 'spell-completion:enemy-3',
+            reasons: ['spell-interruption'],
+          }),
+        ])
+      );
+      if (weaponId === 19) {
+        const third = graph.nodes.find(
+          (node) => node.id === 'attack:party-1:3'
+        );
+        expect(third).toMatchObject({
+          targetId: undefined,
+          segment: undefined,
+        });
+        expect(
+          graph.edges.filter(
+            (edge) =>
+              (edge.fromNodeId === third?.id || edge.toNodeId === third?.id) &&
+              edge.reasons.includes('spell-interruption')
+          )
+        ).toEqual([]);
+      }
+    }
+  );
 });
 
 describe('ordinary tied-action simultaneous groups', () => {
