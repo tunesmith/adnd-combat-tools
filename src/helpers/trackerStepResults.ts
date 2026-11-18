@@ -5,6 +5,7 @@ import { resolveTrackerRoundInitiative } from './initiative/trackerRoundResoluti
 
 export type TrackerStep = Omit<TrackerStepResult, 'text' | 'stepKey'> & {
   stepKey: string;
+  resultTargetOptions?: { key: number; name: string }[];
 };
 
 export function buildTrackerSteps(
@@ -89,6 +90,14 @@ export function buildTrackerSteps(
       actorKey,
       actorName: actor.name,
       targetKeys: confirmed ? candidateKeys : [],
+      ...(!confirmed
+        ? {
+            resultTargetOptions: targets.map((target) => ({
+              key: target.ownerCombatantKey ?? target.combatantKey,
+              name: target.name,
+            })),
+          }
+        : {}),
       targetLabel:
         confirmed && targets.length > 1
           ? targets.map((target) => target.name).join(', ')
@@ -104,20 +113,50 @@ export function buildTrackerSteps(
   return steps;
 }
 
+export function getTrackerResultTarget(
+  step: TrackerStep,
+  result?: TrackerStepResult
+) {
+  return step.resultTargetOptions?.find(
+    (option) => option.key === result?.targetKeys[0]
+  );
+}
+
+export type TrackerStepResultEdit = string | { targetKey: number | null };
+
 export function setTrackerStepResult(
   round: TrackerRound,
   step: TrackerStep,
-  text: string
+  edit: TrackerStepResultEdit
 ): TrackerRound {
   const results = round.stepResults || [];
-  if (!text)
+  const index = results.findIndex((result) => result.stepKey === step.stepKey);
+  const previous = results[index];
+  const { resultTargetOptions, ...context } = step;
+  let target = getTrackerResultTarget(step, previous);
+  let text = previous?.text ?? '';
+  if (typeof edit === 'string') {
+    text = edit;
+  } else {
+    if (!resultTargetOptions) return round;
+    target = resultTargetOptions.find(
+      (option) => option.key === edit.targetKey
+    );
+    if (edit.targetKey !== null && !target) return round;
+  }
+  if (!text && !target) {
     return {
       ...round,
       stepResults: results.filter((result) => result.stepKey !== step.stepKey),
     };
+  }
   const stepResults = results.slice();
-  const index = results.findIndex((result) => result.stepKey === step.stepKey);
-  const result = { ...step, text };
+  const result = {
+    ...context,
+    text,
+    targetKeys: target ? [target.key] : step.targetKeys,
+    targetLabel: target?.name ?? step.targetLabel,
+  };
   if (index === -1) stepResults.push(result);
   else stepResults[index] = result;
   return { ...round, stepResults };
@@ -132,10 +171,9 @@ export function retainPriorStepResults(round: TrackerRound): TrackerRound {
   const keys = new Set(Array.from(steps.values(), (step) => step.stepKey));
   return {
     ...round,
-    stepResults: round.stepResults.map((result) =>
-      result.stepKey !== null && !keys.has(result.stepKey)
-        ? { ...result, stepKey: null }
-        : result
-    ),
+    stepResults: round.stepResults.flatMap((result) => {
+      if (result.stepKey === null || keys.has(result.stepKey)) return [result];
+      return result.text.trim() ? [{ ...result, stepKey: null }] : [];
+    }),
   };
 }

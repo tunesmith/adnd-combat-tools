@@ -1,9 +1,11 @@
 import { getTrackerWeaponWarning } from '../../helpers/trackerWeaponWarning';
 import {
   buildTrackerSteps,
+  getTrackerResultTarget,
   retainPriorStepResults,
   setTrackerStepResult,
   type TrackerStep,
+  type TrackerStepResultEdit,
 } from '../../helpers/trackerStepResults';
 import AutoHeightTextarea from './AutoHeightTextarea';
 import { partyHasName } from '../../helpers/trackerPartyNames';
@@ -238,7 +240,7 @@ const normalizeActionEditorModeForWeapon = (
 
 type TrackerAction =
   | { type: 'replace-state'; state: TrackerState }
-  | { type: 'set-step-result'; step: TrackerStep; text: string }
+  | { type: 'set-step-result'; step: TrackerStep; edit: TrackerStepResultEdit }
   | { type: 'set-title'; value: string }
   | { type: 'set-round-label'; value: string }
   | { type: 'select-round'; index: number }
@@ -1269,7 +1271,7 @@ const applyTrackerAction = (
       return action.state;
     case 'set-step-result':
       return updateCurrentRound(state, (round) =>
-        setTrackerStepResult(round, action.step, action.text)
+        setTrackerStepResult(round, action.step, action.edit)
       );
     case 'set-title':
       return {
@@ -1593,6 +1595,7 @@ const CombatTracker = ({
   const shareTextareaRef = useRef<HTMLTextAreaElement | null>(null);
   const importTextareaRef = useRef<HTMLTextAreaElement | null>(null);
   const combatResultTextareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const resultTargetRef = useRef<HTMLSelectElement>(null);
   const combatFlowGraphInspectorRef = useRef<HTMLDivElement | null>(null);
   const combatFlowGraphContainerRef = useRef<HTMLElement | null>(null);
   const titleInputRef = useRef<HTMLInputElement | null>(null);
@@ -1773,6 +1776,13 @@ const CombatTracker = ({
           )
         : new Map<string, TrackerStep>(),
     [currentRound, resolvedInitiativeRound, combatFlowNodeDisplayById]
+  );
+  const resultsByStepKey = useMemo(
+    () =>
+      new Map(
+        currentRound?.stepResults?.map((result) => [result.stepKey, result])
+      ),
+    [currentRound?.stepResults]
   );
   const activeStepsByKey = useMemo(
     () =>
@@ -4272,12 +4282,15 @@ const CombatTracker = ({
               const active =
                 result.stepKey && activeStepsByKey.get(result.stepKey);
               const step = active || result;
+              const targetLabel =
+                (active && getTrackerResultTarget(active, result)?.name) ||
+                step.targetLabel;
               const prior =
                 result.stepKey === null || (resolvedInitiativeRound && !active);
               return (
                 <li key={index}>
                   <strong>
-                    {step.actorName} → {step.targetLabel}
+                    {step.actorName} → {targetLabel}
                   </strong>
                   <div>
                     {prior ? 'Prior step · ' : ''}
@@ -4291,6 +4304,45 @@ const CombatTracker = ({
         ) : (
           <div>No results recorded.</div>
         )}
+      </details>
+    );
+  };
+
+  const renderUnassignedResultTargets = (entry: CombatWizardEntry) => {
+    const unassigned = Array.from(combatFlowSteps).filter(
+      ([, step]) =>
+        step.side === entry.side &&
+        step.actorKey === entry.combatantKey &&
+        step.resultTargetOptions &&
+        !getTrackerResultTarget(step, resultsByStepKey.get(step.stepKey))
+    );
+    if (!unassigned.length) return null;
+    return (
+      <details
+        className={styles['reviewResults']}
+        key={`unassigned-${entry.side}-${entry.combatantKey}`}
+      >
+        <summary>Unassigned result targets ({unassigned.length})</summary>
+        <ul>
+          {unassigned.map(([nodeId, step]) => (
+            <li key={nodeId}>
+              <button
+                type="button"
+                className={styles['reviewStepLink']}
+                onClick={() => {
+                  closeCombatWizard();
+                  setCombatFlowGraphInspectorNodeId(undefined);
+                  selectCombatFlowNode(nodeId);
+                  window.requestAnimationFrame(() =>
+                    resultTargetRef.current?.focus()
+                  );
+                }}
+              >
+                {step.stepLabel}
+              </button>
+            </li>
+          ))}
+        </ul>
       </details>
     );
   };
@@ -4543,6 +4595,8 @@ const CombatTracker = ({
       : undefined;
     const selectedStep =
       selectedCombatFlowNode && combatFlowSteps.get(selectedCombatFlowNode.id);
+    const selectedResult =
+      selectedStep && resultsByStepKey.get(selectedStep.stepKey);
     const selectedRoundState = selectedCombatant
       ? getActionRoundState(
           currentRound,
@@ -4708,20 +4762,47 @@ const CombatTracker = ({
                       </span>
                       <AutoHeightTextarea
                         className={styles['combatFlowTextarea']}
-                        value={
-                          currentRound.stepResults?.find(
-                            (result) => result.stepKey === selectedStep.stepKey
-                          )?.text || ''
-                        }
+                        value={selectedResult?.text ?? ''}
                         onChange={(text) =>
                           dispatch({
                             type: 'set-step-result',
                             step: selectedStep,
-                            text,
+                            edit: text,
                           })
                         }
                       />
                     </label>
+                    {selectedStep.resultTargetOptions && (
+                      <label className={styles['resultTargetField']}>
+                        Result target
+                        <select
+                          ref={resultTargetRef}
+                          value={
+                            getTrackerResultTarget(selectedStep, selectedResult)
+                              ?.key ?? ''
+                          }
+                          onChange={(event) =>
+                            dispatch({
+                              type: 'set-step-result',
+                              step: selectedStep,
+                              edit: {
+                                targetKey:
+                                  event.target.value === ''
+                                    ? null
+                                    : Number(event.target.value),
+                              },
+                            })
+                          }
+                        >
+                          <option value="">Unassigned</option>
+                          {selectedStep.resultTargetOptions.map((target) => (
+                            <option key={target.key} value={target.key}>
+                              {target.name}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    )}
                   </div>
                   <div className={styles['combatFlowFieldStack']}>
                     {isSelectedCombatFlowSpellStart ? (
@@ -6639,6 +6720,7 @@ const CombatTracker = ({
                   </div>
                 </>
               )}
+              {renderUnassignedResultTargets(currentCombatWizardEntry)}
               {renderRelatedResults(
                 currentCombatWizardEntry.side,
                 currentCombatWizardEntry.combatantKey,

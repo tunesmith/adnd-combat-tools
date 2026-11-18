@@ -2724,3 +2724,31 @@
   font: inherit;
   resize: vertical;
 }
+
+.resultTargetField {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 0.45rem;
+  color: var(--eggshell);
+}
+
+.resultTargetField select {
+  max-width: 100%;
+  padding: 0.2rem 0.4rem;
+  font: inherit;
+  border: 1px solid var(--copper);
+  color: #111;
+  background: var(--eggshell);
+}
+
+.reviewStepLink {
+  padding: 0.15rem 0;
+  border: 0;
+  background: transparent;
+  color: var(--caput-martuum);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}

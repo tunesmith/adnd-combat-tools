@@ -116,6 +116,9 @@ test('one completion can identify an explicit set, while a routine with the same
   expect(steps(round).get('spell-completion:party-1')?.targetKeys).toEqual([
     4, 5,
   ]);
+  expect(
+    steps(round).get('spell-completion:party-1')?.resultTargetOptions
+  ).toBeUndefined();
   round.actions = [
     {
       ...main,
@@ -126,6 +129,69 @@ test('one completion can identify an explicit set, while a routine with the same
     { ...main, id: 'another', targetDeclarations: [] },
   ];
   expect(steps(round).get('spell-completion:party-1')?.targetKeys).toEqual([]);
+});
+
+test('ambiguous routine components keep independent, clearable result targets through serialization and revisions', () => {
+  const round = fixtureRound();
+  const firstCell = round.cells[0]?.[0],
+    secondCell = round.cells[1]?.[0],
+    actor = round.party[0];
+  if (!firstCell || !secondCell || !actor) throw Error('Missing matchup');
+  actor.attacksPerRoutine = 2;
+  firstCell.enemyToPartyVisible = false;
+  firstCell.enemyToParty = '';
+  secondCell.partyToEnemyVisible = true;
+  const first = steps(round).get('attack:party-1:1'),
+    second = steps(round).get('attack:party-1:2');
+  if (!first || !second) throw Error('Missing attacks');
+  expect(first.resultTargetOptions?.map((option) => option.key)).toEqual([
+    4, 5,
+  ]);
+  let edited = setTrackerStepResult(round, first, 'First hit');
+  expect(edited.stepResults?.[0]?.targetKeys).toEqual([]);
+  expect(setTrackerStepResult(edited, first, { targetKey: 6 })).toBe(edited);
+  edited = setTrackerStepResult(edited, first, { targetKey: 4 });
+  edited = setTrackerStepResult(edited, second, { targetKey: 5 });
+  expect(edited.stepResults?.[1]).toMatchObject({ text: '', targetKeys: [5] });
+  edited = setTrackerStepResult(edited, second, 'Second hit');
+  edited = setTrackerStepResult(edited, first, 'Revised first hit');
+  expect(edited.stepResults?.map((r) => [r.text, r.targetKeys])).toEqual([
+    ['Revised first hit', [4]],
+    ['Second hit', [5]],
+  ]);
+  expect(edited.stepResults?.[0]).not.toHaveProperty('resultTargetOptions');
+  const reopened = transformTrackerState(
+    compactTrackerState({ version: 7, activeRound: 0, rounds: [edited] })
+  ).rounds[0];
+  if (!reopened) throw Error('Missing reopened round');
+  expect(reopened.stepResults).toEqual(edited.stepResults);
+  const cleared = setTrackerStepResult(reopened, first, { targetKey: null });
+  expect(cleared.stepResults?.[0]).toMatchObject({
+    text: 'Revised first hit',
+    targetKeys: [],
+    targetLabel: 'Multiple targets',
+  });
+  const blank = setTrackerStepResult(cleared, second, '');
+  expect(blank.stepResults?.[1]).toMatchObject({ text: '', targetKeys: [5] });
+  expect(
+    setTrackerStepResult(blank, second, { targetKey: null }).stepResults
+  ).toHaveLength(1);
+  const revised = retainPriorStepResults({
+    ...edited,
+    cells: edited.cells.map((row, i) =>
+      i === 1
+        ? row.map((cell) => ({ ...cell, partyToEnemyVisible: false }))
+        : row
+    ),
+  });
+  expect(revised.stepResults?.[0]).toMatchObject({
+    stepKey: null,
+    targetKeys: [4],
+    targetLabel: 'Pillar Gnoll',
+  });
+  expect(
+    steps(revised).get('attack:party-1:1')?.resultTargetOptions
+  ).toBeUndefined();
 });
 
 test('compact tracker storage and round creation preserve the source queue without replaying it', () => {

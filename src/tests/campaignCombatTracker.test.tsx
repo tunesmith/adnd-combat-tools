@@ -73,6 +73,49 @@ test('round review shows recorded results for the current combatant alongside an
   expect(dialog.queryByText(/Related results/)).toBeNull();
 });
 
+test('review links unassigned steps to their independent result pickers even before notes are entered', () => {
+  jest.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null);
+  const state = createRegisterIntentionsFixtureState();
+  const round = state.rounds[0],
+    actor = round?.party[0],
+    target = round?.enemies[0],
+    other = round?.enemies[1];
+  const firstCell = round?.cells[0]?.[0],
+    secondCell = round?.cells[1]?.[0];
+  if (!actor || !target || !other || !firstCell || !secondCell)
+    throw Error('Missing matchup');
+  actor.attacksPerRoutine = 2;
+  firstCell.enemyToParty = '';
+  firstCell.enemyToPartyVisible = false;
+  secondCell.partyToEnemyVisible = true;
+  render(<CombatTracker rememberedState={state} />);
+  const review = () => {
+    fireEvent.click(screen.getByRole('button', { name: 'Review round' }));
+    return within(screen.getByRole('dialog', { name: 'Review round' }));
+  };
+  const jump = (count: number, attack: number) => {
+    const dialog = review();
+    fireEvent.click(dialog.getByText(`Unassigned result targets (${count})`));
+    fireEvent.click(
+      dialog.getByRole('button', { name: new RegExp(`attack ${attack}$`) })
+    );
+    return screen.getByLabelText('Result target');
+  };
+  const first = jump(2, 1);
+  expect(first).toHaveValue('');
+  fireEvent.change(first, { target: { value: String(target.key) } });
+  const second = jump(1, 2);
+  expect(second).toHaveValue('');
+  fireEvent.change(second, { target: { value: String(other.key) } });
+  fireEvent.change(screen.getByLabelText('Result', { exact: true }), {
+    target: { value: 'Second hit' },
+  });
+  const dialog = review();
+  expect(dialog.queryByText(/Unassigned result targets/)).toBeNull();
+  expect(dialog.getByText('Related results (1)')).toBeInTheDocument();
+  expect(dialog.getByText(`${actor.name} → ${other.name}`)).toBeInTheDocument();
+});
+
 test('controlled tracker sends complete live edits through campaign validation and never writes browser drafts or URL', () => {
   jest.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null);
   const local = jest.spyOn(Storage.prototype, 'setItem');
