@@ -2833,3 +2833,42 @@
   font-size: 0.9em;
   color: #e1d5b9;
 }
+
+.stepResultFields {
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 0 0.6rem;
+}
+.stepResultFields > label:first-child {
+  flex: 0 1 6rem;
+}
+.stepResultFields > label:last-child {
+  flex: 1 1 12rem;
+  min-width: 0;
+}
+.gridMarkSource {
+  max-width: 100%;
+  text-align: center;
+  font-size: 0.78rem;
+  line-height: 1.15;
+  color: var(--eggshell);
+  overflow-wrap: anywhere;
+}
+.gridMarkSource button {
+  background: transparent;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.interactionCell[data-mark-source] {
+  height: 1px;
+}
+.interactionCell[data-mark-source] .cellShell {
+  position: relative;
+}
+.interactionCell[data-mark-source] .cellEntryInputInline {
+  width: 100%;
+}

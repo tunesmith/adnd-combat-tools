@@ -1,3 +1,5 @@
+import { TreasureReview } from './XpTreasureRows';
+import { treasurePending } from '../../helpers/campaignXpTreasure';
 import { profileClassReviews } from '../../helpers/campaignXpClasses';
 import ClassXpBalancesFields from './ClassXpBalancesFields';
 import XpClassAwardEdit from './XpClassAwardEdit';
@@ -596,10 +598,7 @@ export default function CampaignXp({
     // A timeline draft can be positioned or used for history extension.
     // Disposition experiments are kept in the dialog until confirmation.
     const selectedIds = pointRewards(document, draft)
-      .filter(
-        (r) =>
-          r.input.category !== 'treasure' || r.input.disposition !== 'defer'
-      )
+      .filter((r) => !treasurePending(r.input))
       .map((r) => r.id);
     if (
       onChange((doc) =>
@@ -992,7 +991,12 @@ export default function CampaignXp({
             }}
           >
             <h2>{inspectedEvent.title}</h2>
-            <p>{inspectedEvent.evidence.label}</p>
+            {inspectedEvent.input.category === 'treasure' &&
+            inspectedEvent.input.rows ? (
+              <TreasureReview rows={inspectedEvent.input.rows} />
+            ) : (
+              <p>{inspectedEvent.evidence.label}</p>
+            )}
             {inspectedEvent.notes && <p>{inspectedEvent.notes}</p>}
             <XpRewardCalculation document={document} reward={inspectedEvent} />
             <button autoFocus onClick={() => setInspectedEvent(undefined)}>

@@ -107,7 +107,16 @@ test('possessions supply explicit selected-item evidence and preserve custody in
   );
   const reward = rewardFromPossession(
     doc,
-    newXpReward(doc, 'session-1', 'scroll-evidence', 'treasure'),
+    {
+      ...newXpReward(doc, 'session-1', 'scroll-evidence', 'treasure'),
+      input: {
+        category: 'treasure',
+        disposition: 'defer',
+        marketGp: null,
+        retainedXp: null,
+        proceeds: null,
+      },
+    },
     'session-1',
     candidate.key
   );

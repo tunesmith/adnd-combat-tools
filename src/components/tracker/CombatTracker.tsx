@@ -1,6 +1,7 @@
 import { getTrackerWeaponWarning } from '../../helpers/trackerWeaponWarning';
 import {
   buildTrackerSteps,
+  compileTrackerGridMarks,
   getTrackerResultTarget,
   retainPriorStepResults,
   setTrackerStepResult,
@@ -265,7 +266,7 @@ type TrackerAction =
       rowIndex: number;
       columnIndex: number;
       field: CellField;
-      value: string;
+      value: string | null; // null returns this direction to compiled marks
     }
   | {
       type: 'set-cell-action-ids';
@@ -1368,24 +1369,39 @@ const applyTrackerAction = (
         ),
       }));
     case 'set-cell':
-      return updateCurrentRound(state, (round) => ({
-        ...round,
-        cells: round.cells.map((row, rowIndex) =>
-          rowIndex === action.rowIndex
-            ? row.map((cell, columnIndex) =>
-                columnIndex === action.columnIndex
-                  ? {
-                      ...cell,
-                      [action.field]: action.value,
-                      ...(action.field === 'enemyToParty'
-                        ? { enemyToPartyVisible: true }
-                        : { partyToEnemyVisible: true }),
-                    }
-                  : cell
-              )
-            : row
-        ),
-      }));
+      return updateCurrentRound(state, (previous) => {
+        const { field, value, rowIndex, columnIndex } = action;
+        const party = field === 'partyToEnemy';
+        const visible = `${field}Visible` as const;
+        const manualBlank = `${field}ManualBlank` as const;
+        // Imported actions may specify targets by key without activating the
+        // corresponding grid cells. Preserve the whole assignment on first edit.
+        const round = previous.cells[rowIndex]?.[columnIndex]?.[visible]
+          ? previous
+          : materializeStoredTargets(
+              previous,
+              party ? 'party' : 'enemy',
+              party ? columnIndex : rowIndex
+            );
+        return {
+          ...round,
+          cells: round.cells.map((row, i) =>
+            i !== rowIndex
+              ? row
+              : row.map((cell, j) => {
+                  if (j !== columnIndex) return cell;
+                  const next = {
+                    ...cell,
+                    [field]: value ?? '',
+                    [visible]: true,
+                  };
+                  if (value === '') next[manualBlank] = true;
+                  else delete next[manualBlank];
+                  return next;
+                })
+          ),
+        };
+      });
     case 'set-cell-action-ids':
       return updateCurrentRound(state, (round) => ({
         ...round,
@@ -1836,7 +1852,9 @@ const CombatTracker = ({
     [currentRound]
   );
   // Declarations can be reviewed before either side has rolled initiative.
-  const needsInitiativeGraph = canOpenCombatWizard || showIntentionsWizard;
+  const hasGridMarks = currentRound?.stepResults?.some((r) => r.gridMark);
+  const needsInitiativeGraph =
+    canOpenCombatWizard || showIntentionsWizard || hasGridMarks;
   const declarationRound = useMemo(
     () =>
       currentRound && needsInitiativeGraph
@@ -1860,9 +1878,6 @@ const CombatTracker = ({
     const declarations = getTrackerActionDeclarations(currentRound).filter(
       (a) => a.side === side && a.combatantKey === combatantKey
     );
-    if (!declarations.length) return 'Undeclared';
-    if (declarations.every((a) => a.declaredAction === 'none'))
-      return 'No combat action';
     const actors =
       side === 'party'
         ? declarationRound.scenario.party
@@ -1872,10 +1887,15 @@ const CombatTracker = ({
         .filter((a) => a.ownerCombatantKey === combatantKey)
         .map((a) => a.id)
     );
-    return declarationRound.attackGraph.nodes.some((n) =>
-      actorIds.has(n.combatantId)
+    if (
+      declarationRound.attackGraph.nodes.some((n) =>
+        actorIds.has(n.combatantId)
+      )
     )
-      ? 'Declared'
+      return 'Declared';
+    if (!declarations.length) return 'Undeclared';
+    return declarations.every((a) => a.declaredAction === 'none')
+      ? 'No combat action'
       : 'No graph step';
   }, [
     showIntentionsWizard,
@@ -1884,25 +1904,22 @@ const CombatTracker = ({
     intentionWizardActionError,
     declarationRound,
   ]);
+  const stepRound = hasGridMarks ? declarationRound : resolvedInitiativeRound;
   const combatFlowNodeDisplayById = useMemo(
     () =>
-      resolvedInitiativeRound
-        ? buildInitiativeAttackGraphNodeDisplayById(resolvedInitiativeRound, {
+      stepRound
+        ? buildInitiativeAttackGraphNodeDisplayById(stepRound, {
             targetPrefix: '→',
           })
         : {},
-    [resolvedInitiativeRound]
+    [stepRound]
   );
   const combatFlowSteps = useMemo(
     () =>
-      resolvedInitiativeRound && currentRound
-        ? buildTrackerSteps(
-            currentRound,
-            resolvedInitiativeRound,
-            combatFlowNodeDisplayById
-          )
+      stepRound && currentRound
+        ? buildTrackerSteps(currentRound, stepRound, combatFlowNodeDisplayById)
         : new Map<string, TrackerStep>(),
-    [currentRound, resolvedInitiativeRound, combatFlowNodeDisplayById]
+    [currentRound, stepRound, combatFlowNodeDisplayById]
   );
   const resultsByStepKey = useMemo(
     () =>
@@ -1910,6 +1927,15 @@ const CombatTracker = ({
         currentRound?.stepResults?.map((result) => [result.stepKey, result])
       ),
     [currentRound?.stepResults]
+  );
+  const gridMarks = useMemo(
+    () =>
+      compileTrackerGridMarks(
+        hasGridMarks ? stepRound?.attackGraph.layers ?? [] : [],
+        combatFlowSteps,
+        resultsByStepKey
+      ),
+    [hasGridMarks, stepRound, combatFlowSteps, resultsByStepKey]
   );
   const activeStepsByKey = useMemo(
     () =>
@@ -4043,6 +4069,23 @@ const CombatTracker = ({
         style={style}
         rowCombatant={enemyCombatant}
         columnCombatant={partyCombatant}
+        enemyMarks={gridMarks.get(
+          `enemy:${enemyCombatant.key}:${partyCombatant.key}`
+        )}
+        partyMarks={gridMarks.get(
+          `party:${partyCombatant.key}:${enemyCombatant.key}`
+        )}
+        enemyManualBlank={cellState.enemyToPartyManualBlank}
+        partyManualBlank={cellState.partyToEnemyManualBlank}
+        onUseMarks={(field) =>
+          dispatch({
+            type: 'set-cell',
+            rowIndex: enemyIndex,
+            columnIndex: partyIndex,
+            field,
+            value: null,
+          })
+        }
         enemyToPartyValue={cellState.enemyToParty}
         partyToEnemyValue={cellState.partyToEnemy}
         enemyToPartyVisible={cellState.enemyToPartyVisible}
@@ -4262,7 +4305,7 @@ const CombatTracker = ({
   ) => {
     const results = (currentRound.stepResults || []).filter(
       (result) =>
-        result.text.trim() &&
+        (result.text.trim() || result.gridMark?.trim()) &&
         (result.side === side
           ? result.actorKey === actorKey
           : result.targetKeys.includes(actorKey))
@@ -4299,7 +4342,11 @@ const CombatTracker = ({
                     {prior ? 'Prior step · ' : ''}
                     {step.stepLabel}
                   </div>
-                  <div className={styles['stepResultText']}>{result.text}</div>
+                  <div className={styles['stepResultText']}>
+                    {result.gridMark && <strong>{result.gridMark}</strong>}
+                    {result.gridMark && result.text && ' · '}
+                    {result.text}
+                  </div>
                 </li>
               );
             })}
@@ -5035,22 +5082,41 @@ const CombatTracker = ({
                         {selectedDisplay.actionMeta &&
                           ` · ${selectedDisplay.actionMeta}`}
                       </div>
-                      <label className={styles['combatFlowField']}>
-                        <span className={styles['combatFlowFieldLabel']}>
-                          Result
-                        </span>
-                        <AutoHeightTextarea
-                          className={styles['combatFlowTextarea']}
-                          value={selectedResult?.text ?? ''}
-                          onChange={(text) =>
-                            dispatch({
-                              type: 'set-step-result',
-                              step: selectedStep,
-                              edit: text,
-                            })
-                          }
-                        />
-                      </label>
+                      <div className={styles['stepResultFields']}>
+                        <label className={styles['combatFlowField']}>
+                          <span className={styles['combatFlowFieldLabel']}>
+                            Grid mark
+                          </span>
+                          <input
+                            type="text"
+                            className={styles['combatFlowTextarea']}
+                            value={selectedResult?.gridMark ?? ''}
+                            onChange={(event) =>
+                              dispatch({
+                                type: 'set-step-result',
+                                step: selectedStep,
+                                edit: { gridMark: event.target.value },
+                              })
+                            }
+                          />
+                        </label>
+                        <label className={styles['combatFlowField']}>
+                          <span className={styles['combatFlowFieldLabel']}>
+                            Detail (optional)
+                          </span>
+                          <AutoHeightTextarea
+                            className={styles['combatFlowTextarea']}
+                            value={selectedResult?.text ?? ''}
+                            onChange={(text) =>
+                              dispatch({
+                                type: 'set-step-result',
+                                step: selectedStep,
+                                edit: text,
+                              })
+                            }
+                          />
+                        </label>
+                      </div>
                       {selectedStep.resultTargetOptions && (
                         <label className={styles['resultTargetField']}>
                           Result target

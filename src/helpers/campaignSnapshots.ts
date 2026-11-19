@@ -74,6 +74,8 @@ const cell = z
     enemyToPartyVisible: z.boolean().optional(),
     partyToEnemyVisible: z.boolean().optional(),
     isVisible: z.boolean().optional(),
+    enemyToPartyManualBlank: z.literal(true).optional(),
+    partyToEnemyManualBlank: z.literal(true).optional(),
     enemyToPartyActionIds: z.array(string).optional(),
     partyToEnemyActionIds: z.array(string).optional(),
   })
@@ -147,6 +149,7 @@ const round = z
           targetKeys: z.array(number.int()),
           targetLabel: string,
           stepLabel: string,
+          gridMark: string.optional(),
           text: string,
         })
       )
@@ -223,6 +226,8 @@ function validateTracker(value: unknown): TrackerStateAnyVersion {
             partyToEnemy: string.optional(),
             enemyToPartyVisible: z.boolean().optional(),
             partyToEnemyVisible: z.boolean().optional(),
+            enemyToPartyManualBlank: z.literal(true).optional(),
+            partyToEnemyManualBlank: z.literal(true).optional(),
             enemyToPartyActionIds: z.array(string).optional(),
             partyToEnemyActionIds: z.array(string).optional(),
           })

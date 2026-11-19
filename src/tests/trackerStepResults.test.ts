@@ -6,6 +6,7 @@ import { getTrackerActionDeclarations } from '../helpers/trackerActionDeclaratio
 import { resolveTrackerRoundInitiative } from '../helpers/initiative/trackerRoundResolution';
 import {
   buildTrackerSteps,
+  compileTrackerGridMarks,
   retainPriorStepResults,
   setTrackerStepResult,
 } from '../helpers/trackerStepResults';
@@ -263,4 +264,99 @@ test('compact tracker storage and round creation preserve the source queue witho
   expect(fresh?.partyStates[0]?.effect).toBe('');
   expect(fresh?.partyStates[0]?.nextRoundEffect || '').toBe('');
   expect(fresh?.stepResults || []).toEqual([]);
+});
+
+function cellMarks(round: TrackerRound) {
+  const resolved = resolveTrackerRoundInitiative(round);
+  return compileTrackerGridMarks(
+    resolved.attackGraph.layers,
+    buildTrackerSteps(round, resolved),
+    new Map(round.stepResults?.map((r) => [r.stepKey, r]))
+  );
+}
+
+test('four melee marks compile in graph order independently of note and edit order', () => {
+  let round = fixtureRound();
+  const actions = getTrackerActionDeclarations(round);
+  round.actions = actions.map((a) =>
+    a.side === 'party' ? { ...a, attackRoutineCount: 4 } : a
+  );
+  const resolved = resolveTrackerRoundInitiative(round);
+  const byId = buildTrackerSteps(round, resolved);
+  const attacks = resolved.attackGraph.layers.flat().flatMap((id) => {
+    const step = byId.get(id);
+    return step?.side === 'party' ? [step] : [];
+  });
+  expect(attacks).toHaveLength(4);
+  const marks = ['x', 'x', '5', '6'];
+  for (let i = 3; i >= 0; i--) {
+    const step = attacks[i],
+      gridMark = marks[i];
+    if (!step || !gridMark) throw Error('Missing blow');
+    round = setTrackerStepResult(round, step, { gridMark });
+  }
+  const last = attacks[3];
+  if (!last) throw Error('Missing last blow');
+  round = setTrackerStepResult(round, last, 'Kills the gnoll.');
+  expect(cellMarks(round).get('party:1:4')).toBe('x · x · 5 · 6');
+  expect(cellMarks(round).has('enemy:4:1')).toBe(false);
+  round = setTrackerStepResult(round, last, { gridMark: '' });
+  expect(round.stepResults?.[0]?.text).toBe('Kills the gnoll.');
+  expect(cellMarks(round).get('party:1:4')).toBe('x · x · 5');
+});
+
+test('marks follow each assigned target and archived marks stay available in review only', () => {
+  let round = fixtureRound();
+  const second = round.cells[1]?.[0],
+    first = round.cells[0]?.[0];
+  if (!first || !second) throw Error('Missing cells');
+  first.enemyToParty = '';
+  first.enemyToPartyVisible = false;
+  second.partyToEnemyVisible = true;
+  const step = steps(round).get('attack:party-1:1');
+  if (!step) throw Error('Missing ambiguous step');
+  round = setTrackerStepResult(round, step, { gridMark: '7' });
+  expect(cellMarks(round).size).toBe(0);
+  round = setTrackerStepResult(round, step, { targetKey: 4 });
+  expect(Array.from(cellMarks(round))).toEqual([['party:1:4', '7']]);
+  round = setTrackerStepResult(round, step, { targetKey: 5 });
+  expect(Array.from(cellMarks(round))).toEqual([['party:1:5', '7']]);
+  round = retainPriorStepResults({
+    ...round,
+    cells: round.cells.map((row, i) =>
+      i === 1 ? row.map((c) => ({ ...c, partyToEnemyVisible: false })) : row
+    ),
+  });
+  expect(round.stepResults?.[0]).toMatchObject({
+    stepKey: null,
+    gridMark: '7',
+    targetKeys: [5],
+  });
+  expect(cellMarks(round).size).toBe(0);
+});
+
+test('shared tracker data preserves marks, freeform details and an intentionally empty handwritten direction', () => {
+  let round = fixtureRound();
+  const step = steps(round).get('attack:party-1:1');
+  const cell = round.cells[0]?.[0];
+  if (!cell || !step) throw Error('Missing matchup');
+  cell.partyToEnemy = '';
+  cell.partyToEnemyManualBlank = true;
+  round = setTrackerStepResult(round, step, { gridMark: 'x' });
+  round = setTrackerStepResult(round, step, 'Swing goes wide.');
+  const compact = compactTrackerState({
+    version: 7,
+    activeRound: 0,
+    rounds: [round],
+  });
+  const reopened = transformTrackerState(compact).rounds[0];
+  expect(reopened?.stepResults).toEqual(round.stepResults);
+  expect(reopened?.cells[0]?.[0]).toEqual(cell);
+  const next = insertRoundAfterActive({
+    version: 7,
+    activeRound: 0,
+    rounds: [round],
+  }).rounds[1];
+  expect(next?.cells[0]?.[0]).not.toHaveProperty('partyToEnemyManualBlank');
+  expect(next?.stepResults).toBeUndefined();
 });

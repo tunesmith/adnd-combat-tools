@@ -107,9 +107,12 @@ test('review links unassigned steps to their independent result pickers even bef
   const second = jump(1, 2);
   expect(second).toHaveValue('');
   fireEvent.change(second, { target: { value: String(other.key) } });
-  fireEvent.change(screen.getByLabelText('Result', { exact: true }), {
-    target: { value: 'Second hit' },
-  });
+  fireEvent.change(
+    screen.getByLabelText('Detail (optional)', { exact: true }),
+    {
+      target: { value: 'Second hit' },
+    }
+  );
   const dialog = review();
   expect(dialog.queryByText(/Unassigned result targets/)).toBeNull();
   expect(dialog.getByText('Related results (1)')).toBeInTheDocument();

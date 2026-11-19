@@ -53,7 +53,22 @@ const monsterSchema = z
     bandReason: note,
   })
   .strict();
-const rewardInputSchema = z.discriminatedUnion('category', [
+const treasureAmounts = {
+  disposition: z.enum(['keep', 'sell', 'defer']),
+  retainedXp: rational.nullable(),
+  proceeds: rational.nullable(),
+  marketGp: rational.nullable(),
+};
+const treasureRowSchema = z
+  .object({
+    id,
+    label: z.string().max(1000),
+    evidence: evidenceSchema.nullable(),
+    ...treasureAmounts,
+  })
+  .strict();
+export type XpTreasureRow = z.infer<typeof treasureRowSchema>;
+const rewardInputSchema = z.union([
   z
     .object({
       category: z.literal('monster'),
@@ -64,12 +79,44 @@ const rewardInputSchema = z.discriminatedUnion('category', [
   z
     .object({
       category: z.literal('treasure'),
-      disposition: z.enum(['keep', 'sell', 'defer']),
-      retainedXp: rational.nullable(),
-      // Sale value; retain the historical field name to preserve document compatibility.
-      proceeds: rational.nullable(),
-      // Legacy value used only when no explicit sale value was recorded.
-      marketGp: rational.nullable(),
+      // Original single-item representation, including its sale-value fallback.
+      ...treasureAmounts,
+      rows: z.never().optional(),
+    })
+    .strict(),
+  z
+    .object({
+      category: z.literal('treasure'),
+      rows: z
+        .array(treasureRowSchema)
+        .min(1)
+        .max(1000)
+        .superRefine((rows, ctx) => {
+          const ids = new Set<string>(),
+            keys = new Set<string>();
+          for (const row of rows) {
+            if (ids.has(row.id))
+              ctx.addIssue({
+                code: 'custom',
+                message: 'Treasure rows need distinct identities.',
+              });
+            ids.add(row.id);
+            if (!row.evidence) continue;
+            if (row.evidence.kind !== 'item')
+              ctx.addIssue({
+                code: 'custom',
+                message: 'Choose possession evidence for a treasure row.',
+              });
+            for (const key of row.evidence.keys) {
+              if (keys.has(key))
+                ctx.addIssue({
+                  code: 'custom',
+                  message: 'The same Gear lot is linked to two treasure rows.',
+                });
+              keys.add(key);
+            }
+          }
+        }),
     })
     .strict(),
 ]);

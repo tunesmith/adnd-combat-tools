@@ -251,14 +251,14 @@ test('unknown opening balances and bonuses stay unknown; recipient levels, share
     '225',
   ]);
   const treasure = xpTestReward(xpCampaign(), 'sale', 'treasure');
-  if (treasure.input.category === 'treasure')
+  if (treasure.input.category === 'treasure' && !treasure.input.rows)
     treasure.input = {
       ...treasure.input,
       disposition: 'sell',
       proceeds: '100',
     };
   expect(resolveXpReward(treasure).raw).toBe('100');
-  if (treasure.input.category === 'treasure')
+  if (treasure.input.category === 'treasure' && !treasure.input.rows)
     treasure.input.disposition = 'defer';
   expect(() => resolveXpReward(treasure)).toThrow('pending');
 });
@@ -549,7 +549,8 @@ test('money defaults to full XP for older unset drafts and retains an explicit r
 test('sale value prefers a recorded sale amount, falls back to a legacy GP value and preserves explicit zero', () => {
   const doc = xpCastleDraft();
   const reward = required(doc.xp?.rewards.find((r) => r.id === 'scroll'));
-  if (reward.input.category !== 'treasure') throw Error('Fixture');
+  if (reward.input.category !== 'treasure' || reward.input.rows)
+    throw Error('Fixture');
   reward.input.disposition = 'sell';
   expect(resolveXpReward(reward).raw).toBe('7500');
   reward.input.proceeds = '6000';

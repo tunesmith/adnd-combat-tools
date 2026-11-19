@@ -51,11 +51,16 @@ test.each(['party', 'enemy'] as const)(
     expect(
       flow.queryByRole('button', { name: /off-hand attack details/ })
     ).toBeNull();
-    fireEvent.change(flow.getByLabelText('Result', { exact: true }), {
-      target: { value: 'Sword missed' },
-    });
+    fireEvent.change(
+      flow.getByLabelText('Detail (optional)', { exact: true }),
+      {
+        target: { value: 'Sword missed' },
+      }
+    );
     openStep(off);
-    expect(flow.getByLabelText('Result', { exact: true })).toHaveValue('');
+    expect(
+      flow.getByLabelText('Detail (optional)', { exact: true })
+    ).toHaveValue('');
     expect(
       flow.queryByRole('button', { name: /main-hand attack details/ })
     ).toBeNull();
@@ -70,12 +75,15 @@ test.each(['party', 'enemy'] as const)(
     expect(detail.getByText('Dagger (Held)')).toBeInTheDocument();
     expect(detail.getByText(/Base to hit: 20\+ on d20/)).toBeInTheDocument();
     fireEvent.click(detail.getByRole('button', { name: 'Close' }));
-    fireEvent.change(flow.getByLabelText('Result', { exact: true }), {
-      target: { value: 'Dagger hit' },
-    });
-    openStep(main);
-    expect(flow.getByLabelText('Result', { exact: true })).toHaveValue(
-      'Sword missed'
+    fireEvent.change(
+      flow.getByLabelText('Detail (optional)', { exact: true }),
+      {
+        target: { value: 'Dagger hit' },
+      }
     );
+    openStep(main);
+    expect(
+      flow.getByLabelText('Detail (optional)', { exact: true })
+    ).toHaveValue('Sword missed');
   }
 );

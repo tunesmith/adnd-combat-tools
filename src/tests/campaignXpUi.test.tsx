@@ -54,7 +54,8 @@ test('usable review flow establishes opening XP, keeps a scroll, creates an open
     xp: { ...xpLedger(current), openings: [], points: [] },
   };
   const scroll = xpLedger(current).rewards.find((r) => r.id === 'scroll');
-  if (!scroll || scroll.input.category !== 'treasure') throw Error('Fixture');
+  if (!scroll || scroll.input.category !== 'treasure' || scroll.input.rows)
+    throw Error('Fixture');
   scroll.input.disposition = 'defer';
   current = saveXpReward(current, pendingFungus(current));
   function Harness() {
@@ -726,7 +727,8 @@ test('treasure uses one sale-value field, keeps retained XP separate and saves a
 test('an older treasure draft defaults to full XP and keeps ratio overrides independent of XP adjustments', () => {
   let current = xpCastleDraft();
   const scroll = current.xp?.rewards.find((r) => r.id === 'scroll');
-  if (!scroll || scroll.input.category !== 'treasure') throw Error('Fixture');
+  if (!scroll || scroll.input.category !== 'treasure' || scroll.input.rows)
+    throw Error('Fixture');
   scroll.ratio.proposed = null;
   scroll.input.disposition = 'defer';
   const originalCombats = current.workingCombats;

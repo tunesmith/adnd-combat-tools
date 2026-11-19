@@ -1,4 +1,9 @@
 import {
+  treasureSubtotal,
+  treasurePending,
+  rewardEvidence,
+} from './campaignXpTreasure';
+import {
   calculateClassAwards,
   profileClassReviews,
   rebaseClassAwards,
@@ -40,6 +45,7 @@ import type {
   XpPoint,
   XpPosition,
   XpReward,
+  XpTreasureRow,
 } from './campaignXpModel';
 import {
   calculateMonster,
@@ -316,6 +322,12 @@ export function xpRewardBase(reward: XpReward) {
     if (reward.input.gp === null && !reward.rawOverride)
       fail('Enter GP-equivalent value.');
     raw = xpNumber(reward.input.gp || '0');
+  } else if (reward.input.rows) {
+    const { subtotal, deferred, missing } = treasureSubtotal(reward.input.rows);
+    if (deferred) fail('Deferred treasure remains pending.');
+    if (missing)
+      fail('Enter retained XP or sale proceeds for each decided treasure row.');
+    raw = xpNumber(subtotal);
   } else {
     if (reward.input.disposition === 'defer')
       fail('Deferred treasure remains pending.');
@@ -759,10 +771,7 @@ export function withXpRewardSelection(
   );
   return { ...point, rewardIds, bonuses };
 }
-export type XpTreasureDisposition = Extract<
-  XpReward['input'],
-  { category: 'treasure' }
->['disposition'];
+export type XpTreasureDisposition = XpTreasureRow['disposition'];
 
 export function withXpDisposition(
   reward: XpReward,
@@ -771,6 +780,7 @@ export function withXpDisposition(
   if (
     !disposition ||
     reward.input.category !== 'treasure' ||
+    reward.input.rows ||
     reward.input.disposition === disposition
   )
     return reward;
@@ -796,11 +806,15 @@ export function stageXpAward(
       )
     )
       fail('Accepted treasure disposition is frozen. Use Edit award.');
-    if (
-      choice.input.category === 'treasure' &&
-      choice.input.disposition === 'defer'
-    )
+    if (treasurePending(choice.input)) {
+      if (
+        draft.correctionOf &&
+        choice.input.category === 'treasure' &&
+        choice.input.rows
+      )
+        fail('Decide every treasure row before confirming a correction.');
       return [];
+    }
     if (choice !== reward) {
       const source = xpLedger(doc).rewards.find((r) => r.id === reward.id);
       if (
@@ -883,25 +897,34 @@ export function xpEvidenceDuplicates(
   doc: CampaignDocument,
   reward: XpReward
 ): XpReward[] {
-  if (reward.evidence.kind === 'manual') return [];
+  const sources = rewardEvidence(reward).filter((e) => e.kind !== 'manual');
+  if (!sources.length) return [];
   const entries = [
     ...xpLedger(doc).rewards,
     ...xpLedger(doc).events.flatMap((e) => e.rewards),
   ];
+  const overlaps = (a: XpReward['evidence'], b: XpReward['evidence']) =>
+    a.kind === b.kind &&
+    a.keys.some((k) =>
+      b.keys.some(
+        (other) =>
+          k === other ||
+          (a.kind === 'item' &&
+            k.slice(k.lastIndexOf(':item:')) ===
+              other.slice(other.lastIndexOf(':item:')))
+      )
+    );
   const found = entries.filter((other) => {
-    if (other.id === reward.id || other.evidence.kind !== reward.evidence.kind)
-      return false;
-    if (other.evidence.keys.some((key) => reward.evidence.keys.includes(key)))
-      return true;
-    if (reward.evidence.kind === 'item')
-      return other.evidence.keys.some((a) =>
-        reward.evidence.keys.some(
-          (b) =>
-            a.slice(a.lastIndexOf(':item:')) ===
-            b.slice(b.lastIndexOf(':item:'))
-        )
-      );
+    if (other.id === reward.id) return false;
     if (
+      sources.some((source) =>
+        rewardEvidence(other).some((e) => overlaps(source, e))
+      )
+    )
+      return true;
+    if (
+      reward.evidence.kind !== 'encounter' ||
+      other.evidence.kind !== reward.evidence.kind ||
       other.evidence.sourceId !== reward.evidence.sourceId ||
       other.evidence.instanceId === reward.evidence.instanceId ||
       other.input.category !== 'monster' ||
@@ -913,6 +936,12 @@ export function xpEvidenceDuplicates(
       names.includes(m.name.trim().toLowerCase())
     );
   });
+  if (
+    sources.some((source, i) =>
+      sources.slice(0, i).some((e) => overlaps(source, e))
+    )
+  )
+    found.unshift(reward);
   return found.filter(
     (r, i) => found.findIndex((other) => other.id === r.id) === i
   );

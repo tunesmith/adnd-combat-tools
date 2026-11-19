@@ -1,3 +1,5 @@
+import { treasurePending } from '../../helpers/campaignXpTreasure';
+import { TreasureSubtotal } from './XpTreasureRows';
 import {
   inPartyOrder,
   profileClassLabel,
@@ -159,9 +161,7 @@ export default function XpAwardTable({
     compareXpTimeline(document, a.origin, b.origin, a.id, b.id)
   );
   const resolved = orderedRewards.map((reward) => {
-    const deferred =
-      reward.input.category === 'treasure' &&
-      reward.input.disposition === 'defer';
+    const deferred = treasurePending(reward.input);
     const future =
       !readOnly &&
       compareXpTimeline(
@@ -433,29 +433,38 @@ export default function XpAwardTable({
                           }
                         </small>
                       )}
-                      {treasure && !readOnly && onDisposition && (
-                        <select
-                          aria-label={`Disposition for ${reward.title}`}
-                          value={treasure.disposition}
-                          disabled={
-                            (!!blocked && blocked !== 'Deferred') || frozen
-                          }
-                          onChange={(e) => {
-                            const choice = e.target.value;
-                            if (
-                              choice === 'keep' ||
-                              choice === 'sell' ||
-                              choice === 'defer'
-                            )
-                              onDisposition(reward.id, choice);
-                          }}
-                        >
-                          <option value="keep">Keep</option>
-                          <option value="sell">Sell</option>
-                          <option value="defer">Defer</option>
-                        </select>
+                      {treasure?.rows && (
+                        <TreasureSubtotal rows={treasure.rows} />
                       )}
-                      {blocked && <small>{blocked}</small>}
+                      {treasure &&
+                        !treasure.rows &&
+                        !readOnly &&
+                        onDisposition && (
+                          <select
+                            aria-label={`Disposition for ${reward.title}`}
+                            value={treasure.disposition}
+                            disabled={
+                              (!!blocked && blocked !== 'Deferred') || frozen
+                            }
+                            onChange={(e) => {
+                              const choice = e.target.value;
+                              if (
+                                choice === 'keep' ||
+                                choice === 'sell' ||
+                                choice === 'defer'
+                              )
+                                onDisposition(reward.id, choice);
+                            }}
+                          >
+                            <option value="keep">Keep</option>
+                            <option value="sell">Sell</option>
+                            <option value="defer">Defer</option>
+                          </select>
+                        )}
+                      {blocked &&
+                        !(treasure?.rows && blocked === 'Deferred') && (
+                          <small>{blocked}</small>
+                        )}
                       {!blocked && frozen && (
                         <small>
                           Some shares settled; remaining shares pending

@@ -3,7 +3,10 @@ import type { TrackerRound, TrackerStepResult } from '../types/tracker';
 import { buildInitiativeAttackGraphNodeDisplayById } from './initiative/attackGraphDisplay';
 import { resolveTrackerRoundInitiative } from './initiative/trackerRoundResolution';
 
-export type TrackerStep = Omit<TrackerStepResult, 'text' | 'stepKey'> & {
+export type TrackerStep = Omit<
+  TrackerStepResult,
+  'text' | 'gridMark' | 'stepKey'
+> & {
   stepKey: string;
   resultTargetOptions?: { key: number; name: string }[];
 };
@@ -122,7 +125,10 @@ export function getTrackerResultTarget(
   );
 }
 
-export type TrackerStepResultEdit = string | { targetKey: number | null };
+export type TrackerStepResultEdit =
+  | string
+  | { gridMark: string }
+  | { targetKey: number | null };
 
 export function setTrackerStepResult(
   round: TrackerRound,
@@ -135,8 +141,11 @@ export function setTrackerStepResult(
   const { resultTargetOptions, ...context } = step;
   let target = getTrackerResultTarget(step, previous);
   let text = previous?.text ?? '';
+  let gridMark = previous?.gridMark;
   if (typeof edit === 'string') {
     text = edit;
+  } else if ('gridMark' in edit) {
+    gridMark = edit.gridMark;
   } else {
     if (!resultTargetOptions) return round;
     target = resultTargetOptions.find(
@@ -144,7 +153,7 @@ export function setTrackerStepResult(
     );
     if (edit.targetKey !== null && !target) return round;
   }
-  if (!text && !target) {
+  if (!text && !gridMark && !target) {
     return {
       ...round,
       stepResults: results.filter((result) => result.stepKey !== step.stepKey),
@@ -153,6 +162,7 @@ export function setTrackerStepResult(
   const stepResults = results.slice();
   const result = {
     ...context,
+    ...(gridMark && { gridMark }),
     text,
     targetKeys: target ? [target.key] : step.targetKeys,
     targetLabel: target?.name ?? step.targetLabel,
@@ -173,7 +183,33 @@ export function retainPriorStepResults(round: TrackerRound): TrackerRound {
     ...round,
     stepResults: round.stepResults.flatMap((result) => {
       if (result.stepKey === null || keys.has(result.stepKey)) return [result];
-      return result.text.trim() ? [{ ...result, stepKey: null }] : [];
+      return result.text.trim() || result.gridMark?.trim()
+        ? [{ ...result, stepKey: null }]
+        : [];
     }),
   };
+}
+
+// This is a projection, never a source for declarations or the next round.
+// Graph layers order marks even if the DM enters or revises them out of order.
+export function compileTrackerGridMarks(
+  layers: string[][],
+  steps: Map<string, TrackerStep>,
+  results: Map<string | null, TrackerStepResult>
+) {
+  const cells = new Map<string, string>();
+  for (const nodeId of layers.flat()) {
+    const step = steps.get(nodeId);
+    if (!step) continue;
+    const result = results.get(step.stepKey);
+    const mark = result?.gridMark?.trim();
+    if (!mark) continue;
+    const choice = getTrackerResultTarget(step, result);
+    for (const targetKey of choice ? [choice.key] : step.targetKeys) {
+      const key = `${step.side}:${step.actorKey}:${targetKey}`;
+      const earlier = cells.get(key);
+      cells.set(key, earlier ? `${earlier} · ${mark}` : mark);
+    }
+  }
+  return cells;
 }

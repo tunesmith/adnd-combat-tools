@@ -210,3 +210,39 @@ test('the footer follows an unlabeled live target before initiative, and disting
     dialog.getByText('No combat action', { selector: 'span' })
   ).toBeVisible();
 });
+
+test('a named shriek is declared while its action type stays No combat action', () => {
+  const state = createRegisterIntentionsFixtureState();
+  const round = state.rounds[0];
+  if (!round) throw Error('Missing round');
+  const enemy = getTrackerActionDeclarations(round).find(
+    (a) => a.side === 'enemy'
+  );
+  if (!enemy) throw Error('Missing enemy');
+  round.actions = [
+    {
+      ...enemy,
+      declaredAction: 'none',
+      source: 'intention',
+      actionLabel: 'shriek',
+      intention: 'shriek',
+      usesGridTargets: false,
+      targetDeclarations: [],
+    },
+  ];
+  render(<CombatTracker rememberedState={state} />);
+  expect(
+    screen.getByRole('button', { name: /Pillar Gnoll, target .*, shriek/i })
+  ).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Declare Intentions' }));
+  const dialog = within(
+    screen.getByRole('dialog', { name: 'Declare Intentions' })
+  );
+  expect(dialog.getByRole('radio', { name: 'No combat action' })).toBeChecked();
+  expect(dialog.getByLabelText('Intention')).toHaveValue('shriek');
+  expect(dialog.getByText('Declared')).toBeVisible();
+  fireEvent.change(dialog.getByLabelText('Go to combatant'), {
+    target: { value: '1' },
+  });
+  expect(dialog.getByText('Undeclared')).toBeVisible();
+});

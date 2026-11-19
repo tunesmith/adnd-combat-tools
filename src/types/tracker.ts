@@ -41,6 +41,9 @@ export interface TrackerCellState {
   partyToEnemy: string;
   enemyToPartyVisible: boolean;
   partyToEnemyVisible: boolean;
+  // Nonempty cell text is already a handwritten entry in older saves.
+  enemyToPartyManualBlank?: true;
+  partyToEnemyManualBlank?: true;
   enemyToPartyActionIds?: string[];
   partyToEnemyActionIds?: string[];
 }
@@ -138,6 +141,7 @@ export interface TrackerStepResult {
   targetKeys: number[];
   targetLabel: string;
   stepLabel: string;
+  gridMark?: string;
   text: string;
 }
 
@@ -213,6 +217,9 @@ export interface TrackerSparseCellState {
   partyToEnemy?: string;
   enemyToPartyVisible?: true;
   partyToEnemyVisible?: true;
+  // Nonempty cell text is already a handwritten entry in older saves.
+  enemyToPartyManualBlank?: true;
+  partyToEnemyManualBlank?: true;
   enemyToPartyActionIds?: string[];
   partyToEnemyActionIds?: string[];
 }

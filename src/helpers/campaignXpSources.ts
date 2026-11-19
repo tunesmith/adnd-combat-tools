@@ -1,3 +1,4 @@
+import { newTreasureRow, rewardEvidence } from './campaignXpTreasure';
 import {
   profilesInSession,
   xpRecipientAvailable,
@@ -6,7 +7,12 @@ import {
 import { xpExact, xpMultiply, xpNumber } from './xpArithmetic';
 import { ownedHistory } from './campaignHistory';
 import type { CampaignDocument } from './campaignDocument';
-import type { XpEvidence, XpReward, XpRecipient } from './campaignXpModel';
+import type {
+  XpEvidence,
+  XpReward,
+  XpRecipient,
+  XpTreasureRow,
+} from './campaignXpModel';
 import { xpLedger } from './campaignXp';
 import { fingerprint } from './campaignSnapshots';
 import { parseEncumbranceDocument } from './encumbranceDocument';
@@ -38,6 +44,19 @@ function defaultXpRecipients(
       : [];
   });
 }
+export function manualXpEvidence(sessionId: string): XpEvidence {
+  return {
+    kind: 'manual',
+    sourceId: '',
+    instanceId: '',
+    sessionId,
+    keys: [],
+    label: 'Manual entry',
+    fingerprint: '',
+    snapshot: null,
+  };
+}
+
 export function newXpReward(
   doc: CampaignDocument,
   sessionId: string,
@@ -73,10 +92,7 @@ export function newXpReward(
         ? { category, gp: null }
         : {
             category,
-            disposition: 'defer',
-            retainedXp: null,
-            proceeds: null,
-            marketGp: null,
+            rows: [newTreasureRow('first')],
           },
     recipients: defaultXpRecipients(doc, sessionId),
     ratio: {
@@ -87,16 +103,7 @@ export function newXpReward(
       recordedReason: '',
     },
     rawOverride: null,
-    evidence: {
-      kind: 'manual',
-      sourceId: '',
-      instanceId: '',
-      sessionId,
-      keys: [],
-      label: 'Manual entry',
-      fingerprint: '',
-      snapshot: null,
-    },
+    evidence: manualXpEvidence(sessionId),
     distinctReason: '',
     notes: '',
   };
@@ -249,7 +256,7 @@ export function possessionXpCandidates(
     [
       ...xpLedger(doc).rewards,
       ...xpLedger(doc).events.flatMap((e) => e.rewards),
-    ].flatMap((r) => r.evidence.keys)
+    ].flatMap((r) => rewardEvidence(r).flatMap((e) => e.keys))
   );
   return inventoryHolders(parsed).flatMap((holder) =>
     holder.inventory.map((item) => {
@@ -279,6 +286,42 @@ export function possessionXpCandidates(
     })
   );
 }
+function possessionEvidence(
+  candidate: ReturnType<typeof possessionXpCandidates>[number],
+  sessionId: string
+): XpEvidence {
+  const {
+    captured: _captured,
+    possibleRepeat: _repeat,
+    ...rawSnapshot
+  } = candidate;
+  const snapshot = freeze(rawSnapshot);
+  return {
+    kind: 'item',
+    sourceId: candidate.key,
+    instanceId: candidate.workingId,
+    sessionId,
+    keys: [candidate.key],
+    label: `${candidate.name} · ${candidate.holderName}`,
+    snapshot,
+    fingerprint: fingerprint(snapshot),
+  };
+}
+export function captureTreasurePossession(
+  row: XpTreasureRow,
+  item: ReturnType<typeof possessionXpCandidates>[number],
+  sessionId: string
+): XpTreasureRow {
+  const prior = row.evidence?.keys[0];
+  const label =
+    row.label && (!prior || prior === item.key) ? row.label : item.name;
+  return {
+    ...row,
+    label,
+    marketGp: item.gp,
+    evidence: possessionEvidence(item, sessionId),
+  };
+}
 export function rewardFromPossession(
   doc: CampaignDocument,
   reward: XpReward,
@@ -289,22 +332,19 @@ export function rewardFromPossession(
     (c) => c.key === key
   );
   if (!candidate) throw new Error('Inventory item changed.');
-  const {
-    captured: _captured,
-    possibleRepeat: _repeat,
-    ...rawSnapshot
-  } = candidate;
-  const snapshot = freeze(rawSnapshot);
-  const evidence: XpEvidence = {
-    kind: 'item',
-    sourceId: candidate.key,
-    instanceId: candidate.workingId,
-    sessionId,
-    keys: [candidate.key],
-    label: `${candidate.name} · ${candidate.holderName}`,
-    snapshot,
-    fingerprint: fingerprint(snapshot),
-  };
+  if (reward.input.category === 'treasure' && reward.input.rows) {
+    const [row] = reward.input.rows;
+    if (!row || reward.input.rows.length !== 1)
+      throw Error('Choose a treasure row for this possession.');
+    return {
+      ...reward,
+      input: {
+        category: 'treasure',
+        rows: [captureTreasurePossession(row, candidate, sessionId)],
+      },
+    };
+  }
+  const evidence = possessionEvidence(candidate, sessionId);
   return {
     ...reward,
     title: candidate.name,

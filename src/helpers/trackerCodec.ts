@@ -226,6 +226,8 @@ const compactCell = (
   const compactedCell: TrackerSparseCellState = {
     rowIndex,
     columnIndex,
+    ...(cell.enemyToPartyManualBlank && { enemyToPartyManualBlank: true }),
+    ...(cell.partyToEnemyManualBlank && { partyToEnemyManualBlank: true }),
   };
 
   if (cell.enemyToParty) {
@@ -254,6 +256,8 @@ const compactCell = (
 
   return compactedCell.enemyToParty ||
     compactedCell.partyToEnemy ||
+    compactedCell.enemyToPartyManualBlank ||
+    compactedCell.partyToEnemyManualBlank ||
     compactedCell.enemyToPartyVisible ||
     compactedCell.partyToEnemyVisible ||
     compactedCell.enemyToPartyActionIds ||
@@ -298,6 +302,8 @@ const hydrateSparseCells = (
     }
 
     hydratedRow[cell.columnIndex] = {
+      ...(cell.enemyToPartyManualBlank && { enemyToPartyManualBlank: true }),
+      ...(cell.partyToEnemyManualBlank && { partyToEnemyManualBlank: true }),
       enemyToParty: cell.enemyToParty || '',
       partyToEnemy: cell.partyToEnemy || '',
       enemyToPartyVisible: cell.enemyToPartyVisible === true,

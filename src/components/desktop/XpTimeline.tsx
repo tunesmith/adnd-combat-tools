@@ -1,3 +1,4 @@
+import { treasurePending } from '../../helpers/campaignXpTreasure';
 import type { CampaignDocument } from '../../helpers/campaignDocument';
 import type { XpReward } from '../../helpers/campaignXpModel';
 import {
@@ -72,9 +73,10 @@ export default function XpTimeline({
                 ? 'Partly settled · pending shares'
                 : historicalXpReward(document, reward)
                 ? 'Historical draft'
-                : reward.input.category === 'treasure' &&
-                  reward.input.disposition === 'defer'
-                ? 'Deferred'
+                : treasurePending(reward.input)
+                ? reward.input.category === 'treasure' && reward.input.rows
+                  ? 'Awaiting item decisions'
+                  : 'Deferred'
                 : 'Pending'
               : correction
               ? 'Draft changes'

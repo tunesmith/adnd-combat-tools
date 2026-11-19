@@ -541,3 +541,16 @@
 .incomeDay input {
   width: 6rem;
 }
+
+.treasureRows {
+  display: grid;
+  gap: 0.45rem;
+}
+.treasureRows tr[data-selected='true'] {
+  background: #efe9d9;
+}
+.treasureRows fieldset {
+  display: grid;
+  gap: 0.65rem;
+  min-width: 0;
+}

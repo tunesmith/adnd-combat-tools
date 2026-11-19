@@ -8,6 +8,11 @@ import styles from './tracker.module.css';
 interface TrackerCellProps {
   rowCombatant: TrackerCombatant;
   columnCombatant: TrackerCombatant;
+  enemyMarks?: string;
+  partyMarks?: string;
+  enemyManualBlank?: boolean;
+  partyManualBlank?: boolean;
+  onUseMarks?: (direction: 'enemyToParty' | 'partyToEnemy') => void;
   enemyToPartyValue: string;
   partyToEnemyValue: string;
   enemyToPartyVisible: boolean;
@@ -33,10 +38,15 @@ interface TrackerCellProps {
 const TrackerCell = ({
   rowCombatant,
   columnCombatant,
+  enemyMarks,
+  partyMarks,
+  enemyManualBlank,
+  partyManualBlank,
+  onUseMarks,
   enemyToPartyValue,
   partyToEnemyValue,
-  enemyToPartyVisible,
-  partyToEnemyVisible,
+  enemyToPartyVisible: enemyActive,
+  partyToEnemyVisible: partyActive,
   enemyToPartyActionAssignmentLabel,
   partyToEnemyActionAssignmentLabel,
   onEnemyToPartyVisibilityChange,
@@ -103,8 +113,10 @@ const TrackerCell = ({
         columnOffHandWeapon
       )
     : undefined;
-  const enemyHasContent = Boolean(enemyToPartyValue.trim());
-  const partyHasContent = Boolean(partyToEnemyValue.trim());
+  const enemyToPartyVisible = enemyActive || Boolean(enemyMarks);
+  const partyToEnemyVisible = partyActive || Boolean(partyMarks);
+  const enemyHasContent = Boolean(enemyToPartyValue.trim() || enemyMarks);
+  const partyHasContent = Boolean(partyToEnemyValue.trim() || partyMarks);
   const showEnemyHalf = displayMode !== 'partyOnly';
   const showPartyHalf = displayMode !== 'enemyOnly';
   const enemyToggleEnabled =
@@ -199,8 +211,66 @@ const TrackerCell = ({
       </button>
     ) : null;
 
+  const renderEntry = (direction: 'partyToEnemy' | 'enemyToParty') => {
+    const party = direction === 'partyToEnemy';
+    const marks = party ? partyMarks : enemyMarks;
+    const raw = party ? partyToEnemyValue : enemyToPartyValue;
+    const manualBlank = party ? partyManualBlank : enemyManualBlank;
+    const manual = Boolean(raw || manualBlank);
+    const change = party ? onPartyToEnemyChange : onEnemyToPartyChange;
+    return (
+      <>
+        <input
+          className={styles['cellEntryInputInline']}
+          type="text"
+          aria-label={`Grid entry: ${
+            party ? columnCombatant.name : rowCombatant.name
+          } → ${party ? rowCombatant.name : columnCombatant.name}`}
+          value={manual ? raw : marks ?? ''}
+          onClick={(event) => event.stopPropagation()}
+          onKeyDown={(event) => event.stopPropagation()}
+          onChange={(event) => change(event.target.value)}
+        />
+        {(marks || manual) && (
+          <div className={styles['gridMarkSource']}>
+            {manual ? 'Handwritten' : 'From attack marks'}
+            {manual && (marks || manualBlank) && (
+              <>
+                <div>From attack marks: {marks || '—'}</div>
+                {onUseMarks && (
+                  <button
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      onUseMarks(direction);
+                    }}
+                    onKeyDown={(event) => event.stopPropagation()}
+                  >
+                    Use attack marks
+                  </button>
+                )}
+              </>
+            )}
+          </div>
+        )}
+      </>
+    );
+  };
   return (
-    <td className={styles['interactionCell']} style={style}>
+    <td
+      className={styles['interactionCell']}
+      style={style}
+      data-mark-source={
+        Boolean(
+          enemyMarks ||
+            partyMarks ||
+            enemyToPartyValue ||
+            partyToEnemyValue ||
+            enemyManualBlank ||
+            partyManualBlank
+        ) || undefined
+      }
+    >
       <div
         className={[
           styles['cellShell'],
@@ -249,14 +319,7 @@ const TrackerCell = ({
                   rowToHit,
                   rowOffHandToHit
                 )}
-                <input
-                  className={styles['cellEntryInputInline']}
-                  type={'text'}
-                  value={enemyToPartyValue}
-                  onClick={(event) => event.stopPropagation()}
-                  onKeyDown={(event) => event.stopPropagation()}
-                  onChange={(event) => onEnemyToPartyChange(event.target.value)}
-                />
+                {renderEntry('enemyToParty')}
                 {renderActionAssignmentButton(
                   enemyToPartyActionAssignmentLabel,
                   onEnemyToPartyActionAssignmentOpen
@@ -305,14 +368,7 @@ const TrackerCell = ({
                   columnToHit,
                   columnOffHandToHit
                 )}
-                <input
-                  className={styles['cellEntryInputInline']}
-                  type={'text'}
-                  value={partyToEnemyValue}
-                  onClick={(event) => event.stopPropagation()}
-                  onKeyDown={(event) => event.stopPropagation()}
-                  onChange={(event) => onPartyToEnemyChange(event.target.value)}
-                />
+                {renderEntry('partyToEnemy')}
                 {renderActionAssignmentButton(
                   partyToEnemyActionAssignmentLabel,
                   onPartyToEnemyActionAssignmentOpen
