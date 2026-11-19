@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import {
   buildInitiativeAttackGraphNodeDisplayById,
   getInitiativeAttackGraphNodeLineYs,
@@ -12,6 +12,11 @@ import type {
 import styles from './initiativeAttackGraphView.module.css';
 
 interface InitiativeAttackGraphViewProps {
+  controls?: ReactNode;
+  onResizeStart?: () => void;
+  view?: 'Graph' | 'Action' | 'Both';
+  inspectedNodeId?: string;
+  reveal?: { id: string };
   completedNodeIds?: Set<string>;
   onNodeSelect?: (nodeId: string) => void;
   readyNodeIds?: Set<string>;
@@ -89,6 +94,49 @@ export const InitiativeAttackGraphView = (
   const spellArrowheadId = `${markerIdPrefix}-arrowhead-spell`;
   const highlightedSpellArrowheadId = `${markerIdPrefix}-arrowhead-spell-highlighted`;
 
+  const viewport = useRef<HTMLDivElement>(null);
+  const [combinedHeight, setCombinedHeight] = useState<number>();
+  const drag = useRef<{ pointerId: number; y: number; height: number }>();
+  const resizeHeight = (percent: number) =>
+    setCombinedHeight(Math.max(15, Math.min(80, percent)));
+  const heightPercent = () =>
+    (100 * (viewport.current?.getBoundingClientRect().height ?? 0)) /
+    window.innerHeight;
+  const [zoom, setZoom] = useState<number | 'fit'>(1);
+  const workspace = props.controls !== undefined;
+  const fitting = workspace && zoom === 'fit';
+  const scale = workspace && typeof zoom === 'number' ? zoom : 1;
+  // Fit is purely CSS-sized. Measuring and feeding the scrollbar-dependent
+  // clientWidth back into SVG height can alternate between two viewport sizes.
+  const adjustZoom = (factor: number) => {
+    const current =
+      fitting && viewport.current
+        ? viewport.current.clientWidth / graphLayout.width
+        : scale;
+    setZoom(Math.min(3, Math.max(0.15, current * factor)));
+  };
+  const lastReveal = useRef(props.reveal);
+  useEffect(() => {
+    const el = viewport.current;
+    if (
+      !el ||
+      !props.reveal ||
+      props.view === 'Action' ||
+      props.reveal === lastReveal.current
+    )
+      return;
+    lastReveal.current = props.reveal;
+    const node = Array.from(el.querySelectorAll('[data-graph-node-id]')).find(
+      (n) => n.getAttribute('data-graph-node-id') === props.reveal?.id
+    );
+    if (!node) return;
+    const rect = node.getBoundingClientRect(),
+      box = el.getBoundingClientRect();
+    if (rect.left < box.left || rect.right > box.right)
+      el.scrollLeft += rect.left + rect.width / 2 - box.left - box.width / 2;
+    if (rect.top < box.top || rect.bottom > box.bottom)
+      el.scrollTop += rect.top + rect.height / 2 - box.top - box.height / 2;
+  }, [props.reveal, props.view]);
   if (attackGraph.nodes.length === 0) {
     return (
       <div className={styles['emptyGraph']}>
@@ -98,367 +146,513 @@ export const InitiativeAttackGraphView = (
   }
 
   return (
-    <div
-      className={[
-        styles['graphViewport'],
-        readableText ? styles['graphViewportReadable'] : '',
-      ]
-        .filter(Boolean)
-        .join(' ')}
-      style={minHeightRem ? { minHeight: `${minHeightRem}rem` } : undefined}
-    >
+    <>
+      {workspace && (
+        <div className={styles['graphTools']}>
+          {props.controls}
+          {props.view !== 'Action' && (
+            <div className={styles['zoomTools']}>
+              <button
+                type="button"
+                aria-label="Zoom out"
+                onClick={() => adjustZoom(1 / 1.25)}
+                disabled={!fitting && scale <= 0.15}
+              >
+                −
+              </button>
+              <button
+                type="button"
+                aria-pressed={zoom === 'fit'}
+                onClick={() => setZoom('fit')}
+              >
+                Fit width
+              </button>
+              <button
+                type="button"
+                aria-label="Zoom in"
+                onClick={() => adjustZoom(1.25)}
+                disabled={!fitting && scale >= 3}
+              >
+                +
+              </button>
+            </div>
+          )}
+        </div>
+      )}
       <div
-        className={styles['graphCanvas']}
-        data-graph-canvas={'true'}
+        ref={viewport}
+        hidden={props.view === 'Action'}
+        className={[
+          styles['graphViewport'],
+          workspace ? styles['workspace'] : '',
+          props.view === 'Graph' ? styles['focused'] : '',
+          fitting ? styles['fitWidth'] : '',
+          readableText ? styles['graphViewportReadable'] : '',
+        ]
+          .filter(Boolean)
+          .join(' ')}
         style={{
-          width: graphLayout.width,
-          height: graphLayout.height,
+          minHeight: minHeightRem ? `${minHeightRem}rem` : undefined,
+          height:
+            props.view === 'Both' && combinedHeight !== undefined
+              ? `${combinedHeight}vh`
+              : undefined,
+          maxHeight:
+            props.view === 'Both' ? `${combinedHeight ?? 47}vh` : undefined,
         }}
       >
-        <svg
-          className={styles['graphSvg']}
-          viewBox={`0 0 ${graphLayout.width} ${graphLayout.height}`}
-          width={graphLayout.width}
-          height={graphLayout.height}
-          aria-label={'Initiative precedence graph'}
-          onMouseMove={(event) => {
-            const target = event.target;
-
-            if (!(target instanceof Element)) {
-              return;
-            }
-
-            const nodeElement = target.closest('[data-graph-node="true"]');
-            const nextHoveredNodeId =
-              nodeElement?.getAttribute('data-graph-node-id') || undefined;
-
-            setHoveredNodeId((previous) =>
-              previous === nextHoveredNodeId ? previous : nextHoveredNodeId
-            );
+        <div
+          className={styles['graphCanvas']}
+          data-graph-canvas={'true'}
+          style={{
+            width: fitting ? '100%' : graphLayout.width * scale,
+            height: fitting ? 'auto' : graphLayout.height * scale,
           }}
-          onMouseLeave={() => setHoveredNodeId(undefined)}
         >
-          <defs>
-            <marker
-              id={arrowheadId}
-              viewBox={'0 0 10 10'}
-              refX={'4'}
-              refY={'5'}
-              markerUnits={'userSpaceOnUse'}
-              markerWidth={'8'}
-              markerHeight={'8'}
-              orient={'auto-start-reverse'}
-            >
-              <path
-                d={'M 0 0 L 10 5 L 0 10 z'}
-                className={styles['graphArrowhead']}
-              />
-            </marker>
-            <marker
-              id={highlightedArrowheadId}
-              viewBox={'0 0 10 10'}
-              refX={'4'}
-              refY={'5'}
-              markerUnits={'userSpaceOnUse'}
-              markerWidth={'8'}
-              markerHeight={'8'}
-              orient={'auto-start-reverse'}
-            >
-              <path
-                d={'M 0 0 L 10 5 L 0 10 z'}
-                className={`${styles['graphArrowhead']} ${styles['graphArrowheadSelected']}`}
-              />
-            </marker>
-            <marker
-              id={spellArrowheadId}
-              viewBox={'0 0 14 14'}
-              refX={'4'}
-              refY={'7'}
-              markerUnits={'userSpaceOnUse'}
-              markerWidth={'12'}
-              markerHeight={'12'}
-              orient={'auto-start-reverse'}
-            >
-              <path
-                d={'M 0 0 L 14 7 L 0 14 z'}
-                className={styles['graphArrowhead']}
-              />
-            </marker>
-            <marker
-              id={highlightedSpellArrowheadId}
-              viewBox={'0 0 14 14'}
-              refX={'4'}
-              refY={'7'}
-              markerUnits={'userSpaceOnUse'}
-              markerWidth={'12'}
-              markerHeight={'12'}
-              orient={'auto-start-reverse'}
-            >
-              <path
-                d={'M 0 0 L 14 7 L 0 14 z'}
-                className={`${styles['graphArrowhead']} ${styles['graphArrowheadSelected']}`}
-              />
-            </marker>
-          </defs>
+          <svg
+            className={styles['graphSvg']}
+            viewBox={`0 0 ${graphLayout.width} ${graphLayout.height}`}
+            width={graphLayout.width * scale}
+            height={graphLayout.height * scale}
+            aria-label={'Initiative precedence graph'}
+            onMouseMove={(event) => {
+              const target = event.target;
 
-          {graphLayout.hasSegmentBand ? (
-            <>
-              {graphLayout.segmentColumns.map((segmentColumn, columnIndex) => (
-                <rect
-                  key={`segment-lane-${segmentColumn.segment}`}
-                  x={segmentColumn.startX}
-                  y={graphLayout.headerLineY}
-                  width={segmentColumn.endX - segmentColumn.startX}
-                  height={
-                    graphLayout.segmentBandBottomY - graphLayout.headerLineY
-                  }
-                  className={[
-                    styles['graphSegmentLane'],
-                    columnIndex % 2 === 0
-                      ? styles['graphSegmentLaneEven']
-                      : styles['graphSegmentLaneOdd'],
-                  ]
-                    .filter(Boolean)
-                    .join(' ')}
-                />
-              ))}
-              <line
-                x1={graphLayout.segmentBoundaryXs[0] || 0}
-                y1={graphLayout.headerLineY}
-                x2={
-                  graphLayout.segmentBoundaryXs[
-                    graphLayout.segmentBoundaryXs.length - 1
-                  ] || 0
-                }
-                y2={graphLayout.headerLineY}
-                className={styles['graphSegmentHeaderLine']}
-              />
-              <line
-                x1={graphLayout.segmentBoundaryXs[0] || 0}
-                y1={graphLayout.segmentBandBottomY}
-                x2={
-                  graphLayout.segmentBoundaryXs[
-                    graphLayout.segmentBoundaryXs.length - 1
-                  ] || 0
-                }
-                y2={graphLayout.segmentBandBottomY}
-                className={styles['graphSegmentBandLine']}
-              />
-              {graphLayout.segmentColumns.map((segmentColumn) => (
-                <text
-                  key={`segment-column-${segmentColumn.segment}`}
-                  x={segmentColumn.centerX}
-                  y={graphLayout.headerLabelY}
-                  textAnchor={'middle'}
-                  className={styles['graphSegmentColumnLabel']}
-                >
-                  {segmentColumn.segment}
-                </text>
-              ))}
-              {graphLayout.segmentBoundaryXs.map((boundaryX) => (
-                <line
-                  key={`segment-boundary-${boundaryX}`}
-                  x1={boundaryX}
-                  y1={graphLayout.headerLineY}
-                  x2={boundaryX}
-                  y2={graphLayout.segmentBandBottomY}
-                  className={styles['graphSegmentGuide']}
-                />
-              ))}
-            </>
-          ) : null}
+              if (!(target instanceof Element)) {
+                return;
+              }
 
-          {graphLayout.simultaneousGroups.map((group) => (
-            <g
-              key={`simultaneous-group-${group.nodeIds.join('-')}`}
-              role={'group'}
-              aria-label={'Simultaneous actions'}
-            >
-              <rect
-                x={group.x}
-                y={group.y}
-                width={group.width}
-                height={group.height}
-                rx={18}
-                className={styles['graphSimultaneousGroup']}
-              />
-              <text
-                x={group.x + 12}
-                y={group.y + 16}
-                className={styles['graphSimultaneousLabel']}
+              const nodeElement = target.closest('[data-graph-node="true"]');
+              const nextHoveredNodeId =
+                nodeElement?.getAttribute('data-graph-node-id') || undefined;
+
+              setHoveredNodeId((previous) =>
+                previous === nextHoveredNodeId ? previous : nextHoveredNodeId
+              );
+            }}
+            onMouseLeave={() => setHoveredNodeId(undefined)}
+          >
+            <defs>
+              <marker
+                id={arrowheadId}
+                viewBox={'0 0 10 10'}
+                refX={'4'}
+                refY={'5'}
+                markerUnits={'userSpaceOnUse'}
+                markerWidth={'8'}
+                markerHeight={'8'}
+                orient={'auto-start-reverse'}
               >
-                Simultaneous
-              </text>
-            </g>
-          ))}
+                <path
+                  d={'M 0 0 L 10 5 L 0 10 z'}
+                  className={styles['graphArrowhead']}
+                />
+              </marker>
+              <marker
+                id={highlightedArrowheadId}
+                viewBox={'0 0 10 10'}
+                refX={'4'}
+                refY={'5'}
+                markerUnits={'userSpaceOnUse'}
+                markerWidth={'8'}
+                markerHeight={'8'}
+                orient={'auto-start-reverse'}
+              >
+                <path
+                  d={'M 0 0 L 10 5 L 0 10 z'}
+                  className={`${styles['graphArrowhead']} ${styles['graphArrowheadSelected']}`}
+                />
+              </marker>
+              <marker
+                id={spellArrowheadId}
+                viewBox={'0 0 14 14'}
+                refX={'4'}
+                refY={'7'}
+                markerUnits={'userSpaceOnUse'}
+                markerWidth={'12'}
+                markerHeight={'12'}
+                orient={'auto-start-reverse'}
+              >
+                <path
+                  d={'M 0 0 L 14 7 L 0 14 z'}
+                  className={styles['graphArrowhead']}
+                />
+              </marker>
+              <marker
+                id={highlightedSpellArrowheadId}
+                viewBox={'0 0 14 14'}
+                refX={'4'}
+                refY={'7'}
+                markerUnits={'userSpaceOnUse'}
+                markerWidth={'12'}
+                markerHeight={'12'}
+                orient={'auto-start-reverse'}
+              >
+                <path
+                  d={'M 0 0 L 14 7 L 0 14 z'}
+                  className={`${styles['graphArrowhead']} ${styles['graphArrowheadSelected']}`}
+                />
+              </marker>
+            </defs>
 
-          {graphLayout.edges.map((edge) => {
-            const isHighlighted =
-              hoveredNodeId !== undefined &&
-              (edge.fromNodeId === hoveredNodeId ||
-                edge.toNodeId === hoveredNodeId);
-            const isSpellCastingEdge = edge.reasons.includes('spell-casting');
-
-            return (
-              <path
-                key={`${edge.fromNodeId}-${edge.toNodeId}`}
-                d={edge.path}
-                className={[
-                  styles['graphEdge'],
-                  isSpellCastingEdge ? styles['graphEdgeSpellCasting'] : '',
-                  isHighlighted ? styles['graphEdgeSelected'] : '',
-                ]
-                  .filter(Boolean)
-                  .join(' ')}
-                markerEnd={
-                  isSpellCastingEdge
-                    ? isHighlighted
-                      ? `url(#${highlightedSpellArrowheadId})`
-                      : `url(#${spellArrowheadId})`
-                    : isHighlighted
-                    ? `url(#${highlightedArrowheadId})`
-                    : `url(#${arrowheadId})`
-                }
-              />
-            );
-          })}
-
-          {graphLayout.nodes.map((layoutNode) => {
-            const node = attackNodeById.get(layoutNode.nodeId);
-            if (!node) {
-              return null;
-            }
-
-            const display = graphNodeDisplayById[node.id];
-            if (!display) {
-              return null;
-            }
-
-            const lineYs = getInitiativeAttackGraphNodeLineYs(
-              layoutNode.height,
-              display.lines.length
-            );
-            const isCompleted = completedIdsForDisplay.has(node.id);
-            const isReady = readyIdsForDisplay.has(node.id);
-            const isSelected = selectedNodeId === node.id;
-            const isHovered = hoveredNodeId === node.id;
-            const canSelectNode = Boolean(handleNodeSelect);
-
-            return (
-              <g
-                key={layoutNode.nodeId}
-                className={[
-                  isCompleted ? styles['graphNodeGroupCompleted'] : '',
-                  canSelectNode ? styles['graphNodeGroupInteractive'] : '',
-                  isReady ? styles['graphNodeGroupReady'] : '',
-                  isSelected ? styles['graphNodeGroupActive'] : '',
-                ]
-                  .filter(Boolean)
-                  .join(' ')}
-                transform={`translate(${layoutNode.x} ${layoutNode.y})`}
-                data-graph-node={'true'}
-                data-graph-node-id={node.id}
-                role={canSelectNode ? 'button' : undefined}
-                aria-label={`${display.combatantName}, target ${display.targetLabel}, ${display.actionLabel}`}
-                onClick={
-                  canSelectNode
-                    ? (event) => {
-                        event.stopPropagation();
-                        handleNodeSelect?.(node.id);
+            {graphLayout.hasSegmentBand ? (
+              <>
+                {graphLayout.segmentColumns.map(
+                  (segmentColumn, columnIndex) => (
+                    <rect
+                      key={`segment-lane-${segmentColumn.segment}`}
+                      x={segmentColumn.startX}
+                      y={graphLayout.headerLineY}
+                      width={segmentColumn.endX - segmentColumn.startX}
+                      height={
+                        graphLayout.segmentBandBottomY - graphLayout.headerLineY
                       }
-                    : undefined
-                }
-                onFocus={() => setHoveredNodeId(node.id)}
-                onBlur={() =>
-                  setHoveredNodeId((previous) =>
-                    previous === node.id ? undefined : previous
+                      className={[
+                        styles['graphSegmentLane'],
+                        columnIndex % 2 === 0
+                          ? styles['graphSegmentLaneEven']
+                          : styles['graphSegmentLaneOdd'],
+                      ]
+                        .filter(Boolean)
+                        .join(' ')}
+                    />
                   )
-                }
-                onKeyDown={
-                  canSelectNode
-                    ? (event) => {
-                        if (event.key !== 'Enter' && event.key !== ' ') {
-                          return;
-                        }
+                )}
+                <line
+                  x1={graphLayout.segmentBoundaryXs[0] || 0}
+                  y1={graphLayout.headerLineY}
+                  x2={
+                    graphLayout.segmentBoundaryXs[
+                      graphLayout.segmentBoundaryXs.length - 1
+                    ] || 0
+                  }
+                  y2={graphLayout.headerLineY}
+                  className={styles['graphSegmentHeaderLine']}
+                />
+                <line
+                  x1={graphLayout.segmentBoundaryXs[0] || 0}
+                  y1={graphLayout.segmentBandBottomY}
+                  x2={
+                    graphLayout.segmentBoundaryXs[
+                      graphLayout.segmentBoundaryXs.length - 1
+                    ] || 0
+                  }
+                  y2={graphLayout.segmentBandBottomY}
+                  className={styles['graphSegmentBandLine']}
+                />
+                {graphLayout.segmentColumns.map((segmentColumn) => (
+                  <text
+                    key={`segment-column-${segmentColumn.segment}`}
+                    x={segmentColumn.centerX}
+                    y={graphLayout.headerLabelY}
+                    textAnchor={'middle'}
+                    className={styles['graphSegmentColumnLabel']}
+                  >
+                    {segmentColumn.segment}
+                  </text>
+                ))}
+                {graphLayout.segmentBoundaryXs.map((boundaryX) => (
+                  <line
+                    key={`segment-boundary-${boundaryX}`}
+                    x1={boundaryX}
+                    y1={graphLayout.headerLineY}
+                    x2={boundaryX}
+                    y2={graphLayout.segmentBandBottomY}
+                    className={styles['graphSegmentGuide']}
+                  />
+                ))}
+              </>
+            ) : null}
 
-                        event.preventDefault();
-                        handleNodeSelect?.(node.id);
-                      }
-                    : undefined
-                }
-                tabIndex={0}
+            {graphLayout.simultaneousGroups.map((group) => (
+              <g
+                key={`simultaneous-group-${group.nodeIds.join('-')}`}
+                role={'group'}
+                aria-label={'Simultaneous actions'}
               >
                 <rect
-                  x={0}
-                  y={0}
-                  width={layoutNode.width}
-                  height={layoutNode.height}
-                  rx={16}
-                  style={{ fill: getGraphNodeFill(node.side) }}
+                  x={group.x}
+                  y={group.y}
+                  width={group.width}
+                  height={group.height}
+                  rx={18}
+                  className={styles['graphSimultaneousGroup']}
+                />
+                <text
+                  x={group.x + 12}
+                  y={group.y + 16}
+                  className={styles['graphSimultaneousLabel']}
+                >
+                  Simultaneous
+                </text>
+              </g>
+            ))}
+
+            {graphLayout.edges.map((edge) => {
+              const isHighlighted =
+                hoveredNodeId !== undefined &&
+                (edge.fromNodeId === hoveredNodeId ||
+                  edge.toNodeId === hoveredNodeId);
+              const isSpellCastingEdge = edge.reasons.includes('spell-casting');
+
+              return (
+                <path
+                  key={`${edge.fromNodeId}-${edge.toNodeId}`}
+                  d={edge.path}
                   className={[
-                    styles['graphNodeCard'],
-                    node.side === 'party'
-                      ? styles['graphNodeParty']
-                      : styles['graphNodeEnemy'],
-                    isCompleted ? styles['graphNodeCompleted'] : '',
-                    isReady ? styles['graphNodeReady'] : '',
-                    isSelected ? styles['graphNodeActive'] : '',
-                    isHovered ? styles['graphNodeSelected'] : '',
+                    styles['graphEdge'],
+                    isSpellCastingEdge ? styles['graphEdgeSpellCasting'] : '',
+                    isHighlighted ? styles['graphEdgeSelected'] : '',
                   ]
                     .filter(Boolean)
                     .join(' ')}
+                  markerEnd={
+                    isSpellCastingEdge
+                      ? isHighlighted
+                        ? `url(#${highlightedSpellArrowheadId})`
+                        : `url(#${spellArrowheadId})`
+                      : isHighlighted
+                      ? `url(#${highlightedArrowheadId})`
+                      : `url(#${arrowheadId})`
+                  }
                 />
-                {isReady && !isCompleted ? (
-                  <g
+              );
+            })}
+
+            {graphLayout.nodes.map((layoutNode) => {
+              const node = attackNodeById.get(layoutNode.nodeId);
+              if (!node) {
+                return null;
+              }
+
+              const display = graphNodeDisplayById[node.id];
+              if (!display) {
+                return null;
+              }
+
+              const lineYs = getInitiativeAttackGraphNodeLineYs(
+                layoutNode.height,
+                display.lines.length
+              );
+              const isCompleted = completedIdsForDisplay.has(node.id);
+              const isReady = readyIdsForDisplay.has(node.id);
+              const isSelected = selectedNodeId === node.id;
+              const isHovered = hoveredNodeId === node.id;
+              const canSelectNode = Boolean(handleNodeSelect);
+
+              return (
+                <g
+                  key={layoutNode.nodeId}
+                  className={[
+                    isCompleted ? styles['graphNodeGroupCompleted'] : '',
+                    canSelectNode ? styles['graphNodeGroupInteractive'] : '',
+                    isReady ? styles['graphNodeGroupReady'] : '',
+                    isSelected ? styles['graphNodeGroupActive'] : '',
+                  ]
+                    .filter(Boolean)
+                    .join(' ')}
+                  transform={`translate(${layoutNode.x} ${layoutNode.y})`}
+                  data-graph-node={'true'}
+                  data-graph-node-id={node.id}
+                  role={canSelectNode ? 'button' : undefined}
+                  aria-label={`${display.combatantName}, target ${
+                    display.targetLabel
+                  }, ${display.actionLabel}${
+                    workspace
+                      ? ', ' +
+                        (isCompleted
+                          ? 'Resolved'
+                          : isReady
+                          ? 'Ready'
+                          : 'Waiting')
+                      : ''
+                  }`}
+                  tabIndex={canSelectNode ? 0 : undefined}
+                  onClick={
+                    canSelectNode
+                      ? (event) => {
+                          event.stopPropagation();
+                          handleNodeSelect?.(node.id);
+                        }
+                      : undefined
+                  }
+                  onFocus={() => setHoveredNodeId(node.id)}
+                  onBlur={() =>
+                    setHoveredNodeId((previous) =>
+                      previous === node.id ? undefined : previous
+                    )
+                  }
+                  onKeyDown={
+                    canSelectNode
+                      ? (event) => {
+                          if (event.key !== 'Enter' && event.key !== ' ') {
+                            return;
+                          }
+
+                          event.preventDefault();
+                          handleNodeSelect?.(node.id);
+                        }
+                      : undefined
+                  }
+                >
+                  <rect
+                    x={0}
+                    y={0}
+                    width={layoutNode.width}
+                    height={layoutNode.height}
+                    rx={16}
+                    style={{ fill: getGraphNodeFill(node.side) }}
                     className={[
-                      styles['graphNodeReadyMarker'],
-                      isSelected ? styles['graphNodeReadyMarkerActive'] : '',
-                    ]
-                      .filter(Boolean)
-                      .join(' ')}
-                    aria-hidden={'true'}
-                  >
-                    <title>{'Ready in Combat Flow'}</title>
-                    <circle
-                      cx={13}
-                      cy={13}
-                      r={8}
-                      className={styles['graphNodeReadyMarkerCircle']}
-                    />
-                    <path
-                      d={'M 10 8.5 L 10 17.5 L 17 13 z'}
-                      className={styles['graphNodeReadyMarkerGlyph']}
-                    />
-                  </g>
-                ) : null}
-                {display.lines.map((line, index) => (
-                  <text
-                    key={`${layoutNode.nodeId}-line-${index}`}
-                    x={layoutNode.width / 2}
-                    y={lineYs[index]}
-                    textAnchor={'middle'}
-                    dominantBaseline={'middle'}
-                    className={[
-                      line.kind === 'name'
-                        ? styles['graphNodeName']
-                        : line.kind === 'target'
-                        ? styles['graphNodeTarget']
-                        : styles['graphNodeAction'],
-                      line.isSecondary
-                        ? styles['graphNodeActionSecondary']
+                      styles['graphNodeCard'],
+                      node.side === 'party'
+                        ? styles['graphNodeParty']
+                        : styles['graphNodeEnemy'],
+                      isCompleted ? styles['graphNodeCompleted'] : '',
+                      isReady ? styles['graphNodeReady'] : '',
+                      isSelected ? styles['graphNodeActive'] : '',
+                      isHovered || props.inspectedNodeId === node.id
+                        ? styles['graphNodeSelected']
                         : '',
                     ]
                       .filter(Boolean)
                       .join(' ')}
-                  >
-                    {line.text}
-                  </text>
-                ))}
-              </g>
-            );
-          })}
-        </svg>
+                  />
+                  {workspace && isReady && isSelected && (
+                    <rect
+                      className={styles['selectedInset']}
+                      x={3}
+                      y={3}
+                      width={layoutNode.width - 6}
+                      height={layoutNode.height - 6}
+                      rx={13}
+                    />
+                  )}
+                  {workspace ? (
+                    <g className={styles['statusTag']} aria-hidden="true">
+                      <rect
+                        x={7}
+                        y={-8}
+                        width={isCompleted ? 61 : 52}
+                        height={15}
+                        rx={2}
+                      />
+                      <text x={11} y={3}>
+                        {isCompleted
+                          ? '✓ Resolved'
+                          : isReady
+                          ? '▶ Ready'
+                          : 'Waiting'}
+                      </text>
+                    </g>
+                  ) : isReady && !isCompleted ? (
+                    <g
+                      className={[
+                        styles['graphNodeReadyMarker'],
+                        isSelected ? styles['graphNodeReadyMarkerActive'] : '',
+                      ]
+                        .filter(Boolean)
+                        .join(' ')}
+                      aria-hidden={'true'}
+                    >
+                      <title>{'Ready in Combat Flow'}</title>
+                      <circle
+                        cx={13}
+                        cy={13}
+                        r={8}
+                        className={styles['graphNodeReadyMarkerCircle']}
+                      />
+                      <path
+                        d={'M 10 8.5 L 10 17.5 L 17 13 z'}
+                        className={styles['graphNodeReadyMarkerGlyph']}
+                      />
+                    </g>
+                  ) : null}
+                  {display.lines.map((line, index) => (
+                    <text
+                      key={`${layoutNode.nodeId}-line-${index}`}
+                      x={layoutNode.width / 2}
+                      y={lineYs[index]}
+                      textAnchor={'middle'}
+                      dominantBaseline={'middle'}
+                      className={[
+                        line.kind === 'name'
+                          ? styles['graphNodeName']
+                          : line.kind === 'target'
+                          ? styles['graphNodeTarget']
+                          : styles['graphNodeAction'],
+                        line.isSecondary
+                          ? styles['graphNodeActionSecondary']
+                          : '',
+                      ]
+                        .filter(Boolean)
+                        .join(' ')}
+                    >
+                      {line.text}
+                    </text>
+                  ))}
+                </g>
+              );
+            })}
+          </svg>
+        </div>
       </div>
-    </div>
+      {props.view === 'Both' && (
+        <div
+          role="separator"
+          tabIndex={0}
+          aria-label="Graph height"
+          aria-orientation="horizontal"
+          aria-valuemin={15}
+          aria-valuemax={80}
+          aria-valuenow={Math.round(combinedHeight ?? 47)}
+          aria-valuetext={
+            combinedHeight === undefined
+              ? 'Automatic, up to 47% of window height'
+              : `${Math.round(combinedHeight)}% of window height`
+          }
+          title="Drag to resize graph · Up/Down to adjust · Double-click to reset"
+          className={styles['heightDivider']}
+          onPointerDown={(event) => {
+            if (event.button !== 0 || !event.isPrimary) return;
+            props.onResizeStart?.();
+            event.currentTarget.setPointerCapture(event.pointerId);
+            drag.current = {
+              pointerId: event.pointerId,
+              y: event.clientY,
+              height: heightPercent(),
+            };
+          }}
+          onPointerMove={(event) => {
+            const start = drag.current;
+            if (start?.pointerId === event.pointerId)
+              resizeHeight(
+                start.height +
+                  ((event.clientY - start.y) * 100) / window.innerHeight
+              );
+          }}
+          onLostPointerCapture={() => {
+            drag.current = undefined;
+          }}
+          onDoubleClick={() => {
+            props.onResizeStart?.();
+            setCombinedHeight(undefined);
+          }}
+          onKeyDown={(event) => {
+            const heights: Record<string, number> = {
+              ArrowUp: heightPercent() - 5,
+              ArrowDown: heightPercent() + 5,
+              Home: 15,
+              End: 80,
+            };
+            const next = heights[event.key];
+            if (next !== undefined) {
+              event.preventDefault();
+              props.onResizeStart?.();
+              resizeHeight(next);
+            }
+          }}
+        />
+      )}
+    </>
   );
 };

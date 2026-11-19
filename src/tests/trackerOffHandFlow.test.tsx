@@ -38,7 +38,12 @@ test.each(['party', 'enemy'] as const)(
     const off = screen.getByRole('button', {
       name: /^Fighter, target Guard, .*Off-hand/,
     });
-    fireEvent.click(main);
+    const openStep = (node: HTMLElement) => {
+      fireEvent.click(node);
+      const view = flow.queryByRole('button', { name: 'View step' });
+      if (view) fireEvent.click(view);
+    };
+    openStep(main);
     const mainRoll = flow.getByRole('button', {
       name: `Show ${side} main-hand attack details`,
     });
@@ -49,7 +54,7 @@ test.each(['party', 'enemy'] as const)(
     fireEvent.change(flow.getByLabelText('Result', { exact: true }), {
       target: { value: 'Sword missed' },
     });
-    fireEvent.click(off);
+    openStep(off);
     expect(flow.getByLabelText('Result', { exact: true })).toHaveValue('');
     expect(
       flow.queryByRole('button', { name: /main-hand attack details/ })
@@ -68,7 +73,7 @@ test.each(['party', 'enemy'] as const)(
     fireEvent.change(flow.getByLabelText('Result', { exact: true }), {
       target: { value: 'Dagger hit' },
     });
-    fireEvent.click(main);
+    openStep(main);
     expect(flow.getByLabelText('Result', { exact: true })).toHaveValue(
       'Sword missed'
     );

@@ -227,3 +227,165 @@
   font-weight: 700;
   pointer-events: none;
 }
+
+.graphTools {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  padding: 0.45rem 0.7rem;
+  color: #32291d;
+  background: var(--eggshell);
+  border-bottom: 1px solid var(--copper);
+}
+.graphTools button {
+  color: inherit;
+  background: transparent;
+  border: 1px solid #98866a;
+  padding: 0.3rem 0.55rem;
+  cursor: pointer;
+  font: inherit;
+}
+.graphTools button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.graphTools button[aria-pressed='true'] {
+  background: #493b28;
+  color: var(--eggshell);
+}
+.zoomTools {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+.workspace {
+  box-sizing: border-box;
+  padding: 0;
+  min-height: 0;
+
+  background: #f4efdf;
+}
+.workspace.focused {
+  max-height: 80vh;
+}
+/* A stable gutter prevents tall graphs near the height limit from toggling
+   scrollbars as the fitted SVG changes height. */
+.workspace.fitWidth {
+  overflow-x: hidden;
+  overflow-y: scroll;
+  scrollbar-gutter: stable;
+}
+.fitWidth .graphCanvas {
+  min-width: 0;
+}
+.fitWidth .graphSvg {
+  width: 100%;
+  height: auto;
+}
+.workspace[hidden] {
+  display: none;
+}
+.workspace .graphSegmentLaneEven {
+  fill: #eee8d8;
+}
+.workspace .graphSegmentLaneOdd {
+  fill: #f7f2e4;
+}
+.workspace .graphSegmentColumnLabel,
+.workspace .graphSimultaneousLabel {
+  fill: #534936;
+}
+.workspace .graphSegmentGuide {
+  stroke: #bfb195;
+}
+.workspace .graphEdge {
+  stroke: #766953;
+}
+.workspace .graphArrowhead {
+  fill: #766953;
+}
+.workspace .graphEdgeSelected {
+  stroke: #a77716;
+}
+.workspace .graphArrowheadSelected {
+  fill: #a77716;
+}
+.workspace .graphNodeEnemy {
+  fill: var(--caput-martuum) !important;
+}
+.workspace .graphNodeParty {
+  fill: var(--dark-olive-green) !important;
+}
+.workspace .graphNodeCard {
+  stroke: #8c7d60;
+  filter: none;
+}
+.workspace .graphNodeReady {
+  stroke: #bb850c;
+  stroke-width: 3px;
+}
+.workspace .graphNodeActive {
+  stroke: #563e0d;
+  stroke-width: 3px;
+}
+.workspace .graphNodeReady.graphNodeActive {
+  stroke: var(--goldenrod);
+  filter: drop-shadow(0 0 2px #715214);
+}
+.selectedInset {
+  fill: none;
+  stroke: #fff4d4;
+  stroke-width: 1.5px;
+  pointer-events: none;
+}
+.workspace .graphNodeCompleted {
+  opacity: 0.6;
+}
+.workspace .graphNodeGroupCompleted text {
+  opacity: 1;
+}
+.statusTag {
+  pointer-events: none;
+}
+.statusTag rect {
+  fill: #eee7d4;
+  stroke: #928568;
+}
+.statusTag text {
+  font: 600 10px sans-serif;
+  fill: #33291b;
+}
+.graphNodeGroupReady .statusTag rect {
+  fill: #f4d16f;
+  stroke: #a77716;
+}
+
+.heightDivider {
+  display: grid;
+  place-items: center;
+  height: 0.85rem;
+  background: #e6dfcb;
+  border-bottom: 1px solid #aa997a;
+  touch-action: none;
+  user-select: none;
+  cursor: ns-resize;
+}
+.heightDivider::after {
+  content: '';
+  height: 3px;
+  width: 3rem;
+  border-block: 1px solid #817153;
+}
+.heightDivider:hover,
+.heightDivider:focus-visible,
+.heightDivider:active {
+  background: #dfcca0;
+}
+@media (pointer: coarse) {
+  .heightDivider {
+    min-height: 1.6rem;
+  }
+}
