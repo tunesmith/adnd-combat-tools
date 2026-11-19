@@ -21,7 +21,10 @@ import type {
   BankExtension,
   CampaignBanking,
 } from './campaignBankingModel';
-import { encumbranceCatalogById } from '../tables/encumbranceCatalog';
+import {
+  COPPER_PER_GP,
+  encumbranceCatalogById,
+} from '../tables/encumbranceCatalog';
 import { getInventoryItemInfo } from './encumbranceRules';
 import {
   inventoryHolders,
@@ -44,8 +47,8 @@ const catalogIds: Record<BankDenomination, string> = {
 const bankCopperValue = (code: BankDenomination) => {
   const value = encumbranceCatalogById.get(catalogIds[code])?.valueGp;
   if (value === undefined) throw Error('Missing currency catalog entry.');
-  const copper = Math.round(value * 100);
-  if (Math.abs(copper / 100 - value) > Number.EPSILON)
+  const copper = Math.round(value * COPPER_PER_GP);
+  if (Math.abs(copper / COPPER_PER_GP - value) > Number.EPSILON)
     throw Error('Currency needs exact copper conversion.');
   return copper;
 };
@@ -61,11 +64,15 @@ export function bankGp(
   );
   const sign = copper < BigInt(0) ? '-' : '';
   const magnitude = copper < BigInt(0) ? -copper : copper;
-  const remainder = String(magnitude % BigInt(100))
-    .padStart(2, '0')
+  const remainder = String(
+    (magnitude % BigInt(COPPER_PER_GP)) * BigInt(1000 / COPPER_PER_GP)
+  )
+    .padStart(3, '0')
     .replace(/0+$/, '');
   return (
-    sign + String(magnitude / BigInt(100)) + (remainder ? '.' + remainder : '')
+    sign +
+    String(magnitude / BigInt(COPPER_PER_GP)) +
+    (remainder ? '.' + remainder : '')
   );
 }
 function safe(value: number) {
@@ -87,13 +94,15 @@ function addBankAmounts(
   return result;
 }
 function moneyDenomination(
-  item: EncumbranceInventoryItem
+  item: EncumbranceInventoryItem,
+  recorded = false
 ): BankDenomination | undefined {
   const info = getInventoryItemInfo(item, encumbranceCatalogById);
   const value = item.valueGpOverride ?? info?.valueGp;
   return bankDenominations.find(
     (code) =>
-      value === bankCopperValue(code) / 100 &&
+      (value === bankCopperValue(code) / COPPER_PER_GP ||
+        (recorded && code === 'cp' && value === 0.01)) &&
       (item.catalogId === catalogIds[code] ||
         (info?.category === 'coins' && !['diamond', 'emerald'].includes(code)))
   );
@@ -525,7 +534,11 @@ function applyBankChanges(
   }
   return normalizeInventory(next);
 }
-function validateChanges(entry: BankEntry, progressOnly = false) {
+function validateChanges(
+  entry: BankEntry,
+  progressOnly = false,
+  recorded = false
+) {
   if (!entry.description.trim())
     throw Error('Enter a transaction description.');
   const total = bankChangesAmounts(entry.changes);
@@ -566,7 +579,7 @@ function validateChanges(entry: BankEntry, progressOnly = false) {
     entry.changes.some(
       (c) =>
         (c.quantity === 0 && entry.kind !== 'reconciliation') ||
-        moneyDenomination(c.item) !== c.denomination
+        moneyDenomination(c.item, recorded) !== c.denomination
     )
   )
     throw Error(
@@ -580,11 +593,13 @@ function validateChanges(entry: BankEntry, progressOnly = false) {
     throw Error('A transfer must conserve each denomination.');
   if (entry.kind === 'exchange') {
     const fee = entry.changes.filter((c) => c.fee);
-    if (
-      fee.some((c) => c.quantity >= 0) ||
-      (!progressOnly &&
-        bankGp(bankChangesAmounts(entry.changes.filter((c) => !c.fee))) !== '0')
-    )
+    const tender = bankChangesAmounts(entry.changes.filter((c) => !c.fee));
+    // Previously recorded exchanges may have balanced at 100 cp/gp.
+    const balanced =
+      bankGp(tender) === '0' ||
+      (recorded &&
+        bankGp({ ...tender, cp: BigInt(tender.cp ?? 0) * BigInt(2) }) === '0');
+    if (fee.some((c) => c.quantity >= 0) || (!progressOnly && !balanced))
       throw Error(
         'An exchange must conserve GP value. Mark any fee as a separate outgoing change.'
       );
@@ -1270,7 +1285,13 @@ function projectBankTransaction(
     progress &&
     (candidate.kind === 'transfer' || candidate.kind === 'exchange') &&
     !request.remove;
-  validateChanges(candidate, physicalProgress);
+  validateChanges(
+    candidate,
+    physicalProgress,
+    !!previous &&
+      previous.kind === candidate.kind &&
+      canonical(changes) === canonical(previous.changes)
+  );
   let inventory = working.document;
   if (candidate.effect === 'inventory') {
     if (
@@ -1648,7 +1669,7 @@ export function previewBankExtension(
     for (const entry of entries.filter((e) =>
       e.changes.some((c) => c.holderId === holderId)
     )) {
-      validateChanges(entry);
+      validateChanges(entry, false, true);
       if (
         !atOrAfterOpening(doc, entry.sessionId, proposed) ||
         atOrAfterOpening(doc, entry.sessionId, previous)
@@ -1791,7 +1812,7 @@ export function validateCampaignBanking(
   for (const entry of ledger.entries) {
     unique(entry.id);
     sessionIndex(doc, entry.sessionId);
-    validateChanges(entry);
+    validateChanges(entry, false, true);
     const previous = activeBankEntries(prefix).find(
       (e) => e.transactionId === entry.transactionId
     );

@@ -179,10 +179,15 @@ test('new-session choices filter possessions with profiles while independently r
   fireEvent.change(screen.getByLabelText('Session name'), {
     target: { value: 'Selected party' },
   });
-  fireEvent.click(screen.getByRole('checkbox', { name: 'Current inventory' }));
-  fireEvent.click(screen.getByText('Party profiles'));
+  expect(
+    screen.getByRole('checkbox', { name: 'Current inventory' })
+  ).toBeChecked();
+  fireEvent.click(screen.getByText(/Party profiles/));
   for (const name of ['Mira', 'Nera', 'Bram'])
-    fireEvent.click(screen.getByRole('checkbox', { name: new RegExp(name) }));
+    expect(
+      screen.getByRole('checkbox', { name: new RegExp(name) })
+    ).toBeChecked();
+  fireEvent.click(screen.getByRole('checkbox', { name: /Tal/ }));
   expect(
     screen.queryByRole('checkbox', { name: /Oren/ })
   ).not.toBeInTheDocument();
@@ -480,4 +485,53 @@ test('typed inventory names offer the latest reliable identity and leave ambiguo
   expect(screen.getByLabelText('Starting inventory')).toHaveValue('');
   fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
   expect(onChange).not.toHaveBeenCalled();
+});
+
+test('append uses the displayed carry source and keeps edits after reviewing historical placement', async () => {
+  const source = membershipCampaign();
+  let destination = source;
+  render(
+    <CreateSessionDialog
+      document={source}
+      sessionId="day3"
+      onClose={() => undefined}
+      onCreate={async (change) => {
+        destination = change(source);
+      }}
+    />
+  );
+  const profiles = screen.getByText(/Party profiles/).closest('details');
+  if (!profiles) throw Error('Missing profiles');
+  fireEvent.click(screen.getByText(/Party profiles/));
+  expect(
+    within(profiles).queryByRole('checkbox', { name: /Tal|Oren/ })
+  ).toBeNull();
+  const inventory = () =>
+    screen.getByRole('checkbox', { name: 'Current inventory' });
+  fireEvent.click(inventory());
+  const placement = screen.getByLabelText<HTMLSelectElement>('Placement');
+  const before = Array.from(placement.options).find((o) =>
+    o.value.startsWith('insert:')
+  );
+  if (!before) throw Error('Missing historical placement');
+  fireEvent.change(placement, { target: { value: before.value } });
+  expect(screen.getByText('Empty session')).toBeInTheDocument();
+  fireEvent.change(placement, { target: { value: '' } });
+  expect(inventory()).not.toBeChecked();
+  fireEvent.change(screen.getByLabelText('Session name'), {
+    target: { value: 'Profiles only' },
+  });
+  fireEvent.click(screen.getByRole('button', { name: 'Create session' }));
+  await waitFor(() =>
+    expect(destination.sessions.at(-1)?.label).toBe('Profiles only')
+  );
+  const id = destination.sessions.at(-1)?.id;
+  expect(destination.workingInventories.some((w) => w.sessionId === id)).toBe(
+    false
+  );
+  expect(
+    destination.party?.profiles.some(
+      (p) => p.sessionId === id && p.characterId === memberIds.eli
+    )
+  ).toBe(true);
 });

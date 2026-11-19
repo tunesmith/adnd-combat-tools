@@ -148,6 +148,7 @@ test('mode-specific inputs stay available in the compact wizard', () => {
     fireEvent.click(d.getByRole('radio', { name: m, exact: true }));
   expect(d.getAllByRole('radio')).toHaveLength(9);
   mode('Move/Close');
+  expect(d.getByText('Incomplete declaration')).toBeVisible();
   expect(d.getByRole('button', { name: 'Next' })).toBeDisabled();
   fireEvent.change(d.getByLabelText('Distance', { exact: true }), {
     target: { value: '4' },
@@ -188,4 +189,24 @@ test('mode-specific inputs stay available in the compact wizard', () => {
   });
   fireEvent.click(d.getByRole('button', { name: 'Done' }));
   expect(screen.queryByRole('dialog')).toBeNull();
+});
+
+test('the footer follows an unlabeled live target before initiative, and distinguishes a recorded decision to do nothing', () => {
+  const state = createRegisterIntentionsFixtureState();
+  const round = state.rounds[0];
+  if (!round?.enemyStates[0]) throw Error('Missing enemy');
+  round.enemyStates[0].action = '';
+  round.partyInitiative = '';
+  round.enemyInitiative = '';
+  render(<CombatTracker rememberedState={state} />);
+  fireEvent.click(screen.getByRole('button', { name: 'Declare Intentions' }));
+  const dialog = within(
+    screen.getByRole('dialog', { name: 'Declare Intentions' })
+  );
+  expect(dialog.getByLabelText('Intention')).toHaveValue('');
+  expect(dialog.getByText('Declared')).toBeVisible();
+  fireEvent.click(dialog.getByRole('radio', { name: 'No combat action' }));
+  expect(
+    dialog.getByText('No combat action', { selector: 'span' })
+  ).toBeVisible();
 });

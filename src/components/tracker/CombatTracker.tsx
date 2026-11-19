@@ -1835,13 +1835,55 @@ const CombatTracker = ({
     () => (currentRound ? buildCombatWizardEntries(currentRound) : []),
     [currentRound]
   );
-  const resolvedInitiativeRound = useMemo(
+  // Declarations can be reviewed before either side has rolled initiative.
+  const needsInitiativeGraph = canOpenCombatWizard || showIntentionsWizard;
+  const declarationRound = useMemo(
     () =>
-      currentRound && canOpenCombatWizard
+      currentRound && needsInitiativeGraph
         ? resolveTrackerRoundInitiative(currentRound)
         : undefined,
-    [canOpenCombatWizard, currentRound]
+    [needsInitiativeGraph, currentRound]
   );
+  const resolvedInitiativeRound = canOpenCombatWizard
+    ? declarationRound
+    : undefined;
+  const declarationStatus = useMemo(() => {
+    if (
+      !showIntentionsWizard ||
+      !currentRound ||
+      !declarationRound ||
+      !currentIntentionWizardEntry
+    )
+      return '';
+    if (intentionWizardActionError) return 'Incomplete declaration';
+    const { side, combatantKey } = currentIntentionWizardEntry;
+    const declarations = getTrackerActionDeclarations(currentRound).filter(
+      (a) => a.side === side && a.combatantKey === combatantKey
+    );
+    if (!declarations.length) return 'Undeclared';
+    if (declarations.every((a) => a.declaredAction === 'none'))
+      return 'No combat action';
+    const actors =
+      side === 'party'
+        ? declarationRound.scenario.party
+        : declarationRound.scenario.enemies;
+    const actorIds = new Set(
+      actors
+        .filter((a) => a.ownerCombatantKey === combatantKey)
+        .map((a) => a.id)
+    );
+    return declarationRound.attackGraph.nodes.some((n) =>
+      actorIds.has(n.combatantId)
+    )
+      ? 'Declared'
+      : 'No graph step';
+  }, [
+    showIntentionsWizard,
+    currentRound,
+    currentIntentionWizardEntry,
+    intentionWizardActionError,
+    declarationRound,
+  ]);
   const combatFlowNodeDisplayById = useMemo(
     () =>
       resolvedInitiativeRound
@@ -6695,13 +6737,7 @@ const CombatTracker = ({
                 </section>
               </div>
               <div className={styles['declarationFooter']}>
-                <span>
-                  {intentionWizardActionError
-                    ? 'Incomplete declaration'
-                    : currentIntentionWizardEntry.intention.trim()
-                    ? 'Declared'
-                    : 'Undeclared'}
-                </span>
+                <span>{declarationStatus}</span>
                 <button
                   type="button"
                   className={styles['toolbarButton']}

@@ -140,7 +140,9 @@ test('workspace starts the selected continuation atomically, edits notes indepen
     target: { value: 'Session Two' },
   });
   fireEvent.click(screen.getByRole('checkbox', { name: 'Ongoing' }));
-  fireEvent.click(screen.getByRole('checkbox', { name: 'Current inventory' }));
+  expect(
+    screen.getByRole('checkbox', { name: 'Current inventory' })
+  ).toBeChecked();
   fireEvent.click(screen.getByRole('button', { name: 'Create session' }));
   await waitFor(() =>
     expect(

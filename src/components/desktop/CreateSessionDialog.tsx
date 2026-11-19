@@ -44,12 +44,14 @@ export default function CreateSessionDialog({
   );
   const [label, setLabel] = useState('');
   const [selected, setSelected] = useState<string[]>([]);
-  const [carryInventory, setCarryInventory] = useState(false);
+  const [carryInventory, setCarryInventory] = useState(Boolean(inventory));
   const [copyNotes, setCopyNotes] = useState(false);
   const [profiles] = useState(() =>
     carryablePartyProfiles(document, sessionId)
   );
-  const [partyIds, setPartyIds] = useState<string[]>([]);
+  const [partyIds, setPartyIds] = useState(() =>
+    profiles.map((p) => p.characterId)
+  );
   const [membership] = useState(() => inventoryMembership(document, sessionId));
   const [extraInventoryIds, setExtraInventoryIds] = useState(() =>
     membership.unmatched.map((c) => c.id)

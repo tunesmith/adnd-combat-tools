@@ -1,3 +1,4 @@
+import { sessionAcquisition } from '../../helpers/sessionAcquisition';
 import {
   inventoryHolders,
   updateHolderInventory,
@@ -78,6 +79,7 @@ interface EncumbranceAppProps {
   mode: EncumbranceMode;
   campaign?: {
     active?: boolean;
+    sessionLabel?: string;
     document: EncumbranceDocument | EncumbranceDmDocument;
     readOnly?: boolean;
     onDocumentChange: (document: EncumbranceDocument) => boolean | void;
@@ -244,7 +246,7 @@ const defaultCustomItemDraft = (): CustomItemDraft => ({
 });
 
 interface AddItemDetailsDraft {
-  day: number;
+  day: number | '';
   playerNotes: string;
   dmNotes: string;
   playerKnowsValue: boolean;
@@ -254,9 +256,10 @@ interface AddItemDetailsDraft {
 }
 
 const defaultAddItemDetailsDraft = (
-  addMode: AddMode = 'catalog'
+  addMode: AddMode = 'catalog',
+  day: number | '' = 0
 ): AddItemDetailsDraft => ({
-  day: 0,
+  day,
   playerNotes: '',
   dmNotes: '',
   playerKnowsValue: addMode === 'custom' ? false : true,
@@ -560,7 +563,7 @@ const formatContainerUsage = (
 
 const formatGpValue = (value: number): string =>
   value.toLocaleString(undefined, {
-    maximumFractionDigits: 2,
+    maximumFractionDigits: 3,
   });
 
 const getCharacterDisplayName = (name: string): string =>
@@ -738,7 +741,19 @@ const resizeTextarea = (textarea: HTMLTextAreaElement | null) => {
   )}px`;
 };
 
+function gearAcquisition(
+  campaign: EncumbranceAppProps['campaign'],
+  mode: EncumbranceMode
+) {
+  const acquisition = sessionAcquisition(campaign?.sessionLabel);
+  const newItemDay =
+    acquisition.number ??
+    (campaign?.sessionLabel !== undefined && mode === 'dm' ? '' : 0);
+  return { acquisitionLabel: acquisition.label, newItemDay } as const;
+}
+
 const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
+  const { acquisitionLabel, newItemDay } = gearAcquisition(campaign, mode);
   const [standaloneDocument, setStandaloneDocument] =
     useState<EncumbranceDocument>(() =>
       createEmptyEncumbranceDocument(getDocumentKindForMode(mode))
@@ -1499,13 +1514,13 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
   const openAddModal = () => {
     if (readOnly) return;
     setAddMode('catalog');
-    setAddItemDetailsDraft(defaultAddItemDetailsDraft('catalog'));
+    setAddItemDetailsDraft(defaultAddItemDetailsDraft('catalog', newItemDay));
     setShowAddModal(true);
   };
 
   const closeAddModal = () => {
     setAddMode('catalog');
-    setAddItemDetailsDraft(defaultAddItemDetailsDraft('catalog'));
+    setAddItemDetailsDraft(defaultAddItemDetailsDraft('catalog', newItemDay));
     setShowAddModal(false);
   };
 
@@ -1794,21 +1809,21 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
       return;
     const nextDraft = updater(currentDraft);
     if (editingItemInfo) {
-      const after = itemFields(editingItemInfo, nextDraft);
+      const fields = changedFields(
+        itemFields(editingItemInfo, currentDraft),
+        itemFields(editingItemInfo, nextDraft)
+      );
       const applied = campaign?.onFieldEdit
         ? campaign.onFieldEdit({
             kind: 'item',
             holderId: nextDraft.characterId,
             itemId: nextDraft.itemId,
-            fields: changedFields(
-              itemFields(editingItemInfo, currentDraft),
-              after
-            ),
+            fields,
           })
         : updateInventoryItem(
             nextDraft.characterId,
             nextDraft.itemId,
-            (item) => ({ ...item, ...after })
+            (item) => ({ ...item, ...fields })
           );
       if (applied === false) return;
     }
@@ -2102,7 +2117,7 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
       catalogId: itemInfo.id,
       quantity: itemInfo.isContainer ? 1 : quantity,
       containerId: nextContainerId || null,
-      day: addItemDetailsDraft.day,
+      day: Number(addItemDetailsDraft.day),
       playerNotes: addItemDetailsDraft.playerNotes,
       playerKnowsValue:
         mode === 'dm' ? addItemDetailsDraft.playerKnowsValue : true,
@@ -2141,6 +2156,11 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
   };
 
   const handleAddItem = () => {
+    if (
+      addItemDetailsDraft.day === '' ||
+      !Number.isSafeInteger(addItemDetailsDraft.day)
+    )
+      return;
     const normalizedQuantity = Math.max(1, Math.floor(selectedQuantity));
 
     if (addMode === 'catalog') {
@@ -2729,7 +2749,9 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
         )}
         <div className={styles['inventoryCompactMeta']}>
           <span className={styles['inventoryCompactMetaItem']}>
-            <span className={styles['inventoryCompactMetaLabel']}>Day</span>
+            <span className={styles['inventoryCompactMetaLabel']}>
+              {acquisitionLabel}
+            </span>
             <span>{rowRecord.item.day}</span>
           </span>
           <span className={styles['inventoryCompactMetaItem']}>
@@ -2749,7 +2771,7 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
         </div>
       </div>
       <div className={styles['inventoryCellSummary']}>
-        <span className={styles['inventoryLabel']}>Day</span>
+        <span className={styles['inventoryLabel']}>{acquisitionLabel}</span>
         <span className={styles['inventorySummaryValue']}>
           {rowRecord.item.day}
         </span>
@@ -3981,10 +4003,10 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
                   : ''
               }`}
               onClick={() => toggleInventorySort('day')}
-              aria-label="Sort by Day"
+              aria-label={`Sort by ${acquisitionLabel}`}
               aria-pressed={getInventorySortPriority('day') !== null}
             >
-              <span>Day</span>
+              <span>{acquisitionLabel}</span>
               {getInventorySortPriority('day') !== null && (
                 <span className={styles['inventorySortPriority']}>
                   {getInventorySortPriority('day')}
@@ -4345,7 +4367,10 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
                         onClick={() => {
                           setAddMode('catalog');
                           setAddItemDetailsDraft(
-                            defaultAddItemDetailsDraft('catalog')
+                            defaultAddItemDetailsDraft(
+                              'catalog',
+                              addItemDetailsDraft.day
+                            )
                           );
                         }}
                       >
@@ -4361,7 +4386,10 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
                         onClick={() => {
                           setAddMode('custom');
                           setAddItemDetailsDraft(
-                            defaultAddItemDetailsDraft('custom')
+                            defaultAddItemDetailsDraft(
+                              'custom',
+                              addItemDetailsDraft.day
+                            )
                           );
                         }}
                       >
@@ -4453,22 +4481,26 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
                         </label>
                         {mode === 'dm' && (
                           <label className={styles['fieldGroup']}>
-                            <span className={styles['fieldLabel']}>Day</span>
+                            <span className={styles['fieldLabel']}>
+                              {acquisitionLabel}
+                            </span>
                             <input
                               className={styles['fieldControl']}
                               type="number"
                               min={0}
                               step={1}
                               value={addItemDetailsDraft.day}
-                              onChange={(event) =>
-                                setAddItemDetailsDraft((currentDraft) => ({
-                                  ...currentDraft,
-                                  day: Math.max(
-                                    0,
-                                    Math.floor(Number(event.target.value) || 0)
-                                  ),
-                                }))
-                              }
+                              onChange={(event) => {
+                                const value = event.currentTarget.value;
+                                const day =
+                                  value === ''
+                                    ? ''
+                                    : Math.max(0, Math.floor(Number(value)));
+                                setAddItemDetailsDraft((draft) => ({
+                                  ...draft,
+                                  day,
+                                }));
+                              }}
                             />
                           </label>
                         )}
@@ -4523,7 +4555,7 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
                               className={styles['fieldControl']}
                               type="number"
                               min={0}
-                              step={0.01}
+                              step={0.001}
                               value={customItemDraft.valueGp}
                               onChange={(event) =>
                                 updateCustomItemDraft(
@@ -4817,9 +4849,11 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
                       className={`${styles['button']} ${styles['buttonCompact']} ${styles['buttonPrimary']}`}
                       onClick={handleAddItem}
                       disabled={
-                        addMode === 'catalog'
+                        addItemDetailsDraft.day === '' ||
+                        !Number.isSafeInteger(addItemDetailsDraft.day) ||
+                        (addMode === 'catalog'
                           ? !selectedCatalogItem
-                          : !customItemDraft.name.trim()
+                          : !customItemDraft.name.trim())
                       }
                     >
                       {addMode === 'catalog' ? 'Add Item' : 'Add Custom Item'}
@@ -4905,7 +4939,9 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
                         </label>
                         {mode === 'dm' ? (
                           <label className={styles['fieldGroup']}>
-                            <span className={styles['fieldLabel']}>Day</span>
+                            <span className={styles['fieldLabel']}>
+                              {acquisitionLabel}
+                            </span>
                             <input
                               className={styles['fieldControl']}
                               type="number"
@@ -4925,7 +4961,9 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
                           </label>
                         ) : (
                           <div className={styles['fieldGroup']}>
-                            <span className={styles['fieldLabel']}>Day</span>
+                            <span className={styles['fieldLabel']}>
+                              {acquisitionLabel}
+                            </span>
                             <div className={styles['fieldReadonly']}>
                               {editingItem.day}
                             </div>
@@ -5002,7 +5040,7 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
                               className={styles['fieldControl']}
                               type="number"
                               min={0}
-                              step={0.01}
+                              step={0.001}
                               value={editingItemDraft.valueGp}
                               onChange={(event) =>
                                 updateEditingItemDraft((currentDraft) => ({

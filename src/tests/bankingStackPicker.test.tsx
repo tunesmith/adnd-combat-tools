@@ -301,9 +301,9 @@ test('payment total follows signed draft quantities, independently of save readi
   select('Change 2 quantity', '20');
   expect(total()).toBe('Payment total: 9 gp');
   select('Change 2 denomination', 'cp');
-  expect(total()).toBe('Payment total: 9.8 gp');
+  expect(total()).toBe('Payment total: 9.9 gp');
   select('Change 2 quantity', '1001');
-  expect(total()).toBe('Payment total: -0.01 gp');
+  expect(total()).toBe('Payment total: 4.995 gp');
   select('Change 2 quantity', '0.5');
   expect(total()).toBe('Payment total: —');
   select('Change 2 quantity', '');
@@ -337,6 +337,9 @@ test('payment total follows signed draft quantities, independently of save readi
 test.each([
   ['Day6 — 2025-10-04', 'emerald', 3, 'new:', 6],
   ['Day 6', 'pp', 100, 'new:pouch-a', 6],
+  ['Act10', 'sp', 1000, 'new:', 10],
+  ['Act 10', 'sp', 1000, 'new:', 10],
+  ['Act10 — 2025-11-07', 'sp', 1000, 'new:', 10],
   ['Session 93', 'pp', 100, 'new:', 0],
 ] as const)(
   'new Income stacks use the acquisition day in %s, including evidence and reopen',
@@ -352,14 +355,16 @@ test.each([
     select('Change 1 denomination', code);
     select('Change 1 stack', target);
     select('Change 1 quantity', String(quantity));
-    const field = screen.getByLabelText('Day for new stacks');
+    const field = screen.getByLabelText(
+      label.startsWith('Act') ? 'Acquired in Act' : 'Day for new stacks'
+    );
     if (label === 'Session 93') {
       expect(field).toHaveValue(null);
       expect(
         screen.getByRole('button', { name: 'Save transaction' })
       ).toBeDisabled();
       select('Day for new stacks', '0');
-    } else expect(field).toHaveValue(6);
+    } else expect(field).toHaveValue(day);
     fireEvent.click(screen.getByRole('button', { name: 'Save transaction' }));
     expect(h.onChange).toHaveBeenCalledTimes(1);
     const saved = h.current(),

@@ -221,6 +221,9 @@ export default function DesktopWorkspace() {
   const document = state?.document;
   const sessionId =
     document?.workspace.sessionId || document?.sessions[0]?.id || '';
+  const sessionLabel = document?.sessions.find(
+    (s) => s.id === sessionId
+  )?.label;
   const view =
     document?.workspace.view === 'history'
       ? 'details'
@@ -687,6 +690,7 @@ export default function DesktopWorkspace() {
                 {historicalInventory ? (
                   <HistoricalInventory
                     key={historicalInventory.id}
+                    sessionLabel={sessionLabel}
                     document={historicalInventory.document}
                   />
                 ) : !sessionId ? (
@@ -716,6 +720,7 @@ export default function DesktopWorkspace() {
                     mode="dm"
                     campaign={{
                       document: working.document,
+                      sessionLabel,
                       characterOrder: inSessionInventoryOrder(
                         document,
                         sessionId,

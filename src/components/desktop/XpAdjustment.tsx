@@ -35,8 +35,8 @@ export default function XpAdjustment({
   onChange: (reward: XpReward) => void;
   onClose: () => void;
 }) {
-  const [target, setTarget] = useState('all');
-  const [draft, setDraft] = useState(() => values(reward, 'all'));
+  const [target, setTarget] = useState('raw');
+  const [draft, setDraft] = useState(() => values(reward, 'raw'));
   const [error, setError] = useState('');
   const apply = (reset: boolean) => {
     try {

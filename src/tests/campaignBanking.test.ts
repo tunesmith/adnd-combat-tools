@@ -877,3 +877,31 @@ test('correcting a whole-stack relocation into a split restores a distinct sourc
     quantity: 30,
   });
 });
+
+test('new copper exchanges conserve 200 cp per gp and recorded 100-cp exchanges reopen intact', () => {
+  const doc = bankFixture(),
+    holder = 'castle-kifu-storage';
+  const request = {
+    transactionId: 'copper-exchange',
+    sessionId: 'day3',
+    description: 'Change one gold piece',
+    kind: 'exchange' as const,
+    changes: [
+      bankLeg(doc, 'day3', holder, 'gp', -1, 'castle-gp', 'castle-chest'),
+      bankLeg(doc, 'day3', holder, 'cp', 200, 'copper-change'),
+    ],
+  };
+  const saved = bankPost(doc, request);
+  expect(bankGp({ ...zeroBankAmounts(), cp: 1 })).toBe('0.005');
+  const legacyChanges = request.changes.map((c) =>
+    c.denomination === 'cp' ? { ...c, quantity: 100 } : c
+  );
+  expect(() =>
+    previewBankTransaction(doc, { ...request, changes: legacyChanges })
+  ).toThrow(/conserve GP/);
+  const recorded = required(saved.banking?.entries.at(-1));
+  recorded.changes = legacyChanges;
+  expect(
+    parseCampaign(serializeCampaign(saved)).banking?.entries.at(-1)
+  ).toEqual(recorded);
+});

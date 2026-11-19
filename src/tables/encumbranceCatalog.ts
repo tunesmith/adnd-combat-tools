@@ -1,5 +1,7 @@
 import type { EncumbranceCatalogItem } from '../types/encumbrance';
 
+export const COPPER_PER_GP = 200;
+
 const toGp = ({
   cp = 0,
   sp = 0,
@@ -12,7 +14,7 @@ const toGp = ({
   ep?: number;
   gp?: number;
   pp?: number;
-}): number => cp / 100 + sp / 20 + ep / 2 + gp + pp * 5;
+}): number => cp / COPPER_PER_GP + sp / 20 + ep / 2 + gp + pp * 5;
 
 // Most valueGp figures below transcribe the PHB reference-sheet equipment page.
 // Most encumbranceGp figures below transcribe DMG Appendix O.

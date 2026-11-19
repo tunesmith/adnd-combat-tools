@@ -279,9 +279,9 @@ describe('encumbrance rules', () => {
         character.inventory,
         encumbranceCatalogById
       )
-    ).toBeCloseTo(102.02);
+    ).toBeCloseTo(102.01);
     expect(getTotalValueGp(character, encumbranceCatalogById)).toBeCloseTo(
-      114.02
+      114.01
     );
     expect(
       getInventoryItemTotalKnownValueGp(
@@ -289,9 +289,9 @@ describe('encumbrance rules', () => {
         character.inventory,
         encumbranceCatalogById
       )
-    ).toBeCloseTo(2.02);
+    ).toBeCloseTo(2.01);
     expect(getTotalKnownValueGp(character, encumbranceCatalogById)).toBeCloseTo(
-      14.02
+      14.01
     );
   });
 
@@ -370,4 +370,29 @@ test('STR 8 carrying 436 gp is Heavy gear at 9 inches, not an extra base allowan
     label: 'Heavy gear',
     movement: '9"',
   });
+});
+
+test('five catalog sacks total eight silver and a saved explicit price still wins', () => {
+  const character = createPlayerCharacter();
+  character.inventory = Array.from({ length: 5 }, (_, i) => ({
+    id: String(i),
+    catalogId: 'sack-large',
+    quantity: 1,
+    day: 10,
+    containerId: null,
+    playerNotes: '',
+    playerKnowsValue: true,
+    playerMagicKnowledge: 'unknown',
+  }));
+  expect(getTotalValueGp(character, encumbranceCatalogById)).toBe(0.4);
+  const first = character.inventory[0];
+  if (!first) throw Error('Missing sack');
+  first.valueGpOverride = 0.16;
+  expect(
+    getInventoryItemTotalValueGp(
+      '0',
+      character.inventory,
+      encumbranceCatalogById
+    )
+  ).toBe(0.16);
 });

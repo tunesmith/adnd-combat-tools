@@ -1,3 +1,4 @@
+import { sessionAcquisition } from '../../helpers/sessionAcquisition';
 import { inSessionInventoryOrder } from '../../helpers/campaignInventoryOrder';
 import { useRef, useState } from 'react';
 import type { CampaignDocument } from '../../helpers/campaignDocument';
@@ -148,14 +149,12 @@ export default function BankTransactionDialog({
   onClose: () => void;
 }) {
   const sessionId = entry?.sessionId ?? workspaceSessionId;
-  const [incomeDay, setIncomeDay] = useState(() => {
-    const label =
-      document.sessions.find((s) => s.id === sessionId)?.label.trim() ?? '';
-    const day = /^Day\s*(\d+)(?:\s*[—–-]\s*\d{4}-\d{2}-\d{2})?$/i.exec(
-      label
-    )?.[1];
-    return day && Number.isSafeInteger(Number(day)) ? String(Number(day)) : '';
-  });
+  const acquisition = sessionAcquisition(
+    document.sessions.find((s) => s.id === sessionId)?.label
+  );
+  const [incomeDay, setIncomeDay] = useState(
+    () => acquisition.number?.toString() ?? ''
+  );
   const working = document.workingInventories.find(
     (w) => w.sessionId === sessionId
   );
@@ -458,7 +457,10 @@ export default function BankTransactionDialog({
   let invalid = '';
   let saveError = '';
   if (needsDay && !validDay)
-    invalid = 'Enter the acquisition day for new stacks.';
+    invalid =
+      acquisition.label === 'Day'
+        ? 'Enter the acquisition day for new stacks.'
+        : 'Enter the acquisition Act for new stacks.';
   else if (completed.length) {
     try {
       const candidate = {
@@ -1161,8 +1163,8 @@ export default function BankTransactionDialog({
               {incoming.map((c, i) => (
                 <li key={i}>
                   {bankHolderName(document, c.holderId)} · {c.quantity}{' '}
-                  {c.denomination} · {c.item.name || c.item.catalogId} · Day{' '}
-                  {c.item.day}
+                  {c.denomination} · {c.item.name || c.item.catalogId} ·{' '}
+                  {acquisition.label} {c.item.day}
                   {sourceNote(c.item) && ' · ' + sourceNote(c.item)}
                 </li>
               ))}
@@ -1179,7 +1181,9 @@ export default function BankTransactionDialog({
         )}
         {needsDay && (
           <label className={styles['incomeDay']}>
-            Day for new stacks
+            {acquisition.label === 'Day'
+              ? 'Day for new stacks'
+              : acquisition.label}
             <input
               type="number"
               min={0}

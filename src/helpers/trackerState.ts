@@ -1,3 +1,4 @@
+import { getTrackerActionDeclarations } from './trackerActionDeclarations';
 import { FIGHTER, MONSTER } from '../tables/attackerClass';
 import { getWeaponOptions } from '../tables/weapon';
 import {
@@ -247,6 +248,56 @@ export const createInitialTrackerState = (): TrackerState => {
   };
 };
 
+function carryOpenMelee(previous: TrackerRound, next: TrackerRound) {
+  const melee = getTrackerActionDeclarations(previous).filter(
+    (action) => action.declaredAction === 'open-melee'
+  );
+  for (const side of ['party', 'enemy'] as const) {
+    const party = side === 'party';
+    const actors = party ? next.party : next.enemies;
+    const targets = party ? next.enemies : next.party;
+    const direction = party ? 'partyToEnemy' : 'enemyToParty';
+    actors.forEach((actor, index) => {
+      const actions = melee.filter(
+        (action) => action.side === side && action.combatantKey === actor.key
+      );
+      if (!actions.length) return;
+      const targetKeys = new Set(
+        actions.flatMap((action) =>
+          action.targetDeclarations.map((target) => target.targetCombatantKey)
+        )
+      );
+      let continuing = false;
+      targets.forEach((target, targetIndex) => {
+        const cell = party
+          ? next.cells[targetIndex]?.[index]
+          : next.cells[index]?.[targetIndex];
+        if (!cell) return;
+        // Replace the legacy shorthand-based visibility for this direction only.
+        const keep = targetKeys.has(target.key);
+        cell[`${direction}Visible`] = keep;
+        if (keep) continuing = true;
+      });
+      if (continuing) {
+        (next.actions ??= []).push({
+          id: `${side}:${actor.key}:main`,
+          source: 'intention',
+          side,
+          direction,
+          combatantIndex: index,
+          combatantKey: actor.key,
+          weaponId: actor.weapon,
+          targetSide: party ? 'enemy' : 'party',
+          declaredAction: 'open-melee',
+          intention: '',
+          result: '',
+          targetDeclarations: [],
+        });
+      }
+    });
+  }
+}
+
 export const insertRoundAfterActive = (state: TrackerState): TrackerState => {
   const currentRound = state.rounds[state.activeRound];
   if (!currentRound) {
@@ -258,6 +309,7 @@ export const insertRoundAfterActive = (state: TrackerState): TrackerState => {
     incrementRoundLabel(currentRound.label),
     currentRound
   );
+  carryOpenMelee(currentRound, newRound);
   const rounds = state.rounds.slice();
   rounds.splice(state.activeRound + 1, 0, newRound);
 

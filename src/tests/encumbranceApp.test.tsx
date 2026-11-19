@@ -516,12 +516,13 @@ describe('encumbrance app regressions', () => {
         name: 'Edit Diamond for Unnamed adventurer',
       })
     );
+    // The two diamonds sort by their recorded days, 65 before 69.
     expectBefore(
       screen.getByRole('button', {
-        name: 'Edit Diamond for Unnamed adventurer',
+        name: 'Edit Diamond for Azalia Larkspur',
       }),
       screen.getByRole('button', {
-        name: 'Edit Diamond for Azalia Larkspur',
+        name: 'Edit Diamond for Unnamed adventurer',
       })
     );
   });
@@ -1129,4 +1130,22 @@ describe('encumbrance app regressions', () => {
       'On person'
     );
   });
+});
+
+test('standalone Gear uses copper catalog prices and keeps Day terminology', () => {
+  render(<EncumbranceApp mode="dm" />);
+  fireEvent.click(screen.getByRole('button', { name: 'Add Item' }));
+  const dialog = within(screen.getByRole('dialog', { name: 'Add Item' }));
+  expect(dialog.getByLabelText('Day')).toHaveValue(0);
+  for (const [name, price] of [
+    ['Sack, large', '0.08 gp'],
+    ['Sack, small', '0.05 gp'],
+    ['Belt', '0.15 gp'],
+    ['Dart', '0.015 gp'],
+  ] as const) {
+    chooseSelectOption(dialog, 'Item', name);
+    expect(dialog.getByText('Value per item').parentElement).toHaveTextContent(
+      price
+    );
+  }
 });

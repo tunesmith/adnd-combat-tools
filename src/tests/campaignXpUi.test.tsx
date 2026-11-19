@@ -300,6 +300,9 @@ test('single-table entry calculates fractional XP and applies one deliberate his
   expect(dialog.getAllByText('25.8')).toHaveLength(5);
   fireEvent.click(dialog.getByRole('button', { name: 'Adjust XP…' }));
   let adjustment = within(screen.getByRole('dialog', { name: 'Adjust XP' }));
+  fireEvent.change(adjustment.getByLabelText('Apply to'), {
+    target: { value: 'all' },
+  });
   fireEvent.change(adjustment.getByLabelText('XP each'), {
     target: { value: '26' },
   });
@@ -314,6 +317,9 @@ test('single-table entry calculates fractional XP and applies one deliberate his
   expect(dialog.getAllByText('25.8')).toHaveLength(5);
   fireEvent.click(dialog.getByRole('button', { name: 'Adjust XP…' }));
   adjustment = within(screen.getByRole('dialog', { name: 'Adjust XP' }));
+  fireEvent.change(adjustment.getByLabelText('Apply to'), {
+    target: { value: 'all' },
+  });
   fireEvent.change(adjustment.getByLabelText('XP each'), {
     target: { value: '26' },
   });
@@ -520,9 +526,7 @@ test('one adjustment dialog edits raw XP and individual shares without changing 
   );
   fireEvent.click(dialog.getByRole('button', { name: 'Adjust XP…' }));
   let adjustment = within(screen.getByRole('dialog', { name: 'Adjust XP' }));
-  fireEvent.change(adjustment.getByLabelText('Apply to'), {
-    target: { value: 'raw' },
-  });
+  expect(adjustment.getByLabelText('Apply to')).toHaveValue('raw');
   fireEvent.change(adjustment.getByLabelText('Raw XP'), {
     target: { value: '144' },
   });
@@ -535,6 +539,10 @@ test('one adjustment dialog edits raw XP and individual shares without changing 
   expect(dialog.getByText('Raw XP: 144')).toBeInTheDocument();
   fireEvent.click(dialog.getByRole('button', { name: 'Adjust XP…' }));
   adjustment = within(screen.getByRole('dialog', { name: 'Adjust XP' }));
+  expect(adjustment.getByLabelText('Raw XP')).toHaveValue('144');
+  expect(adjustment.getByLabelText('Note')).toHaveValue(
+    'Retained historical DM addition'
+  );
   fireEvent.change(adjustment.getByLabelText('Apply to'), {
     target: { value: 'xp-tal' },
   });
