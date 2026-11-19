@@ -71,6 +71,25 @@ test('inspecting a dependency preserves the active roll; cycling selects without
       flow.getByLabelText('Detail (optional)', { exact: true })
     ).toHaveValue('First arrow misses');
     expect(flow.getByRole('button', { name: 'Resolve action' })).toBeDisabled();
+    const explanation = within(flow.getByRole('region', { name: 'Why here' }));
+    const disclosure = explanation.getByRole('button', {
+      name: /Show dependencies/,
+    });
+    expect(disclosure).toHaveAttribute('aria-expanded', 'false');
+    fireEvent.click(disclosure);
+    expect(disclosure).toHaveAttribute('aria-expanded', 'true');
+    expect(explanation.getByText('Required by')).toBeVisible();
+    fireEvent.click(
+      explanation.getByRole('button', { name: /Hide dependencies/ })
+    );
+    expect(explanation.queryByText('Required by')).toBeNull();
+    fireEvent.click(
+      explanation.getByRole('button', { name: 'Mark unresolved' })
+    );
+    expect(flow.getByText(/0 \/ 3 resolved/)).toBeInTheDocument();
+    expect(flow.getByLabelText('Detail (optional)')).toHaveValue(
+      'First arrow misses'
+    );
   } finally {
     jest.restoreAllMocks();
   }

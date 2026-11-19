@@ -4786,6 +4786,20 @@ const CombatTracker = ({
           n.segment < model.node.segment &&
           !combatFlowCompletedNodeIds.has(n.id)
       ) || [];
+    const dependencyCount = model.incoming.length + model.outgoing.length;
+    const renderStepLink = (link: typeof model.outgoing[number]) => (
+      <button
+        type="button"
+        className={styles['flowDependencyLink']}
+        onClick={() => {
+          inspectCombatFlowNode(link.nodeId);
+          setRevealNode({ id: link.nodeId });
+        }}
+      >
+        {link.reference.combatantName} · {link.reference.actionTitle}
+        {link.reference.actionMeta && `, ${link.reference.actionMeta}`}
+      </button>
+    );
     return (
       <section className={styles['flowExplanation']} aria-label="Why here">
         <strong>
@@ -4805,86 +4819,79 @@ const CombatTracker = ({
             {Math.min(...earlier.map((n) => n.segment ?? Infinity))} to finish.
           </p>
         )}
-        {pending.length > 0 && (
-          <div>
-            Blocked by{' '}
-            {pending.map((link) => (
-              <button
-                type="button"
-                key={link.nodeId}
-                onClick={() => {
-                  inspectCombatFlowNode(link.nodeId);
-                  setRevealNode({ id: link.nodeId });
-                }}
-              >
-                {link.reference.combatantName} · {link.reference.actionTitle}
-                {link.reference.actionMeta && `, ${link.reference.actionMeta}`}
-              </button>
-            ))}
+        {!showDependencies && pending.length > 0 && (
+          <div className={styles['flowBlockers']}>
+            <strong>Blocked by</strong>
+            <ul>
+              {pending.map((link) => (
+                <li key={link.nodeId}>{renderStepLink(link)}</li>
+              ))}
+            </ul>
           </div>
         )}
-        {(model.incoming.length > 0 || model.outgoing.length > 0) && (
-          <button
-            type="button"
-            aria-expanded={showDependencies}
-            onClick={() => setShowDependencies((v) => !v)}
-          >
-            {showDependencies ? 'Hide dependencies' : 'All dependencies'}
-          </button>
-        )}
-        {showDependencies && (
-          <ul>
-            {model.incoming.map((link) => (
-              <li key={'from' + link.nodeId}>
-                <button
-                  type="button"
-                  onClick={() => {
-                    inspectCombatFlowNode(link.nodeId);
-                    setRevealNode({ id: link.nodeId });
-                  }}
-                >
-                  After {link.reference.combatantName} ·{' '}
-                  {link.reference.actionTitle}
-                </button>{' '}
-                {link.explanation}
-              </li>
-            ))}
-            {model.outgoing.map((link) => (
-              <li key={'to' + link.nodeId}>
-                <button
-                  type="button"
-                  onClick={() => {
-                    inspectCombatFlowNode(link.nodeId);
-                    setRevealNode({ id: link.nodeId });
-                  }}
-                >
-                  Before {link.reference.combatantName} ·{' '}
-                  {link.reference.actionTitle}
-                  {link.reference.actionMeta &&
-                    `, ${link.reference.actionMeta}`}
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
-        {selectedCombatFlowNode?.id !== model.nodeId && (
-          <button
-            type="button"
-            onClick={() => {
-              if (flowView === 'Graph') changeFlowView('Action');
-              selectCombatFlowNode(model.nodeId);
-            }}
-          >
-            View step
-          </button>
-        )}
-        {combatFlowCompletedNodeIds.has(model.nodeId) && (
-          <button
-            type="button"
-            onClick={() => clearCombatFlowNodeResolved(model.nodeId)}
-          >
-            Clear status
-          </button>
+        <div className={styles['flowExplanationActions']}>
+          {dependencyCount > 0 && (
+            <button
+              type="button"
+              aria-expanded={showDependencies}
+              onClick={() => setShowDependencies((v) => !v)}
+            >
+              {showDependencies ? 'Hide dependencies' : 'Show dependencies'} (
+              {dependencyCount})
+            </button>
+          )}
+          {selectedCombatFlowNode?.id !== model.nodeId && (
+            <button
+              type="button"
+              onClick={() => {
+                if (flowView === 'Graph') changeFlowView('Action');
+                selectCombatFlowNode(model.nodeId);
+              }}
+            >
+              View step
+            </button>
+          )}
+          {combatFlowCompletedNodeIds.has(model.nodeId) && (
+            <button
+              type="button"
+              className={styles['flowReopenStep']}
+              onClick={() => clearCombatFlowNodeResolved(model.nodeId)}
+            >
+              Mark unresolved
+            </button>
+          )}
+        </div>
+        {showDependencies && dependencyCount > 0 && (
+          <div className={styles['flowDependencies']}>
+            {model.incoming.length > 0 && (
+              <div>
+                <strong>Depends on</strong>
+                <ul>
+                  {model.incoming.map((link) => (
+                    <li key={link.nodeId}>
+                      {renderStepLink(link)}
+                      <small>
+                        {combatFlowCompletedNodeIds.has(link.nodeId)
+                          ? 'Resolved'
+                          : 'Pending'}
+                      </small>
+                      {link.explanation && <p>{link.explanation}</p>}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {model.outgoing.length > 0 && (
+              <div>
+                <strong>Required by</strong>
+                <ul>
+                  {model.outgoing.map((link) => (
+                    <li key={link.nodeId}>{renderStepLink(link)}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
         )}
       </section>
     );

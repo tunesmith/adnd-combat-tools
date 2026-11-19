@@ -2641,7 +2641,61 @@
 .flowExplanation p {
   margin: 0.18rem 0;
 }
-.flowExplanation button {
+.flowExplanationActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.6rem;
+}
+.flowExplanationActions:not(:empty) {
+  margin-top: 0.4rem;
+}
+.flowExplanationActions button {
+  padding: 0.22rem 0.55rem;
+  border: 1px solid #978465;
+  background: var(--eggshell);
+  color: inherit;
+  font: inherit;
+  line-height: 1.25;
+  cursor: pointer;
+}
+.flowExplanationActions button:hover,
+.flowExplanationActions button[aria-expanded='true'] {
+  background: #dcd0b6;
+}
+.flowExplanation button:focus-visible {
+  outline: 2px solid var(--caput-martuum);
+  outline-offset: 2px;
+}
+.flowExplanationActions .flowReopenStep {
+  margin-inline-start: auto;
+}
+.flowDependencies {
+  display: grid;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  padding-top: 0.4rem;
+  border-top: 1px solid #bbae93;
+}
+.flowDependencies ul,
+.flowBlockers ul {
+  list-style: none;
+  margin: 0;
+  padding-inline-start: 0.75rem;
+  display: grid;
+  gap: 0.25rem;
+}
+.flowBlockers {
+  margin-top: 0.3rem;
+}
+.flowDependencies li > small {
+  margin-inline-start: 0.5rem;
+}
+.flowExplanation .flowDependencyLink {
+  text-align: start;
+  overflow-wrap: anywhere;
+  padding: 0.1rem 0;
+  text-underline-offset: 0.13em;
   border: 0;
   background: transparent;
   text-decoration: underline;
