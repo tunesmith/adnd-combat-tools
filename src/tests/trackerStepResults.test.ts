@@ -163,7 +163,17 @@ test('one completion can identify an explicit set, while a routine with the same
     },
     { ...main, id: 'another', targetDeclarations: [] },
   ];
-  expect(steps(round).get('spell-completion:party-1')?.targetKeys).toEqual([]);
+  // No per-cell action IDs is “All actions” in Declare Intentions.
+  // The cast covers both opponents; the individual blow still needs a pick.
+  expect(steps(round).get('spell-completion:party-1')?.targetKeys).toEqual([
+    4, 5,
+  ]);
+  const melee = Array.from(steps(round).values()).find(
+    (step) => step.side === 'party' && step.resultTargetOptions
+  );
+  expect(melee?.resultTargetOptions?.map((t) => t.key)).toEqual([4, 5]);
+  second.partyToEnemyActionIds = ['another'];
+  expect(steps(round).get('spell-completion:party-1')?.targetKeys).toEqual([4]);
 });
 
 test('ambiguous routine components keep independent, clearable result targets through serialization and revisions', () => {
@@ -360,3 +370,93 @@ test('shared tracker data preserves marks, freeform details and an intentionally
   expect(next?.cells[0]?.[0]).not.toHaveProperty('partyToEnemyManualBlank');
   expect(next?.stepResults).toBeUndefined();
 });
+
+test.each(['spell-casting', 'magical-device', 'turn-undead'] as const)(
+  '%s uses the whole declared target set, including grid-only memberships',
+  (mode) => {
+    const round = fixtureRound(),
+      main = getTrackerActionDeclarations(round)[0],
+      second = round.cells[1]?.[0];
+    if (!main || !second) throw Error('Missing matchup');
+    second.partyToEnemyVisible = true;
+    round.actions = [
+      {
+        ...main,
+        declaredAction: mode,
+        targetDeclarations: [],
+        castingSegments: 2,
+      },
+    ];
+    const actionSteps = Array.from(steps(round).values()).filter(
+      (step) => step.side === 'party'
+    );
+    expect(actionSteps).toHaveLength(mode === 'spell-casting' ? 2 : 1);
+    let edited = round;
+    for (const step of actionSteps) {
+      expect(step.targetKeys).toEqual([4, 5]);
+      expect(step.resultTargetOptions).toBeUndefined();
+      if (step.stepKey === actionSteps.at(-1)?.stepKey)
+        edited = setTrackerStepResult(edited, step, { gridMark: 'sp' });
+    }
+    expect(edited.stepResults).toHaveLength(1);
+    expect(edited.stepResults?.[0]?.targetKeys).toEqual([4, 5]);
+    expect(Array.from(cellMarks(edited))).toEqual([
+      ['party:1:4', 'sp'],
+      ['party:1:5', 'sp'],
+    ]);
+  }
+);
+
+test.each([true, false])(
+  'older spell results keep their saved attribution until adopting the declared set (assigned: %s)',
+  (assigned) => {
+    const round = fixtureRound(),
+      main = getTrackerActionDeclarations(round)[0],
+      second = round.cells[1]?.[0];
+    if (!main || !second) throw Error('Missing matchup');
+    second.partyToEnemyVisible = true;
+    round.actions = [
+      {
+        ...main,
+        declaredAction: 'spell-casting',
+        targetDeclarations: [],
+        castingSegments: 2,
+      },
+    ];
+    const start = steps(round).get('spell-start:party-1');
+    if (!start) throw Error('Missing cast');
+    const oldKey = start.stepKey.replace(/,true\]$/, ',false]');
+    const old = {
+      ...start,
+      stepKey: oldKey,
+      targetKeys: assigned ? [4] : [],
+      targetLabel: assigned ? 'Pillar Gnoll' : 'Multiple targets',
+      text: 'Old casting note',
+      gridMark: 'sp',
+    };
+    round.stepResults = [old];
+    const restored = steps(round).get('spell-start:party-1');
+    if (!restored) throw Error('Missing restored cast');
+    expect(restored.stepKey).toBe(oldKey);
+    expect(restored.resultTargetOptions).toBeUndefined();
+    expect(retainPriorStepResults(round).stepResults).toEqual([old]);
+    const edited = setTrackerStepResult(round, restored, 'Revised note');
+    expect(edited.stepResults?.[0]?.targetKeys).toEqual(old.targetKeys);
+    expect(Array.from(cellMarks(edited))).toEqual(
+      assigned ? [['party:1:4', 'sp']] : []
+    );
+    const adopted = setTrackerStepResult(edited, restored, {
+      useDeclaredTargets: true,
+    });
+    expect(adopted.stepResults).toHaveLength(1);
+    expect(adopted.stepResults?.[0]).toMatchObject({
+      text: 'Revised note',
+      gridMark: 'sp',
+      targetKeys: [4, 5],
+    });
+    expect(Array.from(cellMarks(adopted))).toEqual([
+      ['party:1:4', 'sp'],
+      ['party:1:5', 'sp'],
+    ]);
+  }
+);

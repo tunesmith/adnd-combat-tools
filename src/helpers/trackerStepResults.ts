@@ -22,6 +22,7 @@ export function buildTrackerSteps(
       .map((actor) => [actor.id, actor])
   );
   const steps = new Map<string, TrackerStep>();
+  const savedKeys = new Set(round.stepResults?.map((result) => result.stepKey));
   for (const node of resolved.attackGraph.nodes) {
     const actor = actors.get(node.combatantId);
     const display = displays[node.id];
@@ -36,40 +37,17 @@ export function buildTrackerSteps(
     const candidateKeys = targets
       .map((target) => target.ownerCombatantKey ?? target.combatantKey)
       .sort((a, b) => a - b);
-    // A single discharge or completion can cover an explicitly assigned set.
-    // Grid cells shared by several actions are only candidates for that step.
-    const isCollectiveStep =
+    // These nodes represent one action affecting its declared set. For an
+    // individual blow the same list can instead mean several possible targets.
+    const collective =
+      node.kind === 'spell-start' ||
       node.kind === 'spell-completion' ||
       actor.declaredAction === 'turn-undead' ||
       actor.declaredAction === 'magical-device';
-    const declaration = round.actions?.find(
-      (action) => action.id === actor.actionId
-    );
-    const confirmed =
-      targets.length <= 1 ||
-      (isCollectiveStep &&
-        declaration &&
-        targets.every((target) => {
-          const cell =
-            actor.side === 'party'
-              ? round.cells[target.index]?.[actor.index]
-              : round.cells[actor.index]?.[target.index];
-          const assignments =
-            actor.side === 'party'
-              ? cell?.partyToEnemyActionIds
-              : cell?.enemyToPartyActionIds;
-          return (
-            assignments?.includes(declaration.id) ||
-            declaration.targetDeclarations.some(
-              (t) =>
-                t.targetCombatantKey ===
-                (target.ownerCombatantKey ?? target.combatantKey)
-            )
-          );
-        }));
+    const confirmed = targets.length <= 1 || collective;
     // Graph IDs for secondary declarations use their position in the list.
     // Persist the declaration ID and its occurrence within the routine instead.
-    const stepKey = JSON.stringify([
+    const identity = [
       actor.side,
       actorKey,
       actor.actionId,
@@ -85,8 +63,14 @@ export function buildTrackerSteps(
       node.routineNumber,
       node.componentId,
       candidateKeys,
-      Boolean(confirmed),
-    ]);
+    ];
+    let stepKey = JSON.stringify([...identity, confirmed]);
+    if (collective && targets.length > 1 && !savedKeys.has(stepKey)) {
+      // Older trackers sometimes offered a single-target picker for this same
+      // step. Keep its saved record attached, including its original recipients.
+      const oldKey = JSON.stringify([...identity, false]);
+      if (savedKeys.has(oldKey)) stepKey = oldKey;
+    }
     steps.set(node.id, {
       stepKey,
       side: actor.side,
@@ -125,10 +109,22 @@ export function getTrackerResultTarget(
   );
 }
 
+export function hasNarrowerSavedTargets(
+  step: TrackerStep,
+  result?: TrackerStepResult
+) {
+  return (
+    !!result &&
+    step.targetKeys.length > 1 &&
+    step.targetKeys.some((key) => !result.targetKeys.includes(key))
+  );
+}
+
 export type TrackerStepResultEdit =
   | string
   | { gridMark: string }
-  | { targetKey: number | null };
+  | { targetKey: number | null }
+  | { useDeclaredTargets: true };
 
 export function setTrackerStepResult(
   round: TrackerRound,
@@ -146,14 +142,22 @@ export function setTrackerStepResult(
     text = edit;
   } else if ('gridMark' in edit) {
     gridMark = edit.gridMark;
-  } else {
+  } else if ('targetKey' in edit) {
     if (!resultTargetOptions) return round;
     target = resultTargetOptions.find(
       (option) => option.key === edit.targetKey
     );
     if (edit.targetKey !== null && !target) return round;
   }
-  if (!text && !gridMark && !target) {
+  const keepSavedTargets =
+    hasNarrowerSavedTargets(step, previous) &&
+    !(typeof edit === 'object' && 'useDeclaredTargets' in edit);
+  if (
+    !text &&
+    !gridMark &&
+    !target &&
+    !(keepSavedTargets && previous?.targetKeys.length)
+  ) {
     return {
       ...round,
       stepResults: results.filter((result) => result.stepKey !== step.stepKey),
@@ -164,8 +168,16 @@ export function setTrackerStepResult(
     ...context,
     ...(gridMark && { gridMark }),
     text,
-    targetKeys: target ? [target.key] : step.targetKeys,
-    targetLabel: target?.name ?? step.targetLabel,
+    targetKeys:
+      keepSavedTargets && previous
+        ? previous.targetKeys
+        : target
+        ? [target.key]
+        : step.targetKeys,
+    targetLabel:
+      keepSavedTargets && previous
+        ? previous.targetLabel
+        : target?.name ?? step.targetLabel,
   };
   if (index === -1) stepResults.push(result);
   else stepResults[index] = result;
@@ -203,9 +215,11 @@ export function compileTrackerGridMarks(
     if (!step) continue;
     const result = results.get(step.stepKey);
     const mark = result?.gridMark?.trim();
-    if (!mark) continue;
+    if (!result || !mark) continue;
     const choice = getTrackerResultTarget(step, result);
-    for (const targetKey of choice ? [choice.key] : step.targetKeys) {
+    for (const targetKey of choice
+      ? [choice.key]
+      : step.targetKeys.filter((key) => result.targetKeys.includes(key))) {
       const key = `${step.side}:${step.actorKey}:${targetKey}`;
       const earlier = cells.get(key);
       cells.set(key, earlier ? `${earlier} · ${mark}` : mark);

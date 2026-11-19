@@ -3,6 +3,7 @@ import {
   buildTrackerSteps,
   compileTrackerGridMarks,
   getTrackerResultTarget,
+  hasNarrowerSavedTargets,
   retainPriorStepResults,
   setTrackerStepResult,
   type TrackerStep,
@@ -4329,8 +4330,12 @@ const CombatTracker = ({
                 result.stepKey && activeStepsByKey.get(result.stepKey);
               const step = active || result;
               const targetLabel =
-                (active && getTrackerResultTarget(active, result)?.name) ||
-                step.targetLabel;
+                active && hasNarrowerSavedTargets(active, result)
+                  ? result.targetKeys.length
+                    ? result.targetLabel
+                    : 'Unassigned'
+                  : (active && getTrackerResultTarget(active, result)?.name) ||
+                    step.targetLabel;
               const prior =
                 result.stepKey === null || (resolvedInitiativeRound && !active);
               return (
@@ -5075,7 +5080,7 @@ const CombatTracker = ({
                       </div>
                       <div className={styles['flowMatchup']}>
                         <strong>{selectedDisplay.combatantName}</strong> →{' '}
-                        {selectedDisplay.targetLabel}
+                        {selectedStep.targetLabel}
                       </div>
                       <div className={styles['flowActionLine']}>
                         {selectedDisplay.actionTitle}
@@ -5117,6 +5122,32 @@ const CombatTracker = ({
                           />
                         </label>
                       </div>
+                      {selectedResult &&
+                        hasNarrowerSavedTargets(
+                          selectedStep,
+                          selectedResult
+                        ) && (
+                          <div className={styles['resultTargetField']}>
+                            <span>
+                              Saved result target:{' '}
+                              {selectedResult.targetKeys.length
+                                ? selectedResult.targetLabel
+                                : 'Unassigned'}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                dispatch({
+                                  type: 'set-step-result',
+                                  step: selectedStep,
+                                  edit: { useDeclaredTargets: true },
+                                })
+                              }
+                            >
+                              Use declared targets
+                            </button>
+                          </div>
+                        )}
                       {selectedStep.resultTargetOptions && (
                         <label className={styles['resultTargetField']}>
                           Result target
