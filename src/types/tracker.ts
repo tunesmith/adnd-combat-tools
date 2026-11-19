@@ -106,7 +106,10 @@ export interface TrackerRoundV2 {
 }
 
 export interface TrackerCombatantRoundState {
+  // Older rounds stored an addition to the current effect.
   nextRoundEffect?: string;
+  // An absent override mirrors effect. An empty override ends it on advance.
+  nextRoundEffectOverride?: string;
   hp: string;
   effect: string;
   action: string;

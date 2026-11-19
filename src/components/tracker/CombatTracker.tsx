@@ -24,6 +24,8 @@ import {
   addCombatant,
   createBaseCombatant,
   createInitialTrackerState,
+  getNextRoundEffect,
+  editCombatantRoundField,
   insertRoundAfterActive,
   removeActiveRound,
   removeCombatant,
@@ -135,7 +137,10 @@ interface CombatTrackerProps {
 type TrackerSide = 'party' | 'enemy';
 type AttackDetailDirection = 'enemyToParty' | 'partyToEnemy';
 type RoundField = 'partyInitiative' | 'enemyInitiative' | 'summary';
-type RoundCombatantField = keyof TrackerCombatantRoundState;
+type RoundCombatantField = Exclude<
+  keyof TrackerCombatantRoundState,
+  'nextRoundEffect'
+>;
 type CellField = Extract<
   keyof TrackerCellState,
   'enemyToParty' | 'partyToEnemy'
@@ -1423,29 +1428,18 @@ const applyTrackerAction = (
         ),
       }));
     case 'set-party-state':
+    case 'set-enemy-state': {
+      const states =
+        action.type === 'set-party-state' ? 'partyStates' : 'enemyStates';
       return updateCurrentRound(state, (round) => ({
         ...round,
-        partyStates: round.partyStates.map((partyState, partyIndex) =>
-          partyIndex === action.index
-            ? {
-                ...partyState,
-                [action.field]: action.value,
-              }
-            : partyState
+        [states]: round[states].map((entry, index) =>
+          index === action.index
+            ? editCombatantRoundField(entry, action.field, action.value)
+            : entry
         ),
       }));
-    case 'set-enemy-state':
-      return updateCurrentRound(state, (round) => ({
-        ...round,
-        enemyStates: round.enemyStates.map((enemyState, enemyIndex) =>
-          enemyIndex === action.index
-            ? {
-                ...enemyState,
-                [action.field]: action.value,
-              }
-            : enemyState
-        ),
-      }));
+    }
     case 'set-combatant-actions':
       return updateCurrentRound(state, (previous) => {
         const originals = getStructuredActionsForCombatant(
@@ -4271,13 +4265,13 @@ const CombatTracker = ({
     const actor = getActionCombatant(currentRound, side, index);
     const roundState = getActionRoundState(currentRound, side, index);
     if (!actor || !roundState) return null;
-    const value = roundState.nextRoundEffect || '';
+    const value = getNextRoundEffect(roundState);
     return (
       <details
         key={`queue-${state.activeRound}-${side}-${actor.key}`}
         className={styles['roundDisclosure']}
       >
-        <summary>Next round{value.trim() ? ' (queued)' : ''}</summary>
+        <summary>Next round</summary>
         <AutoHeightTextarea
           aria-label={`Next round effect for ${
             side === 'party'
@@ -4290,7 +4284,7 @@ const CombatTracker = ({
             dispatch({
               type: side === 'party' ? 'set-party-state' : 'set-enemy-state',
               index,
-              field: 'nextRoundEffect',
+              field: 'nextRoundEffectOverride',
               value,
             })
           }

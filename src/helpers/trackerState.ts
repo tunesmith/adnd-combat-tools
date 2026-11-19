@@ -171,16 +171,40 @@ const createNextRoundCells = (
   );
 };
 
+export function getNextRoundEffect(state: TrackerCombatantRoundState): string {
+  if (state.nextRoundEffectOverride !== undefined)
+    return state.nextRoundEffectOverride;
+  if (!state.nextRoundEffect?.trim()) return state.effect;
+  return [state.effect, state.nextRoundEffect]
+    .filter((text) => text.trim())
+    .join('\n');
+}
+
+export function editCombatantRoundField(
+  state: TrackerCombatantRoundState,
+  field: Exclude<keyof TrackerCombatantRoundState, 'nextRoundEffect'>,
+  value: string
+): TrackerCombatantRoundState {
+  const edited = { ...state, [field]: value };
+  if (
+    state.nextRoundEffect !== undefined &&
+    (field === 'effect' || field === 'nextRoundEffectOverride')
+  ) {
+    // Freeze the old combined preview before correcting its opening text.
+    if (field === 'effect' && state.nextRoundEffect.trim()) {
+      edited.nextRoundEffectOverride = getNextRoundEffect(state);
+    }
+    delete edited.nextRoundEffect;
+  }
+  return edited;
+}
+
 const carryCombatantIntoRound = (
   state: TrackerCombatantRoundState
 ): TrackerCombatantRoundState => ({
   ...createCombatantRoundState(state.hp),
   notes: state.notes,
-  effect: state.nextRoundEffect?.trim()
-    ? [state.effect, state.nextRoundEffect]
-        .filter((text) => text.trim())
-        .join('\n')
-    : state.effect,
+  effect: getNextRoundEffect(state),
 });
 
 const createTrackerRound = (

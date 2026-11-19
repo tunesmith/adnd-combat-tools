@@ -62,6 +62,7 @@ const state = z
     hp: string,
     effect: string,
     nextRoundEffect: string.optional(),
+    nextRoundEffectOverride: string.optional(),
     action: string,
     result: string,
     notes: string,
