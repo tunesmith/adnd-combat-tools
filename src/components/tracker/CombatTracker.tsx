@@ -5158,75 +5158,41 @@ const CombatTracker = ({
                             Spell casting starts
                           </div>
                           <div className={styles['combatFlowStartNoticeText']}>
-                            Resolve this when casting begins. Record spell
-                            outcome and target effects when the completion node
+                            Resolve this when casting begins. Record the spell’s
+                            result and target effects when the completion node
                             is ready.
                           </div>
                         </div>
                       ) : (
                         <>
-                          <h3 className={styles['combatFlowPaneTitle']}>
-                            {selectedDisplay.combatantName}’s round
-                          </h3>
-                          <div className={styles['flowRoundFields']}>
-                            <div>
-                              <label className={styles['combatFlowField']}>
-                                <span
-                                  className={styles['combatFlowFieldLabel']}
-                                >
-                                  Outcome
-                                </span>
-                                <AutoHeightTextarea
-                                  className={styles['combatFlowTextarea']}
-                                  value={selectedRoundState?.result || ''}
-                                  onChange={(value) =>
-                                    dispatch({
-                                      type:
-                                        selectedCombatant.side === 'party'
-                                          ? 'set-party-state'
-                                          : 'set-enemy-state',
-                                      index: selectedCombatant.index,
-                                      field: 'result',
-                                      value,
-                                    })
-                                  }
-                                  placeholder={
-                                    'hits for 6; takes 3 damage; fails a save...'
-                                  }
-                                />
-                              </label>
-                            </div>
-                            <div>
-                              <label className={styles['combatFlowField']}>
-                                <span
-                                  className={styles['combatFlowFieldLabel']}
-                                >
-                                  Current Effect
-                                </span>
-                                <AutoHeightTextarea
-                                  className={styles['combatFlowTextarea']}
-                                  value={selectedRoundState?.effect || ''}
-                                  onChange={(value) =>
-                                    dispatch({
-                                      type:
-                                        selectedCombatant.side === 'party'
-                                          ? 'set-party-state'
-                                          : 'set-enemy-state',
-                                      index: selectedCombatant.index,
-                                      field: 'effect',
-                                      value,
-                                    })
-                                  }
-                                  placeholder={
-                                    'hopeless 1/9, slowed 3/8, bless...'
-                                  }
-                                />
-                              </label>
-                              {renderNextRoundEffect(
-                                selectedCombatant.side,
-                                selectedCombatant.index
-                              )}
-                            </div>
+                          <div>
+                            <label className={styles['combatFlowField']}>
+                              <span className={styles['combatFlowFieldLabel']}>
+                                {selectedDisplay.combatantName}’s current effect
+                              </span>
+                              <AutoHeightTextarea
+                                className={styles['combatFlowTextarea']}
+                                value={selectedRoundState?.effect || ''}
+                                onChange={(value) =>
+                                  dispatch({
+                                    type:
+                                      selectedCombatant.side === 'party'
+                                        ? 'set-party-state'
+                                        : 'set-enemy-state',
+                                    index: selectedCombatant.index,
+                                    field: 'effect',
+                                    value,
+                                  })
+                                }
+                                placeholder={
+                                  'hopeless 1/9, slowed 3/8, bless...'
+                                }
+                              />
+                            </label>
+                            {renderNextRoundEffect(
+                              selectedCombatant.side,
+                              selectedCombatant.index
+                            )}
                           </div>
                           {renderRelatedResults(
                             selectedStep.side,

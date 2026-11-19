@@ -178,11 +178,30 @@ test('controlled tracker sends complete live edits through campaign validation a
   expect(screen.getAllByRole('columnheader', { name: 'Outcome' })).toHaveLength(
     2
   );
+  const flow = within(screen.getByRole('region', { name: 'Combat Flow' }));
+  fireEvent.click(flow.getByRole('button', { name: 'Select next ready' }));
+  expect(flow.getByLabelText('Grid mark')).toBeVisible();
+  expect(flow.queryByLabelText('Outcome')).toBeNull();
+  expect(flow.getByLabelText(/’s current effect$/)).toBeVisible();
+  expect(flow.getByText(/Related results/)).toBeVisible();
+  const outcomeRow = screen
+    .getAllByRole('columnheader', { name: 'Outcome' })
+    .find((header) => header.closest('tfoot'))
+    ?.closest('tr');
+  if (!outcomeRow) throw Error('Missing party outcome row');
+  const firstOutcome = within(outcomeRow).getAllByRole('textbox')[0];
+  if (!firstOutcome) throw Error('Missing party outcome field');
+  fireEvent.change(firstOutcome, {
+    target: { value: 'Outcome from the grid' },
+  });
   fireEvent.click(
     screen.getByRole('button', { name: 'Review round', exact: true })
   );
   const combatDialog = within(
     screen.getByRole('dialog', { name: 'Review round' })
+  );
+  expect(combatDialog.getByLabelText('Outcome')).toHaveValue(
+    'Outcome from the grid'
   );
   fireEvent.change(combatDialog.getByLabelText('Outcome'), {
     target: { value: 'Takes 3 damage before acting' },
@@ -190,6 +209,7 @@ test('controlled tracker sends complete live edits through campaign validation a
   expect(
     accepted.workingCombats[0]?.state.rounds[0]?.partyStates[0]?.result
   ).toBe('Takes 3 damage before acting');
+  expect(firstOutcome).toHaveValue('Takes 3 damage before acting');
   fireEvent.click(
     combatDialog.getByRole('button', { name: 'Close', exact: true })
   );

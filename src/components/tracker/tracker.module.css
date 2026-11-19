@@ -2093,16 +2093,6 @@
   display: inline-flex;
   gap: 0;
 }
-.flowRoundFields {
-  display: grid;
-  grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
-  gap: 0.5rem;
-}
-@media (max-width: 980px) {
-  .flowRoundFields {
-    grid-template-columns: minmax(0, 1fr);
-  }
-}
 .combatFlowStartNotice {
   border: 1px solid rgba(224, 171, 41, 0.68);
   background: rgba(224, 171, 41, 0.12);
@@ -2190,7 +2180,7 @@
 }
 
 .combatFlowTextarea,
-.flowRoundFields .queuedEffectInput {
+.combatFlowFieldStack .queuedEffectInput {
   appearance: none;
   border-radius: 0;
   width: 100%;
@@ -2803,9 +2793,6 @@
   .combatFlowSelectedLayout[data-targets='true'] .combatFlowTargetColumn,
   .combatFlowSelectedLayout[data-targets='true'] .combatFlowResolverActions {
     grid-column: 2;
-  }
-  .combatFlowSelectedLayout[data-targets='true'] .flowRoundFields {
-    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
   }
 }
 
