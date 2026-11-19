@@ -267,3 +267,57 @@ export const getTrackerActionDeclarations = (
 
   return derivedActions.concat(explicitActionsWithCurrentTargets);
 };
+
+// Some imported declarations carry their targets directly instead of in grid
+// cells. Bring those memberships into the grid only when the actor is edited.
+export function materializeStoredTargets(
+  round: TrackerRound,
+  side: TrackerActionSide,
+  index: number
+): TrackerRound {
+  const owns = (action: TrackerActionDeclaration) =>
+    action.side === side && action.combatantIndex === index;
+  if (
+    !round.actions?.some(
+      (action) => owns(action) && action.targetDeclarations.length
+    )
+  )
+    return round;
+  const actions = getTrackerActionDeclarations(round).filter(
+    (action) => owns(action) && action.usesGridTargets !== false
+  );
+  const direction = side === 'party' ? 'partyToEnemy' : 'enemyToParty';
+  const targets = side === 'party' ? round.enemies : round.party;
+  return {
+    ...round,
+    actions: round.actions.map((action) => {
+      if (!owns(action) || !action.targetDeclarations.length) return action;
+      const live =
+        actions.find((a) => a.id === action.id)?.targetDeclarations || [];
+      return {
+        ...action,
+        targetDeclarations: action.targetDeclarations.filter((t) =>
+          live.some((l) => l.targetCombatantKey === t.targetCombatantKey)
+        ),
+      };
+    }),
+    cells: round.cells.map((row, r) =>
+      row.map((cell, c) => {
+        if ((side === 'party' ? c : r) !== index) return cell;
+        const key = targets[side === 'party' ? r : c]?.key;
+        const ids = actions
+          .filter((action) =>
+            action.targetDeclarations.some((t) => t.targetCombatantKey === key)
+          )
+          .map((action) => action.id);
+        if (!ids.length) return cell;
+        const all = ids.length === actions.length;
+        return {
+          ...cell,
+          [`${direction}Visible`]: true,
+          [`${direction}ActionIds`]: all ? undefined : ids,
+        };
+      })
+    ),
+  };
+}

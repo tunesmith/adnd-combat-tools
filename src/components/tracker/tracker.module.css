@@ -1444,64 +1444,6 @@
   box-sizing: border-box;
 }
 
-.intentionsWizardMeta {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  gap: 0.75rem;
-  align-items: center;
-  margin-bottom: 0.75rem;
-}
-
-.intentionsWizardNav {
-  display: flex;
-  gap: 0.45rem;
-  margin-left: auto;
-}
-
-.intentionsWizardBadge {
-  display: inline-block;
-  border: 1px solid var(--copper);
-  background: rgba(175, 127, 0, 0.08);
-  color: #111;
-  font-size: 0.95rem;
-  font-weight: 700;
-  line-height: 1.1;
-  padding: 0.35rem 0.55rem;
-}
-
-.intentionsWizardProgress {
-  color: rgba(17, 17, 17, 0.78);
-  font-size: 0.95rem;
-  line-height: 1.2;
-}
-
-.intentionsWizardResolvedBadge {
-  display: inline-block;
-  border: 1px solid var(--copper);
-  background: rgba(84, 111, 58, 0.14);
-  color: #111;
-  font-size: 0.95rem;
-  font-weight: 700;
-  line-height: 1.1;
-  padding: 0.35rem 0.55rem;
-}
-
-.intentionsWizardName {
-  color: #111;
-  font-size: 1.35rem;
-  font-weight: 700;
-  line-height: 1.15;
-  margin-bottom: 0.45rem;
-}
-
-.intentionsWizardActionPanel {
-  border: 1px solid rgba(175, 127, 0, 0.48);
-  background: rgba(175, 127, 0, 0.06);
-  margin: 0 0 0.8rem;
-  padding: 0.7rem 0 0.75rem;
-}
-
 .intentionWeaponPicker {
   display: flex;
   flex-direction: column;
@@ -1520,26 +1462,6 @@
   color: #111;
   font-size: 0.95rem;
   font-weight: 400;
-}
-
-.intentionsWizardBodyResolved {
-  opacity: 0.82;
-}
-
-.intentionsWizardTextarea {
-  width: calc(100% - 1.5rem);
-  min-height: 6rem;
-  border: 1px solid var(--copper);
-  background: var(--eggshell);
-  color: #111;
-  font-family: 'Sura', serif;
-  font-size: 1rem;
-  line-height: 1.35;
-  padding: 0.45rem;
-  margin: 0 0.75rem;
-  resize: none;
-  overflow: hidden;
-  box-sizing: border-box;
 }
 
 .combatWizardMeta {
@@ -1963,141 +1885,6 @@
 .combatWizardEffectInputEnemy,
 .combatWizardEffectInputParty {
   color: var(--eggshell);
-}
-
-.intentionsWizardGridWrap {
-  margin: 0 0.75rem;
-  max-height: min(62vh, 34rem);
-  overflow: auto;
-  border: 1px solid rgba(172, 114, 35, 0.36);
-  background: #ece8d6;
-}
-
-.intentionsWizardGridTable {
-  width: max-content;
-  min-width: 100%;
-  border-collapse: collapse;
-  color: #111;
-}
-
-.intentionsWizardGridTable th,
-.intentionsWizardGridTable td {
-  border-right: 1px solid rgba(172, 114, 35, 0.36);
-  border-bottom: 1px solid rgba(172, 114, 35, 0.36);
-  vertical-align: top;
-}
-
-.intentionsWizardGridTable tbody tr {
-  height: 5.25rem;
-}
-
-.intentionsWizardGridTable tr:last-child th,
-.intentionsWizardGridTable tr:last-child td {
-  border-bottom: 0;
-}
-
-.intentionsWizardGridTable th:last-child,
-.intentionsWizardGridTable td:last-child {
-  border-right: 0;
-}
-
-.intentionsWizardCorner,
-.intentionsWizardColumnHeader,
-.intentionsWizardRowHeader {
-  color: var(--eggshell);
-  font-weight: 700;
-  line-height: 1.15;
-}
-
-.intentionsWizardCorner {
-  position: sticky;
-  top: 0;
-  left: 0;
-  z-index: 4;
-  min-width: 6.8rem;
-  padding: 0.6rem 0.7rem;
-  background: linear-gradient(
-    135deg,
-    var(--caput-martuum),
-    var(--dark-olive-green)
-  );
-  box-shadow: inset 0 -2px 0 var(--copper);
-  text-align: left;
-}
-
-.intentionsWizardColumnHeader {
-  position: sticky;
-  top: 0;
-  z-index: 3;
-  min-width: 7.5rem;
-  padding: 0.6rem 0.45rem;
-  background: var(--dark-olive-green);
-  box-shadow: inset 0 -2px 0 var(--copper);
-  text-align: center;
-  white-space: nowrap;
-}
-
-.intentionsWizardRowHeader {
-  position: sticky;
-  left: 0;
-  z-index: 2;
-  min-width: 6.8rem;
-  max-width: 11rem;
-  padding: 0.7rem 0.65rem;
-  background: var(--caput-martuum);
-  text-align: left;
-}
-
-.intentionsWizardGridTable .interactionCell {
-  min-width: 8.5rem;
-  height: 5.25rem;
-  background: #663837;
-}
-
-.intentionsWizardGridTable .cellShell {
-  position: relative;
-  inset: auto;
-  width: 100%;
-  height: 100%;
-  min-width: 8.5rem;
-  min-height: 5.25rem;
-}
-
-.intentionsWizardGridTable .cellHalfEnemyInline,
-.intentionsWizardGridTable .cellHalfPartyInline {
-  position: relative;
-  display: grid;
-  align-content: center;
-  justify-items: center;
-  gap: 0.14rem;
-  min-height: 100%;
-  padding: 0.16rem 0.18rem;
-  box-sizing: border-box;
-}
-
-.intentionsWizardGridTable .cellEntryLabel,
-.intentionsWizardGridTable .cellEntryLabelButton {
-  font-size: 0.76rem;
-}
-
-.intentionsWizardGridTable .cellEntryInputInline {
-  width: min(100%, 5.25rem);
-  min-height: 1.65rem;
-  font-size: 1rem;
-  padding: 0.12rem 0.15rem;
-}
-
-.intentionsWizardGridTable .cellActionAssignmentButton {
-  position: absolute;
-  bottom: 0.2rem;
-  left: 50%;
-  z-index: 1;
-  min-width: 3.1rem;
-  max-width: calc(100% - 0.35rem);
-  min-height: 1rem;
-  padding: 0.05rem 0.24rem;
-  transform: translateX(-50%);
-  font-size: 0.62rem;
 }
 
 .textInput {
@@ -2751,4 +2538,182 @@
   font: inherit;
   text-decoration: underline;
   cursor: pointer;
+}
+
+.declaration {
+  --actor-color: var(--caput-martuum);
+  --target-color: var(--dark-olive-green);
+  color: #241e16;
+}
+.declaration[data-side='party'] {
+  --actor-color: var(--dark-olive-green);
+  --target-color: var(--caput-martuum);
+}
+.declaration .modalTitle,
+.declarationActor,
+.declarationFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+.declaration .modalTitle button {
+  font: inherit;
+  font-size: 0.95rem;
+  background: transparent;
+  color: inherit;
+  border: 0;
+  cursor: pointer;
+}
+.declarationActor {
+  padding: 0.65rem 1rem;
+  background: var(--actor-color);
+  color: var(--eggshell);
+  border-bottom: 2px solid var(--goldenrod);
+}
+.declarationActor > div,
+.declarationActor label {
+  display: grid;
+  min-width: 0;
+  gap: 0.15rem;
+}
+.declarationActor select {
+  font: bold 1.24rem 'Sura', serif;
+  color: inherit;
+  background: var(--actor-color);
+  border: 0;
+  max-width: 100%;
+}
+.declarationActor textarea {
+  background: var(--eggshell);
+  color: #222;
+  border: 1px solid var(--copper);
+  font: inherit;
+  padding: 0.22rem 0.4rem;
+  resize: none;
+  width: min(12rem, 100%);
+}
+.declarationColumns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 1.25rem;
+  padding: 0.85rem 1rem;
+}
+.intentionsWizardActionPanel {
+  min-width: 0;
+}
+.declarationColumns h3 {
+  background: var(--target-color);
+  color: var(--eggshell);
+  font-size: 1rem;
+  padding: 0.3rem 0.55rem;
+  margin: 0;
+}
+.declarationTargets {
+  border-collapse: collapse;
+  table-layout: fixed;
+  width: 100%;
+  font-size: 0.95rem;
+}
+.declarationTargets th,
+.declarationTargets td {
+  padding: 0.32rem 0.45rem;
+  text-align: left;
+  overflow-wrap: anywhere;
+  border-bottom: 1px solid #c6b996;
+}
+.declarationTargets th:first-child {
+  width: 65%;
+}
+.declarationTargets label {
+  display: flex;
+  gap: 0.35rem;
+  align-items: baseline;
+  cursor: pointer;
+}
+.declarationTargets input {
+  accent-color: var(--target-color);
+}
+.declarationTargets td:nth-child(2) {
+  white-space: pre-wrap;
+}
+.declarationTargets tr[data-active='true'] {
+  background: #eae3cf;
+  box-shadow: inset 3px 0 var(--target-color);
+}
+.declarationTargets fieldset {
+  border: 0;
+  padding: 0 0.3rem;
+  min-width: 0;
+}
+.declarationTargets legend {
+  font-size: 0.85rem;
+}
+.declarationFooter {
+  padding: 0.55rem 1rem;
+  border-top: 1px solid var(--copper);
+  justify-content: flex-end;
+}
+.declarationFooter span {
+  margin-right: auto;
+}
+.declaration .modalLabel {
+  padding: 0.35rem 0 0.1rem;
+}
+.declaration .actionIntentModePills,
+.declaration .actionIntentActionList,
+.declaration .actionIntentDistanceRow {
+  margin: 0 0 0.3rem;
+}
+.declaration .actionIntentModePills {
+  gap: 0.25rem;
+}
+.declaration .actionIntentModePillActive,
+.declaration .actionIntentActionButtonActive {
+  background: var(--actor-color);
+  color: var(--eggshell);
+}
+.declaration .actionIntentActionButtonActive span {
+  color: inherit;
+}
+.declaration .intentionWeaponPicker {
+  flex-flow: row wrap;
+  align-items: center;
+  margin: 0.4rem 0;
+  padding: 0.2rem 0;
+  border: 0;
+  background: transparent;
+}
+.declaration .actionIntentSelect,
+.declaration .actionIntentTextInput,
+.declaration .actionIntentTextarea {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 0.22rem 0.35rem;
+  min-height: 1.9rem;
+}
+.declaration .modalHint {
+  display: none;
+}
+.declarationTiming {
+  display: flex;
+  gap: 0.6rem;
+  margin-bottom: 0.6rem;
+}
+.declarationTiming > div {
+  min-width: 0;
+  flex: 1;
+}
+.declaration .actionIntentActionAddButton {
+  display: inline-block;
+}
+@media (max-width: 650px) {
+  .declarationColumns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .declarationActor > div {
+    max-width: 100%;
+  }
 }

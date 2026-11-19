@@ -10,6 +10,7 @@ import {
 import AutoHeightTextarea from './AutoHeightTextarea';
 import { partyHasName } from '../../helpers/trackerPartyNames';
 import {
+  Fragment,
   useEffect,
   useLayoutEffect,
   useMemo,
@@ -106,6 +107,7 @@ import { InitiativeGraphInspectorPanel } from '../initiative/InitiativeGraphInsp
 import {
   getDefaultTrackerDeclaredAction,
   getTrackerActionDeclarations,
+  materializeStoredTargets,
 } from '../../helpers/trackerActionDeclarations';
 import {
   canSetAgainstCharge,
@@ -240,6 +242,14 @@ const normalizeActionEditorModeForWeapon = (
 
 type TrackerAction =
   | { type: 'replace-state'; state: TrackerState }
+  | {
+      type: 'set-declared-target';
+      side: TrackerSide;
+      index: number;
+      targetIndex: number;
+      active: boolean;
+      actionIds?: string[];
+    }
   | { type: 'set-step-result'; step: TrackerStep; edit: TrackerStepResultEdit }
   | { type: 'set-title'; value: string }
   | { type: 'set-round-label'; value: string }
@@ -939,7 +949,9 @@ const buildActionDeclarationsFromDrafts = ({
   combatant,
   roundState,
   drafts,
+  preserveExplicitAction = false,
 }: {
+  preserveExplicitAction?: boolean;
   side: TrackerSide;
   index: number;
   combatant: TrackerCombatant;
@@ -959,6 +971,7 @@ const buildActionDeclarationsFromDrafts = ({
         ),
       ];
   const mustStoreExplicitActions =
+    preserveExplicitAction ||
     effectiveDrafts.length > 1 ||
     effectiveDrafts.some(
       (draft) =>
@@ -1154,7 +1167,10 @@ const getIntentionWizardActionDrafts = (
   }
 
   return getActionEditorDrafts({
-    actions: getStructuredActionsForCombatant(round, entry.side, entry.index),
+    actions: getTrackerActionDeclarations(round).filter(
+      (action) =>
+        action.side === entry.side && action.combatantKey === entry.combatantKey
+    ),
     fallbackIntention: roundState?.action || '',
     mainActionId: getMainTrackerActionId(entry.side, combatant.key),
     defaultDeclaredAction: getDefaultTrackerDeclaredAction(),
@@ -1293,6 +1309,55 @@ const applyTrackerAction = (
         ...round,
         [action.field]: action.value,
       }));
+    case 'set-declared-target':
+      return updateCurrentRound(state, (previous) => {
+        const { side, index, targetIndex, active, actionIds } = action;
+        const rowIndex = side === 'party' ? targetIndex : index;
+        const columnIndex = side === 'party' ? index : targetIndex;
+        const direction = getActionDirection(side);
+        const cell = previous.cells[rowIndex]?.[columnIndex];
+        if (!cell || (!active && cell[direction].trim())) return previous;
+        const round = materializeStoredTargets(previous, side, index);
+        const targetKey = getActionCombatant(
+          round,
+          getActionTargetSide(side),
+          targetIndex
+        )?.key;
+        return {
+          ...round,
+          ...(round.actions
+            ? {
+                actions: round.actions.map((a) => {
+                  if (
+                    a.side !== side ||
+                    a.combatantIndex !== index ||
+                    (active && (!actionIds || actionIds.includes(a.id)))
+                  )
+                    return a;
+                  return {
+                    ...a,
+                    targetDeclarations: a.targetDeclarations.filter(
+                      (t) => t.targetCombatantKey !== targetKey
+                    ),
+                  };
+                }),
+              }
+            : {}),
+          cells: round.cells.map((row, r) =>
+            r !== rowIndex
+              ? row
+              : row.map((item, c) =>
+                  c !== columnIndex
+                    ? item
+                    : {
+                        ...item,
+                        [`${direction}Visible`]: active,
+                        [getActionIdsField(direction)]: actionIds,
+                      }
+                )
+          ),
+        };
+      });
     case 'set-cell-visibility':
       return updateCurrentRound(state, (round) => ({
         ...round,
@@ -1372,7 +1437,24 @@ const applyTrackerAction = (
         ),
       }));
     case 'set-combatant-actions':
-      return updateCurrentRound(state, (round) => {
+      return updateCurrentRound(state, (previous) => {
+        const originals = getStructuredActionsForCombatant(
+          previous,
+          action.side,
+          action.index
+        );
+        const sameActions =
+          originals.length === action.actionDeclarations.length &&
+          originals.every(
+            (original, i) =>
+              original.id === action.actionDeclarations[i]?.id &&
+              original.declaredAction ===
+                action.actionDeclarations[i]?.declaredAction
+          );
+        // Keep legacy target order intact for label, distance and timing edits.
+        const round = sameActions
+          ? previous
+          : materializeStoredTargets(previous, action.side, action.index);
         const combatant = getActionCombatant(round, action.side, action.index);
 
         if (!combatant) {
@@ -1386,7 +1468,23 @@ const applyTrackerAction = (
               roundAction.combatantKey === combatant.key
             )
         );
-        const combinedActions = nextActions.concat(action.actionDeclarations);
+        const combinedActions = nextActions.concat(
+          action.actionDeclarations.map((declaration) => {
+            // Keep explicit target sets from older saves when editing only the declaration.
+            const original = round.actions?.find(
+              (a) =>
+                a.id === declaration.id &&
+                a.declaredAction === declaration.declaredAction
+            );
+            return declaration.usesGridTargets === false ||
+              !original?.targetDeclarations.length
+              ? declaration
+              : {
+                  ...declaration,
+                  targetDeclarations: original.targetDeclarations,
+                };
+          })
+        );
         const nextRound = pruneCellActionAssignments(
           {
             ...round,
@@ -1461,6 +1559,7 @@ const trackerReducer = (
   // These edits can remove a step or change which creature it targeted.
   switch (action.type) {
     case 'set-combatant-actions':
+    case 'set-declared-target':
     case 'set-cell-visibility':
     case 'set-cell-action-ids':
     case 'set-cell':
@@ -1528,8 +1627,6 @@ const CombatTracker = ({
     IntentionWizardEntry[]
   >([]);
   const [intentionWizardIndex, setIntentionWizardIndex] = useState<number>(0);
-  const [intentionResolvedOnEntry, setIntentionResolvedOnEntry] =
-    useState<boolean>(false);
   const [
     intentionWizardAnchorKeysByRound,
     setIntentionWizardAnchorKeysByRound,
@@ -2368,7 +2465,7 @@ const CombatTracker = ({
   useEffect(() => {
     setShowIntentionsWizard(false);
     setIntentionWizardIndex(0);
-    setIntentionResolvedOnEntry(false);
+
     setShowCombatWizard(false);
     setCombatWizardIndex(0);
     setCellActionAssignmentTarget(undefined);
@@ -2384,16 +2481,13 @@ const CombatTracker = ({
   useEffect(() => {
     if (intentionWizardEntries.length === 0) {
       setIntentionWizardIndex(0);
-      setIntentionResolvedOnEntry(false);
+
       return;
     }
 
     if (intentionWizardIndex >= intentionWizardEntries.length) {
       const nextIndex = intentionWizardEntries.length - 1;
       setIntentionWizardIndex(nextIndex);
-      setIntentionResolvedOnEntry(
-        Boolean(intentionWizardEntries[nextIndex]?.intention.trim())
-      );
     }
   }, [intentionWizardEntries, intentionWizardIndex]);
 
@@ -2986,9 +3080,7 @@ const CombatTracker = ({
 
     setIntentionWizardEntries(nextEntries);
     setIntentionWizardIndex(nextIndex);
-    setIntentionResolvedOnEntry(
-      Boolean(nextEntries[nextIndex]?.intention.trim())
-    );
+
     const nextEntry = nextEntries[nextIndex];
     const nextDrafts = nextEntry
       ? getIntentionWizardActionDrafts(currentRound, nextEntry)
@@ -3008,7 +3100,6 @@ const CombatTracker = ({
 
   const navigateIntentionsWizard = (nextIndex: number) => {
     if (intentionWizardEntries.length === 0) {
-      setIntentionResolvedOnEntry(false);
       setIntentionWizardIndex(0);
       return;
     }
@@ -3018,9 +3109,6 @@ const CombatTracker = ({
       Math.min(intentionWizardEntries.length - 1, nextIndex)
     );
 
-    setIntentionResolvedOnEntry(
-      Boolean(intentionWizardEntries[boundedIndex]?.intention.trim())
-    );
     const nextEntry = intentionWizardEntries[boundedIndex];
     const nextDrafts = nextEntry
       ? getIntentionWizardActionDrafts(currentRound, nextEntry)
@@ -3223,6 +3311,11 @@ const CombatTracker = ({
       index: currentIntentionWizardEntry.index,
       combatant,
       roundState,
+      preserveExplicitAction: getTrackerActionDeclarations(currentRound).some(
+        (action) =>
+          action.side === currentIntentionWizardEntry.side &&
+          action.combatantKey === currentIntentionWizardEntry.combatantKey
+      ),
       drafts,
     });
 
@@ -3712,67 +3805,76 @@ const CombatTracker = ({
                 label: value,
               }))
             }
-            rows={2}
+            rows={modeControl === 'pills' ? 1 : 2}
           />
         </>
       )}
-      {requiresAttackRoutineCountInput(
-        selectedDraft.mode,
-        combatant?.weapon
-      ) ? (
-        <>
+      <div
+        className={
+          modeControl === 'pills' ? styles['declarationTiming'] : undefined
+        }
+      >
+        {requiresAttackRoutineCountInput(
+          selectedDraft.mode,
+          combatant?.weapon
+        ) ? (
+          <div>
+            <label
+              className={styles['modalLabel']}
+              htmlFor={`${idPrefix}-attack-routines`}
+            >
+              Attack routines this round
+            </label>
+            <input
+              id={`${idPrefix}-attack-routines`}
+              className={styles['actionIntentTextInput']}
+              type={'text'}
+              inputMode={'numeric'}
+              value={selectedDraft.attackRoutineCount}
+              onChange={(event) =>
+                updateDraft((draft) => ({
+                  ...draft,
+                  attackRoutineCount: event.target.value,
+                }))
+              }
+            />
+            <p className={styles['modalHint']}>
+              This repeats the whole routine. Leave this at <strong>1</strong>{' '}
+              for a flesh golem&apos;s two fists or a claw/claw/bite routine.
+            </p>
+          </div>
+        ) : null}
+        <div>
           <label
             className={styles['modalLabel']}
-            htmlFor={`${idPrefix}-attack-routines`}
+            htmlFor={`${idPrefix}-initiative-timing`}
           >
-            Attack routines this round
+            Initiative timing
           </label>
-          <input
-            id={`${idPrefix}-attack-routines`}
-            className={styles['actionIntentTextInput']}
-            type={'text'}
-            inputMode={'numeric'}
-            value={selectedDraft.attackRoutineCount}
+          <select
+            id={`${idPrefix}-initiative-timing`}
+            className={styles['actionIntentSelect']}
+            value={selectedDraft.initiativeTiming}
             onChange={(event) =>
               updateDraft((draft) => ({
                 ...draft,
-                attackRoutineCount: event.target.value,
+                initiativeTiming: event.target
+                  .value as InitiativeTimingOverride,
               }))
             }
-          />
+          >
+            {INITIATIVE_TIMING_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
           <p className={styles['modalHint']}>
-            This repeats the whole routine. Leave this at <strong>1</strong> for
-            a flesh golem&apos;s two fists or a claw/claw/bite routine.
+            Use this only for effects such as speed weapons or slow that
+            explicitly make this action win or lose initiative.
           </p>
-        </>
-      ) : null}
-      <label
-        className={styles['modalLabel']}
-        htmlFor={`${idPrefix}-initiative-timing`}
-      >
-        Initiative timing
-      </label>
-      <select
-        id={`${idPrefix}-initiative-timing`}
-        className={styles['actionIntentSelect']}
-        value={selectedDraft.initiativeTiming}
-        onChange={(event) =>
-          updateDraft((draft) => ({
-            ...draft,
-            initiativeTiming: event.target.value as InitiativeTimingOverride,
-          }))
-        }
-      >
-        {INITIATIVE_TIMING_OPTIONS.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
-      <p className={styles['modalHint']}>
-        Use this only for effects such as speed weapons or slow that explicitly
-        make this action win or lose initiative.
-      </p>
+        </div>
+      </div>
       {error ? (
         <div className={styles['actionIntentError']}>{error}</div>
       ) : null}
@@ -3826,7 +3928,7 @@ const CombatTracker = ({
     setShowIntentionsWizard(false);
     setIntentionWizardEntries([]);
     setIntentionWizardIndex(0);
-    setIntentionResolvedOnEntry(false);
+
     setIntentionWizardAnchorKeysByRound({});
     setIntentionWizardActionDrafts([]);
     setIntentionWizardSelectedActionId('');
@@ -4376,6 +4478,139 @@ const CombatTracker = ({
         />
         {renderNextRoundEffect(side, index)}
       </>
+    );
+  };
+
+  const renderDeclarationTargets = (entry: IntentionWizardEntry) => {
+    if (selectedIntentionWizardActionDraft?.mode === 'none') {
+      return <p>No targets required.</p>;
+    }
+    const { side, index } = entry;
+    const opponents =
+      side === 'party' ? currentRound.enemies : currentRound.party;
+    const direction = getActionDirection(side);
+    const actions = getTrackerActionDeclarations(currentRound).filter(
+      (a) => a.side === side && a.combatantKey === entry.combatantKey
+    );
+    const options = getCellActionOptions(actions);
+    return (
+      <table className={styles['declarationTargets']}>
+        <thead>
+          <tr>
+            <th>Combatant</th>
+            <th>Current effect</th>
+          </tr>
+        </thead>
+        <tbody>
+          {opponents.map((opponent, targetIndex) => {
+            const cell =
+              side === 'party'
+                ? currentRound.cells[targetIndex]?.[index]
+                : currentRound.cells[index]?.[targetIndex];
+            if (!cell) return null;
+            const assigned = actions
+              .filter(
+                (a) =>
+                  a.usesGridTargets !== false &&
+                  a.targetDeclarations.some(
+                    (t) => t.targetCombatantKey === opponent.key
+                  )
+              )
+              .map((a) => a.id);
+            const hasText = Boolean(cell[direction].trim());
+            const checked = Boolean(
+              assigned.length || cell[`${direction}Visible`] || hasText
+            );
+            const name =
+              side === 'party'
+                ? getEnemyDisplayName(targetIndex)
+                : getPartyDisplayName(targetIndex);
+            const change = (active: boolean, actionIds?: string[]) =>
+              dispatch({
+                type: 'set-declared-target',
+                side,
+                index,
+                targetIndex,
+                active,
+                actionIds,
+              });
+            return (
+              <Fragment key={opponent.key}>
+                <tr data-active={checked}>
+                  <td>
+                    <label
+                      title={
+                        hasText
+                          ? 'This target has an entry in the combat grid.'
+                          : undefined
+                      }
+                    >
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        disabled={
+                          hasText || Boolean(intentionWizardActionError)
+                        }
+                        onChange={(e) => change(e.target.checked)}
+                      />
+                      {name}
+                    </label>
+                  </td>
+                  <td>
+                    {getActionRoundState(
+                      currentRound,
+                      getActionTargetSide(side),
+                      targetIndex
+                    )?.effect || '—'}
+                  </td>
+                </tr>
+                {checked && options.length > 1 && (
+                  <tr data-active>
+                    <td colSpan={2}>
+                      <fieldset>
+                        <legend>Actions using this target</legend>
+                        {options.map((option) => {
+                          const on =
+                            !assigned.length || assigned.includes(option.id);
+                          return (
+                            <label key={option.id}>
+                              <input
+                                type="checkbox"
+                                checked={on}
+                                disabled={
+                                  Boolean(intentionWizardActionError) ||
+                                  (on && assigned.length === 1)
+                                }
+                                onChange={() => {
+                                  const ids = options
+                                    .filter((o) =>
+                                      o.id === option.id
+                                        ? !on
+                                        : !assigned.length ||
+                                          assigned.includes(o.id)
+                                    )
+                                    .map((o) => o.id);
+                                  change(
+                                    true,
+                                    ids.length === options.length
+                                      ? undefined
+                                      : ids
+                                  );
+                                }}
+                              />
+                              {option.title} · {option.summary}
+                            </label>
+                          );
+                        })}
+                      </fieldset>
+                    </td>
+                  </tr>
+                )}
+              </Fragment>
+            );
+          })}
+        </tbody>
+      </table>
     );
   };
 
@@ -6364,276 +6599,173 @@ const CombatTracker = ({
             onClick={(event) => event.stopPropagation()}
           >
             <div
-              id={'intentions-wizard-title'}
-              className={styles['modalTitle']}
+              className={styles['declaration']}
+              data-side={currentIntentionWizardEntry.side}
             >
-              Declare Intentions
-            </div>
-            <div
-              className={
-                intentionResolvedOnEntry
-                  ? `${styles['modalBody']} ${styles['intentionsWizardBodyResolved']}`
-                  : styles['modalBody']
-              }
-            >
-              <div className={styles['intentionsWizardMeta']}>
-                <span className={styles['intentionsWizardBadge']}>
-                  {currentIntentionWizardEntry.side === 'enemy'
-                    ? 'Enemy'
-                    : 'Party'}
-                </span>
-                <span className={styles['intentionsWizardProgress']}>
-                  {intentionWizardIndex + 1} of {intentionWizardEntries.length}
-                </span>
-                {intentionResolvedOnEntry ? (
-                  <span className={styles['intentionsWizardResolvedBadge']}>
-                    Declared
-                  </span>
-                ) : null}
-                <div className={styles['intentionsWizardNav']}>
-                  <button
-                    type={'button'}
-                    className={styles['toolbarButton']}
-                    disabled={intentionWizardIndex === 0}
-                    onClick={() =>
-                      navigateIntentionsWizard(intentionWizardIndex - 1)
+              <div className={styles['modalTitle']}>
+                <span id="intentions-wizard-title">Declare Intentions</span>
+                <button onClick={closeIntentionsWizard} type="button">
+                  Close
+                </button>
+              </div>
+              <div className={styles['declarationActor']}>
+                <div>
+                  <small>
+                    {currentIntentionWizardEntry.side === 'party'
+                      ? 'Party'
+                      : 'Enemy'}{' '}
+                    · {intentionWizardIndex + 1} of{' '}
+                    {intentionWizardEntries.length}
+                  </small>
+                  <select
+                    aria-label="Go to combatant"
+                    value={intentionWizardIndex}
+                    disabled={Boolean(intentionWizardActionError)}
+                    onChange={(e) =>
+                      navigateIntentionsWizard(Number(e.target.value))
                     }
                   >
-                    Previous
-                  </button>
-                  <button
-                    type={'button'}
-                    className={styles['toolbarButtonPrimary']}
-                    disabled={
-                      intentionWizardIndex >= intentionWizardEntries.length - 1
-                    }
-                    onClick={() =>
-                      navigateIntentionsWizard(intentionWizardIndex + 1)
-                    }
-                  >
-                    Next
-                  </button>
-                </div>
-              </div>
-              <div className={styles['intentionsWizardName']}>
-                {currentIntentionWizardEntry.combatantName}
-              </div>
-              {selectedIntentionWizardActionDraft ? (
-                <div className={styles['intentionsWizardActionPanel']}>
-                  <div className={styles['actionIntentActionList']}>
-                    {intentionWizardActionDrafts.map((draft, actionIndex) => (
-                      <button
-                        key={draft.id}
-                        type={'button'}
-                        className={[
-                          styles['actionIntentActionButton'],
-                          draft.id === selectedIntentionWizardActionDraft.id
-                            ? styles['actionIntentActionButtonActive']
-                            : '',
-                        ]
-                          .filter(Boolean)
-                          .join(' ')}
-                        onClick={() =>
-                          setIntentionWizardSelectedActionId(draft.id)
-                        }
-                        data-testid={`intentions-wizard-action-tab-${actionIndex}`}
-                      >
-                        <span className={styles['actionIntentActionTitle']}>
-                          {actionIndex === 0
-                            ? 'Main'
-                            : `Action ${actionIndex + 1}`}
-                        </span>
-                        <span className={styles['actionIntentActionMeta']}>
-                          {getActionDraftSummary(draft)}
-                        </span>
-                      </button>
+                    {intentionWizardEntries.map((entry, i) => (
+                      <option key={entry.combatantKey} value={i}>
+                        {entry.combatantName}
+                      </option>
                     ))}
+                  </select>
+                </div>
+                <label>
+                  Current effect
+                  <AutoHeightTextarea
+                    id="intentions-wizard-effect"
+                    value={
+                      getActionRoundState(
+                        currentRound,
+                        currentIntentionWizardEntry.side,
+                        currentIntentionWizardEntry.index
+                      )?.effect || ''
+                    }
+                    onChange={(value) =>
+                      updateIntentionsWizardEffect(
+                        currentIntentionWizardEntry,
+                        value
+                      )
+                    }
+                    placeholder="None"
+                  />
+                </label>
+              </div>
+              <div className={styles['declarationColumns']}>
+                {selectedIntentionWizardActionDraft ? (
+                  <div className={styles['intentionsWizardActionPanel']}>
+                    {intentionWizardActionDrafts.length > 1 && (
+                      <div className={styles['actionIntentActionList']}>
+                        {intentionWizardActionDrafts.map(
+                          (draft, actionIndex) => (
+                            <button
+                              key={draft.id}
+                              type={'button'}
+                              className={[
+                                styles['actionIntentActionButton'],
+                                draft.id ===
+                                selectedIntentionWizardActionDraft.id
+                                  ? styles['actionIntentActionButtonActive']
+                                  : '',
+                              ]
+                                .filter(Boolean)
+                                .join(' ')}
+                              onClick={() =>
+                                setIntentionWizardSelectedActionId(draft.id)
+                              }
+                              disabled={Boolean(intentionWizardActionError)}
+                              data-testid={`intentions-wizard-action-tab-${actionIndex}`}
+                            >
+                              <span
+                                className={styles['actionIntentActionTitle']}
+                              >
+                                {actionIndex === 0
+                                  ? 'Main'
+                                  : `Action ${actionIndex + 1}`}
+                              </span>
+                              <span
+                                className={styles['actionIntentActionMeta']}
+                              >
+                                {getActionDraftSummary(draft)}
+                              </span>
+                            </button>
+                          )
+                        )}
+                      </div>
+                    )}
+                    {renderActionDraftControls({
+                      idPrefix: 'intentions-wizard-action',
+                      selectedDraft: selectedIntentionWizardActionDraft,
+                      modeOptions: selectedIntentionWizardModeOptions,
+                      modeControl: 'pills',
+                      combatant: currentIntentionWizardCombatant,
+                      updateDraft: updateSelectedIntentionWizardActionDraft,
+                      onWeaponChange: updateIntentionWizardWeapon,
+                      error: intentionWizardActionError,
+                    })}
                     <button
                       type={'button'}
                       className={styles['actionIntentActionAddButton']}
+                      disabled={Boolean(intentionWizardActionError)}
                       data-testid={'intentions-wizard-action-add'}
                       onClick={addIntentionWizardAction}
                     >
                       Add action
                     </button>
+                    {intentionWizardActionDrafts.length > 1 &&
+                    selectedIntentionWizardActionDraftIndex > 0 ? (
+                      <button
+                        type={'button'}
+                        className={styles['toolbarButtonDanger']}
+                        onClick={removeSelectedIntentionWizardAction}
+                      >
+                        Remove action
+                      </button>
+                    ) : null}
                   </div>
-                  {renderActionDraftControls({
-                    idPrefix: 'intentions-wizard-action',
-                    selectedDraft: selectedIntentionWizardActionDraft,
-                    modeOptions: selectedIntentionWizardModeOptions,
-                    modeControl: 'pills',
-                    combatant: currentIntentionWizardCombatant,
-                    updateDraft: updateSelectedIntentionWizardActionDraft,
-                    onWeaponChange: updateIntentionWizardWeapon,
-                    error: intentionWizardActionError,
-                  })}
-                  {intentionWizardActionDrafts.length > 1 &&
-                  selectedIntentionWizardActionDraftIndex > 0 ? (
-                    <button
-                      type={'button'}
-                      className={styles['toolbarButtonDanger']}
-                      onClick={removeSelectedIntentionWizardAction}
-                    >
-                      Remove action
-                    </button>
-                  ) : null}
-                </div>
-              ) : null}
-              <label
-                className={styles['modalLabel']}
-                htmlFor={'intentions-wizard-effect'}
-              >
-                Current Effect
-              </label>
-              <AutoHeightTextarea
-                id={'intentions-wizard-effect'}
-                className={styles['intentionsWizardTextarea']}
-                value={
-                  currentIntentionWizardEntry.side === 'enemy'
-                    ? currentRound.enemyStates[
-                        currentIntentionWizardEntry.index
-                      ]?.effect || ''
-                    : currentRound.partyStates[
-                        currentIntentionWizardEntry.index
-                      ]?.effect || ''
-                }
-                onChange={(value) =>
-                  updateIntentionsWizardEffect(
-                    currentIntentionWizardEntry,
-                    value
-                  )
-                }
-                placeholder={'hopeless 1/9, slowed 3/8, bless, stoneskin...'}
-              />
-              {renderNextRoundEffect(
-                currentIntentionWizardEntry.side,
-                currentIntentionWizardEntry.index
-              )}
-              <div className={styles['modalLabel']}>Targets</div>
-              <div
-                key={`intentions-target-grid-${currentIntentionWizardEntry.side}-${currentIntentionWizardEntry.combatantKey}`}
-                className={styles['intentionsWizardGridWrap']}
-              >
-                {currentIntentionWizardEntry.side === 'enemy' ? (
-                  <table className={styles['intentionsWizardGridTable']}>
-                    <thead>
-                      <tr>
-                        <th className={styles['intentionsWizardCorner']}>
-                          Target
-                        </th>
-                        {currentRound.party.map(
-                          (partyCombatant, partyIndex) => (
-                            <th
-                              key={`intentions-party-header-${partyCombatant.key}`}
-                              className={styles['intentionsWizardColumnHeader']}
-                            >
-                              {getPartyDisplayName(partyIndex)}
-                            </th>
-                          )
-                        )}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr>
-                        <th className={styles['intentionsWizardRowHeader']}>
-                          {currentIntentionWizardEntry.combatantName}
-                        </th>
-                        {currentRound.party.map((_, partyIndex) =>
-                          renderInteractionCell(
-                            currentIntentionWizardEntry.index,
-                            partyIndex,
-                            undefined,
-                            true,
-                            'enemyOnly'
-                          )
-                        )}
-                      </tr>
-                      <tr>
-                        <th
-                          className={`${styles['combatWizardHpLabel']} ${styles['combatWizardHpLabelEnemy']}`}
-                        >
-                          Current Effect
-                        </th>
-                        {currentRound.party.map((_, partyIndex) => {
-                          const partyState =
-                            currentRound.partyStates[partyIndex];
-
-                          if (!partyState) {
-                            return null;
-                          }
-
-                          return (
-                            <td
-                              key={`intentions-party-effect-${partyIndex}`}
-                              className={`${styles['combatWizardEffectCell']} ${styles['combatWizardEffectCellEnemy']}`}
-                            >
-                              {renderCombatWizardEffectEditor(
-                                'party',
-                                partyIndex
-                              )}
-                            </td>
-                          );
-                        })}
-                      </tr>
-                    </tbody>
-                  </table>
-                ) : (
-                  <table className={styles['intentionsWizardGridTable']}>
-                    <thead>
-                      <tr>
-                        <th className={styles['intentionsWizardCorner']}>
-                          Target
-                        </th>
-                        <th className={styles['intentionsWizardColumnHeader']}>
-                          {currentIntentionWizardEntry.combatantName}
-                        </th>
-                        <th
-                          className={`${styles['combatWizardColumnHeader']} ${styles['combatWizardHpLabelParty']}`}
-                        >
-                          Current Effect
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {currentRound.enemies.map(
-                        (enemyCombatant, enemyIndex) => (
-                          <tr
-                            key={`intentions-enemy-row-${enemyCombatant.key}`}
-                          >
-                            <th className={styles['intentionsWizardRowHeader']}>
-                              {getEnemyDisplayName(enemyIndex)}
-                            </th>
-                            {renderInteractionCell(
-                              enemyIndex,
-                              currentIntentionWizardEntry.index,
-                              undefined,
-                              true,
-                              'partyOnly'
-                            )}
-                            <td
-                              className={`${styles['combatWizardEffectCell']} ${styles['combatWizardEffectCellParty']}`}
-                            >
-                              {renderCombatWizardEffectEditor(
-                                'enemy',
-                                enemyIndex
-                              )}
-                            </td>
-                          </tr>
-                        )
-                      )}
-                    </tbody>
-                  </table>
-                )}
+                ) : null}
+                <section>
+                  <h3>Targets</h3>
+                  {renderDeclarationTargets(currentIntentionWizardEntry)}
+                </section>
               </div>
-            </div>
-            <div className={styles['modalActions']}>
-              <button
-                type={'button'}
-                className={styles['toolbarButton']}
-                onClick={closeIntentionsWizard}
-              >
-                Close
-              </button>
+              <div className={styles['declarationFooter']}>
+                <span>
+                  {intentionWizardActionError
+                    ? 'Incomplete declaration'
+                    : currentIntentionWizardEntry.intention.trim()
+                    ? 'Declared'
+                    : 'Undeclared'}
+                </span>
+                <button
+                  type="button"
+                  className={styles['toolbarButton']}
+                  disabled={
+                    !intentionWizardIndex || Boolean(intentionWizardActionError)
+                  }
+                  onClick={() =>
+                    navigateIntentionsWizard(intentionWizardIndex - 1)
+                  }
+                >
+                  Previous
+                </button>
+                <button
+                  type="button"
+                  className={styles['toolbarButtonPrimary']}
+                  disabled={Boolean(intentionWizardActionError)}
+                  onClick={() =>
+                    intentionWizardIndex === intentionWizardEntries.length - 1
+                      ? closeIntentionsWizard()
+                      : navigateIntentionsWizard(intentionWizardIndex + 1)
+                  }
+                >
+                  {intentionWizardIndex === intentionWizardEntries.length - 1
+                    ? 'Done'
+                    : 'Next'}
+                </button>
+              </div>
             </div>
           </div>
         </>
