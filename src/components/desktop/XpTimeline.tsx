@@ -73,8 +73,9 @@ export default function XpTimeline({
                 ? 'Partly settled · pending shares'
                 : historicalXpReward(document, reward)
                 ? 'Historical draft'
-                : treasurePending(reward.input)
-                ? reward.input.category === 'treasure' && reward.input.rows
+                : treasurePending(reward)
+                ? reward.input.category === 'treasure' &&
+                  reward.input.rows.length > 1
                   ? 'Awaiting item decisions'
                   : 'Deferred'
                 : 'Pending'

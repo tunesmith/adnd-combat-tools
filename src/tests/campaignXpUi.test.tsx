@@ -54,9 +54,9 @@ test('usable review flow establishes opening XP, keeps a scroll, creates an open
     xp: { ...xpLedger(current), openings: [], points: [] },
   };
   const scroll = xpLedger(current).rewards.find((r) => r.id === 'scroll');
-  if (!scroll || scroll.input.category !== 'treasure' || scroll.input.rows)
+  if (!scroll || scroll.input.category !== 'treasure' || !scroll.input.rows[0])
     throw Error('Fixture');
-  scroll.input.disposition = 'defer';
+  scroll.input.rows[0].disposition = 'defer';
   current = saveXpReward(current, pendingFungus(current));
   function Harness() {
     const [doc, setDoc] = useState(current);
@@ -146,7 +146,7 @@ test('usable review flow establishes opening XP, keeps a scroll, creates an open
   expect(xpLedger(current).events).toHaveLength(1);
   expect(
     xpLedger(current).rewards.find((r) => r.id === 'scroll')?.input
-  ).toMatchObject({ disposition: 'keep' });
+  ).toMatchObject({ rows: [{ disposition: 'keep' }] });
   expect(
     screen.queryByRole('button', { name: 'Confirm award', exact: true })
   ).not.toBeInTheDocument();
@@ -685,19 +685,14 @@ test('treasure uses one sale-value field, keeps retained XP separate and saves a
     screen.getByRole('button', { name: 'Kept warding scroll', exact: true })
   );
   let dialog = within(screen.getByRole('dialog', { name: 'XP event review' }));
-  expect(dialog.getByLabelText('Sale value (GP)')).toHaveValue('7500');
+  expect(dialog.getByLabelText('GP value')).toHaveValue('7500');
   expect(dialog.getByLabelText('Retained-item XP')).toHaveValue('1500');
-  expect(
-    dialog.queryByLabelText('Actual sale proceeds (GP)')
-  ).not.toBeInTheDocument();
-  expect(
-    dialog.queryByLabelText('Market value (GP, reference only)')
-  ).not.toBeInTheDocument();
+  expect(dialog.getAllByLabelText('GP value')).toHaveLength(1);
   fireEvent.change(dialog.getByLabelText('Disposition'), {
     target: { value: 'sell' },
   });
   expect(dialog.getByText('Raw XP: 7500')).toBeInTheDocument();
-  fireEvent.change(dialog.getByLabelText('Sale value (GP)'), {
+  fireEvent.change(dialog.getByLabelText('GP value'), {
     target: { value: '6000' },
   });
   expect(dialog.getAllByText('1200')).toHaveLength(5);
@@ -705,14 +700,14 @@ test('treasure uses one sale-value field, keeps retained XP separate and saves a
     target: { value: 'keep' },
   });
   expect(dialog.getByText('Raw XP: 1500')).toBeInTheDocument();
-  expect(dialog.getByLabelText('Sale value (GP)')).toHaveValue('6000');
+  expect(dialog.getByLabelText('GP value')).toHaveValue('6000');
   fireEvent.click(dialog.getByRole('button', { name: 'Save XP event' }));
   fireEvent.click(
     screen.getByRole('button', { name: 'Kept warding scroll', exact: true })
   );
   dialog = within(screen.getByRole('dialog', { name: 'XP event review' }));
-  expect(dialog.getByLabelText('Sale value (GP)')).toHaveValue('6000');
-  fireEvent.change(dialog.getByLabelText('Sale value (GP)'), {
+  expect(dialog.getByLabelText('GP value')).toHaveValue('6000');
+  fireEvent.change(dialog.getByLabelText('GP value'), {
     target: { value: '' },
   });
   fireEvent.click(dialog.getByRole('button', { name: 'Save XP event' }));
@@ -720,17 +715,17 @@ test('treasure uses one sale-value field, keeps retained XP separate and saves a
     screen.getByRole('button', { name: 'Kept warding scroll', exact: true })
   );
   dialog = within(screen.getByRole('dialog', { name: 'XP event review' }));
-  expect(dialog.getByLabelText('Sale value (GP)')).toHaveValue('');
+  expect(dialog.getByLabelText('GP value')).toHaveValue('');
   expect(dialog.getByLabelText('Retained-item XP')).toHaveValue('1500');
 });
 
 test('an older treasure draft defaults to full XP and keeps ratio overrides independent of XP adjustments', () => {
   let current = xpCastleDraft();
   const scroll = current.xp?.rewards.find((r) => r.id === 'scroll');
-  if (!scroll || scroll.input.category !== 'treasure' || scroll.input.rows)
+  if (!scroll || scroll.input.category !== 'treasure' || !scroll.input.rows[0])
     throw Error('Fixture');
   scroll.ratio.proposed = null;
-  scroll.input.disposition = 'defer';
+  scroll.input.rows[0].disposition = 'defer';
   const originalCombats = current.workingCombats;
   function Harness() {
     const [d, setDoc] = useState(current);

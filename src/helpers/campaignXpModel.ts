@@ -56,10 +56,9 @@ const monsterSchema = z
 const treasureAmounts = {
   disposition: z.enum(['keep', 'sell', 'defer']),
   retainedXp: rational.nullable(),
-  proceeds: rational.nullable(),
-  marketGp: rational.nullable(),
+  gp: rational.nullable(),
 };
-const treasureRowSchema = z
+export const treasureRowSchema = z
   .object({
     id,
     label: z.string().max(1000),
@@ -76,14 +75,6 @@ const rewardInputSchema = z.union([
     })
     .strict(),
   z.object({ category: z.literal('money'), gp: rational.nullable() }).strict(),
-  z
-    .object({
-      category: z.literal('treasure'),
-      // Original single-item representation, including its sale-value fallback.
-      ...treasureAmounts,
-      rows: z.never().optional(),
-    })
-    .strict(),
   z
     .object({
       category: z.literal('treasure'),
@@ -325,7 +316,7 @@ export type XpExtension = z.infer<typeof xpExtensionSchema>;
 
 export const campaignXpSchema = z
   .object({
-    version: z.literal(2),
+    version: z.literal(3),
     timeline: z.record(z.array(id).max(3000)),
     sessionOrder: z.array(id).max(500),
     openings: z.array(xpOpeningSchema).max(500),
@@ -339,7 +330,7 @@ export const campaignXpSchema = z
   .strict();
 export type CampaignXp = z.infer<typeof campaignXpSchema>;
 export const emptyCampaignXp = (): CampaignXp => ({
-  version: 2,
+  version: 3,
   timeline: {},
   sessionOrder: [],
   openings: [],

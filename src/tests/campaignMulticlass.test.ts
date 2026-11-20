@@ -206,10 +206,16 @@ test('live Keep/Sell/Defer calculations are hypothetical until one atomic confir
     title: 'Synthetic gem',
     input: {
       category: 'treasure',
-      retainedXp: '100',
-      proceeds: '200',
-      marketGp: null,
-      disposition: 'defer',
+      rows: [
+        {
+          id: 'first',
+          label: reward.title,
+          evidence: null,
+          gp: '200',
+          retainedXp: '100',
+          disposition: 'defer',
+        },
+      ],
     },
     recipients: reward.recipients
       .filter((r) => r.characterId === multiCharacter)
@@ -229,12 +235,16 @@ test('live Keep/Sell/Defer calculations are hypothetical until one atomic confir
   expect(
     previewXpAward(sell, point.id).rows[0]?.classes?.map((c) => c.award)
   ).toEqual([110, 110]);
-  expect(doc.xp?.rewards[0]?.input).toMatchObject({ disposition: 'defer' });
+  expect(doc.xp?.rewards[0]?.input).toMatchObject({
+    rows: [{ disposition: 'defer' }],
+  });
   expect(
     stageXpAward(doc, selected, { gem: 'defer' }).xp?.points[0]?.rewardIds
   ).toEqual([]);
   const accepted = acceptMulti(keep, point.id);
-  expect(accepted.xp?.rewards[0]?.input).toMatchObject({ disposition: 'keep' });
+  expect(accepted.xp?.rewards[0]?.input).toMatchObject({
+    rows: [{ disposition: 'keep' }],
+  });
   expect(reopen(accepted)).toEqual(accepted);
 });
 test('unknown class openings block, and converting confirmed single-class XP requires a reviewed mapping', () => {

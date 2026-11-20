@@ -8,8 +8,7 @@ export function newTreasureRow(id: string): XpTreasureRow {
     evidence: null,
     disposition: 'defer',
     retainedXp: null,
-    proceeds: null,
-    marketGp: null,
+    gp: null,
   };
 }
 
@@ -17,7 +16,7 @@ export function treasureAmount(row: XpTreasureRow) {
   return row.disposition === 'keep'
     ? row.retainedXp
     : row.disposition === 'sell'
-    ? row.proceeds
+    ? row.gp
     : null;
 }
 
@@ -41,14 +40,15 @@ export function treasureSubtotal(rows: XpTreasureRow[]) {
   }
   return { subtotal: xpExact(subtotal), deferred, missing };
 }
-export function treasurePending(input: XpReward['input']) {
+export function treasurePending({ input, rawOverride }: XpReward) {
   if (input.category !== 'treasure') return false;
-  if (!input.rows) return input.disposition === 'defer';
   const { deferred, missing } = treasureSubtotal(input.rows);
-  return deferred > 0 || missing > 0;
+  return (
+    deferred > 0 || (missing > 0 && !(rawOverride && input.rows.length === 1))
+  );
 }
 export function rewardEvidence(reward: XpReward) {
-  if (reward.input.category === 'treasure' && reward.input.rows)
+  if (reward.input.category === 'treasure')
     return [
       ...(reward.evidence.kind === 'manual' ? [] : [reward.evidence]),
       ...reward.input.rows.flatMap((row) =>

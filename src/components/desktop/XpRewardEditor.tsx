@@ -1,5 +1,4 @@
 import XpTreasureRows from './XpTreasureRows';
-import { newTreasureRow } from '../../helpers/campaignXpTreasure';
 import { pendingXpReward, inPartyOrder } from '../../helpers/campaignParty';
 import XpRecipients from './XpRecipients';
 import { useState, useMemo } from 'react';
@@ -222,7 +221,6 @@ export default function XpRewardEditor({
           : change
       )
     );
-  const [initialTreasureRow, setInitialTreasureRow] = useState<string>();
   const [encounterId, setEncounterId] = useState(''),
     [keys, setKeys] = useState<string[]>([]),
     [itemKey, setItemKey] = useState('');
@@ -351,7 +349,7 @@ export default function XpRewardEditor({
             </select>
           </label>
         </div>
-        {!(input.category === 'treasure' && input.rows) && (
+        {input.category !== 'treasure' && (
           <details>
             <summary>Copy encounter or possession evidence</summary>
             {sourceError && (
@@ -420,7 +418,7 @@ export default function XpRewardEditor({
                     value={itemKey}
                     onChange={(e) => setItemKey(e.target.value)}
                   >
-                    <option value="">Choose an item or lot…</option>
+                    <option value="">Choose an item…</option>
                     {items.map((c) => (
                       <option key={c.key} value={c.key}>
                         {c.name} · {c.holderName}
@@ -452,38 +450,37 @@ export default function XpRewardEditor({
             )}
           </details>
         )}
-        {!(input.category === 'treasure' && input.rows) &&
-          draft.evidence.kind !== 'manual' && (
-            <div className={styles['source']}>
-              <strong>{draft.evidence.label}</strong>
-              <span> · frozen source</span>
-              {xpEvidenceChanged(document, draft) && (
-                <strong> · Source changed</strong>
-              )}
-              <button
-                onClick={() => {
-                  try {
-                    setDraft(refreshXpEvidence(document, draft));
-                  } catch (e) {
-                    setError(String(e));
-                  }
-                }}
-              >
-                Refresh and review
-              </button>
-              {draft.evidence.kind === 'encounter' && (
-                <p>
-                  Review starting HP copied from recorded max HP. Enter actual
-                  HD/levels; tracker categories and remaining HP are not used as
-                  substitutes. Map the participating names to campaign
-                  recipients below. Recorded party candidates:{' '}
-                  {xpEvidencePartyNames(draft.evidence).join(', ') ||
-                    'none recorded'}
-                  .
-                </p>
-              )}
-            </div>
-          )}
+        {input.category !== 'treasure' && draft.evidence.kind !== 'manual' && (
+          <div className={styles['source']}>
+            <strong>{draft.evidence.label}</strong>
+            <span> · frozen source</span>
+            {xpEvidenceChanged(document, draft) && (
+              <strong> · Source changed</strong>
+            )}
+            <button
+              onClick={() => {
+                try {
+                  setDraft(refreshXpEvidence(document, draft));
+                } catch (e) {
+                  setError(String(e));
+                }
+              }}
+            >
+              Refresh and review
+            </button>
+            {draft.evidence.kind === 'encounter' && (
+              <p>
+                Review starting HP copied from recorded max HP. Enter actual
+                HD/levels; tracker categories and remaining HP are not used as
+                substitutes. Map the participating names to campaign recipients
+                below. Recorded party candidates:{' '}
+                {xpEvidencePartyNames(draft.evidence).join(', ') ||
+                  'none recorded'}
+                .
+              </p>
+            )}
+          </div>
+        )}
         <fieldset>
           <legend>
             {input.category === 'monster'
@@ -650,105 +647,17 @@ export default function XpRewardEditor({
               />
             </label>
           )}
-          {input.category === 'treasure' && input.rows && (
+          {input.category === 'treasure' && (
             <>
               {sourceError && <p role="alert">{sourceError}</p>}
               <XpTreasureRows
                 rows={input.rows}
                 sessionId={draft.origin.sessionId}
                 items={items}
-                initialRowId={initialTreasureRow}
                 onChange={(rows) =>
                   setDraft({ ...draft, input: { category: 'treasure', rows } })
                 }
               />
-            </>
-          )}
-          {input.category === 'treasure' && !input.rows && (
-            <>
-              <div className={styles['fields']}>
-                <label>
-                  Disposition
-                  <select
-                    value={input.disposition}
-                    onChange={(e) =>
-                      setDraft({
-                        ...draft,
-                        input: {
-                          ...input,
-                          disposition: e.target
-                            .value as typeof input.disposition,
-                        },
-                      })
-                    }
-                  >
-                    <option value="defer">Defer</option>
-                    <option value="keep">Keep</option>
-                    <option value="sell">Sell</option>
-                  </select>
-                </label>
-                <label>
-                  Retained-item XP
-                  <input
-                    value={input.retainedXp ?? ''}
-                    placeholder="Unknown"
-                    onChange={(e) =>
-                      setDraft({
-                        ...draft,
-                        input: {
-                          ...input,
-                          retainedXp: nullable(e.target.value),
-                        },
-                      })
-                    }
-                  />
-                </label>
-                <label>
-                  Sale value (GP)
-                  <input
-                    value={input.proceeds ?? input.marketGp ?? ''}
-                    placeholder="Unknown"
-                    onChange={(e) =>
-                      setDraft({
-                        ...draft,
-                        input: {
-                          ...input,
-                          proceeds: nullable(e.target.value),
-                          marketGp: null,
-                        },
-                      })
-                    }
-                  />
-                </label>
-              </div>
-              <button
-                onClick={() => {
-                  const second = newTreasureRow(crypto.randomUUID());
-                  const first = {
-                    ...newTreasureRow('first'),
-                    label: draft.title,
-                    disposition: input.disposition,
-                    retainedXp: input.retainedXp,
-                    marketGp: input.marketGp,
-                    proceeds:
-                      input.proceeds ??
-                      (input.disposition === 'sell' ? input.marketGp : null),
-                    evidence:
-                      draft.evidence.kind === 'item' ? draft.evidence : null,
-                  };
-                  setInitialTreasureRow(second.id);
-                  setDraft({
-                    ...draft,
-                    evidence:
-                      draft.evidence.kind === 'item'
-                        ? manualXpEvidence(draft.origin.sessionId)
-                        : draft.evidence,
-                    input: { category: 'treasure', rows: [first, second] },
-                  });
-                }}
-              >
-                + Treasure row
-              </button>
             </>
           )}
         </fieldset>

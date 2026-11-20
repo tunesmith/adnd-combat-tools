@@ -107,26 +107,18 @@ test('possessions supply explicit selected-item evidence and preserve custody in
   );
   const reward = rewardFromPossession(
     doc,
-    {
-      ...newXpReward(doc, 'session-1', 'scroll-evidence', 'treasure'),
-      input: {
-        category: 'treasure',
-        disposition: 'defer',
-        marketGp: null,
-        retainedXp: null,
-        proceeds: null,
-      },
-    },
+    newXpReward(doc, 'session-1', 'scroll-evidence', 'treasure'),
     'session-1',
     candidate.key
   );
-  expect(reward.input).toMatchObject({
-    category: 'treasure',
+  if (reward.input.category !== 'treasure') throw Error('Missing treasure');
+  const row = required(reward.input.rows[0]);
+  expect(row).toMatchObject({
     disposition: 'defer',
     retainedXp: null,
-    marketGp: '100',
+    gp: '100',
   });
-  expect(reward.evidence.label).toContain('Synthetic Castle');
+  expect(row.evidence?.label).toContain('Synthetic Castle');
   doc = saveXpReward(doc, reward);
   const working = required(doc.workingInventories[0]);
   working.document = transferInventorySubtree(
@@ -136,7 +128,7 @@ test('possessions supply explicit selected-item evidence and preserve custody in
     'synthetic-tal'
   );
   expect(xpEvidenceChanged(doc, reward)).toBe(true);
-  expect(reward.evidence.label).toContain('Synthetic Castle');
+  expect(row.evidence?.label).toContain('Synthetic Castle');
   const next = startNextSession(doc, {
     campaignId: doc.id,
     sourceSessionId: 'session-1',

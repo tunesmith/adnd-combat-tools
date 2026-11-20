@@ -322,26 +322,15 @@ export function xpRewardBase(reward: XpReward) {
     if (reward.input.gp === null && !reward.rawOverride)
       fail('Enter GP-equivalent value.');
     raw = xpNumber(reward.input.gp || '0');
-  } else if (reward.input.rows) {
+  } else {
     const { subtotal, deferred, missing } = treasureSubtotal(reward.input.rows);
     if (deferred) fail('Deferred treasure remains pending.');
-    if (missing)
-      fail('Enter retained XP or sale proceeds for each decided treasure row.');
-    raw = xpNumber(subtotal);
-  } else {
-    if (reward.input.disposition === 'defer')
-      fail('Deferred treasure remains pending.');
-    const amount =
-      reward.input.disposition === 'keep'
-        ? reward.input.retainedXp
-        : reward.input.proceeds ?? reward.input.marketGp;
-    if (amount === null && !reward.rawOverride)
+    // A single manually adjusted item can have an unknown underlying amount.
+    if (missing && !(reward.rawOverride && reward.input.rows.length === 1))
       fail(
-        reward.input.disposition === 'keep'
-          ? 'Enter retained-item XP; sale value is separate.'
-          : 'Enter sale value in GP.'
+        'Enter retained-item XP for kept items and GP value for sold items.'
       );
-    raw = xpNumber(amount || '0');
+    raw = xpNumber(subtotal);
   }
   const calculatedRaw = calculationError ? null : xpExact(raw);
   if (reward.rawOverride) {
@@ -780,11 +769,15 @@ export function withXpDisposition(
   if (
     !disposition ||
     reward.input.category !== 'treasure' ||
-    reward.input.rows ||
-    reward.input.disposition === disposition
+    reward.input.rows.length !== 1
   )
     return reward;
-  return { ...reward, input: { ...reward.input, disposition } };
+  const [row] = reward.input.rows;
+  if (!row || row.disposition === disposition) return reward;
+  return {
+    ...reward,
+    input: { category: 'treasure', rows: [{ ...row, disposition }] },
+  };
 }
 
 // Build the same candidate ledger for preview and confirmation. Only included
@@ -806,12 +799,8 @@ export function stageXpAward(
       )
     )
       fail('Accepted treasure disposition is frozen. Use Edit award.');
-    if (treasurePending(choice.input)) {
-      if (
-        draft.correctionOf &&
-        choice.input.category === 'treasure' &&
-        choice.input.rows
-      )
+    if (treasurePending(choice)) {
+      if (draft.correctionOf)
         fail('Decide every treasure row before confirming a correction.');
       return [];
     }

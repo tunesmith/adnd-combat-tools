@@ -456,7 +456,7 @@
       ]
     },
     "xp": {
-      "version": 2,
+      "version": 3,
       "sessionOrder": ["session-1", "session-2"],
       "openings": [
         {
@@ -697,10 +697,16 @@
           },
           "input": {
             "category": "treasure",
-            "disposition": "keep",
-            "retainedXp": "1500",
-            "proceeds": null,
-            "marketGp": "7500"
+            "rows": [
+              {
+                "id": "first",
+                "label": "Kept warding scroll",
+                "evidence": null,
+                "disposition": "keep",
+                "retainedXp": "1500",
+                "gp": "7500"
+              }
+            ]
           },
           "recipients": [
             {
@@ -1198,10 +1204,16 @@
               },
               "input": {
                 "category": "treasure",
-                "disposition": "keep",
-                "retainedXp": "1500",
-                "proceeds": null,
-                "marketGp": "7500"
+                "rows": [
+                  {
+                    "id": "first",
+                    "label": "Kept warding scroll",
+                    "evidence": null,
+                    "disposition": "keep",
+                    "retainedXp": "1500",
+                    "gp": "7500"
+                  }
+                ]
               },
               "recipients": [
                 {
@@ -2074,7 +2086,7 @@
       ]
     },
     "xp": {
-      "version": 2,
+      "version": 3,
       "sessionOrder": ["session-1", "session-2"],
       "openings": [
         {
@@ -2315,10 +2327,16 @@
           },
           "input": {
             "category": "treasure",
-            "disposition": "keep",
-            "retainedXp": "1500",
-            "proceeds": null,
-            "marketGp": "7500"
+            "rows": [
+              {
+                "id": "first",
+                "label": "Kept warding scroll",
+                "evidence": null,
+                "disposition": "keep",
+                "retainedXp": "1500",
+                "gp": "7500"
+              }
+            ]
           },
           "recipients": [
             {
@@ -2803,10 +2821,16 @@
               },
               "input": {
                 "category": "treasure",
-                "disposition": "keep",
-                "retainedXp": "1500",
-                "proceeds": null,
-                "marketGp": "7500"
+                "rows": [
+                  {
+                    "id": "first",
+                    "label": "Kept warding scroll",
+                    "evidence": null,
+                    "disposition": "keep",
+                    "retainedXp": "1500",
+                    "gp": "7500"
+                  }
+                ]
               },
               "recipients": [
                 {
@@ -3154,10 +3178,16 @@
               },
               "input": {
                 "category": "treasure",
-                "disposition": "keep",
-                "retainedXp": "1500",
-                "proceeds": null,
-                "marketGp": "7500"
+                "rows": [
+                  {
+                    "id": "first",
+                    "label": "Kept warding scroll",
+                    "evidence": null,
+                    "disposition": "keep",
+                    "retainedXp": "1500",
+                    "gp": "7500"
+                  }
+                ]
               },
               "recipients": [
                 {
@@ -3823,10 +3853,16 @@
                 },
                 "input": {
                   "category": "treasure",
-                  "disposition": "keep",
-                  "retainedXp": "1500",
-                  "proceeds": null,
-                  "marketGp": "7500"
+                  "rows": [
+                    {
+                      "id": "first",
+                      "label": "Kept warding scroll",
+                      "evidence": null,
+                      "disposition": "keep",
+                      "retainedXp": "1500",
+                      "gp": "7500"
+                    }
+                  ]
                 },
                 "recipients": [
                   {
@@ -4114,10 +4150,16 @@
               },
               "input": {
                 "category": "treasure",
-                "disposition": "keep",
-                "retainedXp": "1500",
-                "proceeds": null,
-                "marketGp": "7500"
+                "rows": [
+                  {
+                    "id": "first",
+                    "label": "Kept warding scroll",
+                    "evidence": null,
+                    "disposition": "keep",
+                    "retainedXp": "1500",
+                    "gp": "7500"
+                  }
+                ]
               },
               "recipients": [
                 {

@@ -598,7 +598,7 @@ export default function CampaignXp({
     // A timeline draft can be positioned or used for history extension.
     // Disposition experiments are kept in the dialog until confirmation.
     const selectedIds = pointRewards(document, draft)
-      .filter((r) => !treasurePending(r.input))
+      .filter((r) => !treasurePending(r))
       .map((r) => r.id);
     if (
       onChange((doc) =>
@@ -991,8 +991,7 @@ export default function CampaignXp({
             }}
           >
             <h2>{inspectedEvent.title}</h2>
-            {inspectedEvent.input.category === 'treasure' &&
-            inspectedEvent.input.rows ? (
+            {inspectedEvent.input.category === 'treasure' ? (
               <TreasureReview rows={inspectedEvent.input.rows} />
             ) : (
               <p>{inspectedEvent.evidence.label}</p>

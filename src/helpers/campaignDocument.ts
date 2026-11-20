@@ -1,3 +1,4 @@
+import { upgradeCampaignTreasure } from './upgradeCampaignTreasure';
 import { campaignBankingSchema } from './campaignBankingModel';
 import type { CampaignBanking } from './campaignBankingModel';
 import { validateCampaignBanking } from './campaignBanking';
@@ -243,7 +244,10 @@ export function validateCampaign(value: unknown): CampaignDocument {
   validateCampaignXp(parsed, unique);
   return parsed;
 }
-export function parseCampaign(text: string): CampaignDocument {
+export function parseCampaign(
+  text: string,
+  source: 'file' | 'edit' = 'file'
+): CampaignDocument {
   if (strToU8(text).length > MAX_CAMPAIGN_BYTES)
     throw new Error('Campaign exceeds 8 MB.');
   let value: unknown;
@@ -252,6 +256,7 @@ export function parseCampaign(text: string): CampaignDocument {
   } catch {
     throw new Error('Invalid JSON. The active campaign has not been replaced.');
   }
+  if (source === 'file') upgradeCampaignTreasure(value);
   return validateCampaign(value);
 }
 export function serializeCampaign(document: CampaignDocument): string {

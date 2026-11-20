@@ -98,10 +98,16 @@ export function xpTestReward(
   if (reward.input.category === 'treasure') {
     reward.input = {
       category: 'treasure',
-      disposition: 'keep',
-      retainedXp: '1500',
-      proceeds: null,
-      marketGp: '7500',
+      rows: [
+        {
+          id: 'first',
+          label: reward.title,
+          evidence: null,
+          gp: '7500',
+          retainedXp: '1500',
+          disposition: 'keep',
+        },
+      ],
     };
     reward.ratio.proposed = '1';
   }

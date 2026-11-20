@@ -318,7 +318,7 @@ export function captureTreasurePossession(
   return {
     ...row,
     label,
-    marketGp: item.gp,
+    gp: item.gp,
     evidence: possessionEvidence(item, sessionId),
   };
 }
@@ -332,39 +332,44 @@ export function rewardFromPossession(
     (c) => c.key === key
   );
   if (!candidate) throw new Error('Inventory item changed.');
-  if (reward.input.category === 'treasure' && reward.input.rows) {
-    const [row] = reward.input.rows;
-    if (!row || reward.input.rows.length !== 1)
-      throw Error('Choose a treasure row for this possession.');
+  if (reward.input.category === 'money')
     return {
       ...reward,
-      input: {
-        category: 'treasure',
-        rows: [captureTreasurePossession(row, candidate, sessionId)],
-      },
+      title: candidate.name,
+      evidence: possessionEvidence(candidate, sessionId),
+      input: { category: 'money', gp: candidate.gp },
     };
-  }
-  const evidence = possessionEvidence(candidate, sessionId);
+  const rows =
+    reward.input.category === 'treasure'
+      ? reward.input.rows
+      : [newTreasureRow('first')];
+  const [row] = rows;
+  if (!row || rows.length !== 1)
+    throw Error('Choose a treasure row for this possession.');
   return {
     ...reward,
-    title: candidate.name,
-    evidence,
-    input:
-      reward.input.category === 'money'
-        ? { category: 'money', gp: String(candidate.gp) }
-        : {
-            category: 'treasure',
-            disposition: 'defer',
-            retainedXp: null,
-            proceeds: null,
-            marketGp: String(candidate.gp),
-          },
+    input: {
+      category: 'treasure',
+      rows: [captureTreasurePossession(row, candidate, sessionId)],
+    },
   };
 }
 export function refreshXpEvidence(
   doc: CampaignDocument,
   reward: XpReward
 ): XpReward {
+  if (reward.input.category === 'treasure') {
+    const [row] = reward.input.rows;
+    if (reward.input.rows.length === 1 && row?.evidence) {
+      return rewardFromPossession(
+        doc,
+        reward,
+        row.evidence.sessionId,
+        row.evidence.keys[0] || ''
+      );
+    }
+    return reward;
+  }
   if (reward.evidence.kind === 'encounter') {
     const copy = rewardFromEncounter(
       doc,
@@ -403,8 +408,21 @@ export function xpEvidenceChanged(
   doc: CampaignDocument,
   reward: XpReward
 ): boolean {
-  if (reward.evidence.kind === 'manual') return false;
   try {
+    if (reward.input.category === 'treasure') {
+      return reward.input.rows.some((row) => {
+        if (!row.evidence) return false;
+        const item = possessionXpCandidates(doc, row.evidence.sessionId).find(
+          (c) => c.key === row.evidence?.keys[0]
+        );
+        return (
+          !item ||
+          possessionEvidence(item, row.evidence.sessionId).fingerprint !==
+            row.evidence.fingerprint
+        );
+      });
+    }
+    if (reward.evidence.kind === 'manual') return false;
     return (
       refreshXpEvidence(doc, reward).evidence.fingerprint !==
       reward.evidence.fingerprint

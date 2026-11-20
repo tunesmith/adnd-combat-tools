@@ -161,7 +161,7 @@ export default function XpAwardTable({
     compareXpTimeline(document, a.origin, b.origin, a.id, b.id)
   );
   const resolved = orderedRewards.map((reward) => {
-    const deferred = treasurePending(reward.input);
+    const deferred = treasurePending(reward);
     const future =
       !readOnly &&
       compareXpTimeline(
@@ -437,12 +437,12 @@ export default function XpAwardTable({
                         <TreasureSubtotal rows={treasure.rows} />
                       )}
                       {treasure &&
-                        !treasure.rows &&
+                        treasure.rows.length === 1 &&
                         !readOnly &&
                         onDisposition && (
                           <select
                             aria-label={`Disposition for ${reward.title}`}
-                            value={treasure.disposition}
+                            value={treasure.rows[0]?.disposition}
                             disabled={
                               (!!blocked && blocked !== 'Deferred') || frozen
                             }

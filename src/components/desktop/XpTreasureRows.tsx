@@ -28,7 +28,7 @@ function contribution(row: XpTreasureRow) {
   if (row.disposition === 'defer') return 'Awaiting decision';
   const amount = treasureAmount(row);
   if (amount === null)
-    return row.disposition === 'keep' ? 'Enter retained XP' : 'Enter proceeds';
+    return row.disposition === 'keep' ? 'Enter retained XP' : 'Enter GP value';
   try {
     return xpDisplay(amount) + ' XP';
   } catch {
@@ -49,13 +49,12 @@ export function TreasureReview({
       <table aria-label="Treasure items">
         <thead>
           <tr>
-            <th>Item or lot</th>
+            <th>Item</th>
             <th>Decision</th>
             {!onSelect && (
               <>
-                <th>Market (gp)</th>
                 <th>Retained XP</th>
-                <th>Proceeds (gp)</th>
+                <th>GP value</th>
               </>
             )}
             <th>Contribution</th>
@@ -92,13 +91,11 @@ export function TreasureReview({
               </td>
               {!onSelect && (
                 <>
-                  {[row.marketGp, row.retainedXp, row.proceeds].map(
-                    (amount, index) => (
-                      <td key={index}>
-                        {amount === null ? '—' : xpDisplay(amount)}
-                      </td>
-                    )
-                  )}
+                  {[row.retainedXp, row.gp].map((amount, index) => (
+                    <td key={index}>
+                      {amount === null ? '—' : xpDisplay(amount)}
+                    </td>
+                  ))}
                 </>
               )}
               <td>{contribution(row)}</td>
@@ -133,15 +130,13 @@ export default function XpTreasureRows({
   items,
   sessionId,
   onChange,
-  initialRowId,
 }: {
   rows: XpTreasureRow[];
   items: Possession[];
   sessionId: string;
-  initialRowId?: string;
   onChange: (rows: XpTreasureRow[]) => void;
 }) {
-  const [selected, setSelected] = useState(initialRowId ?? rows[0]?.id);
+  const [selected, setSelected] = useState(rows[0]?.id);
   const row = rows.find((r) => r.id === selected) ?? rows[0];
   if (!row) return null;
   const update = (fields: Partial<XpTreasureRow>) =>
@@ -188,7 +183,7 @@ export default function XpTreasureRows({
             />
           </label>
           <label>
-            Gear item or lot
+            Gear item
             <select
               value={link}
               onChange={(e) => {
@@ -251,9 +246,8 @@ export default function XpTreasureRows({
           </label>
           {(
             [
-              ['marketGp', 'Market value (gp)'],
               ['retainedXp', 'Retained-item XP'],
-              ['proceeds', 'Sale proceeds (gp)'],
+              ['gp', 'GP value'],
             ] as const
           ).map(([key, label]) => (
             <label key={key}>

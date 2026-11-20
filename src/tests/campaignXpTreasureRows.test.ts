@@ -62,7 +62,7 @@ function fixture() {
     name: 'Bottle ' + (i + 1),
     containerId: null,
     quantity: i === 3 ? 2 : 1,
-    valueGpOverride: 150,
+    valueGpOverride: i === 2 ? 400 : 150,
   }));
   doc = startWorkingInventory(
     doc,
@@ -111,7 +111,7 @@ test('seven linked bottles settle together and a correction preserves the origin
   const mixed = rows.map(
     (r, i): XpTreasureRow =>
       i === 2
-        ? { ...r, disposition: 'sell', proceeds: '400' }
+        ? { ...r, disposition: 'sell' }
         : i === 0 || i === 6
         ? r
         : { ...r, disposition: 'defer' }
@@ -160,8 +160,7 @@ test('seven linked bottles settle together and a correction preserves the origin
     'correction'
   );
   const correctedRows = rows.map(
-    (r, i): XpTreasureRow =>
-      i === 2 ? { ...r, disposition: 'sell', proceeds: '400' } : r
+    (r, i): XpTreasureRow => (i === 2 ? { ...r, disposition: 'sell' } : r)
   );
   current = saveXpReward(
     current,
@@ -191,9 +190,9 @@ test('seven linked bottles settle together and a correction preserves the origin
   expect(revised.workingInventories).toEqual(doc.workingInventories);
   expect(revised.banking).toEqual(doc.banking);
 });
-test('each lot has its own evidence and selling needs actual proceeds, including an explicit zero', () => {
+test('each lot has its own evidence and selling uses the item’s GP value, including an explicit zero', () => {
   const { doc, rows, items, reward } = fixture();
-  expect(rows[3]?.marketGp).toBe('300');
+  expect(rows[3]?.gp).toBe('300');
   const saved = saveXpReward(doc, reward);
   expect(
     possessionXpCandidates(saved, 'session-1').filter((i) => i.captured)
@@ -202,13 +201,9 @@ test('each lot has its own evidence and selling needs actual proceeds, including
   const older: XpReward = {
     ...reward,
     id: 'legacy',
-    evidence: required(row.evidence ?? undefined),
     input: {
       category: 'treasure',
-      disposition: 'sell',
-      proceeds: null,
-      marketGp: '300',
-      retainedXp: null,
+      rows: [{ ...row, disposition: 'sell' }],
     },
   };
   expect(xpEvidenceDuplicates(saved, older).map((r) => r.id)).toEqual([
@@ -224,18 +219,19 @@ test('each lot has its own evidence and selling needs actual proceeds, including
     })
   ).toThrow(/same Gear lot/);
   const sale = { ...row, disposition: 'sell' as const };
-  expect(treasureSubtotal([sale])).toEqual({
+  expect(treasureSubtotal([sale]).subtotal).toBe('300');
+  expect(treasureSubtotal([{ ...sale, gp: null }])).toEqual({
     subtotal: '0',
     deferred: 0,
     missing: 1,
   });
-  expect(treasureSubtotal([{ ...sale, proceeds: '0' }])).toEqual({
+  expect(treasureSubtotal([{ ...sale, gp: '0' }])).toEqual({
     subtotal: '0',
     deferred: 0,
     missing: 0,
   });
   const refreshed = captureTreasurePossession(
-    { ...sale, label: 'Grey bottle', proceeds: '0' },
+    { ...sale, label: 'Grey bottle', gp: '0' },
     { ...required(items[3]), gp: '350' },
     'session-1'
   );
@@ -243,8 +239,7 @@ test('each lot has its own evidence and selling needs actual proceeds, including
     id: row.id,
     label: 'Grey bottle',
     disposition: 'sell',
-    proceeds: '0',
-    marketGp: '350',
+    gp: '350',
     retainedXp: '200',
   });
 });

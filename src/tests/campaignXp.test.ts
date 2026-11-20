@@ -251,15 +251,12 @@ test('unknown opening balances and bonuses stay unknown; recipient levels, share
     '225',
   ]);
   const treasure = xpTestReward(xpCampaign(), 'sale', 'treasure');
-  if (treasure.input.category === 'treasure' && !treasure.input.rows)
-    treasure.input = {
-      ...treasure.input,
-      disposition: 'sell',
-      proceeds: '100',
-    };
+  if (treasure.input.category !== 'treasure') throw Error('Fixture');
+  const row = required(treasure.input.rows[0]);
+  row.disposition = 'sell';
+  row.gp = '100';
   expect(resolveXpReward(treasure).raw).toBe('100');
-  if (treasure.input.category === 'treasure' && !treasure.input.rows)
-    treasure.input.disposition = 'defer';
+  row.disposition = 'defer';
   expect(() => resolveXpReward(treasure)).toThrow('pending');
 });
 test('profile edits, custody changes, labels and continuation do not rewrite accepted awards or pending state', () => {
@@ -546,21 +543,19 @@ test('money defaults to full XP for older unset drafts and retains an explicit r
   );
 });
 
-test('sale value prefers a recorded sale amount, falls back to a legacy GP value and preserves explicit zero', () => {
-  const doc = xpCastleDraft();
-  const reward = required(doc.xp?.rewards.find((r) => r.id === 'scroll'));
-  if (reward.input.category !== 'treasure' || reward.input.rows)
-    throw Error('Fixture');
-  reward.input.disposition = 'sell';
+test('sale uses the recorded GP value, including zero, and Keep uses the independent retained XP', () => {
+  const reward = required(
+    xpCastleDraft().xp?.rewards.find((r) => r.id === 'scroll')
+  );
+  if (reward.input.category !== 'treasure') throw Error('Fixture');
+  const row = required(reward.input.rows[0]);
+  row.disposition = 'sell';
   expect(resolveXpReward(reward).raw).toBe('7500');
-  reward.input.proceeds = '6000';
-  expect(resolveXpReward(reward).raw).toBe('6000');
-  reward.input.proceeds = '0';
+  row.gp = '0';
   expect(resolveXpReward(reward).raw).toBe('0');
-  reward.input.proceeds = null;
-  reward.input.marketGp = null;
-  expect(() => resolveXpReward(reward)).toThrow('sale value');
-  reward.input.disposition = 'keep';
+  row.gp = null;
+  expect(() => resolveXpReward(reward)).toThrow('GP value');
+  row.disposition = 'keep';
   expect(resolveXpReward(reward).raw).toBe('1500');
 });
 

@@ -22,7 +22,7 @@ import {
 test('ordered XP round-trips without rewriting accepted data or balances', () => {
   const doc = parseCampaign(JSON.stringify(replay.confirmed));
   expect(doc.schemaVersion).toBe(21);
-  expect(doc.xp?.version).toBe(2);
+  expect(doc.xp?.version).toBe(3);
   expect(xpTimelineEntries(doc, 'session-1').map((e) => e.id)).toEqual([
     'raiders',
     'money',

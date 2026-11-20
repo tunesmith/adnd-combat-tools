@@ -127,7 +127,7 @@ export function moveXpTimelineEntry(
 export function validateXpTimeline(doc: CampaignDocument) {
   const xp = doc.xp;
   if (!xp) return;
-  if (xp.version !== 2 || !xp.timeline)
+  if (xp.version !== 3 || !xp.timeline)
     throw new Error('Expected ordered XP data.');
   const all = entries(xp),
     seen = new Set<string>();

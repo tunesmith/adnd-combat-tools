@@ -1033,7 +1033,7 @@
     ]
   },
   "xp": {
-    "version": 2,
+    "version": 3,
     "timeline": {
       "session-1": ["first-money", "first"]
     },

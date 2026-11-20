@@ -232,10 +232,16 @@ test('Day93 removal, restoration and roster XP settings preserve combat and conf
   opals.title = 'Hell hound opals';
   opals.input = {
     category: 'treasure',
-    disposition: 'keep',
-    retainedXp: '120',
-    proceeds: null,
-    marketGp: null,
+    rows: [
+      {
+        id: 'first',
+        label: opals.title,
+        evidence: null,
+        gp: null,
+        retainedXp: '120',
+        disposition: 'keep',
+      },
+    ],
   };
   opals.recipients = opals.recipients.map((r) => ({
     ...r,

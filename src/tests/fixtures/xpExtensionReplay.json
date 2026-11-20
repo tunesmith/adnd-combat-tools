@@ -64,7 +64,7 @@
     "profiles": []
   },
   "xp": {
-    "version": 2,
+    "version": 3,
     "timeline": {
       "s90": ["Later award-coins", "Later award"],
       "s70": ["First backfill award-coins", "First backfill award"],
