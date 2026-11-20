@@ -160,12 +160,14 @@ const createNextRoundCells = (
       return {
         enemyToParty: '',
         partyToEnemy: '',
-        enemyToPartyVisible: previousCell
-          ? hasEnemyToPartyContent(previousCell)
-          : false,
-        partyToEnemyVisible: previousCell
-          ? hasPartyToEnemyContent(previousCell)
-          : false,
+        enemyToPartyVisible:
+          previousCell && !previousCell.enemyToPartyNoTarget
+            ? hasEnemyToPartyContent(previousCell)
+            : false,
+        partyToEnemyVisible:
+          previousCell && !previousCell.partyToEnemyNoTarget
+            ? hasPartyToEnemyContent(previousCell)
+            : false,
       };
     })
   );

@@ -25,6 +25,7 @@ const getEnemyTargetIndices = (
   round.party.flatMap((_, partyIndex) => {
     const cell = round.cells[enemyIndex]?.[partyIndex];
     return cell &&
+      !cell.enemyToPartyNoTarget &&
       (cell.enemyToPartyVisible || Boolean(cell.enemyToParty.trim()))
       ? [partyIndex]
       : [];
@@ -37,6 +38,7 @@ const getPartyTargetIndices = (
   round.enemies.flatMap((_, enemyIndex) => {
     const cell = round.cells[enemyIndex]?.[partyIndex];
     return cell &&
+      !cell.partyToEnemyNoTarget &&
       (cell.partyToEnemyVisible || Boolean(cell.partyToEnemy.trim()))
       ? [enemyIndex]
       : [];

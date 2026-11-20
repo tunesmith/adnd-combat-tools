@@ -41,6 +41,9 @@ export interface TrackerCellState {
   partyToEnemy: string;
   enemyToPartyVisible: boolean;
   partyToEnemyVisible: boolean;
+  // A handwritten entry can remain visible after its last target assignment is cleared.
+  enemyToPartyNoTarget?: true;
+  partyToEnemyNoTarget?: true;
   // Nonempty cell text is already a handwritten entry in older saves.
   enemyToPartyManualBlank?: true;
   partyToEnemyManualBlank?: true;
@@ -220,6 +223,9 @@ export interface TrackerSparseCellState {
   partyToEnemy?: string;
   enemyToPartyVisible?: true;
   partyToEnemyVisible?: true;
+  // A handwritten entry can remain visible after its last target assignment is cleared.
+  enemyToPartyNoTarget?: true;
+  partyToEnemyNoTarget?: true;
   // Nonempty cell text is already a handwritten entry in older saves.
   enemyToPartyManualBlank?: true;
   partyToEnemyManualBlank?: true;

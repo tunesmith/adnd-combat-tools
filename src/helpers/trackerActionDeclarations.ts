@@ -25,7 +25,7 @@ const hasActiveCellDirection = (
   cell: TrackerCellState | undefined,
   direction: TrackerActionDirection
 ): boolean => {
-  if (!cell) {
+  if (!cell || cell[`${direction}NoTarget`]) {
     return false;
   }
 
@@ -178,53 +178,28 @@ const getTargetDeclarationsForAction = (
   round: TrackerRound,
   action: TrackerActionDeclaration
 ): TrackerActionTargetDeclaration[] => {
-  if (action.usesGridTargets === false) {
-    return [];
-  }
-
-  if (action.direction === 'partyToEnemy') {
-    return round.enemies.flatMap((targetCombatant, enemyIndex) => {
-      const cell = round.cells[enemyIndex]?.[action.combatantIndex];
-
-      if (!cell || !hasActiveCellDirection(cell, action.direction)) {
-        return [];
-      }
-
-      const actionIds = getCellActionIds(cell, action.direction);
-      if (actionIds.length > 0 && !actionIds.includes(action.id)) {
-        return [];
-      }
-
-      return [
-        {
-          targetCombatantKey: targetCombatant.key,
-          targetCombatantIndex: enemyIndex,
-          cellRowIndex: enemyIndex,
-          cellColumnIndex: action.combatantIndex,
-          cellResultText: getCellResultText(cell, action.direction),
-        },
-      ];
-    });
-  }
-
-  return round.party.flatMap((targetCombatant, partyIndex) => {
-    const cell = round.cells[action.combatantIndex]?.[partyIndex];
-
-    if (!cell || !hasActiveCellDirection(cell, action.direction)) {
+  const party = action.side === 'party';
+  const targets = party ? round.enemies : round.party;
+  return targets.flatMap((target, targetIndex) => {
+    const cellRowIndex = party ? targetIndex : action.combatantIndex;
+    const cellColumnIndex = party ? action.combatantIndex : targetIndex;
+    const cell = round.cells[cellRowIndex]?.[cellColumnIndex];
+    if (!cell || !hasActiveCellDirection(cell, action.direction)) return [];
+    const ids = getCellActionIds(cell, action.direction);
+    // Narrative associations are opt-in. Old disabled actions never acquire
+    // a target merely because an unrelated grid entry is visible.
+    if (
+      action.usesGridTargets === false &&
+      !(action.declaredAction === 'none' && ids.includes(action.id))
+    )
       return [];
-    }
-
-    const actionIds = getCellActionIds(cell, action.direction);
-    if (actionIds.length > 0 && !actionIds.includes(action.id)) {
-      return [];
-    }
-
+    if (ids.length && !ids.includes(action.id)) return [];
     return [
       {
-        targetCombatantKey: targetCombatant.key,
-        targetCombatantIndex: partyIndex,
-        cellRowIndex: action.combatantIndex,
-        cellColumnIndex: partyIndex,
+        targetCombatantKey: target.key,
+        targetCombatantIndex: targetIndex,
+        cellRowIndex,
+        cellColumnIndex,
         cellResultText: getCellResultText(cell, action.direction),
       },
     ];
@@ -268,55 +243,78 @@ export const getTrackerActionDeclarations = (
   return derivedActions.concat(explicitActionsWithCurrentTargets);
 };
 
-// Some imported declarations carry their targets directly instead of in grid
-// cells. Bring those memberships into the grid only when the actor is edited.
+export function canAssignGridTarget(action: TrackerActionDeclaration) {
+  return action.usesGridTargets !== false || action.declaredAction === 'none';
+}
+
+export function actionIdsForTarget(
+  actions: TrackerActionDeclaration[],
+  key: number
+) {
+  return actions
+    .filter(
+      (a) =>
+        canAssignGridTarget(a) &&
+        a.targetDeclarations.some((t) => t.targetCombatantKey === key)
+    )
+    .map((a) => a.id);
+}
+
+// An omitted list retains the legacy "all eligible actions" convention. When
+// the last owner is removed a handwritten entry can still occupy the grid.
+export function setCellTargetOwners(
+  cell: TrackerCellState,
+  direction: TrackerActionDirection,
+  ids: string[] | undefined
+): TrackerCellState {
+  const assigned = ids === undefined || ids.length > 0;
+  const handwritten = Boolean(
+    cell[direction] || cell[`${direction}ManualBlank`]
+  );
+  return {
+    ...cell,
+    [`${direction}Visible`]: assigned || handwritten,
+    [`${direction}NoTarget`]: !assigned && handwritten ? true : undefined,
+    [`${direction}ActionIds`]: ids?.length ? ids : undefined,
+  };
+}
+
+// Copy effective memberships before editing stored targets or changing the
+// action list. A wildcard in the old list then applies only to its old owners.
 export function materializeStoredTargets(
   round: TrackerRound,
   side: TrackerActionSide,
-  index: number
+  index: number,
+  survivingIds?: ReadonlySet<string>
 ): TrackerRound {
-  const owns = (action: TrackerActionDeclaration) =>
-    action.side === side && action.combatantIndex === index;
+  const owns = (a: TrackerActionDeclaration) =>
+    a.side === side && a.combatantIndex === index;
   if (
-    !round.actions?.some(
-      (action) => owns(action) && action.targetDeclarations.length
-    )
+    !survivingIds &&
+    !round.actions?.some((a) => owns(a) && a.targetDeclarations.length)
   )
     return round;
-  const actions = getTrackerActionDeclarations(round).filter(
-    (action) => owns(action) && action.usesGridTargets !== false
-  );
+  const old = getTrackerActionDeclarations(round).filter(owns);
   const direction = side === 'party' ? 'partyToEnemy' : 'enemyToParty';
   const targets = side === 'party' ? round.enemies : round.party;
   return {
     ...round,
-    actions: round.actions.map((action) => {
-      if (!owns(action) || !action.targetDeclarations.length) return action;
-      const live =
-        actions.find((a) => a.id === action.id)?.targetDeclarations || [];
-      return {
-        ...action,
-        targetDeclarations: action.targetDeclarations.filter((t) =>
-          live.some((l) => l.targetCombatantKey === t.targetCombatantKey)
-        ),
-      };
-    }),
+    actions: round.actions?.map((a) =>
+      owns(a) && a.targetDeclarations.length && canAssignGridTarget(a)
+        ? { ...a, targetDeclarations: [] }
+        : a
+    ),
     cells: round.cells.map((row, r) =>
       row.map((cell, c) => {
         if ((side === 'party' ? c : r) !== index) return cell;
-        const key = targets[side === 'party' ? r : c]?.key;
-        const ids = actions
-          .filter((action) =>
-            action.targetDeclarations.some((t) => t.targetCombatantKey === key)
-          )
-          .map((action) => action.id);
-        if (!ids.length) return cell;
-        const all = ids.length === actions.length;
-        return {
-          ...cell,
-          [`${direction}Visible`]: true,
-          [`${direction}ActionIds`]: all ? undefined : ids,
-        };
+        const target = targets[side === 'party' ? r : c];
+        if (!target) return cell;
+        const ids = actionIdsForTarget(old, target.key).filter(
+          (id) => !survivingIds || survivingIds.has(id)
+        );
+        return ids.length || hasActiveCellDirection(cell, direction)
+          ? setCellTargetOwners(cell, direction, ids)
+          : cell;
       })
     ),
   };

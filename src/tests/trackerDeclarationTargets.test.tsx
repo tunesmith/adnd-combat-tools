@@ -182,7 +182,7 @@ test('mode-specific inputs stay available in the compact wizard', () => {
   fireEvent.click(d.getByRole('button', { name: 'Bow, short' }));
   expect(d.getByRole('radio', { name: 'No combat action' })).toBeChecked();
   expect(d.queryByRole('radio', { name: 'Set vs charge' })).toBeNull();
-  expect(d.queryByRole('checkbox')).toBeNull();
+  expect(d.getByRole('checkbox', { name: 'Lodi' })).toBeChecked();
   fireEvent.click(d.getByRole('button', { name: 'Add action' }));
   mode('Open melee');
   expect(d.getByRole('status')).toHaveTextContent('mismatch');

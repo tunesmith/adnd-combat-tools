@@ -21,7 +21,7 @@ import {
   useRef,
   useState,
 } from 'react';
-import type { CSSProperties } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import {
   addCombatant,
   createBaseCombatant,
@@ -112,6 +112,9 @@ import {
   getDefaultTrackerDeclaredAction,
   getTrackerActionDeclarations,
   materializeStoredTargets,
+  actionIdsForTarget,
+  canAssignGridTarget,
+  setCellTargetOwners,
 } from '../../helpers/trackerActionDeclarations';
 import {
   canSetAgainstCharge,
@@ -147,11 +150,6 @@ type CellField = Extract<
   keyof TrackerCellState,
   'enemyToParty' | 'partyToEnemy'
 >;
-type CellActionIdsField = Extract<
-  keyof TrackerCellState,
-  'enemyToPartyActionIds' | 'partyToEnemyActionIds'
->;
-
 interface AttackDetailTarget {
   enemyIndex: number;
   partyIndex: number;
@@ -400,63 +398,6 @@ interface CellActionOption {
   title: string;
   summary: string;
 }
-
-const getActionIdsField = (
-  direction: AttackDetailDirection
-): CellActionIdsField =>
-  direction === 'partyToEnemy'
-    ? 'partyToEnemyActionIds'
-    : 'enemyToPartyActionIds';
-
-const getCellActionIds = (
-  cell: TrackerCellState,
-  direction: AttackDetailDirection
-): string[] => cell[getActionIdsField(direction)] || [];
-
-const filterActionIds = (
-  actionIds: string[] | undefined,
-  validActionIds: Set<string>
-): string[] | undefined => {
-  const nextActionIds = (actionIds || []).filter((actionId) =>
-    validActionIds.has(actionId)
-  );
-
-  return nextActionIds.length > 0 ? nextActionIds : undefined;
-};
-
-const pruneCellActionAssignments = (
-  round: TrackerRound,
-  side: TrackerSide,
-  index: number,
-  validActionIds: Set<string>
-): TrackerRound => ({
-  ...round,
-  cells: round.cells.map((row, rowIndex) =>
-    row.map((cell, columnIndex) => {
-      if (side === 'party' && columnIndex === index) {
-        return {
-          ...cell,
-          partyToEnemyActionIds: filterActionIds(
-            cell.partyToEnemyActionIds,
-            validActionIds
-          ),
-        };
-      }
-
-      if (side === 'enemy' && rowIndex === index) {
-        return {
-          ...cell,
-          enemyToPartyActionIds: filterActionIds(
-            cell.enemyToPartyActionIds,
-            validActionIds
-          ),
-        };
-      }
-
-      return cell;
-    })
-  ),
-});
 
 const getTrackerActionId = (
   side: TrackerSide,
@@ -763,7 +704,7 @@ const getCellActionOptions = (
   actions: TrackerActionDeclaration[]
 ): CellActionOption[] =>
   actions.flatMap((action, actionIndex) => {
-    if (action.usesGridTargets === false) {
+    if (!canAssignGridTarget(action)) {
       return [];
     }
 
@@ -793,10 +734,8 @@ const getCellActionAssignmentLabel = (
     optionIds.has(actionId)
   );
 
-  if (
-    selectedActionIds.length === 0 ||
-    selectedActionIds.length === options.length
-  ) {
+  if (!selectedActionIds.length) return 'Assign actions';
+  if (selectedActionIds.length === options.length) {
     return 'All actions';
   }
 
@@ -1218,7 +1157,10 @@ const getCombatFlowNodeTargetIndices = (
   action: TrackerActionDeclaration | undefined,
   combatants: InitiativeScenarioCombatant[]
 ): number[] => {
-  if (action?.usesGridTargets === false) {
+  if (
+    action?.usesGridTargets === false ||
+    combatant.declaredAction === 'none'
+  ) {
     return [];
   }
 
@@ -1305,44 +1247,32 @@ const applyTrackerAction = (
         const columnIndex = side === 'party' ? index : targetIndex;
         const direction = getActionDirection(side);
         const cell = previous.cells[rowIndex]?.[columnIndex];
-        if (!cell || (!active && cell[direction].trim())) return previous;
+        if (!cell) return previous;
         const round = materializeStoredTargets(previous, side, index);
-        const targetKey = getActionCombatant(
-          round,
-          getActionTargetSide(side),
-          targetIndex
-        )?.key;
+        // A grid activation without a per-action choice applies to all selectable
+        // actions, including a narrative association. Keep implicit attacks implicit.
+        const owners =
+          actionIds ??
+          (active &&
+          round.actions?.some(
+            (a) =>
+              a.side === side &&
+              a.combatantIndex === index &&
+              a.declaredAction === 'none'
+          )
+            ? getCellActionOptions(
+                getStructuredActionsForCombatant(round, side, index)
+              ).map((o) => o.id)
+            : undefined);
         return {
           ...round,
-          ...(round.actions
-            ? {
-                actions: round.actions.map((a) => {
-                  if (
-                    a.side !== side ||
-                    a.combatantIndex !== index ||
-                    (active && (!actionIds || actionIds.includes(a.id)))
-                  )
-                    return a;
-                  return {
-                    ...a,
-                    targetDeclarations: a.targetDeclarations.filter(
-                      (t) => t.targetCombatantKey !== targetKey
-                    ),
-                  };
-                }),
-              }
-            : {}),
           cells: round.cells.map((row, r) =>
             r !== rowIndex
               ? row
               : row.map((item, c) =>
                   c !== columnIndex
                     ? item
-                    : {
-                        ...item,
-                        [`${direction}Visible`]: active,
-                        [getActionIdsField(direction)]: actionIds,
-                      }
+                    : setCellTargetOwners(item, direction, active ? owners : [])
                 )
           ),
         };
@@ -1372,8 +1302,9 @@ const applyTrackerAction = (
                   const next = {
                     ...cell,
                     [field]: value ?? '',
-                    [visible]: true,
+                    [visible]: value !== null || !cell[`${field}NoTarget`],
                   };
+                  if (!next[visible]) delete next[`${field}NoTarget`];
                   if (value === '') next[manualBlank] = true;
                   else delete next[manualBlank];
                   return next;
@@ -1412,7 +1343,12 @@ const applyTrackerAction = (
         // Keep legacy target order intact for label, distance and timing edits.
         const round = sameActions
           ? previous
-          : materializeStoredTargets(previous, action.side, action.index);
+          : materializeStoredTargets(
+              previous,
+              action.side,
+              action.index,
+              new Set(action.actionDeclarations.map((a) => a.id))
+            );
         const combatant = getActionCombatant(round, action.side, action.index);
 
         if (!combatant) {
@@ -1434,26 +1370,21 @@ const applyTrackerAction = (
                 a.id === declaration.id &&
                 a.declaredAction === declaration.declaredAction
             );
-            return declaration.usesGridTargets === false ||
-              !original?.targetDeclarations.length
-              ? declaration
-              : {
-                  ...declaration,
-                  targetDeclarations: original.targetDeclarations,
-                };
+            if (!original) return declaration;
+            const updated = {
+              ...declaration,
+              targetDeclarations: original.targetDeclarations,
+            };
+            if (original.usesGridTargets === false)
+              updated.usesGridTargets = false;
+            else delete updated.usesGridTargets;
+            return updated;
           })
         );
-        const nextRound = pruneCellActionAssignments(
-          {
-            ...round,
-            actions: combinedActions.length > 0 ? combinedActions : undefined,
-          },
-          action.side,
-          action.index,
-          new Set(
-            action.actionDeclarations.map((declaration) => declaration.id)
-          )
-        );
+        const nextRound = {
+          ...round,
+          actions: combinedActions.length ? combinedActions : undefined,
+        };
 
         if (action.side === 'party') {
           return {
@@ -1538,28 +1469,27 @@ const trackerReducer = (
 };
 
 // Native details owns subsequent toggles. A new actor/round mounts a fresh disclosure.
-function NextRoundDisclosure({
+function TrackerDisclosure({
   initiallyOpen,
-  label,
-  value,
-  onChange,
+  className,
+  children,
 }: {
   initiallyOpen: boolean;
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
+  className?: string;
+  children: ReactNode;
 }) {
   const [defaultOpen] = useState(initiallyOpen);
   return (
-    <details open={defaultOpen} className={styles['roundDisclosure']}>
-      <summary>Next round</summary>
-      <AutoHeightTextarea
-        aria-label={label}
-        className={styles['queuedEffectInput']}
-        value={value}
-        onChange={onChange}
-      />
+    <details open={defaultOpen} className={className}>
+      {children}
     </details>
+  );
+}
+function SavedHp({ hp, maxHp }: { hp?: string; maxHp?: string }) {
+  return (
+    <span className={styles['reviewHp']}>
+      HP {hp?.trim() ? hp : '—'} · max {maxHp?.trim() ? maxHp : '—'}
+    </span>
   );
 }
 
@@ -1710,6 +1640,11 @@ const CombatTracker = ({
     return true;
   };
   const currentRound = state.rounds[state.activeRound];
+  const effectiveActions = useMemo(
+    () => (currentRound ? getTrackerActionDeclarations(currentRound) : []),
+    [currentRound]
+  );
+
   const availablePartyProfiles = (campaign?.partyProfiles || []).filter(
     (profile) => !partyHasName(currentRound?.party || [], profile.name)
   );
@@ -2017,59 +1952,16 @@ const CombatTracker = ({
     currentCombatWizardActions.find(
       (action) => action.id === combatWizardSelectedActionId
     ) || currentCombatWizardActions[0];
-  const currentCombatWizardTargetIndices = useMemo<number[]>(() => {
-    if (!currentRound || !currentCombatWizardEntry) {
-      return [];
-    }
-
-    if (!selectedCombatWizardAction) {
-      return currentCombatWizardEntry.targetIndices;
-    }
-
-    if (selectedCombatWizardAction.usesGridTargets === false) {
-      return [];
-    }
-
-    const gridActionIds = new Set(
-      currentCombatWizardActions
-        .filter((action) => action.usesGridTargets !== false)
-        .map((action) => action.id)
-    );
-
-    if (!gridActionIds.has(selectedCombatWizardAction.id)) {
-      return [];
-    }
-
-    const direction: AttackDetailDirection =
-      currentCombatWizardEntry.side === 'party'
-        ? 'partyToEnemy'
-        : 'enemyToParty';
-
-    return currentCombatWizardEntry.targetIndices.filter((targetIndex) => {
-      const cell =
-        currentCombatWizardEntry.side === 'party'
-          ? currentRound.cells[targetIndex]?.[currentCombatWizardEntry.index]
-          : currentRound.cells[currentCombatWizardEntry.index]?.[targetIndex];
-
-      if (!cell) {
-        return false;
-      }
-
-      const assignedActionIds = getCellActionIds(cell, direction).filter(
-        (actionId) => gridActionIds.has(actionId)
-      );
-
-      return (
-        assignedActionIds.length === 0 ||
-        assignedActionIds.includes(selectedCombatWizardAction.id)
-      );
-    });
-  }, [
-    currentCombatWizardActions,
-    currentCombatWizardEntry,
-    currentRound,
-    selectedCombatWizardAction,
-  ]);
+  const currentCombatWizardTargetIndices = selectedCombatWizardAction
+    ? selectedCombatWizardAction.usesGridTargets === false ||
+      selectedCombatWizardAction.declaredAction === 'none'
+      ? []
+      : getUniqueTargetIndices(
+          selectedCombatWizardAction.targetDeclarations.map(
+            (t) => t.targetCombatantIndex
+          )
+        )
+    : currentCombatWizardEntry?.targetIndices ?? [];
   const hasTrackerChanged = state !== initialStateRef.current;
   const partyColumnStyles = useMemo<CSSProperties[]>(
     () =>
@@ -2701,15 +2593,18 @@ const CombatTracker = ({
       return;
     }
 
-    const optionIds = new Set(options.map((option) => option.id));
-    const assignedActionIds = getCellActionIds(cell, direction).filter(
-      (actionId) => optionIds.has(actionId)
-    );
-
+    const target =
+      sourceSide === 'party'
+        ? currentRound.enemies[enemyIndex]
+        : currentRound.party[partyIndex];
+    if (!target) return;
     setCellActionAssignmentDraftIds(
-      assignedActionIds.length > 0
-        ? assignedActionIds
-        : options.map((option) => option.id)
+      actionIdsForTarget(
+        effectiveActions.filter(
+          (a) => a.side === sourceSide && a.combatantIndex === sourceIndex
+        ),
+        target.key
+      )
     );
     setCellActionAssignmentTarget({
       enemyIndex,
@@ -2735,18 +2630,13 @@ const CombatTracker = ({
       return;
     }
 
-    const actionIds =
-      selectedActionIds.length === selectedCellActionAssignment.options.length
-        ? undefined
-        : selectedActionIds;
-
     dispatch({
       type: 'set-declared-target',
       side: selectedCellActionAssignment.side,
       index: selectedCellActionAssignment.index,
       targetIndex: selectedCellActionAssignment.targetIndex,
       active: true,
-      actionIds,
+      actionIds: selectedActionIds,
     });
     closeCellActionAssignmentModal();
   };
@@ -3210,7 +3100,8 @@ const CombatTracker = ({
 
   const commitIntentionWizardActionDrafts = (
     drafts: TrackerActionEditorDraft[],
-    combatantOverride?: TrackerCombatant
+    combatantOverride?: TrackerCombatant,
+    forceExplicit = false
   ): boolean => {
     if (!currentIntentionWizardEntry) {
       return false;
@@ -3238,11 +3129,13 @@ const CombatTracker = ({
       index: currentIntentionWizardEntry.index,
       combatant,
       roundState,
-      preserveExplicitAction: getTrackerActionDeclarations(currentRound).some(
-        (action) =>
-          action.side === currentIntentionWizardEntry.side &&
-          action.combatantKey === currentIntentionWizardEntry.combatantKey
-      ),
+      preserveExplicitAction:
+        forceExplicit ||
+        getTrackerActionDeclarations(currentRound).some(
+          (action) =>
+            action.side === currentIntentionWizardEntry.side &&
+            action.combatantKey === currentIntentionWizardEntry.combatantKey
+        ),
       drafts,
     });
 
@@ -3256,14 +3149,13 @@ const CombatTracker = ({
       ...entry,
       intention: result.intention,
     }));
-    dispatch({
+    return dispatch({
       type: 'set-combatant-actions',
       side: currentIntentionWizardEntry.side,
       index: currentIntentionWizardEntry.index,
       intention: result.intention,
       actionDeclarations: result.actionDeclarations,
     });
-    return true;
   };
 
   const updateSelectedIntentionWizardActionDraft = (
@@ -4050,19 +3942,19 @@ const CombatTracker = ({
       return null;
     }
 
-    const enemyActionOptions = getCellActionOptions(
-      getStructuredActionsForCombatant(currentRound, 'enemy', enemyIndex)
+    const enemyActions = effectiveActions.filter(
+      (a) => a.side === 'enemy' && a.combatantIndex === enemyIndex
     );
-    const partyActionOptions = getCellActionOptions(
-      getStructuredActionsForCombatant(currentRound, 'party', partyIndex)
+    const partyActions = effectiveActions.filter(
+      (a) => a.side === 'party' && a.combatantIndex === partyIndex
     );
     const enemyAssignmentLabel = getCellActionAssignmentLabel(
-      enemyActionOptions,
-      getCellActionIds(cellState, 'enemyToParty')
+      getCellActionOptions(enemyActions),
+      actionIdsForTarget(enemyActions, partyCombatant.key)
     );
     const partyAssignmentLabel = getCellActionAssignmentLabel(
-      partyActionOptions,
-      getCellActionIds(cellState, 'partyToEnemy')
+      getCellActionOptions(partyActions),
+      actionIdsForTarget(partyActions, enemyCombatant.key)
     );
 
     return (
@@ -4277,31 +4169,38 @@ const CombatTracker = ({
     const roundState = getActionRoundState(currentRound, side, index);
     if (!actor || !roundState) return null;
     return (
-      <NextRoundDisclosure
+      <TrackerDisclosure
         key={`queue-${state.activeRound}-${side}-${actor.key}`}
         initiallyOpen={reviewActor && Boolean(roundState.effect.trim())}
-        label={`Next round effect for ${
-          side === 'party'
-            ? getPartyDisplayName(index)
-            : getEnemyDisplayName(index)
-        }`}
-        value={getNextRoundEffect(roundState)}
-        onChange={(value) =>
-          dispatch({
-            type: side === 'party' ? 'set-party-state' : 'set-enemy-state',
-            index,
-            field: 'nextRoundEffectOverride',
-            value,
-          })
-        }
-      />
+        className={styles['roundDisclosure']}
+      >
+        <summary>Next round</summary>
+        <AutoHeightTextarea
+          className={styles['queuedEffectInput']}
+          aria-label={`Next round effect for ${
+            side === 'party'
+              ? getPartyDisplayName(index)
+              : getEnemyDisplayName(index)
+          }`}
+          value={getNextRoundEffect(roundState)}
+          onChange={(value) =>
+            dispatch({
+              type: side === 'party' ? 'set-party-state' : 'set-enemy-state',
+              index,
+              field: 'nextRoundEffectOverride',
+              value,
+            })
+          }
+        />
+      </TrackerDisclosure>
     );
   };
 
   const renderRelatedResults = (
     side: TrackerSide,
     actorKey: number,
-    view: 'flow' | 'grid' | 'review' = 'flow'
+    view: 'flow' | 'grid' | 'review' = 'flow',
+    stepKey?: string
   ) => {
     const results = (currentRound.stepResults || []).filter(
       (result) =>
@@ -4312,9 +4211,13 @@ const CombatTracker = ({
     );
     if (view !== 'flow' && !results.length) return null;
     return (
-      <details
-        key={`results-${state.activeRound}-${side}-${actorKey}`}
-        open={view === 'review' || undefined}
+      <TrackerDisclosure
+        key={`results-${state.activeRound}-${side}-${actorKey}-${
+          stepKey ?? view
+        }`}
+        initiallyOpen={
+          view === 'review' || (view === 'flow' && results.length > 0)
+        }
         className={
           view === 'review'
             ? styles['reviewResults']
@@ -4358,7 +4261,7 @@ const CombatTracker = ({
         ) : (
           <div>No results recorded.</div>
         )}
-      </details>
+      </TrackerDisclosure>
     );
   };
 
@@ -4434,14 +4337,13 @@ const CombatTracker = ({
   };
 
   const renderDeclarationTargets = (entry: IntentionWizardEntry) => {
-    if (selectedIntentionWizardActionDraft?.mode === 'none') {
-      return <p>No targets required.</p>;
-    }
+    const selectedDraft = selectedIntentionWizardActionDraft;
+    const narrative = selectedDraft?.mode === 'none';
     const { side, index } = entry;
     const opponents =
       side === 'party' ? currentRound.enemies : currentRound.party;
     const direction = getActionDirection(side);
-    const actions = getTrackerActionDeclarations(currentRound).filter(
+    const actions = effectiveActions.filter(
       (a) => a.side === side && a.combatantKey === entry.combatantKey
     );
     const options = getCellActionOptions(actions);
@@ -4460,19 +4362,11 @@ const CombatTracker = ({
                 ? currentRound.cells[targetIndex]?.[index]
                 : currentRound.cells[index]?.[targetIndex];
             if (!cell) return null;
-            const assigned = actions
-              .filter(
-                (a) =>
-                  a.usesGridTargets !== false &&
-                  a.targetDeclarations.some(
-                    (t) => t.targetCombatantKey === opponent.key
-                  )
-              )
-              .map((a) => a.id);
+            const assigned = actionIdsForTarget(actions, opponent.key);
             const hasText = Boolean(cell[direction].trim());
-            const checked = Boolean(
-              assigned.length || cell[`${direction}Visible`] || hasText
-            );
+            const checked = narrative
+              ? assigned.includes(selectedDraft.id)
+              : assigned.length > 0;
             const name =
               side === 'party'
                 ? getEnemyDisplayName(targetIndex)
@@ -4501,18 +4395,37 @@ const CombatTracker = ({
                         type="checkbox"
                         checked={checked}
                         disabled={
-                          hasText || Boolean(intentionWizardActionError)
+                          (!narrative && hasText && checked) ||
+                          Boolean(intentionWizardActionError)
                         }
-                        onChange={(e) =>
-                          change(
-                            e.target.checked,
-                            e.target.checked &&
-                              options.length > 1 &&
-                              selectedIntentionWizardActionDraft
-                              ? [selectedIntentionWizardActionDraft.id]
-                              : undefined
-                          )
-                        }
+                        onChange={(e) => {
+                          const on = e.target.checked;
+                          if (narrative) {
+                            // A fresh blank editor has no declaration yet. Persist the
+                            // explicit noncombat choice before activating its grid cell.
+                            if (
+                              !actions.some((a) => a.id === selectedDraft.id) &&
+                              !commitIntentionWizardActionDrafts(
+                                intentionWizardActionDrafts,
+                                undefined,
+                                true
+                              )
+                            )
+                              return;
+                            const ids = on
+                              ? [...assigned, selectedDraft.id]
+                              : assigned.filter(
+                                  (id) => id !== selectedDraft.id
+                                );
+                            change(ids.length > 0, ids);
+                          } else
+                            change(
+                              on,
+                              on && selectedDraft && options.length > 1
+                                ? [selectedDraft.id]
+                                : undefined
+                            );
+                        }}
                       />
                       {name}
                     </label>
@@ -4525,14 +4438,13 @@ const CombatTracker = ({
                     )?.effect || '—'}
                   </td>
                 </tr>
-                {checked && options.length > 1 && (
+                {assigned.length > 0 && options.length > 1 && (
                   <tr data-active>
                     <td colSpan={2}>
                       <fieldset>
                         <legend>Actions using this target</legend>
                         {options.map((option) => {
-                          const on =
-                            !assigned.length || assigned.includes(option.id);
+                          const on = assigned.includes(option.id);
                           return (
                             <label key={option.id}>
                               <input
@@ -4540,23 +4452,22 @@ const CombatTracker = ({
                                 checked={on}
                                 disabled={
                                   Boolean(intentionWizardActionError) ||
-                                  (on && assigned.length === 1)
+                                  (on &&
+                                    assigned.length === 1 &&
+                                    !(
+                                      narrative &&
+                                      option.id === selectedDraft.id
+                                    ))
                                 }
                                 onChange={() => {
                                   const ids = options
                                     .filter((o) =>
                                       o.id === option.id
                                         ? !on
-                                        : !assigned.length ||
-                                          assigned.includes(o.id)
+                                        : assigned.includes(o.id)
                                     )
                                     .map((o) => o.id);
-                                  change(
-                                    true,
-                                    ids.length === options.length
-                                      ? undefined
-                                      : ids
-                                  );
+                                  change(ids.length > 0, ids);
                                 }}
                               />
                               {option.title} · {option.summary}
@@ -5094,8 +5005,18 @@ const CombatTracker = ({
                         </span>
                       </div>
                       <div className={styles['flowMatchup']}>
-                        <strong>{selectedDisplay.combatantName}</strong> →{' '}
-                        {selectedStep.targetLabel}
+                        <strong>{selectedDisplay.combatantName}</strong>
+                        <SavedHp
+                          hp={selectedRoundState?.hp}
+                          maxHp={
+                            getActionCombatant(
+                              currentRound,
+                              selectedCombatant.side,
+                              selectedCombatant.index
+                            )?.maxHp
+                          }
+                        />
+                        <span>→ {selectedStep.targetLabel}</span>
                       </div>
                       <div className={styles['flowActionLine']}>
                         {selectedDisplay.actionTitle}
@@ -5240,11 +5161,13 @@ const CombatTracker = ({
                               selectedCombatant.index
                             )}
                           </div>
-                          {renderRelatedResults(
-                            selectedStep.side,
-                            selectedStep.actorKey
-                          )}
                         </>
+                      )}
+                      {renderRelatedResults(
+                        selectedStep.side,
+                        selectedStep.actorKey,
+                        'flow',
+                        selectedStep.stepKey
                       )}
                     </div>
                   </div>
@@ -6900,10 +6823,7 @@ const CombatTracker = ({
                 <span className={styles['combatWizardName']}>
                   {currentCombatWizardEntry.combatantName}
                 </span>
-                <span className={styles['reviewHp']}>
-                  HP {reviewedState?.hp.trim() ? reviewedState.hp : '—'} · max{' '}
-                  {reviewedMaxHp?.trim() ? reviewedMaxHp : '—'}
-                </span>
+                <SavedHp hp={reviewedState?.hp} maxHp={reviewedMaxHp} />
               </div>
               {currentCombatWizardActions.length > 0 ? (
                 <>

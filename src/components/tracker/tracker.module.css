@@ -2092,8 +2092,17 @@
 }
 
 .flowMatchup {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.15rem 0.55rem;
+  overflow-wrap: anywhere;
   font-size: 1.13rem;
   line-height: 1.2;
+}
+.flowMatchup .reviewHp {
+  color: var(--eggshell);
+  font-size: 0.95rem;
 }
 .flowActionLine {
   font-size: 0.94rem;
