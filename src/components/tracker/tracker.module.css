@@ -1496,12 +1496,23 @@
   line-height: 1.2;
 }
 
+.reviewCombatantHeading {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.15rem 0.7rem;
+  margin-bottom: 0.45rem;
+}
+.reviewHp {
+  color: #514637;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
 .combatWizardName {
   color: #111;
   font-size: 1.35rem;
   font-weight: 700;
   line-height: 1.15;
-  margin-bottom: 0.45rem;
 }
 
 .combatWizardReadOnlyValue {
@@ -2895,6 +2906,9 @@
   line-height: 1.15;
   color: var(--eggshell);
   overflow-wrap: anywhere;
+}
+.gridMarkSource summary {
+  cursor: pointer;
 }
 .gridMarkSource button {
   background: transparent;

@@ -2,6 +2,8 @@
 import { useState } from 'react';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import '@testing-library/jest-dom';
+import { buildTrackerSteps } from '../helpers/trackerStepResults';
+import { resolveTrackerRoundInitiative } from '../helpers/initiative/trackerRoundResolution';
 import CombatTracker from '../components/tracker/CombatTracker';
 import { getTrackerActionDeclarations } from '../helpers/trackerActionDeclarations';
 import {
@@ -109,6 +111,8 @@ test('editing shared targets preserves historical shorthand, explicit-only membe
   const thirdAssignment = assignments[2];
   if (!thirdAssignment) throw Error('Missing third target');
   const newTarget = within(thirdAssignment);
+  expect(newTarget.getByRole('checkbox', { name: /Main/ })).not.toBeChecked();
+  fireEvent.click(newTarget.getByRole('checkbox', { name: /Main/ }));
   expect(newTarget.getByRole('checkbox', { name: /Main/ })).toBeChecked();
   fireEvent.click(newTarget.getByRole('checkbox', { name: /Main/ }));
   expect(newTarget.getByRole('checkbox', { name: /Action 2/ })).toBeDisabled();
@@ -245,4 +249,123 @@ test('a named shriek is declared while its action type stays No combat action', 
     target: { value: '1' },
   });
   expect(dialog.getByText('Undeclared')).toBeVisible();
+});
+
+test('a deliberate retarget removes obsolete outgoing results while equivalent saves and ordinary grid edits preserve history', () => {
+  const initial = createRegisterIntentionsFixtureState(),
+    round = initial.rounds[0];
+  if (!round?.cells[0]?.[0] || !round.cells[1]?.[0])
+    throw Error('Missing matchup');
+  const main = getTrackerActionDeclarations(round).find(
+    (a) => a.side === 'party'
+  );
+  if (!main) throw Error('Missing declaration');
+  round.cells[0][0].partyToEnemy = '';
+  round.cells[0][0].partyToEnemyActionIds = [main.id];
+  round.cells[1][0].partyToEnemyVisible = true;
+  round.cells[1][0].partyToEnemyActionIds = ['heat'];
+  round.actions = [
+    { ...main, targetDeclarations: [] },
+    {
+      ...main,
+      id: 'heat',
+      declaredAction: 'magical-device',
+      actionLabel: 'Heat Metal',
+      targetDeclarations: [],
+    },
+  ];
+  const steps = Array.from(
+    buildTrackerSteps(round, resolveTrackerRoundInitiative(round)).values()
+  );
+  const attack = steps.find(
+      (s) => s.side === 'party' && s.targetKeys.includes(4)
+    ),
+    heat = steps.find((s) => s.side === 'party' && s.targetKeys.includes(5)),
+    incoming = steps.find((s) => s.side === 'enemy');
+  if (!attack || !heat || !incoming) throw Error('Missing steps');
+  const miss = { ...attack, text: '', gridMark: 'x' },
+    other = { ...heat, text: 'Hot' },
+    hit = { ...incoming, text: 'Hit Lodi' };
+  round.stepResults = [
+    miss,
+    { ...miss, stepKey: null },
+    other,
+    hit,
+    { ...hit, stepKey: null },
+  ];
+  const original = round.stepResults;
+  let current = initial;
+  function Harness() {
+    const [state, save] = useState(current);
+    return (
+      <CombatTracker
+        campaign={{
+          active: true,
+          state,
+          onStateChange: (next) => {
+            current = next;
+            save(next);
+            return true;
+          },
+        }}
+      />
+    );
+  }
+  render(<Harness />);
+  fireEvent.click(screen.getByRole('button', { name: /^Main: Backstab/ }));
+  fireEvent.click(screen.getByRole('button', { name: 'Save intention' }));
+  expect(current.rounds[0]?.stepResults).toEqual(original);
+  fireEvent.change(screen.getByLabelText('Grid entry: Pillar Gnoll → Lodi'), {
+    target: { value: 'manual' },
+  });
+  expect(current.rounds[0]?.stepResults).toEqual(original);
+  fireEvent.click(screen.getByRole('button', { name: 'Declare Intentions' }));
+  const dialog = within(
+    screen.getByRole('dialog', { name: 'Declare Intentions' })
+  );
+  fireEvent.change(dialog.getByLabelText('Go to combatant'), {
+    target: { value: '3' },
+  });
+  expect(current.rounds[0]?.stepResults).toEqual(original);
+  const toggle = () =>
+    fireEvent.click(
+      dialog.getByRole('checkbox', { name: 'Pillar Gnoll', exact: true })
+    );
+  toggle();
+  toggle();
+  expect(current.rounds[0]?.stepResults).toEqual([
+    other,
+    hit,
+    { ...hit, stepKey: null },
+  ]);
+  expect(current.rounds[0]?.cells[0]?.[0]?.enemyToParty).toBe('manual');
+  fireEvent.click(dialog.getByRole('button', { name: 'Close' }));
+  const flow = within(screen.getByRole('region', { name: 'Combat Flow' }));
+  fireEvent.click(
+    flow.getByRole('button', {
+      name: /^Lodi, target Pillar Gnoll, Backstab.*Ready/,
+    })
+  );
+  fireEvent.change(flow.getByLabelText('Grid mark'), {
+    target: { value: 'x' },
+  });
+  fireEvent.click(flow.getByRole('button', { name: 'Resolve action' }));
+  fireEvent.click(screen.getByRole('button', { name: /^Main: Backstab/ }));
+  const editor = within(screen.getByRole('dialog', { name: 'Edit Intention' }));
+  fireEvent.change(editor.getByLabelText('Intention'), {
+    target: { value: 'Corrected swing' },
+  });
+  fireEvent.click(editor.getByRole('button', { name: 'Save intention' }));
+  expect(current.rounds[0]?.stepResults).toEqual([
+    other,
+    hit,
+    { ...hit, stepKey: null },
+  ]);
+  fireEvent.click(
+    flow.getByRole('button', {
+      name: /^Lodi, target Pillar Gnoll, Corrected swing.*Ready/,
+    })
+  );
+  expect(flow.getByLabelText('Grid mark')).toHaveValue('');
+  expect(flow.getByRole('button', { name: 'Resolve action' })).toBeEnabled();
 });

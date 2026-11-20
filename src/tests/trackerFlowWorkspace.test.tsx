@@ -119,6 +119,8 @@ test('the resolver and main grid share a mark while handwritten and deliberately
     fireEvent.change(mark, { target: { value: '5' } });
     expect(cells()).toHaveLength(2);
     cells().forEach((c) => expect(c).toHaveValue('x'));
+    expect(feedback.getByText('From attack marks: 5')).not.toBeVisible();
+    fireEvent.click(feedback.getByText('Handwritten'));
     expect(feedback.getByText('From attack marks: 5')).toBeVisible();
     const use = () =>
       fireEvent.click(
@@ -136,9 +138,12 @@ test('the resolver and main grid share a mark while handwritten and deliberately
     fireEvent.change(target, { target: { value: '' } });
     fireEvent.change(mark, { target: { value: '7' } });
     expect(main).toHaveValue('');
+    expect(feedback.getByText('From attack marks: 7')).not.toBeVisible();
+    fireEvent.click(feedback.getByText('Handwritten'));
     expect(feedback.getByText('From attack marks: 7')).toBeVisible();
     use();
     expect(main).toHaveValue('7');
+    expect(feedback.queryByText(/From attack marks|Handwritten/)).toBeNull();
     expect(detail).toHaveValue('Drives it back.');
     expect(flow.getByText(/0 \/ 3 resolved/)).toBeInTheDocument();
   } finally {

@@ -494,3 +494,59 @@ test('a participant added while a profile draft is open requires deliberate dupl
   expect(accepted?.rounds[0]?.party).toHaveLength(5);
   expect(accepted?.rounds[0]?.party.at(-1)?.key).not.toBe(7);
 });
+
+test('review shows verbatim HP and opens the effect preview only on entry to a populated actor', () => {
+  jest.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null);
+  const state = createRegisterIntentionsFixtureState(),
+    round = state.rounds[0];
+  if (
+    !round?.party[0] ||
+    !round.partyStates[0] ||
+    !round.partyStates[1] ||
+    !round.enemyStates[0] ||
+    !round.enemies[0]
+  )
+    throw Error('Missing review fixture');
+  round.party[0].maxHp = '10';
+  round.partyStates[0] = {
+    ...round.partyStates[0],
+    hp: '10-8=2',
+    effect: 'Very warm',
+    nextRoundEffectOverride: 'Hot',
+  };
+  round.partyStates[1].effect = '  ';
+  round.enemies[0].maxHp = '8';
+  round.enemyStates[0].hp = '4-7=dead!';
+  render(<CombatTracker rememberedState={state} />);
+  fireEvent.click(screen.getByRole('button', { name: 'Review round' }));
+  const review = within(screen.getByRole('dialog', { name: 'Review round' }));
+  const nextFor = (name: string) =>
+    review.getByLabelText('Next round effect for ' + name);
+  const next = nextFor('Lodi'),
+    disclosure = next.closest('details');
+  expect(review.getByText('HP 10-8=2 · max 10')).toBeVisible();
+  expect(disclosure).toHaveAttribute('open');
+  expect(next).toHaveValue('Hot');
+  const summary = disclosure?.querySelector('summary');
+  if (!summary) throw Error('Missing disclosure');
+  fireEvent.click(summary);
+  const effect = review.getByLabelText('Current Effect', { exact: true });
+  effect.focus();
+  fireEvent.change(effect, { target: { value: 'Correction' } });
+  expect(effect).toHaveFocus();
+  expect(disclosure).not.toHaveAttribute('open');
+  fireEvent.click(review.getByRole('button', { name: 'Next' }));
+  expect(nextFor('Azalia').closest('details')).not.toHaveAttribute('open');
+  expect(review.getByText('HP — · max —')).toBeVisible();
+  fireEvent.click(review.getByRole('button', { name: 'Previous' }));
+  expect(nextFor('Lodi').closest('details')).toHaveAttribute('open');
+  fireEvent.change(nextFor('Lodi'), { target: { value: '' } });
+  fireEvent.click(review.getByRole('button', { name: 'Close' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Review round' }));
+  const reopened = within(screen.getByRole('dialog', { name: 'Review round' }));
+  expect(reopened.getByLabelText('Next round effect for Lodi')).toBeVisible();
+  expect(reopened.getByLabelText('Next round effect for Lodi')).toHaveValue('');
+  for (let i = 0; i < round.party.length; i++)
+    fireEvent.click(reopened.getByRole('button', { name: 'Next' }));
+  expect(reopened.getByText('HP 4-7=dead! · max 8')).toBeVisible();
+});

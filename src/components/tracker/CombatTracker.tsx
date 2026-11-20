@@ -5,6 +5,8 @@ import {
   getTrackerResultTarget,
   hasNarrowerSavedTargets,
   retainPriorStepResults,
+  declarationChanged,
+  discardObsoleteActorResults,
   setTrackerStepResult,
   type TrackerStep,
   type TrackerStepResultEdit,
@@ -145,10 +147,6 @@ type CellField = Extract<
   keyof TrackerCellState,
   'enemyToParty' | 'partyToEnemy'
 >;
-type CellVisibilityField = Extract<
-  keyof TrackerCellState,
-  'enemyToPartyVisible' | 'partyToEnemyVisible'
->;
 type CellActionIdsField = Extract<
   keyof TrackerCellState,
   'enemyToPartyActionIds' | 'partyToEnemyActionIds'
@@ -170,9 +168,9 @@ interface CellActionAssignmentTarget {
 interface SelectedCellActionAssignment {
   sourceName: string;
   targetName: string;
-  rowIndex: number;
-  columnIndex: number;
-  field: CellActionIdsField;
+  side: TrackerSide;
+  index: number;
+  targetIndex: number;
   options: CellActionOption[];
 }
 
@@ -261,25 +259,11 @@ type TrackerAction =
   | { type: 'select-round'; index: number }
   | { type: 'set-round-field'; field: RoundField; value: string }
   | {
-      type: 'set-cell-visibility';
-      rowIndex: number;
-      columnIndex: number;
-      field: CellVisibilityField;
-      value: boolean;
-    }
-  | {
       type: 'set-cell';
       rowIndex: number;
       columnIndex: number;
       field: CellField;
       value: string | null; // null returns this direction to compiled marks
-    }
-  | {
-      type: 'set-cell-action-ids';
-      rowIndex: number;
-      columnIndex: number;
-      field: CellActionIdsField;
-      actionIds: string[] | undefined;
     }
   | {
       type: 'set-party-state';
@@ -906,7 +890,12 @@ const createActionEditorDraft = (
       weaponId,
       defaultDeclaredAction
     ),
-    label: action?.actionLabel || action?.intention || fallbackIntention,
+    label:
+      action?.actionLabel ??
+      (action &&
+      action.intention !== formatDeclaredAction(action.declaredAction)
+        ? action.intention
+        : fallbackIntention),
     initiativeTiming: getActionInitiativeTiming(action),
     distanceInches: '',
     activationSegments: '',
@@ -1157,7 +1146,7 @@ const getActionEditorDrafts = ({
 
 const getIntentionWizardActionDrafts = (
   round: TrackerRound,
-  entry: IntentionWizardEntry
+  entry: Pick<IntentionWizardEntry, 'side' | 'index' | 'combatantKey'>
 ): TrackerActionEditorDraft[] => {
   const combatant = getActionCombatant(round, entry.side, entry.index);
   const roundState = getActionRoundState(round, entry.side, entry.index);
@@ -1358,22 +1347,6 @@ const applyTrackerAction = (
           ),
         };
       });
-    case 'set-cell-visibility':
-      return updateCurrentRound(state, (round) => ({
-        ...round,
-        cells: round.cells.map((row, rowIndex) =>
-          rowIndex === action.rowIndex
-            ? row.map((cell, columnIndex) =>
-                columnIndex === action.columnIndex
-                  ? {
-                      ...cell,
-                      [action.field]: action.value,
-                    }
-                  : cell
-              )
-            : row
-        ),
-      }));
     case 'set-cell':
       return updateCurrentRound(state, (previous) => {
         const { field, value, rowIndex, columnIndex } = action;
@@ -1408,25 +1381,6 @@ const applyTrackerAction = (
           ),
         };
       });
-    case 'set-cell-action-ids':
-      return updateCurrentRound(state, (round) => ({
-        ...round,
-        cells: round.cells.map((row, rowIndex) =>
-          rowIndex === action.rowIndex
-            ? row.map((cell, columnIndex) =>
-                columnIndex === action.columnIndex
-                  ? {
-                      ...cell,
-                      [action.field]: action.actionIds,
-                      ...(action.field === 'enemyToPartyActionIds'
-                        ? { enemyToPartyVisible: true }
-                        : { partyToEnemyVisible: true }),
-                    }
-                  : cell
-              )
-            : row
-        ),
-      }));
     case 'set-party-state':
     case 'set-enemy-state': {
       const states =
@@ -1560,21 +1514,54 @@ const trackerReducer = (
   action: TrackerAction
 ): TrackerState => {
   const next = applyTrackerAction(state, action);
-  // These edits can remove a step or change which creature it targeted.
+  const before = state.rounds[state.activeRound];
+  const after = next.rounds[next.activeRound];
+  if (!before || !after?.stepResults?.length || before === after) return next;
   switch (action.type) {
     case 'set-combatant-actions':
     case 'set-declared-target':
-    case 'set-cell-visibility':
-    case 'set-cell-action-ids':
-    case 'set-cell':
-    case 'update-combatant':
-    case 'remove-combatant':
-      if (next.rounds[next.activeRound]?.stepResults?.length) {
+    case 'update-combatant': {
+      const actor = getActionCombatant(after, action.side, action.index);
+      if (actor && declarationChanged(before, after, action.side, action.index))
+        return updateCurrentRound(next, (round) =>
+          discardObsoleteActorResults(before, round, action.side, actor.key)
+        );
+      if (action.type === 'update-combatant')
         return updateCurrentRound(next, retainPriorStepResults);
-      }
+      break;
+    }
+    case 'set-cell':
+    case 'remove-combatant':
+      return updateCurrentRound(next, retainPriorStepResults);
   }
   return next;
 };
+
+// Native details owns subsequent toggles. A new actor/round mounts a fresh disclosure.
+function NextRoundDisclosure({
+  initiallyOpen,
+  label,
+  value,
+  onChange,
+}: {
+  initiallyOpen: boolean;
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  const [defaultOpen] = useState(initiallyOpen);
+  return (
+    <details open={defaultOpen} className={styles['roundDisclosure']}>
+      <summary>Next round</summary>
+      <AutoHeightTextarea
+        aria-label={label}
+        className={styles['queuedEffectInput']}
+        value={value}
+        onChange={onChange}
+      />
+    </details>
+  );
+}
 
 const CombatTracker = ({
   rememberedState,
@@ -1669,10 +1656,9 @@ const CombatTracker = ({
   const [intentionWizardActionError, setIntentionWizardActionError] = useState<
     string | undefined
   >(undefined);
-  const [
-    combatFlowCompletedNodeIdsByRound,
-    setCombatFlowCompletedNodeIdsByRound,
-  ] = useState<Record<number, string[]>>({});
+  const [completedStepKeysByRound, setCompletedStepKeysByRound] = useState<
+    Record<number, string[]>
+  >({});
   const [
     combatFlowSelectedNodeIdsByRound,
     setCombatFlowSelectedNodeIdsByRound,
@@ -1835,9 +1821,12 @@ const CombatTracker = ({
     return {
       sourceName,
       targetName,
-      rowIndex: cellActionAssignmentTarget.enemyIndex,
-      columnIndex: cellActionAssignmentTarget.partyIndex,
-      field: getActionIdsField(cellActionAssignmentTarget.direction),
+      side: sourceSide,
+      index: sourceIndex,
+      targetIndex:
+        sourceSide === 'party'
+          ? cellActionAssignmentTarget.enemyIndex
+          : cellActionAssignmentTarget.partyIndex,
       options,
     };
   }, [cellActionAssignmentTarget, currentRound]);
@@ -1939,26 +1928,16 @@ const CombatTracker = ({
       ),
     [combatFlowSteps]
   );
-  const combatFlowGraphNodeIds = useMemo(
-    () =>
-      new Set(
-        resolvedInitiativeRound?.attackGraph.nodes.map((node) => node.id) || []
-      ),
-    [resolvedInitiativeRound]
-  );
-  const combatFlowCompletedNodeIds = useMemo(
-    () =>
-      new Set(
-        (combatFlowCompletedNodeIdsByRound[state.activeRound] || []).filter(
-          (nodeId) => combatFlowGraphNodeIds.has(nodeId)
-        )
-      ),
-    [
-      combatFlowCompletedNodeIdsByRound,
-      combatFlowGraphNodeIds,
-      state.activeRound,
-    ]
-  );
+  const combatFlowCompletedNodeIds = useMemo(() => {
+    const completed = new Set(
+      completedStepKeysByRound[state.activeRound] || []
+    );
+    return new Set(
+      Array.from(combatFlowSteps)
+        .filter(([, step]) => completed.has(step.stepKey))
+        .map(([nodeId]) => nodeId)
+    );
+  }, [completedStepKeysByRound, combatFlowSteps, state.activeRound]);
   const combatFlowGraphNodeStatusById = useMemo<
     Record<string, InitiativeGraphNodeStatus>
   >(
@@ -2010,6 +1989,22 @@ const CombatTracker = ({
     ]
   );
   const currentCombatWizardEntry = combatWizardEntries[combatWizardIndex];
+  const reviewedState =
+    currentRound &&
+    currentCombatWizardEntry &&
+    getActionRoundState(
+      currentRound,
+      currentCombatWizardEntry.side,
+      currentCombatWizardEntry.index
+    );
+  const reviewedMaxHp =
+    currentRound &&
+    currentCombatWizardEntry &&
+    getActionCombatant(
+      currentRound,
+      currentCombatWizardEntry.side,
+      currentCombatWizardEntry.index
+    )?.maxHp;
   const currentCombatWizardEntryKey = currentCombatWizardEntry?.combatantKey;
   const currentCombatWizardActions = useMemo<TrackerActionDeclaration[]>(
     () =>
@@ -2452,16 +2447,15 @@ const CombatTracker = ({
       return;
     }
 
-    const savedCompletedNodeIds =
-      combatFlowCompletedNodeIdsByRound[state.activeRound] || [];
-    const validCompletedNodeIds = savedCompletedNodeIds.filter((nodeId) =>
-      combatFlowGraphNodeIds.has(nodeId)
+    const savedStepKeys = completedStepKeysByRound[state.activeRound] || [];
+    const validStepKeys = savedStepKeys.filter((key) =>
+      activeStepsByKey.has(key)
     );
 
-    if (validCompletedNodeIds.length !== savedCompletedNodeIds.length) {
-      setCombatFlowCompletedNodeIdsByRound((previous) => ({
+    if (validStepKeys.length !== savedStepKeys.length) {
+      setCompletedStepKeysByRound((previous) => ({
         ...previous,
-        [state.activeRound]: validCompletedNodeIds,
+        [state.activeRound]: validStepKeys,
       }));
     }
 
@@ -2473,8 +2467,8 @@ const CombatTracker = ({
       }));
     }
   }, [
-    combatFlowCompletedNodeIdsByRound,
-    combatFlowGraphNodeIds,
+    completedStepKeysByRound,
+    activeStepsByKey,
     combatFlowSelectedNodeId,
     resolvedInitiativeRound,
     selectedCombatFlowNode,
@@ -2747,10 +2741,11 @@ const CombatTracker = ({
         : selectedActionIds;
 
     dispatch({
-      type: 'set-cell-action-ids',
-      rowIndex: selectedCellActionAssignment.rowIndex,
-      columnIndex: selectedCellActionAssignment.columnIndex,
-      field: selectedCellActionAssignment.field,
+      type: 'set-declared-target',
+      side: selectedCellActionAssignment.side,
+      index: selectedCellActionAssignment.index,
+      targetIndex: selectedCellActionAssignment.targetIndex,
+      active: true,
       actionIds,
     });
     closeCellActionAssignmentModal();
@@ -2758,19 +2753,11 @@ const CombatTracker = ({
 
   const openActionEditor = (side: TrackerSide, index: number) => {
     const combatant = getActionCombatant(currentRound, side, index);
-    const actions = getStructuredActionsForCombatant(currentRound, side, index);
-    const roundState = getActionRoundState(currentRound, side, index);
-
-    if (!combatant) {
-      return;
-    }
-
-    const drafts = getActionEditorDrafts({
-      actions,
-      fallbackIntention: roundState?.action || '',
-      mainActionId: getMainTrackerActionId(side, combatant.key),
-      defaultDeclaredAction: getDefaultTrackerDeclaredAction(),
-      weaponId: combatant.weapon,
+    if (!combatant) return;
+    const drafts = getIntentionWizardActionDrafts(currentRound, {
+      side,
+      index,
+      combatantKey: combatant.key,
     });
     setActionEditorDrafts(drafts);
     setActionEditorWeapon(combatant.weapon);
@@ -2798,12 +2785,30 @@ const CombatTracker = ({
       return;
     }
 
+    const originalDrafts = getIntentionWizardActionDrafts(currentRound, {
+      ...actionEditorTarget,
+      combatantKey: combatant.key,
+    });
+    if (
+      combatant.weapon === savedActionEditorCombatant?.weapon &&
+      JSON.stringify(actionEditorDrafts) === JSON.stringify(originalDrafts)
+    ) {
+      closeActionEditor();
+      return;
+    }
     const result = buildActionDeclarationsFromDrafts({
       side: actionEditorTarget.side,
       index: actionEditorTarget.index,
       combatant,
       roundState,
       drafts: actionEditorDrafts,
+      preserveExplicitAction: Boolean(
+        getStructuredActionsForCombatant(
+          currentRound,
+          actionEditorTarget.side,
+          actionEditorTarget.index
+        ).length
+      ),
     });
 
     if (!result.ok) {
@@ -3064,16 +3069,18 @@ const CombatTracker = ({
   };
 
   const completeCombatFlowNode = (nodeId: string) => {
-    setCombatFlowCompletedNodeIdsByRound((previous) => {
-      const completedNodeIds = previous[state.activeRound] || [];
+    const stepKey = combatFlowSteps.get(nodeId)?.stepKey;
+    if (!stepKey) return;
+    setCompletedStepKeysByRound((previous) => {
+      const completedKeys = previous[state.activeRound] || [];
 
-      if (completedNodeIds.includes(nodeId)) {
+      if (completedKeys.includes(stepKey)) {
         return previous;
       }
 
       return {
         ...previous,
-        [state.activeRound]: completedNodeIds.concat(nodeId),
+        [state.activeRound]: completedKeys.concat(stepKey),
       };
     });
   };
@@ -3090,18 +3097,18 @@ const CombatTracker = ({
   };
 
   const clearCombatFlowNodeResolved = (nodeId: string) => {
-    setCombatFlowCompletedNodeIdsByRound((previous) => {
-      const completedNodeIds = previous[state.activeRound] || [];
+    const stepKey = combatFlowSteps.get(nodeId)?.stepKey;
+    if (!stepKey) return;
+    setCompletedStepKeysByRound((previous) => {
+      const completedKeys = previous[state.activeRound] || [];
 
-      if (!completedNodeIds.includes(nodeId)) {
+      if (!completedKeys.includes(stepKey)) {
         return previous;
       }
 
       return {
         ...previous,
-        [state.activeRound]: completedNodeIds.filter(
-          (completedNodeId) => completedNodeId !== nodeId
-        ),
+        [state.activeRound]: completedKeys.filter((key) => key !== stepKey),
       };
     });
   };
@@ -3168,7 +3175,7 @@ const CombatTracker = ({
   };
 
   const resetCombatFlowProgress = () => {
-    setCombatFlowCompletedNodeIdsByRound((previous) => ({
+    setCompletedStepKeysByRound((previous) => ({
       ...previous,
       [state.activeRound]: [],
     }));
@@ -3864,7 +3871,7 @@ const CombatTracker = ({
     setActionEditorTarget(undefined);
     setActionEditorDrafts([]);
     setActionEditorError(undefined);
-    setCombatFlowCompletedNodeIdsByRound({});
+    setCompletedStepKeysByRound({});
     setCombatFlowSelectedNodeIdsByRound({});
     setCombatFlowGraphInspectorNodeId(undefined);
     setFlowView('Both');
@@ -4120,20 +4127,20 @@ const CombatTracker = ({
         }
         onEnemyToPartyVisibilityChange={(value) =>
           dispatch({
-            type: 'set-cell-visibility',
-            rowIndex: enemyIndex,
-            columnIndex: partyIndex,
-            field: 'enemyToPartyVisible',
-            value,
+            type: 'set-declared-target',
+            side: 'enemy',
+            index: enemyIndex,
+            targetIndex: partyIndex,
+            active: value,
           })
         }
         onPartyToEnemyVisibilityChange={(value) =>
           dispatch({
-            type: 'set-cell-visibility',
-            rowIndex: enemyIndex,
-            columnIndex: partyIndex,
-            field: 'partyToEnemyVisible',
-            value,
+            type: 'set-declared-target',
+            side: 'party',
+            index: partyIndex,
+            targetIndex: enemyIndex,
+            active: value,
           })
         }
         onEnemyToPartyChange={(value) =>
@@ -4261,35 +4268,33 @@ const CombatTracker = ({
     </div>
   );
 
-  const renderNextRoundEffect = (side: TrackerSide, index: number) => {
+  const renderNextRoundEffect = (
+    side: TrackerSide,
+    index: number,
+    reviewActor = false
+  ) => {
     const actor = getActionCombatant(currentRound, side, index);
     const roundState = getActionRoundState(currentRound, side, index);
     if (!actor || !roundState) return null;
-    const value = getNextRoundEffect(roundState);
     return (
-      <details
+      <NextRoundDisclosure
         key={`queue-${state.activeRound}-${side}-${actor.key}`}
-        className={styles['roundDisclosure']}
-      >
-        <summary>Next round</summary>
-        <AutoHeightTextarea
-          aria-label={`Next round effect for ${
-            side === 'party'
-              ? getPartyDisplayName(index)
-              : getEnemyDisplayName(index)
-          }`}
-          className={styles['queuedEffectInput']}
-          value={value}
-          onChange={(value) =>
-            dispatch({
-              type: side === 'party' ? 'set-party-state' : 'set-enemy-state',
-              index,
-              field: 'nextRoundEffectOverride',
-              value,
-            })
-          }
-        />
-      </details>
+        initiallyOpen={reviewActor && Boolean(roundState.effect.trim())}
+        label={`Next round effect for ${
+          side === 'party'
+            ? getPartyDisplayName(index)
+            : getEnemyDisplayName(index)
+        }`}
+        value={getNextRoundEffect(roundState)}
+        onChange={(value) =>
+          dispatch({
+            type: side === 'party' ? 'set-party-state' : 'set-enemy-state',
+            index,
+            field: 'nextRoundEffectOverride',
+            value,
+          })
+        }
+      />
     );
   };
 
@@ -4498,7 +4503,16 @@ const CombatTracker = ({
                         disabled={
                           hasText || Boolean(intentionWizardActionError)
                         }
-                        onChange={(e) => change(e.target.checked)}
+                        onChange={(e) =>
+                          change(
+                            e.target.checked,
+                            e.target.checked &&
+                              options.length > 1 &&
+                              selectedIntentionWizardActionDraft
+                              ? [selectedIntentionWizardActionDraft.id]
+                              : undefined
+                          )
+                        }
                       />
                       {name}
                     </label>
@@ -6882,8 +6896,14 @@ const CombatTracker = ({
                   </button>
                 </div>
               </div>
-              <div className={styles['combatWizardName']}>
-                {currentCombatWizardEntry.combatantName}
+              <div className={styles['reviewCombatantHeading']}>
+                <span className={styles['combatWizardName']}>
+                  {currentCombatWizardEntry.combatantName}
+                </span>
+                <span className={styles['reviewHp']}>
+                  HP {reviewedState?.hp.trim() ? reviewedState.hp : '—'} · max{' '}
+                  {reviewedMaxHp?.trim() ? reviewedMaxHp : '—'}
+                </span>
               </div>
               {currentCombatWizardActions.length > 0 ? (
                 <>
@@ -6967,13 +6987,7 @@ const CombatTracker = ({
                 <AutoHeightTextarea
                   id={'combat-wizard-effect'}
                   className={styles['combatWizardTextarea']}
-                  value={
-                    currentCombatWizardEntry.side === 'enemy'
-                      ? currentRound.enemyStates[currentCombatWizardEntry.index]
-                          ?.effect || ''
-                      : currentRound.partyStates[currentCombatWizardEntry.index]
-                          ?.effect || ''
-                  }
+                  value={reviewedState?.effect || ''}
                   onChange={(value) =>
                     updateCombatWizardEffect(currentCombatWizardEntry, value)
                   }
@@ -6981,7 +6995,8 @@ const CombatTracker = ({
                 />
                 {renderNextRoundEffect(
                   currentCombatWizardEntry.side,
-                  currentCombatWizardEntry.index
+                  currentCombatWizardEntry.index,
+                  true
                 )}
               </div>
               {renderCombatTargetEditor(

@@ -1,5 +1,11 @@
 import type { InitiativeResolvedRound } from './initiative/resolvedRound';
-import type { TrackerRound, TrackerStepResult } from '../types/tracker';
+import { getTrackerActionDeclarations } from './trackerActionDeclarations';
+import { getTrackerActiveOffHandWeapon } from './trackerCombatantDisplay';
+import type {
+  TrackerRound,
+  TrackerStepResult,
+  TrackerActionSide,
+} from '../types/tracker';
 import { buildInitiativeAttackGraphNodeDisplayById } from './initiative/attackGraphDisplay';
 import { resolveTrackerRoundInitiative } from './initiative/trackerRoundResolution';
 
@@ -184,13 +190,84 @@ export function setTrackerStepResult(
   return { ...round, stepResults };
 }
 
-// Removing and then recreating even an identical declaration starts a fresh
-// step. Keep the earlier note and its original recipients available for review.
+// Only declaration inputs participate in this comparison. In particular, a
+// handwritten grid entry and a round's Outcome are not intention corrections.
+export function declarationChanged(
+  before: TrackerRound,
+  after: TrackerRound,
+  side: TrackerActionSide,
+  index: number
+) {
+  const inputs = (round: TrackerRound) => {
+    const actor = (side === 'party' ? round.party : round.enemies)[index];
+    if (!actor) return undefined;
+    const actions = getTrackerActionDeclarations(round).filter(
+      (a) => a.side === side && a.combatantKey === actor.key
+    );
+    const weaponAction = actions.some((a) =>
+      ['open-melee', 'close', 'charge', 'set-vs-charge', 'missile'].includes(
+        a.declaredAction
+      )
+    );
+    return JSON.stringify([
+      weaponAction
+        ? [
+            actor.weapon,
+            getTrackerActiveOffHandWeapon(actor),
+            actor.attacksPerRoutine ?? 1,
+          ]
+        : null,
+      actions.map((a) => [
+        a.id,
+        a.declaredAction,
+        a.actionLabel?.trim() || '',
+        a.initiativeTiming ?? 'normal',
+        a.actionDistanceInches,
+        a.activationSegments,
+        a.castingSegments,
+        a.attackRoutineCount ?? 1,
+        a.targetDeclarations.map((t) => t.targetCombatantKey),
+      ]),
+    ]);
+  };
+  return inputs(before) !== inputs(after);
+}
+
+function activeStepKeys(round: TrackerRound) {
+  const steps = buildTrackerSteps(round, resolveTrackerRoundInitiative(round));
+  return new Set(Array.from(steps.values(), (step) => step.stepKey));
+}
+
+// Match on both sides of the correction. A previously detached or unsupported
+// record must not reappear just because the DM recreates a similar step.
+export function discardObsoleteActorResults(
+  before: TrackerRound,
+  after: TrackerRound,
+  side: TrackerActionSide,
+  actorKey: number
+): TrackerRound {
+  const owned = (r: TrackerStepResult) =>
+    r.side === side && r.actorKey === actorKey;
+  if (!after.stepResults?.some(owned)) return after;
+  const priorKeys = activeStepKeys(before),
+    liveKeys = activeStepKeys(after);
+  return {
+    ...after,
+    stepResults: after.stepResults.filter(
+      (r) =>
+        !owned(r) ||
+        (r.stepKey !== null &&
+          priorKeys.has(r.stepKey) &&
+          liveKeys.has(r.stepKey))
+    ),
+  };
+}
+
+// Roster changes and ordinary grid edits still keep prior notes for review.
 export function retainPriorStepResults(round: TrackerRound): TrackerRound {
   if (!round.stepResults?.some((result) => result.stepKey !== null))
     return round;
-  const steps = buildTrackerSteps(round, resolveTrackerRoundInitiative(round));
-  const keys = new Set(Array.from(steps.values(), (step) => step.stepKey));
+  const keys = activeStepKeys(round);
   return {
     ...round,
     stepResults: round.stepResults.flatMap((result) => {

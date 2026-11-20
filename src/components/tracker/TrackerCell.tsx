@@ -231,27 +231,20 @@ const TrackerCell = ({
           onKeyDown={(event) => event.stopPropagation()}
           onChange={(event) => change(event.target.value)}
         />
-        {(marks || manual) && (
-          <div className={styles['gridMarkSource']}>
-            {manual ? 'Handwritten' : 'From attack marks'}
-            {manual && (marks || manualBlank) && (
-              <>
-                <div>From attack marks: {marks || '—'}</div>
-                {onUseMarks && (
-                  <button
-                    type="button"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      onUseMarks(direction);
-                    }}
-                    onKeyDown={(event) => event.stopPropagation()}
-                  >
-                    Use attack marks
-                  </button>
-                )}
-              </>
+        {manual && (
+          <details
+            className={styles['gridMarkSource']}
+            onClick={(event) => event.stopPropagation()}
+            onKeyDown={(event) => event.stopPropagation()}
+          >
+            <summary>Handwritten</summary>
+            <div>From attack marks: {marks || '—'}</div>
+            {onUseMarks && (marks || manualBlank) && (
+              <button type="button" onClick={() => onUseMarks(direction)}>
+                Use attack marks
+              </button>
             )}
-          </div>
+          </details>
         )}
       </>
     );
