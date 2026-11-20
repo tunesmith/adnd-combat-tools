@@ -1,9 +1,10 @@
 import { profileLabel } from '../../helpers/campaignParty';
-import { useState } from 'react';
+import { Fragment, useState, type ReactNode } from 'react';
 import type { CampaignDocument } from '../../helpers/campaignDocument';
 import type {
   PartyProfile,
   RosterCharacter,
+  SaveReminder,
 } from '../../helpers/campaignPartyModel';
 import {
   calculatedSaves,
@@ -12,14 +13,13 @@ import {
   reorderPartyCharacter,
   updatePartyProfile,
 } from '../../helpers/campaignParty';
-import { saveCategories } from '../../tables/savingThrows';
-import AutoHeightTextarea from '../tracker/AutoHeightTextarea';
+import { saveCategories, saveNoteLabels } from '../../tables/savingThrows';
+import layout from './partyReference.module.css';
+import PartyEncumbrance from './PartyEncumbrance';
 import ProfileDialog from './ProfileDialog';
 import SessionProfileTable from './SessionProfileTable';
 import SessionXpReference from './SessionXpReference';
 import styles from './campaignWorkspace.module.css';
-
-const notes = ['Dodging notes', 'Fire/lightning notes', 'Other notes'] as const;
 
 export default function PartyReference({
   document,
@@ -51,15 +51,8 @@ export default function PartyReference({
   }
   return (
     <>
-      <div
-        className={
-          view === 'session'
-            ? styles['profileActions']
-            : styles['referenceHeading']
-        }
-      >
-        {view === 'saves' && <h2>Saving throws</h2>}
-        {view === 'session' && (
+      {view === 'session' && (
+        <div className={styles['profileActions']}>
           <button
             disabled={!sessionId}
             onClick={(event) => {
@@ -73,8 +66,8 @@ export default function PartyReference({
           >
             + Character
           </button>
-        )}
-      </div>
+        </div>
+      )}
       {view === 'session' ? (
         <>
           <SessionProfileTable
@@ -108,116 +101,137 @@ export default function PartyReference({
             : 'Select a session first.'}
         </p>
       ) : (
-        <div className={styles['partyTableWrap']}>
-          <table className={styles['partyTable']}>
-            <thead>
-              <tr>
-                <th scope="col">Character</th>
-                {saveCategories.map(([label, full]) => (
-                  <th
-                    key={label}
-                    scope="col"
-                    title={full}
-                    className={styles['saveTarget']}
-                  >
-                    {label}
-                  </th>
-                ))}
-                {notes.map((label) => (
-                  <th key={label} scope="col" className={styles['saveNote']}>
-                    {label}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((p, index) => {
-                const character = document.party?.roster.find(
-                  (c) => c.id === p.characterId
-                );
-                if (!character) return null;
-                const saves = calculatedSaves(p);
-                const targets = saves ?? p.overrides;
-                return (
-                  <tr key={p.characterId}>
-                    <th scope="row">
-                      <div className={styles['referenceCharacter']}>
-                        <button
-                          className={styles['sessionName']}
-                          onClick={(event) => {
-                            event.currentTarget.focus();
-                            setEditor({ profile: p, character });
-                          }}
-                        >
-                          {character.name}
-                        </button>
-                        {p.adjustment && (
-                          <button
-                            className={styles['sessionEffect']}
-                            title={`${p.adjustment.name} +1 · ${
-                              p.adjustment.enabled ? 'On' : 'Off'
-                            } · Base ${p.baseLevel}`}
-                            aria-label={`${character.name} ${p.adjustment.name} +1`}
-                            aria-pressed={p.adjustment.enabled}
-                            onClick={() =>
-                              update(p.characterId, (current) =>
-                                current.adjustment
-                                  ? {
-                                      ...current,
-                                      adjustment: {
-                                        ...current.adjustment,
-                                        enabled: !current.adjustment.enabled,
-                                      },
-                                    }
-                                  : current
-                              )
-                            }
-                          >
-                            +1
-                          </button>
-                        )}
-                      </div>
-                      <small>
-                        {[
-                          character.player,
-                          profileLabel(p),
-                          !saves ? 'Manual saves' : '',
-                        ]
-                          .filter(Boolean)
-                          .join(' · ')}
-                      </small>
-                    </th>
-                    {saveCategories.map(([label], i) => (
-                      <td key={label} className={styles['saveTarget']}>
-                        {targets[i] ?? '—'}
-                      </td>
-                    ))}
-                    {notes.map((label, i) => (
-                      <td key={label} className={styles['saveNote']}>
-                        <AutoHeightTextarea
-                          className={styles['saveNoteEditor']}
-                          aria-label={`${index + 1}. ${
-                            character.name
-                          } ${label}`}
-                          cols={1}
-                          maxLength={100000}
-                          value={p.saveNotes[i] ?? ''}
-                          onChange={(value) => {
-                            update(p.characterId, (current) => {
-                              const saveNotes: [...PartyProfile['saveNotes']] =
-                                [...current.saveNotes];
-                              saveNotes[i] = value;
-                              return { ...current, saveNotes };
-                            });
-                          }}
-                        />
-                      </td>
+        <div className={layout['resources']}>
+          <section className={layout['savesSection']}>
+            <header>
+              <h2>Saving throws</h2>
+            </header>
+            <div
+              className={layout['scroll']}
+              role="region"
+              aria-label="Saving throws table"
+              tabIndex={0}
+            >
+              <table className={layout['saves']} aria-label="Saving throws">
+                <thead>
+                  <tr>
+                    <th scope="col">Character</th>
+                    {saveCategories.map(([label, full]) => (
+                      <th key={label} scope="col" title={full}>
+                        {label}
+                      </th>
                     ))}
                   </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                </thead>
+                <tbody>
+                  {rows.map((p) => {
+                    const character = document.party?.roster.find(
+                      (c) => c.id === p.characterId
+                    );
+                    if (!character) return null;
+                    const saves = calculatedSaves(p);
+                    const targets = saves ?? p.overrides;
+                    return (
+                      <Fragment key={p.characterId}>
+                        <tr>
+                          <th scope="row">
+                            <div className={layout['character']}>
+                              <button
+                                className={styles['sessionName']}
+                                onClick={(event) => {
+                                  event.currentTarget.focus();
+                                  setEditor({ profile: p, character });
+                                }}
+                              >
+                                {character.name}
+                              </button>
+                              {p.adjustment && (
+                                <button
+                                  className={styles['sessionEffect']}
+                                  title={`${p.adjustment.name} +1 · ${
+                                    p.adjustment.enabled ? 'On' : 'Off'
+                                  } · Base ${p.baseLevel}`}
+                                  aria-label={`${character.name} ${p.adjustment.name} +1`}
+                                  aria-pressed={p.adjustment.enabled}
+                                  onClick={() =>
+                                    update(p.characterId, (current) =>
+                                      current.adjustment
+                                        ? {
+                                            ...current,
+                                            adjustment: {
+                                              ...current.adjustment,
+                                              enabled:
+                                                !current.adjustment.enabled,
+                                            },
+                                          }
+                                        : current
+                                    )
+                                  }
+                                >
+                                  +1
+                                </button>
+                              )}
+                            </div>
+                            <small>
+                              {[
+                                character.player,
+                                profileLabel(p),
+                                !saves
+                                  ? 'Manual saves'
+                                  : p.saveBasis !== 'printed'
+                                  ? p.saveBasis + ' matrix'
+                                  : '',
+                              ]
+                                .filter(Boolean)
+                                .join(' · ')}
+                            </small>
+                          </th>
+                          {saveCategories.map(([label], i) => (
+                            <td key={label}>{targets[i] ?? '—'}</td>
+                          ))}
+                        </tr>
+                        {!!p.saveReminders?.length && (
+                          <tr>
+                            <td colSpan={6} className={layout['reminderCell']}>
+                              <ReminderGroups
+                                name={character.name}
+                                rows={p.saveReminders}
+                              />
+                            </td>
+                          </tr>
+                        )}
+                        {p.saveNotes.some((n) => n.trim()) && (
+                          <tr className={layout['notes']}>
+                            <td colSpan={6}>
+                              {p.saveNotes.map(
+                                (note, i) =>
+                                  note.trim() && (
+                                    <div key={i}>
+                                      <b>
+                                        {saveNoteLabels[i]?.replace(
+                                          ' notes',
+                                          ''
+                                        )}
+                                      </b>{' '}
+                                      {note}
+                                    </div>
+                                  )
+                              )}
+                            </td>
+                          </tr>
+                        )}
+                      </Fragment>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </section>
+          <PartyEncumbrance
+            document={document}
+            sessionId={sessionId}
+            profiles={rows}
+          />
         </div>
       )}
       {editor && editor.profile.sessionId === sessionId && (
@@ -228,6 +242,59 @@ export default function PartyReference({
           onChange={onChange}
           onClose={() => setEditor(undefined)}
         />
+      )}
+    </>
+  );
+}
+
+function ReminderGroups({
+  name,
+  rows,
+}: {
+  name: string;
+  rows: SaveReminder[];
+}) {
+  const bonuses: ReactNode[] = [];
+  const instructions: ReactNode[] = [];
+  for (const row of rows) {
+    const source = row.source && <small>{row.source}</small>;
+    if ('instruction' in row) {
+      instructions.push(
+        <li key={row.id}>
+          <span>{row.instruction}</span>
+          {source}
+        </li>
+      );
+    } else {
+      bonuses.push(
+        <li key={row.id}>
+          <b>{row.bonus}</b>
+          <span>{row.appliesWhen}</span>
+          {source}
+        </li>
+      );
+    }
+  }
+  return (
+    <>
+      {bonuses.length > 0 && (
+        <ul
+          className={layout['reminderList']}
+          aria-label={`${name} — add to the roll`}
+        >
+          {bonuses}
+        </ul>
+      )}
+      {instructions.length > 0 && (
+        <>
+          <div className={layout['beforeHeading']}>Before the roll</div>
+          <ul
+            className={layout['beforeList']}
+            aria-label={`${name} — before the roll`}
+          >
+            {instructions}
+          </ul>
+        </>
       )}
     </>
   );

@@ -7,6 +7,20 @@ import type {
   StrengthScore,
 } from '../types/encumbrance';
 
+import { encumbranceCatalogById } from '../tables/encumbranceCatalog';
+
+export function inventoryCatalog(
+  holders: readonly Pick<EncumbranceCharacterSheet, 'inventory'>[]
+) {
+  const catalog = new Map(encumbranceCatalogById);
+  for (const holder of holders) {
+    for (const item of holder.inventory) {
+      if (item.customItem) catalog.set(item.catalogId, item.customItem);
+    }
+  }
+  return catalog;
+}
+
 const defaultWeightAllowanceByScore = new Map<number, number>([
   [3, -350],
   [4, -250],
@@ -34,31 +48,14 @@ const exceptionalWeightAllowance = new Map<string, number>([
   ['00', 3000],
 ]);
 
-const unencumberedBaseCapacityGp = 350;
-
-const normalLoadBand: LoadBand = {
-  id: 'normal',
-  label: 'Unencumbered',
-  movement: '12"',
-};
-
-const heavyLoadBand: LoadBand = {
-  id: 'heavy',
-  label: 'Heavy gear',
-  movement: '9"',
-};
-
-const veryHeavyLoadBand: LoadBand = {
-  id: 'very-heavy',
-  label: 'Very heavy gear',
-  movement: '6"',
-};
-
-const encumberedLoadBand: LoadBand = {
-  id: 'encumbered',
-  label: 'Encumbered',
-  movement: '3"-4"',
-};
+// Upper-inclusive limits before applying Strength; the last band is open-ended.
+export const loadBands = [
+  { id: 'normal', label: 'Unencumbered', movement: '12"', limit: 350 },
+  { id: 'heavy', label: 'Heavy gear', movement: '9"', limit: 700 },
+  { id: 'very-heavy', label: 'Very heavy gear', movement: '6"', limit: 1050 },
+  { id: 'encumbered', label: 'Encumbered', movement: '3"-4"', limit: 1500 },
+  { id: 'immobile', label: 'Immobile', movement: '0"', limit: Infinity },
+] as const;
 
 const getChildItems = (
   inventory: EncumbranceInventoryItem[],
@@ -106,8 +103,7 @@ export const getStrengthWeightAllowanceGp = (
 
 export const getStrengthCarryingCapacityGp = (
   strength: StrengthScore
-): number =>
-  unencumberedBaseCapacityGp + getStrengthWeightAllowanceGp(strength);
+): number => loadBands[0].limit + getStrengthWeightAllowanceGp(strength);
 
 export const getEffectiveLoadGp = (
   totalEncumbranceGp: number,
@@ -117,19 +113,9 @@ export const getEffectiveLoadGp = (
   Math.max(0, totalEncumbranceGp - getStrengthWeightAllowanceGp(strength));
 
 export const getLoadBand = (effectiveLoadGp: number): LoadBand => {
-  if (effectiveLoadGp <= 350) {
-    return normalLoadBand;
-  }
-
-  if (effectiveLoadGp <= 700) {
-    return heavyLoadBand;
-  }
-
-  if (effectiveLoadGp <= 1050) {
-    return veryHeavyLoadBand;
-  }
-
-  return encumberedLoadBand;
+  const { id, label, movement } =
+    loadBands.find((band) => effectiveLoadGp <= band.limit) ?? loadBands[4];
+  return { id, label, movement };
 };
 
 export const getInventoryItemTotalGp = (
@@ -160,14 +146,23 @@ export const getInventoryItemTotalGp = (
 
 export const getTotalEncumbranceGp = (
   character: Pick<EncumbranceCharacterSheet, 'inventory'>,
-  catalogById: Map<string, EncumbranceCatalogItem>
+  catalogById: Map<string, EncumbranceCatalogItem>,
+  wornBodyArmorId?: string
 ): number =>
-  getChildItems(character.inventory, null).reduce(
-    (total, item) =>
-      total +
-      getInventoryItemTotalGp(item.id, character.inventory, catalogById),
-    0
-  );
+  getChildItems(character.inventory, null).reduce((total, item) => {
+    const carried = getInventoryItemTotalGp(
+      item.id,
+      character.inventory,
+      catalogById
+    );
+    // PHB p. 36 / DMG p. 164: exempt only the single magical suit being worn.
+    // Other copies in the stack and any contents retain their normal load.
+    const worn =
+      item.id === wornBodyArmorId && item.isMagical && item.quantity > 0
+        ? getOwnEncumbrance(item, catalogById) / item.quantity
+        : 0;
+    return total + carried - worn;
+  }, 0);
 
 export const getInventoryItemTotalValueGp = (
   itemId: string,

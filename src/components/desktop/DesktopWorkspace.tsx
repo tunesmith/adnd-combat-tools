@@ -12,6 +12,7 @@ import {
 import BankBalances from './BankBalances';
 import { reorderCampaignSession } from '../../helpers/campaignSessionOrder';
 import CampaignXp from './CampaignXp';
+import { wornArmorByHolder } from '../../helpers/partyEncumbrance';
 import PartyReference from './PartyReference';
 import AutoHeightTextarea from '../tracker/AutoHeightTextarea';
 import CreateSessionDialog from './CreateSessionDialog';
@@ -721,6 +722,7 @@ export default function DesktopWorkspace() {
                     campaign={{
                       document: working.document,
                       sessionLabel,
+                      wornArmorByHolder: wornArmorByHolder(document, sessionId),
                       characterOrder: inSessionInventoryOrder(
                         document,
                         sessionId,

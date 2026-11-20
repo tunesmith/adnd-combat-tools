@@ -20,8 +20,27 @@ const level = z.number().int().min(0).max(99);
 const override = z.number().int().min(0).max(99).nullable();
 const attribute = z.number().int().min(0).max(25).nullable();
 const bonus = z.number().int().min(-1000).max(1000).nullable();
+export const armorTypes = [
+  'leather',
+  'padded',
+  'studded',
+  'ring',
+  'scale',
+  'chain',
+  'elfin-chain',
+  'splint',
+  'banded',
+  'plate',
+] as const;
+export type BodyArmor = typeof armorTypes[number];
 export const profileReferenceSchema = z
   .object({
+    // Absent = unrecorded, null = explicitly wearing no body armor.
+    wornArmor: z
+      .object({ itemId: id, type: z.enum(armorTypes).optional() })
+      .strict()
+      .nullable()
+      .optional(),
     race: z.string().max(200),
     gender: z.string().max(200),
     age: z.number().int().min(0).max(1_000_000).nullable(),
@@ -101,6 +120,30 @@ const profileClassSchema = z
   })
   .strict();
 export type ProfileClass = z.infer<typeof profileClassSchema>;
+const reminderFields = z
+  .object({
+    id,
+    source: z.string().max(1000),
+  })
+  .strict();
+const saveReminderSchema = z.union([
+  reminderFields.extend({
+    bonus: z.string().trim().min(1, 'Enter a saving-throw bonus.').max(100),
+    appliesWhen: z
+      .string()
+      .trim()
+      .min(1, 'Enter when the bonus applies.')
+      .max(1000),
+  }),
+  reminderFields.extend({
+    instruction: z
+      .string()
+      .trim()
+      .min(1, 'Enter a before-the-roll instruction.')
+      .max(1000),
+  }),
+]);
+export type SaveReminder = z.infer<typeof saveReminderSchema>;
 export const partyProfileSchema = z
   .object({
     characterId: id,
@@ -132,6 +175,13 @@ export const partyProfileSchema = z
     // Keep the V6 file key. These targets only apply when no save is calculated.
     overrides: z.tuple([override, override, override, override, override]),
     saveNotes: z.tuple([note, note, note]),
+    saveReminders: z
+      .array(saveReminderSchema)
+      .refine(
+        (rows) => new Set(rows.map((row) => row.id)).size === rows.length,
+        'Repeated saving-throw reminder ID.'
+      )
+      .optional(),
     reference: profileReferenceSchema.optional(),
   })
   .strict();

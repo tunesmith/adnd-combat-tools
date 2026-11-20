@@ -239,7 +239,7 @@ export type EncumbranceDocument =
   | EncumbrancePlayerDocumentV9
   | EncumbranceDmDocumentV10;
 
-type LoadBandId = 'normal' | 'heavy' | 'very-heavy' | 'encumbered';
+type LoadBandId = 'normal' | 'heavy' | 'very-heavy' | 'encumbered' | 'immobile';
 
 export interface LoadBand {
   id: LoadBandId;

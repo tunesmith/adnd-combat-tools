@@ -354,6 +354,8 @@ test.each<[number, StrengthScore['exceptional'], number, number]>([
       [700, 'very-heavy'],
       [700.01, 'encumbered'],
       [701, 'encumbered'],
+      [1150, 'encumbered'],
+      [1150.01, 'immobile'],
     ] as const) {
       const effective = getEffectiveLoadGp(capacity + offset, strength);
       expect(effective).toBeCloseTo(350 + offset);

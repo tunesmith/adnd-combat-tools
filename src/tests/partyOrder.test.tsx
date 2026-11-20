@@ -160,7 +160,7 @@ test('dragging a Session row updates References and both XP views, persists, and
       .map((c) => c.textContent)
   ).toEqual(['Bram', 'Mira', 'Tal', 'Oren', 'Nera']);
   fireEvent.click(screen.getByRole('button', { name: 'Show references' }));
-  const saves = screen.getByRole('table');
+  const saves = screen.getByRole('table', { name: 'Saving throws' });
   expect(
     rowNames(saves).map((name) => names.find((n) => name?.startsWith(n)))
   ).toEqual(['Bram', 'Mira', 'Tal', 'Oren', 'Nera']);

@@ -61,3 +61,9 @@ export const saveCategories = [
   ['Breath', 'Breath weapon, except petrification or polymorph'],
   ['Spell', 'Spell, where a different category is not specified'],
 ] as const;
+
+export const saveNoteLabels = [
+  'Dodging notes',
+  'Fire/lightning notes',
+  'Other notes',
+] as const;

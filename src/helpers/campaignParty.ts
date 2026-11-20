@@ -494,6 +494,9 @@ export function copyPartyProfile(
     adjustment: p.adjustment ? { ...p.adjustment } : null,
     overrides: [...p.overrides],
     saveNotes: [...p.saveNotes],
+    ...(p.saveReminders && {
+      saveReminders: p.saveReminders.map((row) => ({ ...row })),
+    }),
     ...(p.reference
       ? {
           reference: {

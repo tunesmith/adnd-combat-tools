@@ -1,0 +1,241 @@
+.resources {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 1.4em 1em;
+  font-size: inherit;
+  color: #302b22;
+}
+.resources section {
+  min-width: 0;
+  max-width: 100%;
+}
+.savesSection {
+  flex: 0 1 28em;
+}
+.matrixSection {
+  flex-grow: 1;
+}
+.resources header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.86em;
+  padding: 0 0.2rem 0.4rem;
+}
+.resources h2 {
+  margin: 0;
+  font-size: 1.22em;
+  color: #57272d;
+  font-weight: 650;
+}
+.resources header small,
+.saves small {
+  color: #675c4f;
+  font-size: 0.86em;
+}
+.scroll {
+  overflow-x: auto;
+  max-width: 100%;
+  border: 1px solid #cec3b1;
+  border-radius: 4px;
+  background: #fffcf6;
+}
+.scroll:focus-visible {
+  outline: 2px solid #784c32;
+  outline-offset: 2px;
+}
+.resources table {
+  width: 100%;
+  border-spacing: 0;
+  font: inherit;
+  line-height: 1.32;
+  font-variant-numeric: tabular-nums;
+}
+.resources :is(th, td) {
+  padding: 0.34em 0.46em;
+  border-bottom: 1px solid #e4ddcf;
+  text-align: right;
+  vertical-align: middle;
+}
+.resources tbody tr:last-child > * {
+  border-bottom: 0;
+}
+.resources thead th {
+  background: #ede7da;
+  color: #554b3e;
+  font-weight: 600;
+  vertical-align: bottom;
+}
+.resources th:first-child {
+  text-align: left;
+}
+.saves th:first-child {
+  width: 35%;
+}
+.saves :is(th, td):not(:first-child) {
+  padding-inline: 0.3em;
+}
+.saves tbody th {
+  font-weight: 400;
+}
+.saves small {
+  display: block;
+}
+.saves td:not(:first-child),
+.saves thead th:not(:first-child) {
+  text-align: center;
+}
+.character {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.15em;
+}
+.character button:first-child {
+  font-size: inherit;
+}
+.reminderList b {
+  color: #405b35;
+}
+.resources .reminderCell {
+  padding-block: 0.2em 0.4em;
+  text-align: left;
+}
+.reminderList,
+.beforeList {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  gap: 0.1em;
+}
+.reminderList li,
+.beforeList li {
+  display: grid;
+  grid-template-columns: minmax(2.5ch, max-content) minmax(0, 1fr) fit-content(
+      30%
+    );
+  align-items: baseline;
+  column-gap: 0.45em;
+  overflow-wrap: anywhere;
+}
+.reminderList b {
+  max-width: 8ch;
+  text-align: right;
+}
+.reminderList small,
+.beforeList small {
+  text-align: right;
+}
+.beforeList li {
+  grid-template-columns: minmax(0, 1fr) fit-content(30%);
+}
+.beforeHeading {
+  font-size: 0.86em;
+  font-weight: 600;
+  color: #675c4f;
+}
+.reminderList + .beforeHeading {
+  margin-top: 0.3em;
+}
+.instructionField {
+  grid-column: span 2;
+}
+.addReminder {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5em;
+}
+.editor {
+  min-width: 0;
+  margin: 10px 0;
+  border: 0;
+  padding: 0;
+}
+.editor legend {
+  margin-bottom: 0.35em;
+  font-weight: 600;
+}
+.editorRow {
+  display: grid;
+  grid-template-columns: minmax(5ch, 0.5fr) minmax(10ch, 2fr) minmax(8ch, 1fr) auto;
+  gap: 0.5em;
+  align-items: end;
+  margin-bottom: 0.5em;
+}
+.editorRow input {
+  display: block;
+  width: 100%;
+}
+@media (max-width: 520px) {
+  .editorRow {
+    grid-template-columns: minmax(7ch, 0.5fr) minmax(0, 2fr);
+  }
+  .editorRow .sourceField {
+    grid-column: span 2;
+  }
+  .editorRow button {
+    grid-column: span 2;
+    justify-self: end;
+  }
+}
+.notes td {
+  text-align: left;
+  color: #453d30;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+.notes td > div {
+  padding: 0.12em 0.3em 0.12em 0.55em;
+  border-left: 2px solid #cab88a;
+}
+.notes b {
+  font-size: 0.9em;
+  color: #655844;
+  margin-right: 0.3em;
+}
+.matrix {
+  table-layout: fixed;
+}
+.matrix th:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  width: 8.25em;
+  background: #f6f1e7;
+  box-shadow: 1px 0 #d4c9b9;
+}
+.matrix thead th {
+  padding-inline: 0.25em;
+  overflow-wrap: anywhere;
+}
+.matrix thead th:first-child {
+  background: #ede7da;
+}
+.matrix tbody th {
+  font-weight: 500;
+}
+.matrix .active {
+  background: #dce7cf;
+  color: #294625;
+  font-weight: 700;
+}
+.matrix td {
+  overflow-wrap: anywhere;
+}
+.matrix .total > * {
+  font-weight: 700;
+  background-color: #f0ecdf;
+}
+.matrix .room > * {
+  border-top: 1px solid #c9bda9;
+  border-bottom: 1px solid #c9bda9;
+}
+
+.hint {
+  margin: 0.45em 0.25em 0;
+  color: #675c4f;
+  font-size: 0.86em;
+}

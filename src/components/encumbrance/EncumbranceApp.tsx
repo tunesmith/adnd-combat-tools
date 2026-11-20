@@ -50,6 +50,7 @@ import {
   getInventoryItemTotalKnownValueGp,
   getInventoryItemTotalValueGp,
   getLoadBand,
+  inventoryCatalog,
   getStrengthCarryingCapacityGp,
   getTotalEncumbranceGp,
   getTotalKnownValueGp,
@@ -87,6 +88,7 @@ interface EncumbranceAppProps {
     onExport: () => void;
     onAddCharacter?: () => void;
     characterOrder?: string[];
+    wornArmorByHolder?: ReadonlyMap<string, string>;
     onReorderCharacter?: (fromId: string, targetId: string) => void;
   };
 }
@@ -1029,21 +1031,15 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
     }
   }, [activeCharacter, dmCharacters, editingItemDraft, mode]);
 
-  const catalogById = useMemo(() => {
-    const nextCatalogById = new Map(encumbranceCatalogById);
-    const allInventory =
-      document.kind === 'adnd-encumbrance-dm'
-        ? inventoryHolders(document).flatMap((character) => character.inventory)
-        : document.character.inventory;
-
-    allInventory.forEach((item) => {
-      if (item.customItem) {
-        nextCatalogById.set(item.catalogId, item.customItem);
-      }
-    });
-
-    return nextCatalogById;
-  }, [document]);
+  const catalogById = useMemo(
+    () =>
+      inventoryCatalog(
+        document.kind === 'adnd-encumbrance-dm'
+          ? inventoryHolders(document)
+          : [document.character]
+      ),
+    [document]
+  );
 
   const selectableCatalogGroups = useMemo(() => {
     const coinSortOrder = new Map<string, number>([
@@ -1155,7 +1151,8 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
     addPreviewValuePerItemGp * addPreviewQuantity;
   const totalEncumbranceGp = getTotalEncumbranceGp(
     activeCharacter,
-    catalogById
+    catalogById,
+    campaign?.wornArmorByHolder?.get(activeCharacter.id)
   );
   const totalValueGp =
     mode === 'dm'
@@ -2567,7 +2564,13 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
   const visibleTotalEncumbranceGp = visibleCharacters.reduce(
     (total, character) =>
       total +
-      (character.strength ? getTotalEncumbranceGp(character, catalogById) : 0),
+      (character.strength
+        ? getTotalEncumbranceGp(
+            character,
+            catalogById,
+            campaign?.wornArmorByHolder?.get(character.id)
+          )
+        : 0),
     0
   );
   const visibleTotalValueGp = visibleCharacters.reduce(

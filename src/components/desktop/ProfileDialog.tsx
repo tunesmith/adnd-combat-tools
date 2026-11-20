@@ -1,7 +1,9 @@
 import ProfileClassesFields from './ProfileClassesFields';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { CampaignDocument } from '../../helpers/campaignDocument';
 import {
+  armorTypes,
+  emptyProfileReference,
   partyProfileSchema,
   rosterCharacterSchema,
 } from '../../helpers/campaignPartyModel';
@@ -23,8 +25,16 @@ import {
   profilesInSession,
   updatePartyProfile,
 } from '../../helpers/campaignParty';
-import { saveCategories } from '../../tables/savingThrows';
+import { saveCategories, saveNoteLabels } from '../../tables/savingThrows';
+import {
+  partyGear,
+  armorChoices,
+  armorItemName,
+  armorMovement,
+  catalogArmor,
+} from '../../helpers/partyEncumbrance';
 import ProfileReferenceFields from './ProfileReferenceFields';
+import SaveReminderEditor from './SaveReminderEditor';
 import AutoHeightTextarea from '../tracker/AutoHeightTextarea';
 import styles from './campaignWorkspace.module.css';
 
@@ -84,6 +94,25 @@ export default function ProfileDialog({
   }
   const patch = (changes: Partial<PartyProfile>) =>
     setDraft((p) => ({ ...p, ...changes }));
+  const choices = useMemo(
+    () =>
+      armorChoices(
+        partyGear(document, profile.sessionId).holders.get(identity.id)
+      ),
+    [document, profile.sessionId, identity.id]
+  );
+  const worn = draft.reference?.wornArmor;
+  const chosen = choices.find((item) => item.id === worn?.itemId);
+  function setArmor(
+    value: NonNullable<PartyProfile['reference']>['wornArmor']
+  ) {
+    patch({
+      reference: {
+        ...(draft.reference ?? emptyProfileReference()),
+        wornArmor: value,
+      },
+    });
+  }
   function save() {
     const parsedProfile = partyProfileSchema.safeParse(draft),
       parsedCharacter = rosterCharacterSchema.safeParse(identity);
@@ -227,6 +256,73 @@ export default function ProfileDialog({
             </label>
           </div>
           <ProfileClassesFields value={draft} onChange={patch} />
+          <div className={styles['profileFields']}>
+            <label>
+              Worn armor
+              <select
+                aria-label="Worn armor"
+                value={
+                  worn === null ? 'none' : worn ? 'item:' + worn.itemId : ''
+                }
+                onChange={(e) => {
+                  const item = choices.find(
+                    (i) => 'item:' + i.id === e.target.value
+                  );
+                  setArmor(
+                    item
+                      ? { itemId: item.id }
+                      : e.target.value === 'none'
+                      ? null
+                      : undefined
+                  );
+                }}
+              >
+                <option value="">Unknown</option>
+                <option value="none">No worn armor</option>
+                {worn && !chosen && (
+                  <option value={'item:' + worn.itemId}>
+                    Previously worn item unavailable
+                  </option>
+                )}
+                {['Body armor', 'Custom items'].map((group) => {
+                  const items = choices.filter(
+                    (item) =>
+                      Boolean(catalogArmor(item)) === (group === 'Body armor')
+                  );
+                  return (
+                    items.length > 0 && (
+                      <optgroup key={group} label={group}>
+                        {items.map((item) => (
+                          <option key={item.id} value={'item:' + item.id}>
+                            {armorItemName(item)}
+                          </option>
+                        ))}
+                      </optgroup>
+                    )
+                  );
+                })}
+              </select>
+            </label>
+            {worn && chosen && !catalogArmor(chosen) && (
+              <label>
+                Body armor type
+                <select
+                  value={worn.type ?? ''}
+                  onChange={(e) => {
+                    const type = armorTypes.find((t) => t === e.target.value);
+                    setArmor({ ...worn, type });
+                  }}
+                >
+                  <option value="">Unknown</option>
+                  {armorTypes.map((type) => (
+                    <option key={type} value={type}>
+                      {armorMovement[type].name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+          </div>
           <ProfileReferenceFields
             value={draft.reference}
             showXpBonus={!draft.classes}
@@ -396,6 +492,34 @@ export default function ProfileDialog({
                   </label>
                 ))}
               </div>
+            </fieldset>
+          )}
+          <SaveReminderEditor
+            rows={draft.saveReminders ?? []}
+            onChange={(saveReminders) => patch({ saveReminders })}
+          />
+          {(profile.saveNotes.some(Boolean) ||
+            draft.saveNotes.some(Boolean)) && (
+            <fieldset className={styles['profileGroup']}>
+              <legend>Original saving-throw notes</legend>
+              {saveNoteLabels.map((label, i) => (
+                <label key={label}>
+                  {label}
+                  <AutoHeightTextarea
+                    aria-label={label}
+                    value={draft.saveNotes[i] ?? ''}
+                    rows={1}
+                    maxLength={100000}
+                    onChange={(text) => {
+                      const saveNotes: PartyProfile['saveNotes'] = [
+                        ...draft.saveNotes,
+                      ];
+                      saveNotes[i] = text;
+                      patch({ saveNotes });
+                    }}
+                  />
+                </label>
+              ))}
             </fieldset>
           )}
           <details>
