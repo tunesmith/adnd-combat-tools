@@ -27,7 +27,10 @@ storage ownership, validation, tests and native diagnostics.
 
 ## Workspace
 
-Open a file through **File → Open**, Finder, or **Reopen Last Campaign**. Use
+**File → Open Recent** lists previously opened or newly saved campaigns. Choose a
+filename to switch campaigns, or **Clear Menu** to clear the history. Switching
+uses the usual Save, Discard, or Cancel prompt for unsaved changes.
+You can also open a file through **File → Open**, Finder, or **Reopen Last Campaign**. Use
 **File → New Campaign** for a new document. Select a session, then a view:
 
 | View        | Purpose                                                                     |

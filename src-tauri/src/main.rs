@@ -40,7 +40,7 @@ struct Session {
 }
 struct State {
     ready: AtomicBool,
-    pending_open: Mutex<std::collections::VecDeque<PathBuf>>,
+    pending_open: Mutex<Vec<(String, PathBuf)>>,
     session: Mutex<Session>,
     exiting: AtomicBool,
 }
@@ -93,15 +93,8 @@ impl Session {
             return;
         }
         self.view.recent_path = Some(path.clone());
-        let result = (|| -> Result<(), String> {
-            let dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
-            fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
-            let bytes = serde_json::to_vec(path).map_err(|e| e.to_string())?;
-            fs::write(dir.join("recent.tmp"), bytes).map_err(|e| e.to_string())?;
-            fs::rename(dir.join("recent.tmp"), dir.join("recent.json")).map_err(|e| e.to_string())
-        })();
-        if result.is_err() {
-            self.view.status += " (Could not remember path; use Open next time.)";
+        if macos::note_recent(app, path).is_err() {
+            self.view.status += " (Could not update Open Recent.)";
         }
     }
     fn load(&mut self, app: &tauri::AppHandle, path: PathBuf) -> Result<(), String> {
@@ -190,12 +183,15 @@ impl Session {
             Ok(rev) => {
                 self.revision = Some(rev);
                 self.saved = Some(doc);
+                let new_path = self.view.path.as_ref() != Some(&path);
                 self.view.path = Some(path.clone());
                 self.view.dirty = false;
                 self.view.status = "Saved successfully".into();
                 self.view.save_count += 1;
                 self.view.error = None;
-                self.remember(app, &path);
+                if new_path {
+                    self.remember(app, &path);
+                }
                 Ok(true)
             }
             Err(e) if e == CONFLICT => {
@@ -233,6 +229,11 @@ impl Session {
         opened: Option<PathBuf>,
     ) -> Result<bool, String> {
         self.view.error = None;
+        if command == "clearRecent" {
+            macos::clear_recents(app)?;
+            self.view.recent_path = None;
+            return Ok(false);
+        }
         if command == "save" || command == "saveAs" {
             self.save(app, command == "saveAs")?;
             return Ok(false);
@@ -317,21 +318,21 @@ fn run_command(app: tauri::AppHandle, command: String, opened: Option<PathBuf>) 
     }
     result.map(|_| ())
 }
-fn run(app: tauri::AppHandle, command: String, opened: Option<PathBuf>) {
-    std::thread::spawn(move || { let _ = run_command(app, command, opened); });
-}
 #[tauri::command]
 async fn campaign_state(app: tauri::AppHandle) -> View {
     tauri::async_runtime::spawn_blocking(move || {
         let state = app.state::<State>();
-        state.ready.store(true, Ordering::SeqCst);
+        {
+            let pending = state.pending_open.lock().unwrap();
+            if !state.ready.swap(true, Ordering::SeqCst) {
+                for (id, _) in pending.iter() {
+                    let _ = app.emit("campaign-action", format!("openPending:{id}"));
+                }
+            }
+        }
         let session = state.session.lock().unwrap();
         session.publish(&app);
-        let view = session.view.clone();
-        if !state.pending_open.lock().unwrap().is_empty() {
-            let _ = app.emit("campaign-action", "openPending");
-        }
-        view
+        session.view.clone()
     })
     .await
     .unwrap()
@@ -339,12 +340,19 @@ async fn campaign_state(app: tauri::AppHandle) -> View {
 #[tauri::command]
 async fn campaign_command(app: tauri::AppHandle, command: String) -> Result<(), String> {
     tauri::async_runtime::spawn_blocking(move || {
-        if command == "openPending" {
-            let path = app.state::<State>().pending_open.lock().unwrap().pop_front();
-            if let Some(path) = path { return run_command(app, "open".into(), Some(path)); }
+        if let Some((action @ ("openPending" | "cancelPending"), id)) = command.split_once(':') {
+            // Only a path supplied by Finder or selected in the native menu is eligible.
+            let path = {
+                let state = app.state::<State>();
+                let mut pending = state.pending_open.lock().unwrap();
+                pending.iter().position(|(key, _)| key == id).map(|i| pending.remove(i).1)
+            };
+            if let ("openPending", Some(path)) = (action, path) {
+                return run_command(app, "open".into(), Some(path));
+            }
             return Ok(());
         }
-        if !["new", "open", "save", "saveAs", "close", "reopen", "quit"].contains(&command.as_str()) {
+        if !["new", "open", "save", "saveAs", "close", "reopen", "quit", "clearRecent"].contains(&command.as_str()) {
             return Err("Unknown command".into());
         }
         run_command(app, command, None)
@@ -357,11 +365,21 @@ fn standalone_tools() -> Vec<StandaloneTool> {
         .expect("Bundled standalone tool catalog must be valid")
 }
 
+fn queue_open(app: &tauri::AppHandle, path: PathBuf) {
+    let state = app.state::<State>();
+    let id = uuid::Uuid::new_v4().to_string();
+    let mut pending = state.pending_open.lock().unwrap();
+    pending.push((id.clone(), path));
+    if state.ready.load(Ordering::SeqCst) {
+        let _ = app.emit("campaign-action", format!("openPending:{id}"));
+    }
+}
+
 fn main() {
     tauri::Builder::default()
         .manage(State {
             ready: AtomicBool::new(false),
-            pending_open: Mutex::new(std::collections::VecDeque::new()),
+            pending_open: Mutex::new(Vec::new()),
             session: Mutex::new(Session::new(None)),
             exiting: AtomicBool::new(false),
         })
@@ -377,23 +395,6 @@ fn main() {
             campaign_export_working
         ])
         .setup(|app| {
-            let recent = app
-                .path()
-                .app_data_dir()
-                .ok()
-                .and_then(|p| fs::read(p.join("recent.json")).ok())
-                .and_then(|b| serde_json::from_slice(&b).ok());
-            {
-                let state = app.state::<State>();
-                let mut session = state.session.lock().unwrap();
-                if session.view.recent_path.is_none() {
-                    session.view.recent_path = recent;
-                }
-            }
-            #[cfg(feature = "diagnostic-harness")]
-            if let Ok(path) = std::env::var("ADND_DIAGNOSTIC_CAMPAIGN") {
-                app.state::<State>().session.lock().unwrap().load(app.handle(), path.into())?;
-            }
             let builder = tauri::WebviewWindowBuilder::from_config(app, &app.config().app.windows[0])?;
             #[cfg(feature = "diagnostic-harness")]
             let builder = if let Ok(path) = std::env::var("ADND_DIAGNOSTIC_SCRIPT") {
@@ -425,6 +426,9 @@ fn main() {
                     true,
                     Some(key),
                 )?)?;
+                if id == "open" {
+                    file.append(&Submenu::new(app.handle(), "Open Recent", true)?)?;
+                }
             }
             file.append(&PredefinedMenuItem::separator(app.handle())?)?;
             file.append(&MenuItem::with_id(
@@ -454,6 +458,14 @@ fn main() {
             }
             menu.insert(&tools, tools_index)?;
             app.set_menu(menu)?;
+            macos::install_recent_menu()?;
+            #[cfg(feature = "diagnostic-harness")]
+            if let Ok(path) = std::env::var("ADND_DIAGNOSTIC_CAMPAIGN") {
+                app.state::<State>().session.lock().unwrap().load(app.handle(), path.into())?;
+                return Ok(());
+            }
+            let recent = macos::restore_recent(app.handle());
+            app.state::<State>().session.lock().unwrap().view.recent_path = recent;
             Ok(())
         })
         .on_menu_event(|app, event| {
@@ -484,13 +496,7 @@ fn main() {
             tauri::RunEvent::Opened { urls } => {
                 for url in urls {
                     if let Ok(path) = url.to_file_path() {
-                        let state = app.state::<State>();
-                        if state.ready.load(Ordering::SeqCst) {
-                            state.pending_open.lock().unwrap().push_back(path);
-                            let _ = app.emit("campaign-action", "openPending");
-                        } else {
-                            run(app.clone(), "open".into(), Some(path));
-                        }
+                        queue_open(app, path);
                     }
                 }
             }

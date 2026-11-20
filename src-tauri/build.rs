@@ -15,5 +15,10 @@ fn main() {
     println!("cargo:rerun-if-changed=../src");
     println!("cargo:rerun-if-changed=../scripts");
     println!("cargo:rerun-if-changed=../package-lock.json");
+    cc::Build::new()
+        .file("src/recent_menu.m")
+        .flag("-fobjc-arc")
+        .compile("recent_menu");
+    println!("cargo:rerun-if-changed=src/recent_menu.m");
     tauri_build::build()
 }

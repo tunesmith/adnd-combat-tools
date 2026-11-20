@@ -6,6 +6,7 @@ import type {
 } from '../types/campaignStorage';
 import type { CampaignDocument } from './campaignDocument';
 
+type NativeAction = DocumentCommand | `openPending:${string}` | 'clearRecent';
 type Job<T> = { run: () => Promise<T>; key?: string };
 type Draft = {
   key: string;
@@ -169,9 +170,15 @@ export async function createTauriStorage(): Promise<CampaignStorage | null> {
     );
     return operation;
   }
-  function command(action: DocumentCommand | 'openPending'): Promise<void> {
+  function command(action: NativeAction): Promise<void> {
     if (commandTask) {
       if (commandAction === action) return commandTask;
+      // A second file selection should wait for the first one's save prompt.
+      if (action.startsWith('openPending:'))
+        return commandTask.then(
+          () => command(action),
+          () => command(action)
+        );
       const error = new Error(
         'A document command is already in progress. Wait for it to finish.'
       );
@@ -207,12 +214,16 @@ export async function createTauriStorage(): Promise<CampaignStorage | null> {
   await listen<DocumentState>('campaign-state', ({ payload }) => {
     accept(payload);
   });
-  await listen<DocumentCommand | 'openPending'>(
-    'campaign-action',
-    ({ payload }) => {
-      void command(payload).catch((error) => publish('failed', error));
-    }
-  );
+  await listen<NativeAction>('campaign-action', ({ payload }) => {
+    void command(payload).catch((error) => {
+      publish('failed', error);
+      // A rejected edit can prevent dispatch. Release just that file request.
+      if (payload.startsWith('openPending:'))
+        void invoke('campaign_command', {
+          command: payload.replace('openPending:', 'cancelPending:'),
+        }).catch(() => undefined);
+    });
+  });
   async function apply(
     id: string,
     epoch: number,

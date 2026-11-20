@@ -8,7 +8,7 @@ afterEach(() => {
 test('ordinary browser has no native storage', async () => {
   expect(await createTauriStorage()).toBeNull();
 });
-test.each(['save', 'quit', 'openPending'])(
+test.each(['save', 'quit', 'openPending:test-file'])(
   '%s waits for in-flight edits',
   async (action) => {
     let finishEdit: () => void = () => undefined;
@@ -203,7 +203,7 @@ test('rejected edits block Save until the accepted draft is restored', async () 
   expect(calls).toContain('campaign_command');
 });
 
-test.each(['save', 'quit', 'openPending'])(
+test.each(['save', 'quit', 'openPending:test-file'])(
   '%s waits for a queued combat edit and retains inventory',
   async (action) => {
     const { parseCampaign } = await import('../helpers/campaignDocument');
@@ -291,7 +291,7 @@ test.each(['save', 'quit', 'openPending'])(
   }
 );
 
-test.each(['save', 'quit', 'openPending'])(
+test.each(['save', 'quit', 'openPending:test-file'])(
   '%s waits for one atomic XP confirmation and ignores a stale award callback',
   async (action) => {
     const { xpCastleDraft } = await import('./fixtures/xpCampaign');
@@ -1070,4 +1070,47 @@ test('inventory batches rebase exact fields across a transfer, direct quantity e
   expect(parseCampaign(serializeCampaign(h.current().document))).toEqual(
     h.current().document
   );
+});
+
+test('two native file selections keep their own destinations when the first fails', async () => {
+  let send: ((event: { payload: unknown }) => void) | undefined;
+  const calls: string[] = [];
+  let rejectFirst: (error: Error) => void = () => undefined;
+  const first = new Promise<void>((_, reject) => {
+    rejectFirst = reject;
+  });
+  window.__TAURI__ = {
+    core: {
+      invoke: async <T>(name: string, args?: Record<string, unknown>) => {
+        if (name === 'campaign_command') {
+          const action = String(args?.['command']);
+          calls.push(action);
+          if (action === 'openPending:first') await first;
+        }
+        return undefined as unknown as T;
+      },
+    },
+    event: {
+      listen: async <T>(
+        name: string,
+        handler: (event: { payload: T }) => void
+      ) => {
+        if (name === 'campaign-action')
+          send = handler as (event: { payload: unknown }) => void;
+        return () => undefined;
+      },
+    },
+  };
+  await createTauriStorage();
+  send?.({ payload: 'openPending:first' });
+  send?.({ payload: 'openPending:second' });
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  expect(calls).toEqual(['openPending:first']);
+  rejectFirst(new Error('File moved'));
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  expect(calls.filter((action) => action.startsWith('openPending:'))).toEqual([
+    'openPending:first',
+    'openPending:second',
+  ]);
+  expect(calls).toContain('cancelPending:first');
 });
