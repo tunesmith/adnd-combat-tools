@@ -727,6 +727,9 @@
 }
 
 .combatantModalForm {
+  min-width: 0;
+  margin: 0;
+  border: 0;
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 0.72rem 0.85rem;
@@ -860,6 +863,11 @@
   pointer-events: auto;
 }
 
+.combatantShell:hover .removeCombatant:disabled,
+.combatantShell:focus-within .removeCombatant:disabled {
+  opacity: 0.45;
+}
+
 .combatantShell:hover .combatantContent,
 .combatantShell:focus-within .combatantContent {
   text-decoration: underline;
@@ -963,7 +971,6 @@
 }
 
 .removeCombatant:disabled {
-  opacity: 0.45;
   cursor: not-allowed;
 }
 

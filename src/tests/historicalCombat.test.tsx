@@ -57,7 +57,7 @@ test('campaign history replaces the editor for inspection and returns without a 
     onEdit = jest.fn(() => true);
   render(
     <CampaignCombats
-      onCreateEncounter={() => Promise.resolve()}
+      onCommit={() => Promise.resolve()}
       document={doc}
       sessionId="session-1"
       active

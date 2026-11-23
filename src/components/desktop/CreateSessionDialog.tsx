@@ -46,6 +46,9 @@ export default function CreateSessionDialog({
   const [selected, setSelected] = useState<string[]>([]);
   const [carryInventory, setCarryInventory] = useState(Boolean(inventory));
   const [copyNotes, setCopyNotes] = useState(false);
+  const hasPreparedEnemies = Boolean(source?.preparedEnemies?.length);
+  const [copyPreparedEnemies, setCopyPreparedEnemies] =
+    useState(hasPreparedEnemies);
   const [profiles] = useState(() =>
     carryablePartyProfiles(document, sessionId)
   );
@@ -87,6 +90,7 @@ export default function CreateSessionDialog({
       ? [`${selected.length} encounter${selected.length === 1 ? '' : 's'}`]
       : []),
     ...(copyNotes ? ['session notes'] : []),
+    ...(copyPreparedEnemies ? ['prepared enemies'] : []),
     ...(partyIds.length
       ? [`${partyIds.length} party profile${partyIds.length === 1 ? '' : 's'}`]
       : []),
@@ -134,6 +138,7 @@ export default function CreateSessionDialog({
                 }
               : null,
           copyNotes,
+          copyPreparedEnemies,
           partyCharacterIds: partyIds,
           capturedAt: new Date().toISOString(),
         };
@@ -227,6 +232,7 @@ export default function CreateSessionDialog({
             (inventory ||
               combats.length > 0 ||
               source.notes ||
+              hasPreparedEnemies ||
               profiles.length > 0) && (
               <fieldset className={styles['sessionTransfer']}>
                 <legend>Carry from {source.label}</legend>
@@ -293,6 +299,16 @@ export default function CreateSessionDialog({
                     {c.title}
                   </label>
                 ))}
+                {hasPreparedEnemies && (
+                  <label className={styles['continuationChoice']}>
+                    <input
+                      type="checkbox"
+                      checked={copyPreparedEnemies}
+                      onChange={(e) => setCopyPreparedEnemies(e.target.checked)}
+                    />
+                    Prepared enemies
+                  </label>
+                )}
                 {profiles.length > 0 && (
                   <details>
                     <summary>

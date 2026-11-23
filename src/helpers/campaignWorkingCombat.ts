@@ -12,6 +12,10 @@ import {
 } from './trackerState';
 import type { TrackerState } from '../types/tracker';
 import type { CampaignDocument } from './campaignDocument';
+import {
+  addPreparedEnemies,
+  preparedEnemiesInSession,
+} from './campaignPreparedEnemies';
 export interface WorkingCombat {
   id: string;
   sessionId: string;
@@ -225,15 +229,17 @@ export function createEncounterFromParty(
   source: { id: string; generation: number } | undefined,
   encounterId: string,
   checkpointId: string,
-  at: string
+  at: string,
+  preparedEnemyIds: readonly string[] = []
 ): CampaignDocument {
   if (doc.workingCombats.some((c) => c.id === encounterId)) return doc;
+  const roster = preparedEnemiesInSession(doc, sessionId);
   if (!source)
     return createWorkingCombat(
       doc,
       sessionId,
       title,
-      emptyWorkingCombat(),
+      addPreparedEnemies(emptyWorkingCombat(), roster, preparedEnemyIds),
       { kind: 'empty' },
       encounterId
     );
@@ -273,8 +279,41 @@ export function createEncounterFromParty(
     preserved,
     sessionId,
     title,
-    fresh,
+    addPreparedEnemies(fresh, roster, preparedEnemyIds),
     { kind: 'checkpoint', checkpointId },
     encounterId
   );
+}
+
+export function addPreparedEnemiesToWorkingCombat(
+  doc: CampaignDocument,
+  target: Pick<WorkingCombat, 'id' | 'sessionId' | 'generation'>,
+  roundIndex: number,
+  selectedIds: readonly string[]
+): CampaignDocument {
+  const combat = doc.workingCombats.find(
+    (item) =>
+      item.id === target.id &&
+      item.sessionId === target.sessionId &&
+      item.generation === target.generation &&
+      !item.removedAt
+  );
+  if (!combat || combat.state.activeRound !== roundIndex)
+    throw new Error(
+      'The active round changed. Reopen the prepared enemy picker.'
+    );
+  const next = addPreparedEnemies(
+    combat.state,
+    preparedEnemiesInSession(doc, combat.sessionId),
+    selectedIds
+  );
+  return next === combat.state
+    ? doc
+    : changeWorkingCombat(
+        doc,
+        combat.id,
+        combat.sessionId,
+        combat.generation,
+        next
+      );
 }

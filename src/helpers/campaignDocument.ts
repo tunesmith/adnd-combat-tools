@@ -37,6 +37,8 @@ import {
   sessionSchema,
 } from './campaignSnapshots';
 import type { CampaignRecord, CampaignSession } from './campaignSnapshots';
+import { preparedEnemiesSchema } from './campaignPreparedEnemies';
+import type { PreparedEnemy } from './campaignPreparedEnemies';
 export interface CampaignDocument {
   kind: 'adnd-campaign';
   schemaVersion: 21;
@@ -58,6 +60,7 @@ export interface CampaignDocument {
   sessions: (CampaignSession & {
     notes?: string;
     continuation?: SessionContinuation;
+    preparedEnemies?: PreparedEnemy[];
   })[];
   records: CampaignRecord[];
 }
@@ -80,6 +83,7 @@ const campaignSchema = z
           .extend({
             notes: z.string().max(1_000_000).optional(),
             continuation: sessionContinuationSchema.optional(),
+            preparedEnemies: preparedEnemiesSchema.optional(),
           })
           .strict()
       )

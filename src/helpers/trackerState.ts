@@ -397,39 +397,41 @@ export const addCombatant = (
   state: TrackerState,
   side: TrackerSide,
   nextKey: number,
-  partyDraft?: TrackerCombatant
+  draft?: TrackerCombatant,
+  notes = ''
 ): TrackerState => {
   const currentRound = state.rounds[state.activeRound];
   if (!currentRound) {
     return state;
   }
 
-  const combatant =
-    side === 'party'
-      ? partyDraft
-        ? { ...partyDraft, key: nextKey }
-        : createTrackerCombatant(nextKey, side, currentRound.party.length)
-      : (() => {
-          const previousEnemy =
-            currentRound.enemies[currentRound.enemies.length - 1];
+  const combatant = draft
+    ? { ...draft, key: nextKey }
+    : side === 'party'
+    ? createTrackerCombatant(nextKey, side, currentRound.party.length)
+    : (() => {
+        const previousEnemy =
+          currentRound.enemies[currentRound.enemies.length - 1];
 
-          if (!previousEnemy) {
-            return createTrackerCombatant(
-              nextKey,
-              side,
-              currentRound.enemies.length
-            );
-          }
+        if (!previousEnemy) {
+          return createTrackerCombatant(
+            nextKey,
+            side,
+            currentRound.enemies.length
+          );
+        }
 
-          return {
-            ...cloneCombatant(previousEnemy),
-            key: nextKey,
-            name: incrementCopiedEnemyName(
-              previousEnemy.name,
-              currentRound.enemies.length
-            ),
-          };
-        })();
+        const copy = cloneCombatant(previousEnemy);
+        delete copy.preparedEnemyId;
+        return {
+          ...copy,
+          key: nextKey,
+          name: incrementCopiedEnemyName(
+            previousEnemy.name,
+            currentRound.enemies.length
+          ),
+        };
+      })();
 
   if (side === 'party') {
     return {
@@ -461,14 +463,28 @@ export const addCombatant = (
                 createEmptyCell()
               ),
             ]),
-            enemyStates: round.enemyStates.concat(
-              createCombatantRoundState(combatant.maxHp)
-            ),
+            enemyStates: round.enemyStates.concat({
+              ...createCombatantRoundState(combatant.maxHp),
+              notes,
+            }),
           }
         : round
     ),
   };
 };
+
+export const getNextCombatantKey = (state: TrackerState): number =>
+  Math.max(
+    0,
+    ...state.rounds.flatMap((round) => [
+      ...round.party.concat(round.enemies).map((combatant) => combatant.key),
+      // Prior-step notes can still identify a creature removed from the roster.
+      ...(round.stepResults || []).flatMap((result) => [
+        result.actorKey,
+        ...result.targetKeys,
+      ]),
+    ])
+  ) + 1;
 
 export const removeCombatant = (
   state: TrackerState,

@@ -23,6 +23,7 @@ export const sessionContinuationSchema = z
     inventoryId: z.string().min(1).nullable(),
     inventoryCharacterIds: z.array(z.string().min(1)).max(500).optional(),
     copyNotes: z.boolean(),
+    copyPreparedEnemies: z.literal(true).optional(),
     partyCharacterIds: z.array(z.string().min(1)).optional(),
   })
   .strict();

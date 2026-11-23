@@ -20,6 +20,10 @@ The bundle is `src-tauri/target/release/bundle/macos/AD&D Campaign.app`. Once bu
 it runs without a development server. This is a local build; signing, notarization
 and an update service are not part of this workflow.
 
+To compile while the app is open, run `npm run desktop:build -- --no-bundle`.
+After you save and quit the app, package the compiled build with
+`npm exec -- tauri bundle --bundles app`. Open the app when you are ready.
+
 For browser development, use `npm run dev`. `npm run build` produces the GitHub
 Pages export under `/adnd-combat-tools`; desktop assets have their own output and
 local origin. See [architecture and verification](desktop-architecture.md) for

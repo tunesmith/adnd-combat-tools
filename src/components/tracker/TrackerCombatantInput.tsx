@@ -123,6 +123,14 @@ interface TrackerCombatantInputProps {
     ) => boolean | void;
     onCancel: () => void;
   };
+  preparedEnemy?: {
+    title: string;
+    notes: string;
+    busy: boolean;
+    error: string;
+    onSave: (combatant: TrackerCombatant, notes: string) => void;
+    onCancel: () => void;
+  };
   modalRootId?: string;
 }
 
@@ -153,6 +161,7 @@ const TrackerCombatantInput = ({
   onUpdate,
   liveUpdates = false,
   newMember,
+  preparedEnemy,
   modalRootId = 'app-modal',
 }: TrackerCombatantInputProps) => {
   const [open, setOpen] = useState(Boolean(newMember));
@@ -160,6 +169,9 @@ const TrackerCombatantInput = ({
     useState<boolean>(false);
   const [draft, setDraft] = useState<TrackerCombatant>(combatant);
   const [addError, setAddError] = useState('');
+  const [preparedNotes, setPreparedNotes] = useState(
+    preparedEnemy?.notes ?? ''
+  );
   const duplicateName = Boolean(newMember?.isDuplicateName(draft.name));
   const [movementRateInput, setMovementRateInput] = useState<string>(
     formatMovementRateInput(combatant.movementRate)
@@ -244,6 +256,10 @@ const TrackerCombatantInput = ({
   };
 
   const closeModal = () => {
+    if (preparedEnemy) {
+      if (!preparedEnemy.busy) preparedEnemy.onCancel();
+      return;
+    }
     newMember?.onCancel();
     setIsEditingWeaponShortlist(false);
     setOpen(false);
@@ -477,7 +493,7 @@ const TrackerCombatantInput = ({
       ? document.getElementById(modalRootId)
       : null;
   const selectMenuPortalTarget =
-    liveUpdates || newMember
+    liveUpdates || newMember || preparedEnemy
       ? modalRoot
       : typeof document !== 'undefined'
       ? document.body
@@ -512,10 +528,17 @@ const TrackerCombatantInput = ({
       ))}
     </span>
   );
+  const modalTitle =
+    preparedEnemy?.title ??
+    (newMember
+      ? 'Add Party Member from Profile'
+      : side === 'party'
+      ? 'Edit Party Member'
+      : 'Edit Enemy');
 
   return (
     <div className={styles['combatantShell']}>
-      {!newMember && (
+      {!newMember && !preparedEnemy && (
         <>
           <div className={sizerClassName} aria-hidden={'true'}>
             {renderHeaderContent(true)}
@@ -550,7 +573,7 @@ const TrackerCombatantInput = ({
           </button>
         </>
       )}
-      {open &&
+      {(open || preparedEnemy) &&
         modalRoot &&
         createPortal(
           <>
@@ -558,16 +581,11 @@ const TrackerCombatantInput = ({
             <div
               className={styles['modal']}
               role="dialog"
-              aria-label={
-                newMember
-                  ? 'Add Party Member from Profile'
-                  : side === 'party'
-                  ? 'Edit Party Member'
-                  : 'Edit Enemy'
-              }
+              aria-label={modalTitle}
+              aria-modal={preparedEnemy ? true : undefined}
               onKeyDown={(event) => {
                 if (
-                  newMember &&
+                  (newMember || preparedEnemy) &&
                   event.key === 'Escape' &&
                   !event.defaultPrevented
                 ) {
@@ -576,13 +594,7 @@ const TrackerCombatantInput = ({
                 }
               }}
             >
-              <div className={styles['modalTitle']}>
-                {newMember
-                  ? 'Add Party Member from Profile'
-                  : side === 'party'
-                  ? 'Edit Party Member'
-                  : 'Edit Enemy'}
-              </div>
+              <div className={styles['modalTitle']}>{modalTitle}</div>
               {newMember && (
                 <p className={styles['modalHint']}>
                   {newMember.copiedClassAndLevel
@@ -591,7 +603,10 @@ const TrackerCombatantInput = ({
                   Review armor, weapon, movement, and hit points before adding.
                 </p>
               )}
-              <div className={styles['combatantModalForm']}>
+              <fieldset
+                className={styles['combatantModalForm']}
+                disabled={preparedEnemy?.busy}
+              >
                 <div className={styles['combatantFieldWide']}>
                   <label
                     className={styles['combatantFieldLabel']}
@@ -604,7 +619,7 @@ const TrackerCombatantInput = ({
                     className={styles['combatantTextInput']}
                     type={'text'}
                     value={draft.name || ''}
-                    autoFocus={Boolean(newMember)}
+                    autoFocus={Boolean(newMember || preparedEnemy)}
                     onChange={handleNameChange}
                     onBlur={handleNameBlur}
                     placeholder={'Name or label'}
@@ -871,7 +886,47 @@ const TrackerCombatantInput = ({
                     12&quot;.
                   </p>
                 ) : null}
-              </div>
+                {preparedEnemy && (
+                  <label className={styles['combatantFieldWide']}>
+                    <span className={styles['combatantFieldLabel']}>
+                      DM notes
+                    </span>
+                    <textarea
+                      className={styles['combatantTextInput']}
+                      rows={3}
+                      value={preparedNotes}
+                      onChange={(event) => setPreparedNotes(event.target.value)}
+                    />
+                  </label>
+                )}
+              </fieldset>
+              {preparedEnemy && (
+                <>
+                  {preparedEnemy.error && (
+                    <p role="alert" className={styles['modalHint']}>
+                      {preparedEnemy.error}
+                    </p>
+                  )}
+                  <div className={styles['modalActions']}>
+                    <button
+                      type="button"
+                      disabled={preparedEnemy.busy}
+                      className={styles['toolbarButton']}
+                      onClick={closeModal}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      disabled={preparedEnemy.busy || !draft.name?.trim()}
+                      className={styles['toolbarButtonPrimary']}
+                      onClick={() => preparedEnemy.onSave(draft, preparedNotes)}
+                    >
+                      {preparedEnemy.busy ? 'Saving…' : 'Save and return'}
+                    </button>
+                  </div>
+                </>
+              )}
               {newMember && (
                 <>
                   {duplicateName && (

@@ -6,10 +6,16 @@ import {
   captureCombatCheckpoint,
   restoreWorkingCombat,
   emptyWorkingCombat,
+  createEncounterFromParty,
+  addPreparedEnemiesToWorkingCombat,
 } from '../helpers/campaignWorkingCombat';
+import { changePreparedEnemy } from '../helpers/campaignPreparedEnemies';
 import { startWorkingInventory } from '../helpers/campaignWorkingInventory';
 import { syntheticCombat, syntheticInventory } from './fixtures/campaignB1';
 import {
+  addCombatant,
+  createBaseCombatant,
+  getNextCombatantKey,
   insertRoundAfterActive,
   removeCombatant,
 } from '../helpers/trackerState';
@@ -191,4 +197,63 @@ test('session selection and independent encounters survive serialization without
   expect(other.workingCombats[0]).toEqual(doc.workingCombats[0]);
   expect(other.workingCombats[1]?.state.rounds[0]?.party).toEqual([]);
   expect(parseCampaign(serializeCampaign(other))).toEqual(other);
+});
+
+test('prepared enemies get distinct tracker identities and follow roster order in the active round', () => {
+  let doc = setup();
+  for (const name of ['Cube 1', 'Cube 2', 'Cube 3']) {
+    const { key: _key, ...combatant } = createBaseCombatant(0, 'enemy', name);
+    doc = changePreparedEnemy(doc, 'session-1', undefined, {
+      id: name,
+      combatant: { ...combatant, name, maxHp: '20' },
+      notes: `Notes for ${name}`,
+    });
+  }
+  doc = createEncounterFromParty(
+    doc,
+    'session-1',
+    'Ambush',
+    required(doc.workingCombats[0]),
+    'ambush',
+    'before-party-copy',
+    at,
+    ['Cube 3', 'Cube 1']
+  );
+  const created = required(
+    doc.workingCombats.find((combat) => combat.id === 'ambush')
+  );
+  const state = insertRoundAfterActive(created.state);
+  const advanced = addCombatant(state, 'enemy', getNextCombatantKey(state));
+  doc = changeWorkingCombat(doc, created.id, created.sessionId, 0, advanced);
+  const reinforced = addPreparedEnemiesToWorkingCombat(doc, created, 1, [
+    'Cube 1',
+    'Cube 2',
+  ]);
+  const reopened = parseCampaign(serializeCampaign(reinforced));
+  const rounds = required(
+    reopened.workingCombats.find((combat) => combat.id === 'ambush')
+  ).state.rounds;
+  expect(rounds[0]).toEqual(created.state.rounds[0]);
+  expect(rounds[0]?.enemies.map((enemy) => enemy.name)).toEqual([
+    'Cube 1',
+    'Cube 3',
+  ]);
+  const round = required(rounds[1]);
+  expect(round.enemies.map((enemy) => enemy.preparedEnemyId)).toEqual([
+    'Cube 1',
+    'Cube 3',
+    undefined,
+    'Cube 2',
+  ]);
+  expect(
+    new Set(round.enemies.concat(round.party).map((actor) => actor.key)).size
+  ).toBe(round.enemies.length + round.party.length);
+  expect(round.enemyStates[3]).toMatchObject({
+    hp: '20',
+    notes: 'Notes for Cube 2',
+  });
+  expect(round.cells[3]).toHaveLength(round.party.length);
+  expect(
+    addPreparedEnemiesToWorkingCombat(reopened, created, 1, ['Cube 2'])
+  ).toBe(reopened);
 });

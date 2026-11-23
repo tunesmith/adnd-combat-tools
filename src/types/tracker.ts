@@ -9,6 +9,7 @@ export type TrackerActionSide = 'party' | 'enemy';
 export type TrackerActionDirection = 'partyToEnemy' | 'enemyToParty';
 
 export interface TrackerCombatant extends Creature {
+  preparedEnemyId?: string;
   maxHp?: string;
   movementRate?: number;
   missileInitiativeAdjustment?: number;

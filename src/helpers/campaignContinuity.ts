@@ -25,6 +25,7 @@ export interface NextSessionRequest {
     characterIds?: string[];
   } | null;
   copyNotes: boolean;
+  copyPreparedEnemies?: boolean;
   partyCharacterIds?: string[];
   capturedAt: string;
 }
@@ -33,9 +34,16 @@ function sourceContext(doc: CampaignDocument, id: string) {
   if (!session) throw new Error('Source session no longer exists.');
   // Ordering is already represented by the ordered profiles below. Omit the
   // optional migration field so pre-order continuation fingerprints stay valid.
-  const { partyOrder: _partyOrder, ...sessionContext } = session;
+  const {
+    partyOrder: _partyOrder,
+    preparedEnemies,
+    ...sessionContext
+  } = session;
   return {
-    session: sessionContext,
+    session: {
+      ...sessionContext,
+      ...(preparedEnemies?.length ? { preparedEnemies } : {}),
+    },
     records: doc.records,
     combats: doc.workingCombats.filter((c) => c.sessionId === id),
     inventory: doc.workingInventories.filter((w) => w.sessionId === id),
@@ -75,13 +83,14 @@ export function startNextSession(
           request.partyCharacterIds ?? []
         )
       : undefined;
-  const origin = {
+  const origin: Omit<SessionContinuation, 'requestFingerprint'> = {
     sourceSessionId: request.sourceSessionId,
     sourceFingerprint: request.sourceFingerprint,
     combatInstanceIds: request.combats.map((c) => c.sourceId),
     inventoryId: request.inventory?.sourceId || null,
     ...(inventoryIds ? { inventoryCharacterIds: inventoryIds } : {}),
     copyNotes: request.copyNotes,
+    ...(request.copyPreparedEnemies ? { copyPreparedEnemies: true } : {}),
     ...(request.partyCharacterIds?.length
       ? { partyCharacterIds: request.partyCharacterIds }
       : {}),
@@ -116,6 +125,9 @@ export function startNextSession(
           .filter((p) => request.partyCharacterIds?.includes(p.characterId))
           .map((p) => p.characterId),
         notes: request.copyNotes ? source.notes || '' : '',
+        ...(request.copyPreparedEnemies
+          ? { preparedEnemies: clone(source.preparedEnemies ?? []) }
+          : {}),
         continuation: { ...origin, requestFingerprint: fingerprint },
       },
     ],
@@ -457,6 +469,11 @@ export function validateContinuityTransition(
     const source = old.sessions.find((p) => p.id === origin.sourceSessionId);
     if ((s.notes || '') !== (origin.copyNotes ? source?.notes || '' : ''))
       throw new Error('Session notes were not copied as requested.');
+    if (
+      canonical(s.preparedEnemies ?? []) !==
+      canonical(origin.copyPreparedEnemies ? source?.preparedEnemies ?? [] : [])
+    )
+      throw new Error('Prepared enemies were not copied as requested.');
     const party = carriedPartyProfiles(
       old,
       origin.sourceSessionId,

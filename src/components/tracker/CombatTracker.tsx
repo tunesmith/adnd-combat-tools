@@ -26,6 +26,7 @@ import {
   addCombatant,
   createBaseCombatant,
   createInitialTrackerState,
+  getNextCombatantKey,
   getNextRoundEffect,
   editCombatantRoundField,
   insertRoundAfterActive,
@@ -128,6 +129,7 @@ interface CombatTrackerProps {
     readOnly?: boolean;
     state: TrackerState;
     onStateChange: (state: TrackerState) => boolean | void;
+    onAddPreparedEnemies?: () => void;
     partyProfiles?: {
       id: string;
       name: string;
@@ -322,19 +324,6 @@ const updateCurrentRound = (
     roundIndex === state.activeRound ? updater(round) : round
   ),
 });
-
-const getNextCombatantKey = (state: TrackerState): number =>
-  Math.max(
-    0,
-    ...state.rounds.flatMap((round) => [
-      ...round.party.concat(round.enemies).map((combatant) => combatant.key),
-      // Prior-step notes can still identify a creature removed from the roster.
-      ...(round.stepResults || []).flatMap((result) => [
-        result.actorKey,
-        ...result.targetKeys,
-      ]),
-    ])
-  ) + 1;
 
 const formatDraftNameSummary = (names: string[]): string => {
   if (names.length === 0) {
@@ -5500,6 +5489,15 @@ const CombatTracker = ({
                 >
                   Add Enemy
                 </button>
+                {campaign?.onAddPreparedEnemies && (
+                  <button
+                    type="button"
+                    className={styles['toolbarButton']}
+                    onClick={campaign.onAddPreparedEnemies}
+                  >
+                    + Add prepared enemies
+                  </button>
+                )}
               </div>
               {!campaign && (
                 <div className={styles['toolbarStatus']}>

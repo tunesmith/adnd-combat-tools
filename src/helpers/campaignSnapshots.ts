@@ -36,27 +36,23 @@ export function canonical(value: unknown): string {
 export const fingerprint = (value: unknown): string => sha256(canonical(value));
 const string = z.string();
 const number = z.number().finite();
-const roster = z
-  .array(
-    z
-      .object({
-        key: number.int(),
-        name: string.optional(),
-        class: number,
-        level: number,
-        armorType: number,
-        armorClass: number,
-        weapon: number,
-        maxHp: string.optional(),
-        movementRate: number.optional(),
-        missileInitiativeAdjustment: number.optional(),
-        attacksPerRoutine: number.optional(),
-        offHandWeapon: number.int().optional(),
-        weaponShortlist: z.array(number).optional(),
-      })
-      .passthrough()
-  )
-  .max(100);
+export const trackerCombatantSchema = z.object({
+  key: number.int(),
+  name: string.optional(),
+  class: number,
+  level: number,
+  armorType: number,
+  armorClass: number,
+  weapon: number,
+  maxHp: string.optional(),
+  movementRate: number.optional(),
+  missileInitiativeAdjustment: number.optional(),
+  attacksPerRoutine: number.optional(),
+  offHandWeapon: number.int().optional(),
+  weaponShortlist: z.array(number).optional(),
+  preparedEnemyId: string.min(1).optional(),
+});
+const roster = z.array(trackerCombatantSchema.passthrough()).max(100);
 const state = z
   .object({
     hp: string,

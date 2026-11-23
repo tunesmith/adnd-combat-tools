@@ -1,6 +1,10 @@
 import { useRef, useState } from 'react';
 import type { CampaignDocument } from '../../helpers/campaignDocument';
+import { preparedEnemiesInSession } from '../../helpers/campaignPreparedEnemies';
+import type { PreparedEnemy } from '../../helpers/campaignPreparedEnemies';
 import { createEncounterFromParty } from '../../helpers/campaignWorkingCombat';
+import PreparedEnemyEditor from './PreparedEnemyEditor';
+import PreparedEnemyRows from './PreparedEnemyRows';
 import styles from './campaignWorkspace.module.css';
 
 export default function CreateEncounterDialog({
@@ -30,6 +34,9 @@ export default function CreateEncounterDialog({
     () => sources.find((c) => c.id === selectedId)?.id || ''
   );
   const [name, setName] = useState('');
+  const [enemyIds, setEnemyIds] = useState<string[]>([]);
+  const [editingEnemy, setEditingEnemy] = useState<PreparedEnemy>();
+  const entries = preparedEnemiesInSession(document, sessionId);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const submitting = useRef(false);
@@ -61,7 +68,8 @@ export default function CreateEncounterDialog({
           source,
           ids.encounterId,
           ids.checkpointId,
-          ids.at
+          ids.at,
+          enemyIds
         )
       );
       onClose();
@@ -71,6 +79,15 @@ export default function CreateEncounterDialog({
       setBusy(false);
     }
   }
+  if (editingEnemy)
+    return (
+      <PreparedEnemyEditor
+        entry={editingEnemy}
+        sessionId={sessionId}
+        onChange={create}
+        onClose={() => setEditingEnemy(undefined)}
+      />
+    );
   return (
     <div className={styles['dialogShade']}>
       <form
@@ -118,6 +135,23 @@ export default function CreateEncounterDialog({
             ))}
           </select>
         </label>
+        {entries.length > 0 && (
+          <fieldset className={styles['sessionTransfer']}>
+            <legend>Prepared enemies</legend>
+            <PreparedEnemyRows
+              entries={entries}
+              selectedIds={enemyIds}
+              disabled={busy}
+              onToggle={(id, checked) =>
+                setEnemyIds((ids) =>
+                  checked ? [...ids, id] : ids.filter((item) => item !== id)
+                )
+              }
+              onEdit={setEditingEnemy}
+            />
+            <small aria-live="polite">{enemyIds.length} selected</small>
+          </fieldset>
+        )}
         {error && <p role="alert">{error}</p>}
         <footer className={styles['sessionDialogFooter']}>
           <button type="button" disabled={busy} onClick={onClose}>

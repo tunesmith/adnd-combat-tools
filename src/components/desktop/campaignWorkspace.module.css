@@ -351,12 +351,58 @@
   margin-bottom: 12px;
 }
 .combatControls .encounterStrip {
+  flex: 1 1 auto;
   margin: 0;
   padding: 0;
   border: 0;
 }
-.combatControls .encounterStrip {
-  width: 100%;
+.managePreparedEnemies {
+  margin-left: auto;
+  padding: 7px 12px;
+  border: 1px solid #b8a98e;
+  border-radius: 5px;
+  background: transparent;
+  color: #443b2c;
+  cursor: pointer;
+}
+.preparedEditorLayer {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+}
+.preparedRows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.preparedRow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid #d8ccbc;
+}
+.preparedName {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  flex: 1 1 8rem;
+  overflow-wrap: anywhere;
+}
+.preparedName input {
+  flex: none;
+  margin: 0;
+}
+.preparedStats {
+  color: #685b47;
+}
+.preparedStats span {
+  display: block;
+}
+.preparedRowActions {
+  display: flex;
+  gap: 6px;
 }
 .versionToolbar {
   padding-top: 12px;
@@ -371,9 +417,11 @@
   padding: 8px 14px;
   margin-top: 12px;
 }
+.sessionStrip .addTab {
+  margin-left: auto;
+}
 .sessionStrip .addTab,
 .encounterStrip .addTab {
-  margin-left: auto;
   color: #57272d;
   font-weight: 600;
 }
@@ -462,7 +510,8 @@
   color: #6d6151;
   font-size: 13px;
 }
-.sessionDialogFooter button {
+.sessionDialogFooter button,
+.preparedRowActions button {
   padding: 7px 12px;
   border: 1px solid #b8a98e;
   border-radius: 5px;
@@ -471,12 +520,29 @@
   font: inherit;
   cursor: pointer;
 }
+.preparedRowActions button {
+  min-height: 28px;
+  padding: 3px 8px;
+  font-size: 13px;
+  line-height: 1.3;
+}
+.preparedRowActions .preparedRemove {
+  color: #852c20;
+}
+.preparedRowActions button:hover:not(:disabled) {
+  background: #f3ebdd;
+}
+.preparedRowActions button:focus-visible {
+  outline: 2px solid #57272d;
+  outline-offset: 2px;
+}
 .sessionDialogFooter button[type='submit'] {
   background: #57272d;
   color: #fff8e9;
   border-color: #57272d;
 }
-.sessionDialogFooter button:disabled {
+.sessionDialogFooter button:disabled,
+.preparedRowActions button:disabled {
   opacity: 0.5;
   cursor: default;
 }

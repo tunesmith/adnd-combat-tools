@@ -6,6 +6,8 @@ import {
 import { ownedHistory } from '../../helpers/campaignHistory';
 import { useState } from 'react';
 import CreateEncounterDialog from './CreateEncounterDialog';
+import ManagePreparedEnemies from './ManagePreparedEnemies';
+import AddPreparedEnemiesDialog from './AddPreparedEnemiesDialog';
 import RenamableTab from './RenamableTab';
 import CombatTracker from '../tracker/CombatTracker';
 import VersionToolbar from './VersionToolbar';
@@ -26,7 +28,7 @@ export default function CampaignCombats({
   sessionId,
   onChange,
   onEdit,
-  onCreateEncounter,
+  onCommit,
   editorVersion,
   active,
 }: {
@@ -39,13 +41,17 @@ export default function CampaignCombats({
     generation: number,
     state: TrackerState
   ) => boolean;
-  onCreateEncounter: (
+  onCommit: (
     change: (d: CampaignDocument) => CampaignDocument
   ) => Promise<void>;
   editorVersion: number;
   active: boolean;
 }) {
-  const [creating, setCreating] = useState(false);
+  const [dialog, setDialog] = useState<{
+    sessionId: string;
+    kind: 'create' | 'manage' | 'reinforce';
+    combatId?: string;
+  }>();
   const [confirmRemovalId, setConfirmRemovalId] = useState<string>();
   const [undo, setUndo] = useState<string>();
   const [newEncounterId, setNewEncounterId] = useState<string>();
@@ -59,6 +65,8 @@ export default function CampaignCombats({
     combats.find(
       (c) => c.id === document.workspace.combatSelections?.[sessionId]
     ) || combats[0];
+  const panel = active && dialog?.sessionId === sessionId ? dialog.kind : '';
+  const closePanel = () => setDialog(undefined);
   const historyId = historySelections[selected?.id || ''] || '';
   function setHistoryId(id: string) {
     if (selected)
@@ -236,22 +244,48 @@ export default function CampaignCombats({
               ))}
               <button
                 className={styles['addTab']}
-                onClick={() => setCreating(true)}
+                onClick={() => setDialog({ sessionId, kind: 'create' })}
               >
                 + Encounter
               </button>
             </div>
+            <button
+              type="button"
+              className={styles['managePreparedEnemies']}
+              onClick={() => setDialog({ sessionId, kind: 'manage' })}
+            >
+              Manage prepared enemies
+            </button>
           </div>
-          {creating && active && (
+          {panel === 'create' && (
             <CreateEncounterDialog
               key={`${document.id}:${sessionId}`}
               document={document}
               sessionId={sessionId}
               selectedId={selected?.id}
-              onCreate={onCreateEncounter}
-              onClose={() => setCreating(false)}
+              onCreate={onCommit}
+              onClose={closePanel}
             />
           )}
+          {panel === 'manage' && (
+            <ManagePreparedEnemies
+              document={document}
+              sessionId={sessionId}
+              onChange={onCommit}
+              onClose={closePanel}
+            />
+          )}
+          {panel === 'reinforce' &&
+            selected &&
+            dialog?.combatId === selected.id && (
+              <AddPreparedEnemiesDialog
+                key={`${selected.id}:${selected.generation}:${editorVersion}`}
+                document={document}
+                combat={selected}
+                onChange={onCommit}
+                onClose={closePanel}
+              />
+            )}
           {!selected && (
             <p>
               Create an encounter above, or choose a stored source in Campaign
@@ -265,6 +299,12 @@ export default function CampaignCombats({
                 active,
                 state: selected.state,
                 partyProfiles,
+                onAddPreparedEnemies: () =>
+                  setDialog({
+                    sessionId,
+                    kind: 'reinforce',
+                    combatId: selected.id,
+                  }),
                 onStateChange: (next) =>
                   onEdit(
                     selected.id,

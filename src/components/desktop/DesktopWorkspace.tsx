@@ -910,7 +910,7 @@ export default function DesktopWorkspace() {
                   sessionId={sessionId}
                   editorVersion={editorVersion}
                   onChange={(change) => mutate(change, scope)}
-                  onCreateEncounter={(change) => acceptMutation(change, scope)}
+                  onCommit={(change) => acceptMutation(change, scope)}
                   onEdit={(id, ownedSession, generation, next) => {
                     return mutate(
                       (d) =>
