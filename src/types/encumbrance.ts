@@ -1,3 +1,5 @@
+import type { BodyArmor } from '../tables/bodyArmor';
+
 export type EncumbranceMode = 'dm' | 'player';
 
 export type EncumbranceDocumentKind =
@@ -50,7 +52,9 @@ export interface EncumbranceCatalogItem {
   ammoCapacity?: AmmoCapacityRule;
 }
 
-export type EncumbranceCustomItem = EncumbranceCatalogItem;
+export interface EncumbranceCustomItem extends EncumbranceCatalogItem {
+  bodyArmorType?: BodyArmor;
+}
 
 interface EncumbranceInventoryItemBase {
   id: string;

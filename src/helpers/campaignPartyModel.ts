@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { bodyArmorTypes } from '../tables/bodyArmor';
 
 export const partyClasses = [
   'manual',
@@ -20,24 +21,11 @@ const level = z.number().int().min(0).max(99);
 const override = z.number().int().min(0).max(99).nullable();
 const attribute = z.number().int().min(0).max(25).nullable();
 const bonus = z.number().int().min(-1000).max(1000).nullable();
-export const armorTypes = [
-  'leather',
-  'padded',
-  'studded',
-  'ring',
-  'scale',
-  'chain',
-  'elfin-chain',
-  'splint',
-  'banded',
-  'plate',
-] as const;
-export type BodyArmor = typeof armorTypes[number];
 export const profileReferenceSchema = z
   .object({
     // Absent = unrecorded, null = explicitly wearing no body armor.
     wornArmor: z
-      .object({ itemId: id, type: z.enum(armorTypes).optional() })
+      .object({ itemId: id, type: z.enum(bodyArmorTypes).optional() })
       .strict()
       .nullable()
       .optional(),

@@ -59,6 +59,7 @@ import {
   encumbranceCatalog,
   encumbranceCatalogById,
 } from '../../tables/encumbranceCatalog';
+import { bodyArmor, bodyArmorTypes } from '../../tables/bodyArmor';
 import {
   createEncumbranceSelectStyles,
   type EncumbranceSelectOption,
@@ -100,22 +101,13 @@ type EncumbranceSelectOptions = readonly (
 
 type AddMode = 'catalog' | 'custom';
 type InventorySortKey = 'owner' | 'item' | 'day';
-type CustomCategory = Extract<
-  EquipmentCategory,
-  | 'containers'
-  | 'armor'
-  | 'arms'
-  | 'clothing'
-  | 'herbs'
-  | 'adventuring-gear'
-  | 'provisions'
-  | 'religious-items'
-  | 'treasure'
+type CustomItemClassification = Pick<
+  EncumbranceCustomItem,
+  'category' | 'bodyArmorType'
 >;
 
-interface CustomItemDraft {
+interface CustomItemDraft extends CustomItemClassification {
   name: string;
-  category: CustomCategory;
   encumbranceGp: number;
   valueGp: number;
   capacityGp: number;
@@ -225,7 +217,7 @@ const categoryLabels: Record<EquipmentCategory, string> = {
   coins: 'Coins',
 };
 
-const customCategoryOptions: CustomCategory[] = [
+const customCategoryOptions: EquipmentCategory[] = [
   'containers',
   'armor',
   'arms',
@@ -306,6 +298,14 @@ const customCategorySelectOptions: EncumbranceSelectOption[] =
     value: category,
     label: categoryLabels[category],
   }));
+
+const bodyArmorSelectOptions: EncumbranceSelectOption[] = [
+  { value: '', label: 'None' },
+  ...bodyArmorTypes.map((type) => ({
+    value: type,
+    label: bodyArmor[type].name,
+  })),
+];
 
 const magicKnowledgeOptions: EncumbranceSelectOption[] = (
   Object.keys(magicKnowledgeLabels) as MagicKnowledge[]
@@ -411,6 +411,63 @@ const EncumbranceSelectField = ({
     autoFocus={autoFocus}
   />
 );
+
+function CustomItemClassificationFields({
+  idPrefix,
+  value,
+  showBodyArmorType,
+  onChange,
+  menuPortalTarget,
+}: {
+  idPrefix: string;
+  value: CustomItemClassification;
+  showBodyArmorType: boolean;
+  onChange: (value: CustomItemClassification) => void;
+  menuPortalTarget?: HTMLElement;
+}) {
+  const categories =
+    value.category === 'coins'
+      ? [...customCategorySelectOptions, { value: 'coins', label: 'Coins' }]
+      : customCategorySelectOptions;
+  return (
+    <>
+      <label className={styles['fieldGroup']}>
+        <span className={styles['fieldLabel']}>Category</span>
+        <EncumbranceSelectField
+          inputId={idPrefix + '-category'}
+          ariaLabel="Category"
+          options={categories}
+          value={value.category}
+          onChange={(nextValue) => {
+            const category = customCategoryOptions.find((c) => c === nextValue);
+            if (category && category !== value.category) onChange({ category });
+          }}
+          menuPortalTarget={menuPortalTarget}
+        />
+      </label>
+      {showBodyArmorType && value.category === 'armor' && (
+        <label className={styles['fieldGroup']}>
+          <span className={styles['fieldLabel']}>Body armor type</span>
+          <EncumbranceSelectField
+            inputId={idPrefix + '-body-armor-type'}
+            ariaLabel="Body armor type"
+            options={bodyArmorSelectOptions}
+            value={value.bodyArmorType ?? ''}
+            onChange={(nextValue) =>
+              onChange({
+                category: value.category,
+                bodyArmorType: bodyArmorTypes.find(
+                  (type) => type === nextValue
+                ),
+              })
+            }
+            menuPortalTarget={menuPortalTarget}
+          />
+        </label>
+      )}
+    </>
+  );
+}
 
 const documentFilePickerTypes: BrowserFilePickerAcceptType[] = [
   {
@@ -795,6 +852,7 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
   const [storageDraft, setStorageDraft] =
     useState<EncumbranceStorageLocation | null>(null);
   const [storageError, setStorageError] = useState('');
+  const [classificationError, setClassificationError] = useState('');
   const [addMode, setAddMode] = useState<AddMode>('catalog');
   const [selectedCatalogId, setSelectedCatalogId] = useState<string>(
     encumbranceCatalog[0]?.id || ''
@@ -1103,12 +1161,15 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
   );
 
   const selectedCatalogItem = encumbranceCatalogById.get(selectedCatalogId);
-  const customPreviewItem: EncumbranceCatalogItem = {
+  const customPreviewItem: EncumbranceCustomItem = {
     id: '__custom-preview__',
     name: customItemDraft.name.trim() || 'Custom item',
     category: customItemDraft.category,
     encumbranceGp: Math.max(0, customItemDraft.encumbranceGp),
     valueGp: Math.max(0, customItemDraft.valueGp),
+    ...(customItemDraft.category === 'armor' && customItemDraft.bodyArmorType
+      ? { bodyArmorType: customItemDraft.bodyArmorType }
+      : {}),
     ...(customItemDraft.category === 'containers'
       ? {
           isContainer: true,
@@ -1471,6 +1532,7 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
       return;
     }
 
+    setClassificationError('');
     setEditingItemDraft({
       characterId,
       itemId: item.id,
@@ -1925,6 +1987,61 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
     );
   };
 
+  const editCustomItemClassification = ({
+    category,
+    bodyArmorType,
+  }: CustomItemClassification) => {
+    if (!editingItemDraft || !editingItem || !editingCustomItemInfo) return;
+    if (
+      editingCustomItemInfo.isContainer &&
+      category !== 'containers' &&
+      editingItemDescendantIds.length
+    ) {
+      setClassificationError(
+        'Move the contents before changing the container category.'
+      );
+      return;
+    }
+    if (
+      category === 'containers' &&
+      !editingCustomItemInfo.isContainer &&
+      editingItem.quantity !== 1
+    ) {
+      setClassificationError(
+        'Set quantity to 1 before making this item a container.'
+      );
+      return;
+    }
+    setClassificationError('');
+    updateCustomInventoryItem(
+      editingItemDraft.characterId,
+      editingItemDraft.itemId,
+      (current) => {
+        const {
+          bodyArmorType: _oldArmor,
+          isContainer,
+          capacityGp,
+          ignoresContentsWeightForEncumbrance,
+          ...definition
+        } = current;
+        return {
+          ...definition,
+          category,
+          ...(category === 'armor' && bodyArmorType ? { bodyArmorType } : {}),
+          ...(category === 'containers'
+            ? {
+                isContainer: true,
+                capacityGp: capacityGp ?? 100,
+                ...(isContainer && ignoresContentsWeightForEncumbrance
+                  ? { ignoresContentsWeightForEncumbrance: true }
+                  : {}),
+              }
+            : {}),
+        };
+      }
+    );
+  };
+
   const selectActiveCharacter = (characterId: string) => {
     if (readOnly) {
       setPreviewCharacterId(characterId);
@@ -2175,22 +2292,8 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
     }
 
     const customItem: EncumbranceCustomItem = {
+      ...customPreviewItem,
       id: createCustomCatalogId(customItemDraft.name),
-      name: customItemDraft.name.trim(),
-      category: customItemDraft.category,
-      encumbranceGp: Math.max(0, customItemDraft.encumbranceGp),
-      valueGp: Math.max(0, customItemDraft.valueGp),
-      ...(customItemDraft.category === 'containers'
-        ? {
-            isContainer: true,
-            capacityGp: Math.max(1, customItemDraft.capacityGp),
-            ...(customItemDraft.ignoresContentsWeightForEncumbrance
-              ? {
-                  ignoresContentsWeightForEncumbrance: true,
-                }
-              : {}),
-          }
-        : {}),
     };
 
     if (
@@ -4425,24 +4528,19 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
                                 autoFocus
                               />
                             </label>
-                            <label className={styles['fieldGroup']}>
-                              <span className={styles['fieldLabel']}>
-                                Category
-                              </span>
-                              <EncumbranceSelectField
-                                inputId="encumbrance-add-category"
-                                ariaLabel="Category"
-                                options={customCategorySelectOptions}
-                                value={customItemDraft.category}
-                                onChange={(nextValue) =>
-                                  updateCustomItemDraft(
-                                    'category',
-                                    nextValue as CustomCategory
-                                  )
-                                }
-                                menuPortalTarget={selectMenuPortalTarget}
-                              />
-                            </label>
+                            <CustomItemClassificationFields
+                              idPrefix="encumbrance-add"
+                              value={customItemDraft}
+                              showBodyArmorType={mode === 'dm'}
+                              onChange={({ category, bodyArmorType }) =>
+                                setCustomItemDraft((draft) => ({
+                                  ...draft,
+                                  category,
+                                  bodyArmorType,
+                                }))
+                              }
+                              menuPortalTarget={selectMenuPortalTarget}
+                            />
                           </>
                         )}
                         <label className={styles['fieldGroup']}>
@@ -4885,6 +4983,23 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
                             autoFocus
                           />
                         </label>
+                        {mode === 'dm' && editingCustomItemInfo && (
+                          <CustomItemClassificationFields
+                            idPrefix="encumbrance-edit"
+                            value={editingCustomItemInfo}
+                            showBodyArmorType
+                            onChange={editCustomItemClassification}
+                            menuPortalTarget={selectMenuPortalTarget}
+                          />
+                        )}
+                        {classificationError && (
+                          <div
+                            className={styles['modalFieldWide']}
+                            role="alert"
+                          >
+                            {classificationError}
+                          </div>
+                        )}
                         <label className={styles['fieldGroup']}>
                           <span className={styles['fieldLabel']}>Quantity</span>
                           <input

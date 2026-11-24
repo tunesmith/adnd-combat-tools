@@ -2,7 +2,6 @@ import type {
   AmmoCapacityRule,
   AmmoKind,
   AnyEncumbranceDocument,
-  EncumbranceCatalogItem,
   EncumbranceCustomItem,
   EncumbranceDmCharacter,
   EncumbranceDmDocumentV7,
@@ -32,6 +31,7 @@ import type {
   StrengthScore,
 } from '../types/encumbrance';
 import { encumbranceCatalogById } from '../tables/encumbranceCatalog';
+import { bodyArmorTypes } from '../tables/bodyArmor';
 
 const DOCUMENT_VERSION = 10;
 
@@ -332,16 +332,19 @@ const normalizeEquipmentCategory = (
   return 'adventuring-gear';
 };
 
-const isCatalogItem = (value: unknown): value is EncumbranceCatalogItem => {
+const isCatalogItem = (value: unknown): value is EncumbranceCustomItem => {
   if (!value || typeof value !== 'object') {
     return false;
   }
 
-  const candidate = value as Partial<EncumbranceCatalogItem>;
+  const candidate = value as Partial<EncumbranceCustomItem>;
   return (
     typeof candidate.id === 'string' &&
     typeof candidate.name === 'string' &&
     normalizeEquipmentCategory(candidate.category) !== null &&
+    (candidate.bodyArmorType === undefined ||
+      (candidate.category === 'armor' &&
+        bodyArmorTypes.includes(candidate.bodyArmorType))) &&
     isNonNegativeNumber(candidate.encumbranceGp) &&
     isNonNegativeNumber(candidate.valueGp) &&
     (candidate.isContainer === undefined ||
@@ -359,7 +362,7 @@ const isCatalogItem = (value: unknown): value is EncumbranceCatalogItem => {
 };
 
 const sanitizeCatalogItem = (
-  candidate: EncumbranceCatalogItem
+  candidate: EncumbranceCustomItem
 ): EncumbranceCustomItem => ({
   id: candidate.id,
   name: candidate.name,
@@ -367,6 +370,9 @@ const sanitizeCatalogItem = (
     normalizeEquipmentCategory(candidate.category) || 'adventuring-gear',
   encumbranceGp: candidate.encumbranceGp,
   valueGp: candidate.valueGp,
+  ...(candidate.category === 'armor' && candidate.bodyArmorType
+    ? { bodyArmorType: candidate.bodyArmorType }
+    : {}),
   ...(candidate.isContainer ? { isContainer: true } : {}),
   ...(typeof candidate.capacityGp === 'number'
     ? {

@@ -2,7 +2,6 @@ import ProfileClassesFields from './ProfileClassesFields';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { CampaignDocument } from '../../helpers/campaignDocument';
 import {
-  armorTypes,
   emptyProfileReference,
   partyProfileSchema,
   rosterCharacterSchema,
@@ -30,8 +29,6 @@ import {
   partyGear,
   armorChoices,
   armorItemName,
-  armorMovement,
-  catalogArmor,
 } from '../../helpers/partyEncumbrance';
 import ProfileReferenceFields from './ProfileReferenceFields';
 import SaveReminderEditor from './SaveReminderEditor';
@@ -94,15 +91,17 @@ export default function ProfileDialog({
   }
   const patch = (changes: Partial<PartyProfile>) =>
     setDraft((p) => ({ ...p, ...changes }));
-  const choices = useMemo(
-    () =>
-      armorChoices(
-        partyGear(document, profile.sessionId).holders.get(identity.id)
-      ),
+  const holder = useMemo(
+    () => partyGear(document, profile.sessionId).holders.get(identity.id),
     [document, profile.sessionId, identity.id]
   );
+  const choices = armorChoices(holder);
   const worn = draft.reference?.wornArmor;
   const chosen = choices.find((item) => item.id === worn?.itemId);
+  const previous =
+    worn &&
+    !chosen &&
+    holder?.inventory.find((item) => item.id === worn.itemId);
   function setArmor(
     value: NonNullable<PartyProfile['reference']>['wornArmor']
   ) {
@@ -280,48 +279,19 @@ export default function ProfileDialog({
                 <option value="">Unknown</option>
                 <option value="none">No worn armor</option>
                 {worn && !chosen && (
-                  <option value={'item:' + worn.itemId}>
-                    Previously worn item unavailable
+                  <option value={'item:' + worn.itemId} disabled>
+                    {previous
+                      ? `${armorItemName(previous)} (unavailable)`
+                      : 'Previously worn item unavailable'}
                   </option>
                 )}
-                {['Body armor', 'Custom items'].map((group) => {
-                  const items = choices.filter(
-                    (item) =>
-                      Boolean(catalogArmor(item)) === (group === 'Body armor')
-                  );
-                  return (
-                    items.length > 0 && (
-                      <optgroup key={group} label={group}>
-                        {items.map((item) => (
-                          <option key={item.id} value={'item:' + item.id}>
-                            {armorItemName(item)}
-                          </option>
-                        ))}
-                      </optgroup>
-                    )
-                  );
-                })}
+                {choices.map((item) => (
+                  <option key={item.id} value={'item:' + item.id}>
+                    {armorItemName(item)}
+                  </option>
+                ))}
               </select>
             </label>
-            {worn && chosen && !catalogArmor(chosen) && (
-              <label>
-                Body armor type
-                <select
-                  value={worn.type ?? ''}
-                  onChange={(e) => {
-                    const type = armorTypes.find((t) => t === e.target.value);
-                    setArmor({ ...worn, type });
-                  }}
-                >
-                  <option value="">Unknown</option>
-                  {armorTypes.map((type) => (
-                    <option key={type} value={type}>
-                      {armorMovement[type].name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            )}
           </div>
           <ProfileReferenceFields
             value={draft.reference}

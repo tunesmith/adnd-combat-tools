@@ -1,11 +1,8 @@
 import type { CampaignDocument } from './campaignDocument';
 import { inventoryMembership } from './campaignInventoryMembership';
-import {
-  armorTypes,
-  type BodyArmor,
-  type PartyProfile,
-} from './campaignPartyModel';
+import type { PartyProfile } from './campaignPartyModel';
 import { encumbranceCatalogById } from '../tables/encumbranceCatalog';
+import { bodyArmor, bodyArmorTypes } from '../tables/bodyArmor';
 import type {
   EncumbranceDmCharacter,
   EncumbranceInventoryItem,
@@ -19,21 +16,6 @@ import {
   getTotalEncumbranceGp,
   loadBands,
 } from './encumbranceRules';
-
-// DMG p. 27, Types of Armor & Encumbrance.
-export const armorMovement: Record<BodyArmor, { name: string; move: number }> =
-  {
-    leather: { name: 'Leather', move: 12 },
-    padded: { name: 'Padded', move: 9 },
-    studded: { name: 'Studded leather', move: 9 },
-    ring: { name: 'Ring', move: 9 },
-    scale: { name: 'Scale', move: 6 },
-    chain: { name: 'Chain', move: 9 },
-    'elfin-chain': { name: 'Elfin chain', move: 12 },
-    splint: { name: 'Splint', move: 6 },
-    banded: { name: 'Banded', move: 9 },
-    plate: { name: 'Plate', move: 6 },
-  };
 
 export function partyGear(doc: CampaignDocument, sessionId: string) {
   const { matched } = inventoryMembership(doc, sessionId);
@@ -52,19 +34,22 @@ export function partyGear(doc: CampaignDocument, sessionId: string) {
   };
 }
 
-export function catalogArmor(item: EncumbranceInventoryItem) {
-  return armorTypes.find((type) => item.catalogId === 'armor-' + type);
+export function itemBodyArmor(item: EncumbranceInventoryItem) {
+  if (item.customItem)
+    return item.customItem.category === 'armor' && !item.customItem.isContainer
+      ? item.customItem.bodyArmorType
+      : undefined;
+  return bodyArmorTypes.find((type) => item.catalogId === 'armor-' + type);
+}
+
+function wearableBodyArmor(item: EncumbranceInventoryItem) {
+  if (item.containerId === null && item.quantity > 0)
+    return itemBodyArmor(item);
+  return undefined;
 }
 
 export function armorChoices(holder?: EncumbranceDmCharacter) {
-  return (
-    holder?.inventory.filter(
-      (item) =>
-        item.containerId === null &&
-        item.quantity > 0 &&
-        (catalogArmor(item) || item.customItem)
-    ) ?? []
-  );
+  return holder?.inventory.filter(wearableBodyArmor) ?? [];
 }
 
 export function armorItemName(item: EncumbranceInventoryItem) {
@@ -77,9 +62,9 @@ export function armorItemName(item: EncumbranceInventoryItem) {
 
 function equippedArmor(profile: PartyProfile, holder?: EncumbranceDmCharacter) {
   const choice = profile.reference?.wornArmor;
-  const item = armorChoices(holder).find((i) => i.id === choice?.itemId);
-  const type = item && (catalogArmor(item) ?? choice?.type);
-  return item && type ? { item, armor: armorMovement[type] } : undefined;
+  const item = choice && holder?.inventory.find((i) => i.id === choice.itemId);
+  const type = item && wearableBodyArmor(item);
+  return item && type ? { item, armor: bodyArmor[type] } : undefined;
 }
 
 export function wornArmorByHolder(doc: CampaignDocument, sessionId: string) {

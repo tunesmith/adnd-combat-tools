@@ -1,5 +1,6 @@
 import { upgradeCampaignTreasure } from './upgradeCampaignTreasure';
 import { upgradeCampaignSessionMetadata } from './campaignSessionMetadata';
+import { upgradeCampaignWornArmor } from './upgradeCampaignWornArmor';
 import { campaignBankingSchema } from './campaignBankingModel';
 import type { CampaignBanking } from './campaignBankingModel';
 import { validateCampaignBanking } from './campaignBanking';
@@ -118,7 +119,10 @@ const campaignSchema = z
   })
   .strict();
 
-export function validateCampaign(value: unknown): CampaignDocument {
+export function validateCampaign(
+  value: unknown,
+  source: 'file' | 'edit' = 'edit'
+): CampaignDocument {
   if (!value || typeof value !== 'object')
     throw new Error('Expected a campaign object.');
   const header = value as Record<string, unknown>;
@@ -129,6 +133,7 @@ export function validateCampaign(value: unknown): CampaignDocument {
       'Unsupported campaign schema version. This app requires version 21. Upgrade older files with the previous app before opening them here.'
     );
   const parsed = campaignSchema.parse(value);
+  if (source === 'file') upgradeCampaignWornArmor(parsed);
   const ids = new Set<string>();
   const unique = (id: string) => {
     if (ids.has(id)) throw new Error('Duplicate campaign identity.');
@@ -275,7 +280,7 @@ export function parseCampaign(
     upgradeCampaignTreasure(value);
     upgradeCampaignSessionMetadata(value);
   }
-  return validateCampaign(value);
+  return validateCampaign(value, source);
 }
 export function serializeCampaign(document: CampaignDocument): string {
   const text = JSON.stringify(validateCampaign(document), null, 2) + '\n';
