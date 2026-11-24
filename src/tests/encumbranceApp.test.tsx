@@ -127,7 +127,7 @@ const addCatalogItem = ({
     });
   }
 
-  fireEvent.change(within(dialog).getByLabelText('Day'), {
+  fireEvent.change(within(dialog).getByLabelText('Session'), {
     target: { value: String(day) },
   });
 
@@ -505,7 +505,7 @@ describe('encumbrance app regressions', () => {
     );
 
     fireEvent.click(screen.getByRole('button', { name: 'Sort by Owner' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Sort by Day' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Sort by Session' }));
     fireEvent.click(screen.getByRole('button', { name: 'Sort by Item' }));
 
     expectBefore(
@@ -1132,11 +1132,11 @@ describe('encumbrance app regressions', () => {
   });
 });
 
-test('standalone Gear uses copper catalog prices and keeps Day terminology', () => {
+test('standalone Gear uses copper catalog prices and labels acquisition Session', () => {
   render(<EncumbranceApp mode="dm" />);
   fireEvent.click(screen.getByRole('button', { name: 'Add Item' }));
   const dialog = within(screen.getByRole('dialog', { name: 'Add Item' }));
-  expect(dialog.getByLabelText('Day')).toHaveValue(0);
+  expect(dialog.getByLabelText('Session')).toHaveValue(0);
   for (const [name, price] of [
     ['Sack, large', '0.08 gp'],
     ['Sack, small', '0.05 gp'],

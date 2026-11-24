@@ -74,6 +74,8 @@ export function validateHistoryTransition(
   next: CampaignDocument,
   purpose: string
 ) {
+  if (old.sessionMetadataVersion && !next.sessionMetadataVersion)
+    throw new Error('Session metadata version cannot be removed.');
   validateContinuityTransition(old, next);
   validateXpTransition(old, next);
   validateBankingTransition(old, next);

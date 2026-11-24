@@ -154,7 +154,7 @@ test('workspace starts the selected continuation atomically, edits notes indepen
     screen.getByRole('table', { name: 'Session characters' })
   ).toBeInTheDocument();
   expect(
-    screen.getByRole('button', { name: '+ Character' })
+    screen.getByRole('button', { name: 'Add character' })
   ).toBeInTheDocument();
   const copied = native.document?.workingCombats.find(
     (c) => c.sessionId !== 'one'

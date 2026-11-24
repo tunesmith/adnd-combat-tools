@@ -9,14 +9,18 @@ import { canonical } from './campaignSnapshots';
 import { captureCombatCheckpoint } from './campaignWorkingCombat';
 import { captureInventoryCheckpoint } from './campaignWorkingInventory';
 import type { CampaignDocument } from './campaignDocument';
+import type { CampaignSession } from './campaignSnapshots';
 import type { SessionContinuation } from './campaignContinuityModel';
 const clone = <T>(value: T): T => JSON.parse(JSON.stringify(value));
-export interface NextSessionRequest {
+type DestinationDetails = Pick<
+  CampaignSession,
+  'label' | 'date' | 'sessionNumber'
+>;
+export interface NextSessionRequest extends DestinationDetails {
   campaignId: string;
   sourceSessionId: string;
   sourceFingerprint: string;
   destinationId: string;
-  label: string;
   combats: { sourceId: string; instanceId: string; checkpointId: string }[];
   inventory: {
     sourceId: string;
@@ -36,6 +40,8 @@ function sourceContext(doc: CampaignDocument, id: string) {
   // optional migration field so pre-order continuation fingerprints stay valid.
   const {
     partyOrder: _partyOrder,
+    date: _date,
+    sessionNumber: _sessionNumber,
     preparedEnemies,
     ...sessionContext
   } = session;
@@ -58,10 +64,18 @@ export function sessionFingerprint(doc: CampaignDocument, id: string) {
 }
 function requestFingerprint(
   destinationId: string,
-  label: string,
+  { label, date, sessionNumber }: DestinationDetails,
   origin: Omit<SessionContinuation, 'requestFingerprint'>
 ) {
-  return sha256(canonical({ destinationId, label, ...origin }));
+  return sha256(
+    canonical({
+      destinationId,
+      label,
+      ...(date !== undefined ? { date } : {}),
+      ...(sessionNumber !== undefined ? { sessionNumber } : {}),
+      ...origin,
+    })
+  );
 }
 export function startNextSession(
   doc: CampaignDocument,
@@ -95,7 +109,16 @@ export function startNextSession(
       ? { partyCharacterIds: request.partyCharacterIds }
       : {}),
   };
-  const fingerprint = requestFingerprint(request.destinationId, label, origin);
+  const details = {
+    label,
+    date: request.date,
+    sessionNumber: request.sessionNumber,
+  };
+  const fingerprint = requestFingerprint(
+    request.destinationId,
+    details,
+    origin
+  );
   const existing = doc.sessions.find((s) => s.id === request.destinationId);
   if (existing) {
     if (existing.continuation?.requestFingerprint === fingerprint) return doc;
@@ -120,7 +143,7 @@ export function startNextSession(
       ...doc.sessions,
       {
         id: request.destinationId,
-        label,
+        ...details,
         partyOrder: profilesInSession(doc, source.id)
           .filter((p) => request.partyCharacterIds?.includes(p.characterId))
           .map((p) => p.characterId),
@@ -464,7 +487,7 @@ export function validateContinuityTransition(
     )
       throw new Error('Source session changed during continuation.');
     const { requestFingerprint: stored, ...choices } = origin;
-    if (requestFingerprint(s.id, s.label, choices) !== stored)
+    if (requestFingerprint(s.id, s, choices) !== stored)
       throw new Error('Continuation choices do not match confirmation.');
     const source = old.sessions.find((p) => p.id === origin.sourceSessionId);
     if ((s.notes || '') !== (origin.copyNotes ? source?.notes || '' : ''))

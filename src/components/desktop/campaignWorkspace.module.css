@@ -83,8 +83,35 @@
   white-space: nowrap;
 }
 .sessionList > div > button {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 2px;
+  min-height: 48px;
+  max-width: 100%;
+  padding-block: 4px;
+}
+.sessionTabName {
+  max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+.sessionTabDate {
+  display: block;
+  font-size: 11px;
+  line-height: 1.3;
+  opacity: 0.87;
+}
+.sessionRename {
+  display: grid;
+  gap: 2px;
+  align-content: center;
+  justify-items: center;
+  min-width: 0;
+}
+.sessionRename .inlineName {
+  padding-block: 4px;
 }
 .sessionStrip > button {
   flex: none;
@@ -420,6 +447,39 @@
 .sessionStrip .addTab {
   margin-left: auto;
 }
+.sessionOptions {
+  position: relative;
+  flex: none;
+}
+.sessionStrip .sessionOptionsButton {
+  display: grid;
+  place-items: center;
+  min-width: 34px;
+  min-height: 34px;
+  padding: 0 6px;
+  font-size: 18px;
+  line-height: 1;
+}
+.sessionOptionsPanel {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 10;
+  padding: 4px;
+  border: 1px solid #d8ccbc;
+  border-radius: 5px;
+  background: #fffdf8;
+  box-shadow: 0 4px 12px #0002;
+  white-space: nowrap;
+}
+.sessionOptionsPanel > button {
+  width: 100%;
+  border: 0;
+  text-align: left;
+}
+.sessionOptionsPanel > button:hover {
+  background: #f3ebdd;
+}
 .sessionStrip .addTab,
 .encounterStrip .addTab {
   color: #57272d;
@@ -476,6 +536,19 @@
   border-radius: 5px;
   font: inherit;
   font-weight: 400;
+}
+.sessionNameField + .sessionMetadataFields,
+.sessionMetadataRow {
+  margin-top: 12px;
+}
+.sessionMetadataRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px;
+}
+.sessionMetadataRow .sessionNameField {
+  min-width: 0;
+  margin: 0;
 }
 .sessionTransfer {
   margin-top: 18px;
@@ -573,21 +646,6 @@
   max-width: 100%;
 }
 
-.profileActions {
-  display: flex;
-  justify-content: flex-end;
-  margin-bottom: 5px;
-}
-.profileActions button {
-  padding: 3px 8px;
-  border: 1px solid #b8a98e;
-  border-radius: 4px;
-  background: #fffdf8;
-  color: #443b2c;
-  cursor: pointer;
-  font: inherit;
-  font-size: 12px;
-}
 .sessionTableWrap {
   width: 100%;
   max-width: 100%;
@@ -615,6 +673,34 @@
   background: #ede6d9;
   color: #62594b;
   font-weight: 500;
+}
+.sessionCharacterHeader {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.sessionCharacterAdd {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 30px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: #6d6151;
+  font: inherit;
+  font-size: 17px;
+  line-height: 1;
+  cursor: pointer;
+}
+.sessionCharacterAdd:hover {
+  background: #dfd5c5;
+  color: #57272d;
+}
+.sessionCharacterAdd:focus-visible {
+  outline: 2px solid #57272d;
 }
 .sessionTable th:first-child,
 .sessionTable td:nth-child(2) {

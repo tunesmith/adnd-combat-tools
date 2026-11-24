@@ -1,4 +1,3 @@
-import { sessionAcquisition } from '../../helpers/sessionAcquisition';
 import { inSessionInventoryOrder } from '../../helpers/campaignInventoryOrder';
 import { useRef, useState } from 'react';
 import type { CampaignDocument } from '../../helpers/campaignDocument';
@@ -149,11 +148,11 @@ export default function BankTransactionDialog({
   onClose: () => void;
 }) {
   const sessionId = entry?.sessionId ?? workspaceSessionId;
-  const acquisition = sessionAcquisition(
-    document.sessions.find((s) => s.id === sessionId)?.label
-  );
+  const sessionNumber = document.sessions.find(
+    (s) => s.id === sessionId
+  )?.sessionNumber;
   const [incomeDay, setIncomeDay] = useState(
-    () => acquisition.number?.toString() ?? ''
+    () => sessionNumber?.toString() ?? ''
   );
   const working = document.workingInventories.find(
     (w) => w.sessionId === sessionId
@@ -457,10 +456,7 @@ export default function BankTransactionDialog({
   let invalid = '';
   let saveError = '';
   if (needsDay && !validDay)
-    invalid =
-      acquisition.label === 'Day'
-        ? 'Enter the acquisition day for new stacks.'
-        : 'Enter the acquisition Act for new stacks.';
+    invalid = 'Enter the acquisition session number for new stacks.';
   else if (completed.length) {
     try {
       const candidate = {
@@ -1163,8 +1159,8 @@ export default function BankTransactionDialog({
               {incoming.map((c, i) => (
                 <li key={i}>
                   {bankHolderName(document, c.holderId)} · {c.quantity}{' '}
-                  {c.denomination} · {c.item.name || c.item.catalogId} ·{' '}
-                  {acquisition.label} {c.item.day}
+                  {c.denomination} · {c.item.name || c.item.catalogId} · Session{' '}
+                  {c.item.day}
                   {sourceNote(c.item) && ' · ' + sourceNote(c.item)}
                 </li>
               ))}
@@ -1181,9 +1177,7 @@ export default function BankTransactionDialog({
         )}
         {needsDay && (
           <label className={styles['incomeDay']}>
-            {acquisition.label === 'Day'
-              ? 'Day for new stacks'
-              : acquisition.label}
+            Session
             <input
               type="number"
               min={0}

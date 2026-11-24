@@ -91,14 +91,14 @@ test('a synchronously rejected controlled edit does not remain displayed as acce
   expect(quantity).toHaveValue(2);
 });
 
-test('unnumbered campaign gear accepts a deliberate zero and an Act rename only defaults future items', () => {
+test('unnumbered campaign gear accepts a deliberate zero and assigning a number only defaults future items', () => {
   let current: EncumbranceDocument = syntheticInventory();
-  const props = (sessionLabel: string) => (
+  const props = (sessionNumber?: number) => (
     <EncumbranceApp
       mode="dm"
       campaign={{
         document: current,
-        sessionLabel,
+        sessionNumber,
         onExport: jest.fn(),
         onDocumentChange: (next) => {
           current = next;
@@ -106,23 +106,23 @@ test('unnumbered campaign gear accepts a deliberate zero and an Act rename only 
       }}
     />
   );
-  const view = render(props('Interlude'));
+  const view = render(props());
   const add = () => {
     fireEvent.click(screen.getByRole('button', { name: 'Add Item' }));
     return within(screen.getByRole('dialog', { name: 'Add Item' }));
   };
   const draft = add();
-  expect(draft.getByLabelText('Day')).toHaveValue(null);
+  expect(draft.getByLabelText('Session')).toHaveValue(null);
   expect(draft.getByRole('button', { name: 'Add Item' })).toBeDisabled();
-  fireEvent.change(draft.getByLabelText('Day'), { target: { value: '0' } });
+  fireEvent.change(draft.getByLabelText('Session'), { target: { value: '0' } });
   fireEvent.click(draft.getByRole('button', { name: 'Add Item' }));
-  view.rerender(props('Act 11'));
+  view.rerender(props(11));
   fireEvent.click(screen.getByRole('button', { name: 'Edit Backpack' }));
   expect(
     within(screen.getByRole('dialog', { name: 'Backpack' })).getByLabelText(
-      'Acquired in Act'
+      'Session'
     )
   ).toHaveValue(0);
   fireEvent.keyDown(window, { key: 'Escape' });
-  expect(add().getByLabelText('Acquired in Act')).toHaveValue(11);
+  expect(add().getByLabelText('Session')).toHaveValue(11);
 });

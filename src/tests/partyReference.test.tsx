@@ -45,7 +45,7 @@ test('calculated rows use the rules table and only manual rows accept numeric ta
   }
   render(<Workspace />);
   expect(
-    screen.queryByRole('button', { name: '+ Character' })
+    screen.queryByRole('button', { name: 'Add character' })
   ).not.toBeInTheDocument();
   expect(screen.getByRole('cell', { name: '9' })).toBeInTheDocument();
   expect(screen.queryByRole('cell', { name: '5' })).not.toBeInTheDocument();

@@ -51,28 +51,22 @@ export default function PartyReference({
   }
   return (
     <>
-      {view === 'session' && (
-        <div className={styles['profileActions']}>
-          <button
-            disabled={!sessionId}
-            onClick={(event) => {
-              event.currentTarget.focus();
-              const id = crypto.randomUUID();
-              setEditor({
-                profile: emptyProfile(sessionId, id),
-                character: { id, name: '', player: '', notes: '' },
-              });
-            }}
-          >
-            + Character
-          </button>
-        </div>
-      )}
       {view === 'session' ? (
         <>
           <SessionProfileTable
             document={document}
             profiles={rows}
+            onAdd={
+              sessionId
+                ? () => {
+                    const id = crypto.randomUUID();
+                    setEditor({
+                      profile: emptyProfile(sessionId, id),
+                      character: { id, name: '', player: '', notes: '' },
+                    });
+                  }
+                : undefined
+            }
             onReorder={(fromId, targetId) =>
               onChange((doc) =>
                 reorderPartyCharacter(doc, sessionId, fromId, targetId)

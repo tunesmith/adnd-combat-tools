@@ -21,6 +21,7 @@ function campaign(): CampaignDocument {
   return {
     kind: 'adnd-campaign',
     schemaVersion: 21,
+    sessionMetadataVersion: 1,
     workingCombats: [],
     combatCheckpoints: [],
     workingInventories: [],

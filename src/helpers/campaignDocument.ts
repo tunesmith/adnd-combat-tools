@@ -1,4 +1,5 @@
 import { upgradeCampaignTreasure } from './upgradeCampaignTreasure';
+import { upgradeCampaignSessionMetadata } from './campaignSessionMetadata';
 import { campaignBankingSchema } from './campaignBankingModel';
 import type { CampaignBanking } from './campaignBankingModel';
 import { validateCampaignBanking } from './campaignBanking';
@@ -42,6 +43,7 @@ import type { PreparedEnemy } from './campaignPreparedEnemies';
 export interface CampaignDocument {
   kind: 'adnd-campaign';
   schemaVersion: 21;
+  sessionMetadataVersion?: 1;
   xp?: CampaignXp;
   banking?: CampaignBanking;
   party?: CampaignParty;
@@ -68,6 +70,7 @@ const campaignSchema = z
   .object({
     kind: z.literal('adnd-campaign'),
     schemaVersion: z.literal(21),
+    sessionMetadataVersion: z.literal(1).optional(),
     id: z
       .string()
       .min(1)
@@ -131,7 +134,15 @@ export function validateCampaign(value: unknown): CampaignDocument {
     if (ids.has(id)) throw new Error('Duplicate campaign identity.');
     ids.add(id);
   };
-  parsed.sessions.forEach((s) => unique(s.id));
+  const sessionNumbers = new Set<number>();
+  for (const session of parsed.sessions) {
+    unique(session.id);
+    const number = session.sessionNumber;
+    if (number === undefined) continue;
+    if (sessionNumbers.has(number))
+      throw new Error(`Session number ${number} is already in use.`);
+    sessionNumbers.add(number);
+  }
   for (const record of parsed.records) {
     unique(record.id);
     if (!parsed.sessions.some((s) => s.id === record.sessionId))
@@ -260,7 +271,10 @@ export function parseCampaign(
   } catch {
     throw new Error('Invalid JSON. The active campaign has not been replaced.');
   }
-  if (source === 'file') upgradeCampaignTreasure(value);
+  if (source === 'file') {
+    upgradeCampaignTreasure(value);
+    upgradeCampaignSessionMetadata(value);
+  }
   return validateCampaign(value);
 }
 export function serializeCampaign(document: CampaignDocument): string {

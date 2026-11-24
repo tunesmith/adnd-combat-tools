@@ -13,6 +13,7 @@ const example = {
   workspace: { sessionId: null, view: 'possessions', combatSelections: {} },
   kind: 'adnd-campaign',
   schemaVersion: 21,
+  sessionMetadataVersion: 1,
   id: 'synthetic-id',
   title: 'Lantern Company',
   notes: 'Only invented campaign notes.',

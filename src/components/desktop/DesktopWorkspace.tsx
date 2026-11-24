@@ -16,6 +16,7 @@ import { wornArmorByHolder } from '../../helpers/partyEncumbrance';
 import PartyReference from './PartyReference';
 import AutoHeightTextarea from '../tracker/AutoHeightTextarea';
 import CreateSessionDialog from './CreateSessionDialog';
+import EditSessionDetailsDialog from './EditSessionDetailsDialog';
 import RenamableTab from './RenamableTab';
 import { ownedHistory, ownsVersion } from '../../helpers/campaignHistory';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -57,6 +58,12 @@ export default function DesktopWorkspace() {
     sessionId: string;
     owner: DocumentState;
   } | null>(null);
+  const [sessionOptionsOpen, setSessionOptionsOpen] = useState(false);
+  const [editingSession, setEditingSession] = useState<{
+    sessionId: string;
+    owner: DocumentState;
+  } | null>(null);
+  const sessionOptionsButton = useRef<HTMLButtonElement>(null);
   const [addingInventory, setAddingInventory] = useState<{
     owner: DocumentState;
     workingId: string;
@@ -222,9 +229,16 @@ export default function DesktopWorkspace() {
   const document = state?.document;
   const sessionId =
     document?.workspace.sessionId || document?.sessions[0]?.id || '';
-  const sessionLabel = document?.sessions.find(
-    (s) => s.id === sessionId
-  )?.label;
+  const selectedSession = document?.sessions.find((s) => s.id === sessionId);
+  const sessionToEdit =
+    editingSession?.owner.epoch === state?.epoch &&
+    editingSession?.sessionId === sessionId
+      ? selectedSession
+      : undefined;
+  useEffect(() => {
+    setSessionOptionsOpen(false);
+    setEditingSession(null);
+  }, [state?.epoch, sessionId, activeTool]);
   const view =
     document?.workspace.view === 'history'
       ? 'details'
@@ -433,6 +447,17 @@ export default function DesktopWorkspace() {
         </main>
       )}
       <div style={{ display: activeTool ? 'none' : undefined }}>
+        {document && editingSession && sessionToEdit && (
+          <EditSessionDetailsDialog
+            session={sessionToEdit}
+            sessions={document.sessions}
+            onSave={(change) => acceptMutation(change, editingSession.owner)}
+            onClose={() => {
+              setEditingSession(null);
+              sessionOptionsButton.current?.focus();
+            }}
+          />
+        )}
         {continuing &&
           document &&
           continuing.owner.epoch === state?.epoch &&
@@ -576,6 +601,9 @@ export default function DesktopWorkspace() {
                         )
                       }
                       label={s.label}
+                      sessionDate={
+                        s.date ? { sessionId: s.id, value: s.date } : undefined
+                      }
                       selected={s.id === sessionId}
                       onSelect={() => {
                         if (s.id !== sessionId)
@@ -606,6 +634,50 @@ export default function DesktopWorkspace() {
               >
                 + Session
               </button>
+              <div
+                className={styles['sessionOptions']}
+                onBlur={(event) => {
+                  if (!event.currentTarget.contains(event.relatedTarget))
+                    setSessionOptionsOpen(false);
+                }}
+                onKeyDown={(event) => {
+                  if (event.key !== 'Escape' || !sessionOptionsOpen) return;
+                  event.preventDefault();
+                  event.stopPropagation();
+                  setSessionOptionsOpen(false);
+                  sessionOptionsButton.current?.focus();
+                }}
+              >
+                <button
+                  ref={sessionOptionsButton}
+                  type="button"
+                  className={styles['sessionOptionsButton']}
+                  aria-label="Session options"
+                  aria-expanded={sessionOptionsOpen}
+                  title="Session options"
+                  disabled={!selectedSession || state.busy || pending}
+                  onClick={(event) => {
+                    event.currentTarget.focus();
+                    setSessionOptionsOpen(!sessionOptionsOpen);
+                  }}
+                >
+                  ⋯
+                </button>
+                {sessionOptionsOpen && (
+                  <div className={styles['sessionOptionsPanel']}>
+                    <button
+                      type="button"
+                      autoFocus
+                      onClick={() => {
+                        setSessionOptionsOpen(false);
+                        setEditingSession({ sessionId, owner: state });
+                      }}
+                    >
+                      Edit session details…
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
             <nav className={styles['navigation']} aria-label="Session views">
               {(
@@ -651,10 +723,7 @@ export default function DesktopWorkspace() {
                       rows={5}
                       maxLength={1_000_000}
                       disabled={!sessionId}
-                      value={
-                        document.sessions.find((s) => s.id === sessionId)
-                          ?.notes || ''
-                      }
+                      value={selectedSession?.notes || ''}
                       onChange={(notes) => {
                         const ownerId = sessionId;
                         mutate(
@@ -691,7 +760,6 @@ export default function DesktopWorkspace() {
                 {historicalInventory ? (
                   <HistoricalInventory
                     key={historicalInventory.id}
-                    sessionLabel={sessionLabel}
                     document={historicalInventory.document}
                   />
                 ) : !sessionId ? (
@@ -721,7 +789,7 @@ export default function DesktopWorkspace() {
                     mode="dm"
                     campaign={{
                       document: working.document,
-                      sessionLabel,
+                      sessionNumber: selectedSession?.sessionNumber,
                       wornArmorByHolder: wornArmorByHolder(document, sessionId),
                       characterOrder: inSessionInventoryOrder(
                         document,

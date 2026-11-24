@@ -157,6 +157,7 @@ test('two new stacks in one container keep distinct IDs and post one transaction
   add();
   select('Change 2 stack', 'new:pouch-a');
   select('Change 2 quantity', '5');
+  select('Session', '4');
   fireEvent.click(screen.getByRole('button', { name: 'Save transaction' }));
   expect(onChange).toHaveBeenCalledTimes(1);
   const changes = current().banking?.entries.at(-1)?.changes ?? [];
@@ -335,19 +336,16 @@ test('payment total follows signed draft quantities, independently of save readi
 });
 
 test.each([
-  ['Day6 — 2025-10-04', 'emerald', 3, 'new:', 6],
-  ['Day 6', 'pp', 100, 'new:pouch-a', 6],
-  ['Act10', 'sp', 1000, 'new:', 10],
-  ['Act 10', 'sp', 1000, 'new:', 10],
-  ['Act10 — 2025-11-07', 'sp', 1000, 'new:', 10],
-  ['Session 93', 'pp', 100, 'new:', 0],
+  ['The Attack', 86, 'emerald', 3, 'new:'],
+  ['Act 10', 6, 'pp', 100, 'new:pouch-a'],
+  ['Interlude', undefined, 'pp', 100, 'new:'],
 ] as const)(
-  'new Income stacks use the acquisition day in %s, including evidence and reopen',
-  (label, code, quantity, target, day) => {
+  'new Income stacks use the stored number in %s, allowing manual entry',
+  (label, sessionNumber, code, quantity, target) => {
     const { doc } = fixture();
     doc.sessions = [
-      { id: 'unrelated', label: 'Day 22' },
-      ...doc.sessions.map((s) => ({ ...s, label })),
+      { id: 'unrelated', label: 'Day 22', sessionNumber: 22 },
+      ...doc.sessions.map((s) => ({ ...s, label, sessionNumber })),
     ];
     const h = open(doc);
     select('Description', 'Reviewed income');
@@ -355,21 +353,20 @@ test.each([
     select('Change 1 denomination', code);
     select('Change 1 stack', target);
     select('Change 1 quantity', String(quantity));
-    const field = screen.getByLabelText(
-      label.startsWith('Act') ? 'Acquired in Act' : 'Day for new stacks'
-    );
-    if (label === 'Session 93') {
+    const field = screen.getByLabelText('Session');
+    if (sessionNumber === undefined) {
       expect(field).toHaveValue(null);
       expect(
         screen.getByRole('button', { name: 'Save transaction' })
       ).toBeDisabled();
-      select('Day for new stacks', '0');
-    } else expect(field).toHaveValue(day);
+      select('Session', '0');
+    } else expect(field).toHaveValue(sessionNumber);
     fireEvent.click(screen.getByRole('button', { name: 'Save transaction' }));
     expect(h.onChange).toHaveBeenCalledTimes(1);
     const saved = h.current(),
       entry = saved.banking?.entries.at(-1),
       c = entry?.changes[0];
+    const day = sessionNumber ?? 0;
     expect(c?.item).toMatchObject({
       day,
       containerId: target === 'new:' ? null : 'pouch-a',
@@ -385,12 +382,12 @@ test.each([
 
 test('editing an Income from another workspace session preserves old stack days and dates only a new destination', () => {
   const { doc } = fixture();
-  doc.sessions[0] = { id: 'day1', label: 'Day6' };
+  doc.sessions[0] = { id: 'day1', label: 'Day6', sessionNumber: 6 };
   const first = open(doc);
   select('Transaction type', 'income');
   select('Description', 'Receipt');
   select('Change 1 quantity', '2');
-  expect(screen.queryByLabelText('Day for new stacks')).toBeNull();
+  expect(screen.queryByLabelText('Session')).toBeNull();
   fireEvent.click(screen.getByRole('button', { name: 'Save transaction' }));
   const saved = first.current(),
     entry = saved.banking?.entries.at(-1);
@@ -398,7 +395,10 @@ test('editing an Income from another workspace session preserves old stack days 
   const retained = entry.changes[0]?.item;
   expect(retained?.day).toBe(0);
   cleanup();
-  saved.sessions = [{ id: 'another', label: 'Day 99' }, ...saved.sessions];
+  saved.sessions = [
+    { id: 'another', label: 'Day 99', sessionNumber: 99 },
+    ...saved.sessions,
+  ];
   let edited = saved;
   render(
     <BankTransactionDialog
@@ -412,12 +412,12 @@ test('editing an Income from another workspace session preserves old stack days 
       onClose={() => undefined}
     />
   );
-  expect(screen.queryByLabelText('Day for new stacks')).toBeNull();
+  expect(screen.queryByLabelText('Session')).toBeNull();
   add();
   select('Change 2 denomination', 'pp');
   select('Change 2 quantity', '100');
-  expect(screen.getByLabelText('Day for new stacks')).toHaveValue(6);
-  select('Day for new stacks', '4');
+  expect(screen.getByLabelText('Session')).toHaveValue(6);
+  select('Session', '4');
   fireEvent.click(screen.getByRole('button', { name: 'Save transaction' }));
   const revision = edited.banking?.entries.at(-1);
   expect(revision?.sessionId).toBe('day1');

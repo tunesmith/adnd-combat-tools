@@ -152,7 +152,7 @@ function harness(initial: CampaignDocument, day = 'd93', includeXp = false) {
   return () => current;
 }
 function addExisting(id: string) {
-  fireEvent.click(screen.getByRole('button', { name: '+ Character' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Add character' }));
   const dialog = within(
     screen.getByRole('dialog', { name: 'Character profile' })
   );
@@ -419,7 +419,7 @@ test('retirement cutoff is inclusive and uses session order for additions and ca
   fireEvent.click(carry.getByRole('button', { name: 'Cancel' }));
   const profile = editCharacter('Retiring PC');
   fireEvent.click(profile.getByRole('button', { name: 'Remove from session' }));
-  fireEvent.click(screen.getByRole('button', { name: '+ Character' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Add character' }));
   const picker = within(
     screen.getByRole('dialog', { name: 'Character profile' })
   );

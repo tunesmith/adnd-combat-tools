@@ -13,6 +13,11 @@ import {
   startNextSession,
 } from '../../helpers/campaignContinuity';
 import type { CampaignDocument } from '../../helpers/campaignDocument';
+import {
+  nextSessionNumber,
+  sessionDetails,
+} from '../../helpers/campaignSessionMetadata';
+import SessionDetailsFields from './SessionDetailsFields';
 import styles from './campaignWorkspace.module.css';
 
 export default function CreateSessionDialog({
@@ -42,7 +47,11 @@ export default function CreateSessionDialog({
   const [inventory] = useState(() =>
     document.workingInventories.find((w) => w.sessionId === sessionId)
   );
-  const [label, setLabel] = useState('');
+  const [draft, setDraft] = useState(() => ({
+    label: '',
+    date: '',
+    number: String(nextSessionNumber(document.sessions)),
+  }));
   const [selected, setSelected] = useState<string[]>([]);
   const [carryInventory, setCarryInventory] = useState(Boolean(inventory));
   const [copyNotes, setCopyNotes] = useState(false);
@@ -97,32 +106,39 @@ export default function CreateSessionDialog({
   ];
 
   async function create() {
-    const name = label.trim();
-    if ((!name && !move) || submitting.current) return;
+    if ((!draft.label.trim() && !move) || submitting.current) return;
     submitting.current = true;
     setBusy(true);
     setError('');
     try {
       const id = destinationId.current ?? crypto.randomUUID();
       destinationId.current = id;
+      const details = move
+        ? undefined
+        : sessionDetails(
+            document.sessions,
+            draft,
+            document.sessions.find((s) => s.id === id)
+          );
+      const destination = details && { id, ...details, notes: '' };
       if (placement) {
         const before = placement.slice(placement.indexOf(':') + 1);
         await onCreate((doc) => {
-          if (move && !doc.sessions.some((s) => s.id === tail?.id))
-            throw new Error('The session to move is missing.');
-          return placeHistoricalSession(
-            doc,
-            before,
-            move && tail ? tail : { id, label: name, notes: '' }
-          );
+          const session = move
+            ? doc.sessions.find((s) => s.id === tail?.id)
+            : destination;
+          if (!session) throw new Error('The session is missing.');
+          return placeHistoricalSession(doc, before, session);
         });
-      } else if (source && transfers.length) {
+      } else if (destination && source && transfers.length) {
         const request = {
           campaignId: document.id,
           sourceSessionId: source.id,
           sourceFingerprint: fingerprint,
           destinationId: id,
-          label: name,
+          label: destination.label,
+          date: destination.date,
+          sessionNumber: destination.sessionNumber,
           combats: selected.map((sourceId) => ({
             sourceId,
             instanceId: crypto.randomUUID(),
@@ -143,18 +159,24 @@ export default function CreateSessionDialog({
           capturedAt: new Date().toISOString(),
         };
         await onCreate((doc) => startNextSession(doc, request));
-      } else {
+      } else if (destination) {
         await onCreate((doc) => {
           const existing = doc.sessions.find((session) => session.id === id);
           if (existing) {
-            if (existing.label === name && !existing.continuation) return doc;
+            if (
+              !existing.continuation &&
+              existing.label === destination.label &&
+              existing.date === destination.date &&
+              existing.sessionNumber === destination.sessionNumber
+            )
+              return doc;
             throw new Error(
               'This session already exists. Close the dialog and try again.'
             );
           }
           return {
             ...doc,
-            sessions: [...doc.sessions, { id, label: name, notes: '' }],
+            sessions: [...doc.sessions, destination],
             workspace: { ...doc.workspace, sessionId: id, view: 'session' },
           };
         });
@@ -216,17 +238,7 @@ export default function CreateSessionDialog({
               </select>
             </label>
           )}
-          {!move && (
-            <label className={styles['sessionNameField']}>
-              Session name
-              <input
-                autoFocus
-                maxLength={1000}
-                value={label}
-                onChange={(e) => setLabel(e.target.value)}
-              />
-            </label>
-          )}
+          {!move && <SessionDetailsFields draft={draft} onChange={setDraft} />}
           {!placement &&
             source &&
             (inventory ||
@@ -373,7 +385,10 @@ export default function CreateSessionDialog({
           <button type="button" disabled={busy} onClick={onClose}>
             Cancel
           </button>
-          <button type="submit" disabled={busy || (!move && !label.trim())}>
+          <button
+            type="submit"
+            disabled={busy || (!move && !draft.label.trim())}
+          >
             {busy ? 'Saving…' : move ? 'Move session' : 'Create session'}
           </button>
         </footer>

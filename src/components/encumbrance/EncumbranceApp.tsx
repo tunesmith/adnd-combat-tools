@@ -1,4 +1,3 @@
-import { sessionAcquisition } from '../../helpers/sessionAcquisition';
 import {
   inventoryHolders,
   updateHolderInventory,
@@ -80,7 +79,7 @@ interface EncumbranceAppProps {
   mode: EncumbranceMode;
   campaign?: {
     active?: boolean;
-    sessionLabel?: string;
+    sessionNumber?: number;
     document: EncumbranceDocument | EncumbranceDmDocument;
     readOnly?: boolean;
     onDocumentChange: (document: EncumbranceDocument) => boolean | void;
@@ -743,19 +742,8 @@ const resizeTextarea = (textarea: HTMLTextAreaElement | null) => {
   )}px`;
 };
 
-function gearAcquisition(
-  campaign: EncumbranceAppProps['campaign'],
-  mode: EncumbranceMode
-) {
-  const acquisition = sessionAcquisition(campaign?.sessionLabel);
-  const newItemDay =
-    acquisition.number ??
-    (campaign?.sessionLabel !== undefined && mode === 'dm' ? '' : 0);
-  return { acquisitionLabel: acquisition.label, newItemDay } as const;
-}
-
 const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
-  const { acquisitionLabel, newItemDay } = gearAcquisition(campaign, mode);
+  const newItemDay = campaign ? campaign.sessionNumber ?? '' : 0;
   const [standaloneDocument, setStandaloneDocument] =
     useState<EncumbranceDocument>(() =>
       createEmptyEncumbranceDocument(getDocumentKindForMode(mode))
@@ -2752,9 +2740,7 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
         )}
         <div className={styles['inventoryCompactMeta']}>
           <span className={styles['inventoryCompactMetaItem']}>
-            <span className={styles['inventoryCompactMetaLabel']}>
-              {acquisitionLabel}
-            </span>
+            <span className={styles['inventoryCompactMetaLabel']}>Session</span>
             <span>{rowRecord.item.day}</span>
           </span>
           <span className={styles['inventoryCompactMetaItem']}>
@@ -2774,7 +2760,7 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
         </div>
       </div>
       <div className={styles['inventoryCellSummary']}>
-        <span className={styles['inventoryLabel']}>{acquisitionLabel}</span>
+        <span className={styles['inventoryLabel']}>Session</span>
         <span className={styles['inventorySummaryValue']}>
           {rowRecord.item.day}
         </span>
@@ -4006,10 +3992,10 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
                   : ''
               }`}
               onClick={() => toggleInventorySort('day')}
-              aria-label={`Sort by ${acquisitionLabel}`}
+              aria-label="Sort by Session"
               aria-pressed={getInventorySortPriority('day') !== null}
             >
-              <span>{acquisitionLabel}</span>
+              <span>Session</span>
               {getInventorySortPriority('day') !== null && (
                 <span className={styles['inventorySortPriority']}>
                   {getInventorySortPriority('day')}
@@ -4485,7 +4471,7 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
                         {mode === 'dm' && (
                           <label className={styles['fieldGroup']}>
                             <span className={styles['fieldLabel']}>
-                              {acquisitionLabel}
+                              Session
                             </span>
                             <input
                               className={styles['fieldControl']}
@@ -4943,7 +4929,7 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
                         {mode === 'dm' ? (
                           <label className={styles['fieldGroup']}>
                             <span className={styles['fieldLabel']}>
-                              {acquisitionLabel}
+                              Session
                             </span>
                             <input
                               className={styles['fieldControl']}
@@ -4965,7 +4951,7 @@ const EncumbranceApp = ({ mode, campaign }: EncumbranceAppProps) => {
                         ) : (
                           <div className={styles['fieldGroup']}>
                             <span className={styles['fieldLabel']}>
-                              {acquisitionLabel}
+                              Session
                             </span>
                             <div className={styles['fieldReadonly']}>
                               {editingItem.day}

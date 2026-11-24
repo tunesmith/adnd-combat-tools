@@ -4,6 +4,7 @@ import { sha256 } from 'js-sha256';
 import { getTrackerEncodedStateFromUrlText } from './trackerUrl';
 import { transformTrackerState, compactTrackerState } from './trackerCodec';
 import { parseEncumbranceDocument } from './encumbranceDocument';
+import { isSessionDate } from './campaignSessionMetadata';
 import type { TrackerState, TrackerStateAnyVersion } from '../types/tracker';
 
 const MAX_SOURCE_BYTES = 1_000_000;
@@ -496,6 +497,8 @@ export interface CampaignSession {
   partyOrder?: string[];
   id: string;
   label: string;
+  date?: string;
+  sessionNumber?: number;
 }
 export interface CampaignRecord {
   id: string;
@@ -509,6 +512,12 @@ export const sessionSchema = z
   .object({
     id: string.min(1),
     label: string.min(1).max(1000),
+    date: string.refine(isSessionDate, 'Invalid session date.').optional(),
+    sessionNumber: number
+      .int()
+      .positive()
+      .max(Number.MAX_SAFE_INTEGER)
+      .optional(),
     partyOrder: z.array(string.min(1)).max(500).optional(),
   })
   .strict();

@@ -7,6 +7,8 @@ use std::{fs, io::Write, path::Path};
 pub struct Document {
     pub kind: String,
     pub schema_version: u32,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub session_metadata_version: Option<u32>,
     pub id: String,
     pub title: String,
     pub notes: String,
@@ -31,6 +33,7 @@ impl Document {
         Self {
             kind: "adnd-campaign".into(),
             schema_version: 21,
+            session_metadata_version: Some(1),
             id: uuid::Uuid::new_v4().to_string(),
             title: "Untitled campaign".into(),
             notes: String::new(),

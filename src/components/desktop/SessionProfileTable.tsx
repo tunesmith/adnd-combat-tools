@@ -14,12 +14,14 @@ const signed = (value: number | null | undefined, percent = false) =>
 export default function SessionProfileTable({
   document,
   profiles,
+  onAdd,
   onEdit,
   onToggle,
   onReorder,
 }: {
   document: CampaignDocument;
   profiles: PartyProfile[];
+  onAdd?: () => void;
   onEdit: (profile: PartyProfile, character: RosterCharacter) => void;
   onToggle: (characterId: string) => void;
   onReorder?: (fromId: string, targetId: string) => void;
@@ -53,7 +55,25 @@ export default function SessionProfileTable({
       <table className={styles['sessionTable']} aria-label="Session characters">
         <thead>
           <tr>
-            <th scope="col">Character / player</th>
+            <th scope="col">
+              <div className={styles['sessionCharacterHeader']}>
+                <span>Character / player</span>
+                {onAdd && (
+                  <button
+                    type="button"
+                    className={styles['sessionCharacterAdd']}
+                    title="Add character"
+                    aria-label="Add character"
+                    onClick={(event) => {
+                      event.currentTarget.focus();
+                      onAdd();
+                    }}
+                  >
+                    +
+                  </button>
+                )}
+              </div>
+            </th>
             <th scope="col">Race / alignment</th>
             <th scope="col">Class</th>
             <th scope="col">Lv</th>

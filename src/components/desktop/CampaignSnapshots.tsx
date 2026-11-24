@@ -6,6 +6,7 @@ import BankBalances from './BankBalances';
 import { useEffect, useRef, useState } from 'react';
 import HistoricalCombat from './HistoricalCombat';
 import type { CampaignDocument } from '../../helpers/campaignDocument';
+import { nextSessionNumber } from '../../helpers/campaignSessionMetadata';
 import { ownedHistory } from '../../helpers/campaignHistory';
 import {
   importCampaignSource,
@@ -306,7 +307,14 @@ export default function CampaignSnapshots({
               if (
                 await apply({
                   ...document,
-                  sessions: [...document.sessions, { id, label: label.trim() }],
+                  sessions: [
+                    ...document.sessions,
+                    {
+                      id,
+                      label: label.trim(),
+                      sessionNumber: nextSessionNumber(document.sessions),
+                    },
+                  ],
                 })
               ) {
                 setSession(id);
