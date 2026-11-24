@@ -17,8 +17,16 @@ npm run desktop:run
 ```
 
 The bundle is `src-tauri/target/release/bundle/macos/AD&D Campaign.app`. Once built,
-it runs without a development server. This is a local build; signing, notarization
-and an update service are not part of this workflow.
+it runs without a development server. The normal app uses the **AD&D Campaign Local
+Signing** identity in Curt’s login Keychain. Tauri reads the signer from
+`src-tauri/tauri.conf.json` for both build and bundle commands. Leave the signing
+override unset. macOS uses the signer and bundle identifier to recognize the
+owner of Open Recent across updates. The private key stays in Keychain. To
+verify a build, use `codesign -d -r- "src-tauri/target/release/bundle/macos/AD&D Campaign.app"`.
+Its designated requirement should contain the bundle identifier and certificate
+fingerprint. Those should match the previous release even when the executable
+hash changes.
+For an isolated ad-hoc test app, use `npm run desktop:build:diagnostic`.
 
 To compile while the app is open, run `npm run desktop:build -- --no-bundle`.
 After you save and quit the app, package the compiled build with

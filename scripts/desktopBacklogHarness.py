@@ -1,6 +1,6 @@
 """Run the diagnostic-feature Tauri bundle on disposable copies, never the input file.
 
-Requires: npm run desktop:build -- --features diagnostic-harness
+Requires: npm run desktop:build:diagnostic
 No campaign contents are written to diagnostics; retained copies stay in the printed
 private temporary directory for inspection. Native file-picker/prompt choices are
 injected in this test feature; the normal Session command and atomic save paths run.
@@ -42,7 +42,7 @@ campaign.write_text(json.dumps(document, indent=2) + '\n')
 script = root / 'src-tauri/diagnostics' / ('inventory.js' if inventory_mode else args.mode + '.js')
 env = dict(os.environ, ADND_DIAGNOSTICS='1', ADND_DIAGNOSTIC_CAMPAIGN=str(campaign),
            ADND_DIAGNOSTIC_SCRIPT=str(script), ADND_DIAGNOSTIC_SAVE_AS=str(save_as))
-app = args.app or root / 'src-tauri/target/release/bundle/macos/AD&D Campaign.app/Contents/MacOS/adnd-tools-desktop'
+app = args.app or root / 'desktop-build/diagnostics/release/bundle/macos/AD&D Campaign Diagnostics.app/Contents/MacOS/adnd-tools-desktop'
 checks = []
 external_bytes = None
 disk_before_failure = None

@@ -42,6 +42,11 @@
 
 - Run `npm run tsc`, `npm test`, `npm run format`, and `npm run lint` before finishing each commit.
 
+## Desktop campaign builds
+
+- Build the everyday macOS app with `npm run desktop:build` using the configured Keychain signer and bundle ID. Preserve both when packaging updates, including staged builds. If signing fails, surface the error rather than falling back to `APPLE_SIGNING_IDENTITY=-` or a config override.
+- Use `npm run desktop:build:diagnostic` for an isolated ad-hoc test bundle with its own identifier and output directory. Test with disposable campaigns. See `doc/desktop.md` for packaging while the normal app is in use.
+
 ## Deployment & Configuration Tips
 
 - GitHub Pages uses static export under `/adnd-combat-tools` (`basePath`/`assetPrefix` set in `next.config.js` for production).

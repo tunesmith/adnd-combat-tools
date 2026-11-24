@@ -116,12 +116,11 @@ input during Save, rejected edits, a validation timeout, disk failure, retry,
 repeated commands, navigation, Save As, Quit and external conflicts.
 
 ```sh
-npm run desktop:build -- --features diagnostic-harness
+npm run desktop:build:diagnostic
 python3 scripts/desktopBacklogHarness.py --campaign /path/to/SOCK.adnd --mode timing
 python3 scripts/desktopBacklogHarness.py --campaign /path/to/SOCK.adnd
 python3 scripts/desktopBacklogHarness.py --campaign /path/to/SOCK.adnd --mode inventory-timing
 python3 scripts/desktopBacklogHarness.py --campaign /path/to/SOCK.adnd --mode inventory-validation
-npm run desktop:build
 ```
 
 This harness is scenario-specific: its timing case needs an encounter named
@@ -136,10 +135,10 @@ does not verify OS dialog interaction or physical keyboard accelerator delivery.
 
 `ADND_DIAGNOSTICS=1` enables bounded native operation/size/timing output; renderer
 timing is opt-in through `window.__CAMPAIGN_DIAGNOSTICS__`. Script injection and fault
-controls require the explicit `diagnostic-harness` build feature. Harness runs leave
-the normal recent-file shortcut alone. Rebuild normally afterward to remove test
-controls. Compare native operation counts and request-to-completion times on the
-same input; browser/Node timings alone do not establish native performance.
+controls require the explicit `diagnostic-harness` build feature. The diagnostic bundle uses its
+own app identifier, Cargo output, and ad-hoc signature so its tests have a
+separate recent-document list. Compare native operation counts and
+request-to-completion times on the same input; browser/Node timings alone do not establish native performance.
 
 Keep reusable test code and synthetic fixtures in the repo. Keep generated bundles,
 disposable campaign copies and run-specific logs/screenshots out of commits. Past

@@ -23,6 +23,7 @@
     "test:coverage": "jest --coverage",
     "desktop:assets": "DESKTOP_BUILD=1 NEXT_PUBLIC_DESKTOP=1 next build && DESKTOP_BUILD=1 NEXT_PUBLIC_DESKTOP=1 next export -o out-desktop",
     "desktop:build": "tauri build --bundles app",
+    "desktop:build:diagnostic": "CARGO_TARGET_DIR=\"$PWD/desktop-build/diagnostics\" tauri build --bundles app --features diagnostic-harness --config src-tauri/tauri.diagnostic.conf.json",
     "desktop:run": "open \"src-tauri/target/release/bundle/macos/AD&D Campaign.app\"",
     "desktop:test": "npm run desktop:boundary && cargo test --manifest-path src-tauri/Cargo.toml",
     "desktop:boundary": "node scripts/buildCampaignBoundary.cjs"

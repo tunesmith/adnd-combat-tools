@@ -43,7 +43,8 @@
       "icons/campaign.icns": "campaign.icns"
     },
     "macOS": {
-      "infoPlist": "Info.plist"
+      "infoPlist": "Campaign-Info.plist",
+      "signingIdentity": "AD&D Campaign Local Signing"
     }
   }
 }

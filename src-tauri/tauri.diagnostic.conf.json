@@ -1,0 +1,11 @@
+{
+  "productName": "AD&D Campaign Diagnostics",
+  "identifier": "local.adnd.tools.diagnostics",
+  "bundle": {
+    "fileAssociations": [],
+    "macOS": {
+      "infoPlist": null,
+      "signingIdentity": "-"
+    }
+  }
+}
